@@ -68,6 +68,8 @@ public final class ShipDesignArt {
     private static final int CALLOUT_H = 12;
     private static final int CALLOUT_PAD = 4;
     private static final float DARKER = 0.4F;
+    /* How far toward black a push button's ground is from its colour. */
+    private static final float BUTTON_DARK = 0.8F;
     private static final float CHANNEL = 255.0F;
     /* The small text's size against the game's letters, as the mock's small face against its labels. */
     private static final float SMALL = 0.75F;
@@ -163,6 +165,18 @@ public final class ShipDesignArt {
         Draw.textScaled(g, font, key, x + kw / 2 - smallWidth(font, key) / 2 + 1, y + 2, c.dark(), SMALL);
         Draw.text(g, font, label, x + kw + 3, y + 1, c.text());
         return kw + 3 + font.width(label);
+    }
+
+    /**
+     * A push button, {@code w} by {@code h}, as the approved plans' list draws its own: dark with a tint of
+     * {@code colour}, edged in it, its word in the small letters in it, in the middle.
+     */
+    public static void button(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
+                              final String word, final int colour) {
+        final Colours c = PALETTE.get();
+        g.fill(x, y, x + w, y + h, mix(colour, c.black(), BUTTON_DARK));
+        frame(g, x, y, x + w, y + h, colour);
+        small(g, font, word, x + (w - smallWidth(font, word)) / 2, y + 2, colour);
     }
 
     /** A bar of twenty segments, as full as {@code share}, from {@code x} {@code w} wide. */

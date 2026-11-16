@@ -296,6 +296,11 @@ public final class ShipyardGameTests {
                             + " flies but does not fit the dock");
                     helper.assertTrue(dock.confirm() && dock.plan().orElseThrow().equals(ready),
                             "the ready ship that fits is sent to the dock");
+                    dock.delete(1);
+                    helper.assertTrue(dock.plans().size() == 1, "a place past its plans forgets none");
+                    dock.delete(0);
+                    helper.assertTrue(dock.plans().isEmpty() && dock.plan().orElseThrow().equals(ready),
+                            "its plan deleted, the ship sent to the dock stays");
                     final ShipDesign flipped = ready.withSpine(ready.spine(), List.of(1));
                     helper.assertTrue(ShipyardLayout.laid(ShipParts.all(level), ShipKits.all(level), flipped)
                             .cells().size() == ShipyardLayout.laid(ShipParts.all(level), ShipKits.all(level), ready)

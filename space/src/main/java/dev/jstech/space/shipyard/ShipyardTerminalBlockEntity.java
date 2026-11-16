@@ -325,6 +325,16 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         return true;
     }
 
+    /** Forgets its plan at {@code place} in its list; the ship its dock builds or has built is left as it is. */
+    public void delete(final int place) {
+        final List<ShipDesign> kept = new ArrayList<>(plans());
+        if (place >= 0 && place < kept.size()) {
+            kept.remove(place);
+            this.plans.set(List.copyOf(kept));
+            setChanged();
+        }
+    }
+
     /**
      * Sends the design to the dock to be built, when it is ready to fly and fits the dock; whether it was sent. The
      * plan built before comes apart, its formed parts' blocks given back, unless it is the same plan, which goes on.

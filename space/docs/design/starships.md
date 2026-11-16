@@ -88,7 +88,10 @@ saying why; only the joints it fits show their green nodes. The part under the m
 The screen shows the parts by kind, searched by name or maker, the chosen part's length, mass, blocks, power and note,
 the flight check with the room left in the hull, the ship's mass, thrust, vertical take-off thrust against weight,
 power and crew, the blocks the dock needs and the Item Port holds, and the footprint on the floor; F changes the
-finish. A design is saved by name among the dock's plans, and sent to the dock once it flies and fits the bay.
+finish. A design is saved by name among the dock's plans, and sent to the dock once it flies and fits the bay. L opens
+the plans (sixteen at most) over the middle of the screen, each with its length and mass, the one sent to the dock
+marked: Load puts one in the designer, Delete forgets it and leaves the ship in the dock as it is, and Ctrl and Z
+undoes a load as it undoes any other change, Ctrl and Y redoing it.
 
 A design sent to the dock appears as a **hologram**: every block still to place shows where it goes, the layer being
 built glowing amber, and each part still to form has its box with a tag lifted over it, with its name, its size and how

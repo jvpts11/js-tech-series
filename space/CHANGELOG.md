@@ -934,6 +934,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   with the throttle, longer and hotter boosting, leaving a heat trail in thin air and clean and blue in space. Its air
   engines blow their exhaust back out of their nozzles where they breathe. The jets go with the ship however fast it
   flies, and come out of the mouths and nozzles where its model draws them.
+- The Starship Design opens the dock's plans on L, over the middle of the screen: each plan with its length
+  and mass, the one sent to the dock marked, and its Load and Delete. Load puts the plan in the designer, Delete
+  forgets it and leaves the ship in the dock as it is; the list scrolls past six.
+- The Starship Design undoes and redoes its changes, a plan loaded too, with Ctrl and Z and Ctrl and Y (Shift
+  with Z redoes too), sixty-four changes back, as the Rocket Design does.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

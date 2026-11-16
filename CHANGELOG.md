@@ -3969,6 +3969,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) An emitter of an effect file can keep its particles `attached` to what emits them, moved along as far as it
   moves each tick, as an engine's jet keeps its shape behind a fast craft; and `ClientEffects.holdReaching` holds an
   effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.
+- (Space) The Starship Design opens the dock's plans on L, over the middle of the screen: each plan with its length
+  and mass, the one sent to the dock marked, and its Load and Delete. Load puts the plan in the designer, Delete
+  forgets it and leaves the ship in the dock as it is; the list scrolls past six.
+- (Space) The Starship Design undoes and redoes its changes, a plan loaded too, with Ctrl and Z and Ctrl and Y (Shift
+  with Z redoes too), sixty-four changes back, as the Rocket Design does.
 
 ### Changed
 - (Space) A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

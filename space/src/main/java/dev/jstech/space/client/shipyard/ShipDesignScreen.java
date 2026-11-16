@@ -43,7 +43,10 @@ import dev.jstech.space.shipyard.ShipDesignMenu;
 import dev.jstech.space.shipyard.ShipDesigner;
 import dev.jstech.space.shipyard.ShipyardLayout;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -51,6 +54,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.LightTexture;
@@ -115,8 +119,17 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     private double taken;
     private int seats;
     private int beds;
+    /* The designs before the edits made, to undo back to, and those undone, to redo, the latest first. */
+    private final Deque<ShipDesign> undone = new ArrayDeque<>();
+    private final Deque<ShipDesign> redone = new ArrayDeque<>();
+    /* Whether the plans' list is open, how far down it is scrolled, and each plan's size as worked out. */
+    private boolean plansOpen;
+    private int plansScroll;
+    private final Map<ShipDesign, String> sizes = new HashMap<>();
 
     private static final int HIDDEN = -10_000;
+    /* How many edits back the design can be undone. */
+    private static final int MOST_UNDO = 64;
     private static final int MODULES_TAB = 2;
     /* How near a node, in the frame's points, a part must be let go to snap to it, the snap on and off. */
     private static final double SNAP_REACH = 12;
@@ -205,8 +218,9 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         this.target = this.held == null ? null : target(mouseX, mouseY);
         final Ghost ghost = ghost(mouseX, mouseY);
         final List<ShipPartModels.Placed> drawn = drawnModels();
-        // With nothing held, the part under the mouse is outlined by its own silhouette, its name beside it.
-        final int under = this.held == null ? partAt(drawn, mouseX, mouseY) : -1;
+        // With nothing held, the part under the mouse is outlined by its own silhouette, its name beside it; not
+        // under the plans' list.
+        final int under = this.held == null && !this.plansOpen ? partAt(drawn, mouseX, mouseY) : -1;
         final List<float[]> outline = under >= 0 && this.mesh != null ? this.mesh.outline(under, this.view.eye())
                 : List.of();
         this.view.draw(g, this.width, this.height, this.terminal, drawn, outline,
@@ -241,6 +255,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
             this.makers = ShipMakers.all(this.minecraft.level);
             this.finishes = List.copyOf(ShipFinishes.all(this.minecraft.level).keySet());
         }
+        this.sizes.clear();
         if (this.design.name().isBlank()) {
             this.design = this.design.named(GameText.resolve(ShipDesignTexts.UNNAMED.with(
                     String.format(Locale.ROOT, "%02d", this.terminal.plans().size() + 1))).toUpperCase(Locale.ROOT));
@@ -263,6 +278,10 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         final double y = frameY(mouseY);
         if (this.naming != null && !onName(x, y)) {
             finishNaming(true);
+        }
+        if (this.plansOpen && button == InputConstants.MOUSE_BUTTON_LEFT) {
+            clickPlans(x, y);
+            return true;
         }
         this.searching = button == InputConstants.MOUSE_BUTTON_LEFT && x >= ShipDesignLayout.SEARCH_X0
                 && x < ShipDesignLayout.SEARCH_X1 && y >= ShipDesignLayout.SEARCH_Y0 && y < ShipDesignLayout.SEARCH_Y1;
@@ -307,6 +326,11 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                                  final double scrollY) {
         final double x = frameX(mouseX);
         final double y = frameY(mouseY);
+        if (this.plansOpen && ShipDesignLayout.onPlans(x, y)) {
+            this.plansScroll = Math.clamp(this.plansScroll - (int) Math.signum(scrollY), 0, Math.max(0,
+                    this.terminal.plans().size() - ShipDesignLayout.PLAN_ROWS));
+            return true;
+        }
         if (x >= ShipDesignLayout.LEFT_X0 && x < ShipDesignLayout.LEFT_X1 && y >= ShipDesignLayout.CARD_Y0
                 && y < ShipDesignLayout.CHOSEN_Y) {
             final int rows = (shelf().size() + ShipDesignLayout.CARD_COLUMNS - 1) / ShipDesignLayout.CARD_COLUMNS;
@@ -342,6 +366,16 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
             }
             return true;
         }
+        // Ctrl (Command on a Mac) and Z undoes, with Shift or Y redoes, read from the keys held with it.
+        final int control = Minecraft.ON_OSX ? GLFW.GLFW_MOD_SUPER : GLFW.GLFW_MOD_CONTROL;
+        if ((modifiers & control) != 0 && (key == GLFW.GLFW_KEY_Z || key == GLFW.GLFW_KEY_Y)) {
+            if (key == GLFW.GLFW_KEY_Y || (modifiers & GLFW.GLFW_MOD_SHIFT) != 0) {
+                redo();
+            } else {
+                undo();
+            }
+            return true;
+        }
         switch (key) {
             case GLFW.GLFW_KEY_E -> {
                 send();
@@ -350,6 +384,17 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
             case GLFW.GLFW_KEY_S -> {
                 save();
                 return true;
+            }
+            case GLFW.GLFW_KEY_L -> {
+                this.plansOpen = !this.plansOpen;
+                return true;
+            }
+            case GLFW.GLFW_KEY_ESCAPE -> {
+                if (this.plansOpen) {
+                    this.plansOpen = false;
+                    return true;
+                }
+                return super.keyPressed(key, scanCode, modifiers);
             }
             case GLFW.GLFW_KEY_F -> {
                 nextFinish();
@@ -393,6 +438,9 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         partsPanel(g);
         rightPanel(g);
         bottom(g);
+        if (this.plansOpen) {
+            plans(g);
+        }
         g.pose().popPose();
     }
 
@@ -1183,6 +1231,8 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                 GameText.resolve(ShipDesignTexts.SEND)) + ShipDesignLayout.KEY_GAP;
         x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_S),
                 GameText.resolve(ShipDesignTexts.SAVE)) + ShipDesignLayout.KEY_GAP;
+        x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_L),
+                GameText.resolve(ShipDesignTexts.PLANS)) + ShipDesignLayout.KEY_GAP;
         x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_F),
                 GameText.resolve(ShipDesignTexts.FINISH_TOOL)) + ShipDesignLayout.KEY_GAP;
         ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, GameText.resolve(ShipDesignTexts.KEY_DELETE),
@@ -1195,7 +1245,102 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         }
     }
 
+    /*
+     * The plans' list over the middle, as the approved mock draws it: on dark glass under its title's tab, how many
+     * plans the dock keeps of how many it can; a row for each plan in sight, its name, under it its length and mass,
+     * the one sent to the dock marked green, and its load and delete; the help at its foot.
+     */
+    private void plans(final GuiGraphics g) {
+        final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
+        final int x0 = ShipDesignLayout.PLANS_X0;
+        final int x1 = ShipDesignLayout.PLANS_X1;
+        final int cut = ShipDesignLayout.CUT;
+        ShipDesignArt.chamfer(g, x0, ShipDesignLayout.PLANS_Y0, x1, ShipDesignLayout.PLANS_Y1, c.dark(), cut, true,
+                false, false);
+        ShipDesignArt.panel(g, this.font, x0, ShipDesignLayout.PLANS_Y0, x1, ShipDesignLayout.PLANS_Y1, "", cut);
+        ShipDesignArt.chamfer(g, x0, ShipDesignLayout.PLANS_Y0, ShipDesignLayout.PLANS_TAB_X1,
+                ShipDesignLayout.PLANS_TAB_Y1, c.accent(), cut, true, false, false);
+        Draw.text(g, this.font, up(ShipDesignTexts.PLANS), x0 + cut, ShipDesignLayout.PLANS_TITLE_Y, c.dark());
+        final List<ShipDesign> plans = this.terminal.plans();
+        final String count = GameText.resolve(ShipDesignTexts.PLANS_COUNT.with(plans.size(),
+                ShipyardTerminalBlockEntity.MOST_PLANS));
+        ShipDesignArt.small(g, this.font, count, x1 - cut - ShipDesignArt.smallWidth(this.font, count),
+                ShipDesignLayout.PLANS_TITLE_Y + 1, c.dim());
+        if (plans.isEmpty()) {
+            ShipDesignArt.small(g, this.font, GameText.resolve(ShipDesignTexts.NO_PLANS),
+                    ShipDesignLayout.PLAN_TEXT_X, ShipDesignLayout.PLAN_Y0 + ShipDesignLayout.PLAN_NAME_DY, c.dim());
+        }
+        this.plansScroll = Math.clamp(this.plansScroll, 0, Math.max(0, plans.size() - ShipDesignLayout.PLAN_ROWS));
+        final Optional<ShipDesign> docked = this.terminal.plan();
+        final int room = ShipDesignLayout.PLAN_LOAD_X - 4 - ShipDesignLayout.PLAN_TEXT_X;
+        for (int i = 0; i < Math.min(ShipDesignLayout.PLAN_ROWS, plans.size() - this.plansScroll); i++) {
+            final ShipDesign plan = plans.get(this.plansScroll + i);
+            final int y = ShipDesignLayout.planY(i);
+            g.fill(ShipDesignLayout.PLAN_X0, y, ShipDesignLayout.PLAN_X1, y + ShipDesignLayout.PLAN_H, c.card());
+            ShipDesignArt.frame(g, ShipDesignLayout.PLAN_X0, y, ShipDesignLayout.PLAN_X1, y + ShipDesignLayout.PLAN_H,
+                    c.accentDim());
+            Draw.text(g, this.font, fit(plan.name(), room, false), ShipDesignLayout.PLAN_TEXT_X,
+                    y + ShipDesignLayout.PLAN_NAME_DY, c.text());
+            final boolean here = docked.isPresent() && docked.get().equals(plan);
+            final String size = sizeOf(plan) + (here ? "   " + GameText.resolve(ShipDesignTexts.IN_THE_DOCK) : "");
+            ShipDesignArt.small(g, this.font, fit(size, room, true), ShipDesignLayout.PLAN_TEXT_X,
+                    y + ShipDesignLayout.PLAN_SIZE_DY, here ? c.green() : c.dim());
+            ShipDesignArt.button(g, this.font, ShipDesignLayout.PLAN_LOAD_X, y + ShipDesignLayout.PLAN_BUTTON_DY,
+                    ShipDesignLayout.PLAN_BUTTON_W, ShipDesignLayout.PLAN_BUTTON_H,
+                    GameText.resolve(ShipDesignTexts.LOAD), c.accent());
+            ShipDesignArt.button(g, this.font, ShipDesignLayout.PLAN_DELETE_X, y + ShipDesignLayout.PLAN_BUTTON_DY,
+                    ShipDesignLayout.PLAN_BUTTON_W, ShipDesignLayout.PLAN_BUTTON_H,
+                    GameText.resolve(ShipDesignTexts.DELETE_PLAN), c.red());
+        }
+        final String help = GameText.resolve(ShipDesignTexts.PLANS_HELP);
+        ShipDesignArt.small(g, this.font, help, (x0 + x1 - ShipDesignArt.smallWidth(this.font, help)) / 2,
+                ShipDesignLayout.PLANS_HELP_Y, c.dim());
+    }
+
+    /* A plan's length and mass, as the top writes the design's, worked out once. */
+    private String sizeOf(final ShipDesign plan) {
+        return this.sizes.computeIfAbsent(plan, key -> {
+            double tonnes = 0;
+            final List<ResourceLocation> all = new ArrayList<>(plan.spine());
+            all.addAll(plan.hung());
+            for (final ResourceLocation id : all) {
+                final ShipPart part = this.parts.get(id);
+                tonnes += part == null ? 0 : part.figures().mass() / KILO;
+            }
+            return GameText.resolve(ShipDesignTexts.SIZE_LINE.with(length(ShipyardLayout.laid(this.parts, this.kits,
+                    plan)), tenth(tonnes)));
+        });
+    }
+
     // ---- The clicks ----------------------------------------------------------------------------------------------
+
+    /*
+     * A click while the plans' list is open: on a plan's load, that plan in the designer, the design before kept to
+     * undo back to; on its delete, the plan forgotten; off the list, the list shut.
+     */
+    private void clickPlans(final double x, final double y) {
+        if (!ShipDesignLayout.onPlans(x, y)) {
+            this.plansOpen = false;
+            return;
+        }
+        final List<ShipDesign> plans = this.terminal.plans();
+        for (int i = 0; i < Math.min(ShipDesignLayout.PLAN_ROWS, plans.size() - this.plansScroll); i++) {
+            final int top = ShipDesignLayout.planY(i) + ShipDesignLayout.PLAN_BUTTON_DY;
+            if (y < top || y >= top + ShipDesignLayout.PLAN_BUTTON_H) {
+                continue;
+            }
+            final int place = this.plansScroll + i;
+            if (x >= ShipDesignLayout.PLAN_LOAD_X
+                    && x < ShipDesignLayout.PLAN_LOAD_X + ShipDesignLayout.PLAN_BUTTON_W) {
+                commit(plans.get(place));
+                this.plansOpen = false;
+                say(ShipDesignTexts.LOADED.with(Text.of(plans.get(place).name())));
+            } else if (x >= ShipDesignLayout.PLAN_DELETE_X
+                    && x < ShipDesignLayout.PLAN_DELETE_X + ShipDesignLayout.PLAN_BUTTON_W) {
+                ShipDesigner.DELETE.send(place);
+            }
+        }
+    }
 
     /* A click on the top: the ship's name, to rename it, or a tool. */
     private boolean clickTop(final double x, final double y) {
@@ -1264,14 +1409,39 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     // ---- The design ----------------------------------------------------------------------------------------------
 
-    /* Sets {@code to} as the design, and sends it to the shipyard. */
+    /* Sets {@code to} as the design, the one before kept to undo back to, and sends it to the shipyard. */
     private void commit(final ShipDesign to) {
         if (!to.bounded() || to.equals(this.design)) {
             return;
         }
+        this.undone.push(this.design);
+        while (this.undone.size() > MOST_UNDO) {
+            this.undone.removeLast();
+        }
+        this.redone.clear();
         this.design = to;
         ShipDesigner.SET.send(to);
         recount();
+    }
+
+    /* Takes the design back to before the last edit, a plan loaded too. */
+    private void undo() {
+        if (!this.undone.isEmpty()) {
+            this.redone.push(this.design);
+            this.design = this.undone.pop();
+            ShipDesigner.SET.send(this.design);
+            recount();
+        }
+    }
+
+    /* Makes again the last edit undone. */
+    private void redo() {
+        if (!this.redone.isEmpty()) {
+            this.undone.push(this.design);
+            this.design = this.redone.pop();
+            ShipDesigner.SET.send(this.design);
+            recount();
+        }
     }
 
     /* Works out what the design comes to: its blocks, what keeps it down, whether it fits, its figures. */
@@ -1458,10 +1628,15 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     }
 
     private int length() {
-        if (this.laid.cells().isEmpty()) {
+        return length(this.laid);
+    }
+
+    /* How long the ship {@code laid} is, nose to tail, in blocks. */
+    private static int length(final ShipLayout.Laid laid) {
+        if (laid.cells().isEmpty()) {
             return 0;
         }
-        final int[] box = bounds(this.laid.cells().keySet().stream().toList());
+        final int[] box = bounds(laid.cells().keySet().stream().toList());
         return box[5] - box[4] + 1;
     }
 

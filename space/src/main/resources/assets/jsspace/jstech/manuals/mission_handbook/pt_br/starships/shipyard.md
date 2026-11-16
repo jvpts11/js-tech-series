@@ -29,7 +29,7 @@ height: 120
 1. Construa a doca inteira, com o poço escavado e vazio. O Projetor de Estruturas do J's Core mostra a doca bloco por bloco, e o Construtor de Multiblocos usado nesse projetor escava o poço e constrói a doca para você, com o terminal lá em cima na cabine por último.
 2. Use o terminal para abrir o Projeto da Nave. Arraste as peças dos cartões até o nó verde de uma junta; o botão direito do mouse gira a vista.
 3. Respeite a checagem de voo: uma cabine, uma eclusa, um reator, um motor principal, trem de pouso, uma espinha inteira e uma nave que caiba no vão.
-4. Aperte [[S]] para guardar o projeto e [[E]] para mandá-lo para a doca.
+4. Aperte [[S]] para guardar o projeto e [[E]] para mandá-lo para a doca. [[L]] abre os planos guardados pelo nome: Abrir põe um no projeto, Apagar o esquece, e Ctrl e Z desfaz uma abertura ou qualquer outra mudança.
 5. Construa à mão sobre os fantasmas do holograma, ou alimente a Porta de Itens com um funil ou um cano para os quatro braços robóticos; o Projeto da Nave mostra o que ainda falta trazer. Cada peça se forma no seu modelo quando o último bloco dela entra.
 6. Com todas as peças formadas, use o Console de Voo com a mão vazia. A nave sai da doca, sua para [pilotar](jsspace:flying_a_ship).
 7. Para mudá-la ou consertá-la, traga a nave a até 32 blocos do terminal de uma doca livre e, como piloto, use o Console de Voo dela. A doca a recebe de volta, reabastece o reator e guarda o projeto, para você mudar e mandar de novo com [[E]].

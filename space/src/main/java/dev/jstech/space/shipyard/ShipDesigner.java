@@ -41,6 +41,9 @@ public final class ShipDesigner {
     /** The design saved as one of the shipyard's plans, over the plan of its name. */
     public static final MenuCall<ShipDesignMenu, Boolean> SAVE = MenuCalls.declare(id("ship_design_save"),
             ShipDesignMenu.class, ByteBufCodecs.BOOL, (menu, player, any) -> menu.terminal().save());
+    /** One of the shipyard's plans forgotten, by its place in the list. */
+    public static final MenuCall<ShipDesignMenu, Integer> DELETE = MenuCalls.declare(id("ship_design_delete"),
+            ShipDesignMenu.class, ByteBufCodecs.VAR_INT, (menu, player, place) -> menu.terminal().delete(place));
     /** The design sent to the dock to be built, when it is ready. */
     public static final MenuCall<ShipDesignMenu, Boolean> CONFIRM = MenuCalls.declare(id("ship_design_confirm"),
             ShipDesignMenu.class, ByteBufCodecs.BOOL, (menu, player, any) -> menu.terminal().confirm());

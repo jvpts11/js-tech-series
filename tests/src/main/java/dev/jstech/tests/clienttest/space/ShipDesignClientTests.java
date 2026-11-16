@@ -24,6 +24,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * The Starship Design on a player's game, opened at a formed Small Shipyard's terminal: the approved builder's ship on
@@ -32,7 +33,8 @@ import net.minecraft.world.level.block.Blocks;
  * the design. Held, the part is a hologram: cyan under the mouse over the void, green where it would be set over a
  * joint it snaps to, red over the nose it does not fit, the words by the mouse in the same colour; the green nodes only
  * while a part is held, only where it snaps. With nothing held, the part under the mouse is outlined by its own
- * faces, and a click takes that part.
+ * faces, and a click takes that part. The plans saved by name open in a list on L, as the approved mock draws it: a
+ * plan's load puts it in the designer, undone with Ctrl and Z, and its delete forgets it.
  */
 public final class ShipDesignClientTests {
 
@@ -79,6 +81,8 @@ public final class ShipDesignClientTests {
     /* How many green pixels show a joint's node; how many more cyan ones a part's outline. */
     private static final int NODE_SEEN = 15;
     private static final int OUTLINE_SEEN = 25;
+    /* The plans saved for the plans' list. */
+    private static final int PLANS = 3;
 
     private ShipDesignClientTests() {
     }
@@ -238,6 +242,44 @@ public final class ShipDesignClientTests {
                 .thenAssert(SETTLE, () -> screen(ctx).design().spine().equals(List.of(part("orbiter_cockpit"),
                         part("airlock"), part("quarters"))), "the click took the reactor itself, and let go over "
                         + "the parts it is off the ship");
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void plans_openOnLLoadOneUndoTheLoadAndDeleteOne(final ClientTestContext ctx) {
+        final ShipDesign surveyor = ship().named("SURVEYOR").withSpine(List.of(part("orbiter_cockpit"),
+                part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of());
+        final ShipDesign hauler = ship().named("HAULER");
+        final BlockPos[] terminal = open(ctx, ship());
+        ctx.then(SETTLE, () -> screen(ctx).keyPressed(InputConstants.KEY_S, 0, 0))
+                .then(SETTLE, () -> screen(ctx).edit(surveyor))
+                .then(SETTLE, () -> screen(ctx).keyPressed(InputConstants.KEY_S, 0, 0))
+                .then(SETTLE, () -> screen(ctx).edit(hauler))
+                .then(SETTLE, () -> screen(ctx).keyPressed(InputConstants.KEY_S, 0, 0))
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(terminal[0]) instanceof ShipyardTerminalBlockEntity
+                        dock && dock.plans().size() == PLANS, ARRIVE, "the three plans on the player's game")
+                .then(0, () -> screen(ctx).keyPressed(InputConstants.KEY_L, 0, 0))
+                .thenScreenshot(SETTLE, "ship-design-plans")
+                .then(0, () -> click(ctx, ShipDesignLayout.PLAN_LOAD_X, 1))
+                .thenAssert(SETTLE, () -> screen(ctx).design().equals(surveyor), "the second plan's load puts the "
+                        + "surveyor in the designer")
+                .then(0, () -> screen(ctx).keyPressed(InputConstants.KEY_Z, 0, GLFW.GLFW_MOD_CONTROL))
+                .thenAssert(SETTLE, () -> screen(ctx).design().equals(hauler), "undone, the design before it is back")
+                .then(0, () -> {
+                    screen(ctx).keyPressed(InputConstants.KEY_L, 0, 0);
+                    click(ctx, ShipDesignLayout.PLAN_DELETE_X, 0);
+                })
+                .thenWaitUntilServer(level -> level.getBlockEntity(terminal[0]) instanceof ShipyardTerminalBlockEntity
+                        dock && dock.plans().stream().map(ShipDesign::name).toList().equals(List.of("SURVEYOR",
+                        "HAULER")), ARRIVE, "the first plan's delete to forget it", level -> "the shipyard's plans: "
+                        + ((ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0])).plans().stream()
+                        .map(ShipDesign::name).toList());
+    }
+
+    /* A click on the plans' row {@code row}, on the button from {@code x} of the frame. */
+    private static void click(final ClientTestContext ctx, final int x, final int row) {
+        final int[] at = frame(ctx, x + ShipDesignLayout.PLAN_BUTTON_W / 2, ShipDesignLayout.planY(row)
+                + ShipDesignLayout.PLAN_BUTTON_DY + ShipDesignLayout.PLAN_BUTTON_H / 2);
+        screen(ctx).mouseClicked(at[0], at[1], InputConstants.MOUSE_BUTTON_LEFT);
     }
 
     /* The ship the screen is opened on: a cockpit, an airlock, the quarters and a reactor, and its hung parts. */

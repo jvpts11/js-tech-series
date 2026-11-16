@@ -110,6 +110,33 @@ public final class ShipDesignLayout {
     public static final int KEYS_Y0 = 255;
     public static final int KEY_GAP = 7;
     public static final int SAID_Y = 238;
+    /**
+     * The plans' list over the middle, as the approved mock lays it: its glass, the tab of its title, how many plans it
+     * keeps at its right, its rows of a plan each (the name, under it the length and mass, at the right its load and
+     * delete), as many as show at once, and its line of help at its foot.
+     */
+    public static final int PLANS_X0 = 131;
+    public static final int PLANS_X1 = 351;
+    public static final int PLANS_Y0 = 39;
+    public static final int PLANS_Y1 = 201;
+    public static final int PLANS_TAB_X1 = 179;
+    public static final int PLANS_TAB_Y1 = 50;
+    public static final int PLANS_TITLE_Y = 41;
+    public static final int PLAN_X0 = 135;
+    public static final int PLAN_X1 = 347;
+    public static final int PLAN_Y0 = 55;
+    public static final int PLAN_H = 20;
+    public static final int PLAN_STEP = 23;
+    public static final int PLAN_ROWS = 6;
+    public static final int PLAN_TEXT_X = 140;
+    public static final int PLAN_NAME_DY = 2;
+    public static final int PLAN_SIZE_DY = 12;
+    public static final int PLAN_LOAD_X = 267;
+    public static final int PLAN_DELETE_X = 306;
+    public static final int PLAN_BUTTON_W = 36;
+    public static final int PLAN_BUTTON_DY = 6;
+    public static final int PLAN_BUTTON_H = 9;
+    public static final int PLANS_HELP_Y = 192;
     /* The widest a line of the right panel is, the keys' row, the note's lines, in the game's letters. */
     private static final int CHECK_GLYPHS = 16;
     private static final int NOTE_GLYPHS = 28;
@@ -150,6 +177,35 @@ public final class ShipDesignLayout {
             layout.textBox("ship" + i, INNER_X0, shipY(i), INNER_X1 - INNER_X0, SHIP_STEP - 1);
         }
         return layout.textBox("dock", INNER_X0, DOCK_Y + 9, INNER_X1 - INNER_X0, 3 * tall + 10);
+    }
+
+    /**
+     * The plans' list laid out, every row full: its rows apart and inside it, the name and the figures of each clear
+     * of its buttons, the help under the last; for a test to hold to the frame and apart.
+     */
+    public static GuiLayout plansLayout() {
+        final GuiLayout layout = new GuiLayout(WIDTH, HEIGHT)
+                .box("tab", PLANS_X0, PLANS_Y0, PLANS_TAB_X1 - PLANS_X0, PLANS_TAB_Y1 - PLANS_Y0);
+        final int small = Math.round(GuiLayout.LINE_HEIGHT * 3 / 4);
+        for (int i = 0; i < PLAN_ROWS; i++) {
+            final int y = planY(i);
+            layout.box("load" + i, PLAN_LOAD_X, y + PLAN_BUTTON_DY, PLAN_BUTTON_W, PLAN_BUTTON_H)
+                    .box("delete" + i, PLAN_DELETE_X, y + PLAN_BUTTON_DY, PLAN_BUTTON_W, PLAN_BUTTON_H)
+                    .box("name" + i, PLAN_TEXT_X, y + PLAN_NAME_DY, PLAN_LOAD_X - 4 - PLAN_TEXT_X,
+                            Math.round(GuiLayout.LINE_HEIGHT))
+                    .box("size" + i, PLAN_TEXT_X, y + PLAN_SIZE_DY, PLAN_LOAD_X - 4 - PLAN_TEXT_X, small);
+        }
+        return layout.box("help", PLAN_X0, PLANS_HELP_Y, PLAN_X1 - PLAN_X0, small);
+    }
+
+    /** The top of the plans' row {@code i} in sight. */
+    public static int planY(final int i) {
+        return PLAN_Y0 + i * PLAN_STEP;
+    }
+
+    /** Whether {@code x, y} of the frame is on the plans' list. */
+    public static boolean onPlans(final double x, final double y) {
+        return x >= PLANS_X0 && x < PLANS_X1 && y >= PLANS_Y0 && y < PLANS_Y1;
     }
 
     /** The left edge of the kind's tab {@code i}. */

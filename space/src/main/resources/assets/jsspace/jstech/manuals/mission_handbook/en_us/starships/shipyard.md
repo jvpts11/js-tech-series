@@ -29,7 +29,7 @@ height: 120
 1. Build the dock whole, its pit dug clear. J's Core's Structure Projector shows it block by block, and the Multiblock Builder used on that projector digs the pit and builds the dock for you, its terminal up in the booth last.
 2. Use the terminal to open the Starship Design. Drag parts from their cards to the green node of a joint; the right mouse button turns the view.
 3. Mind the flight check: a cockpit, an airlock, a reactor, a main engine, landing gear, a whole spine, and a ship that fits the bay.
-4. Press [[S]] to keep the design, [[E]] to send it to the dock.
+4. Press [[S]] to keep the design, [[E]] to send it to the dock. [[L]] opens the plans kept by name: Load puts one in the designer, Delete forgets it, and Ctrl and Z undoes a load or any other change.
 5. Build it by hand on the ghosts of its hologram, or feed the Item Port by hopper or pipe for the four robot arms; the Starship Design shows what is still to bring. Each part forms into its model as its last block goes in.
 6. With every part formed, use the Flight Console with an empty hand. The ship leaves the dock, yours to [fly](jsspace:flying_a_ship).
 7. To change or mend it, bring it within 32 blocks of a free dock's terminal and, as its pilot, use its Flight Console. The dock takes it back, fills its reactor and keeps its plan, to change and send again with [[E]].

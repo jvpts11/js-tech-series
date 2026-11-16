@@ -85,6 +85,16 @@ public final class ShipDesignTexts {
     public static final TextKey SAVED = TextKey.of("jsspace.ship_design.saved", "Saved as %s");
     public static final TextKey NOT_SAVED = TextKey.of("jsspace.ship_design.not_saved",
             "Not saved: name it, or the dock's plans are full");
+    // The plans' list: its key, its title and count, a plan's row and buttons, its help, and what loading says.
+    public static final TextKey PLANS = TextKey.of("jsspace.ship_design.plans", "Plans");
+    public static final TextKey PLANS_COUNT = TextKey.of("jsspace.ship_design.plans_count", "%s of %s");
+    public static final TextKey NO_PLANS = TextKey.of("jsspace.ship_design.no_plans", "No plans saved yet");
+    public static final TextKey IN_THE_DOCK = TextKey.of("jsspace.ship_design.in_the_dock", "In the dock");
+    public static final TextKey LOAD = TextKey.of("jsspace.ship_design.load", "Load");
+    public static final TextKey DELETE_PLAN = TextKey.of("jsspace.ship_design.delete_plan", "Delete");
+    public static final TextKey PLANS_HELP = TextKey.of("jsspace.ship_design.plans_help",
+            "Load puts the plan in the designer;  Delete forgets it");
+    public static final TextKey LOADED = TextKey.of("jsspace.ship_design.loaded", "Loaded %s");
     public static final TextKey PAIRS = TextKey.of("jsspace.ship_design.pairs",
             "A small ship's side parts always go in pairs");
     public static final TextKey NO_FLIP = TextKey.of("jsspace.ship_design.no_flip", "A cockpit is never flipped");

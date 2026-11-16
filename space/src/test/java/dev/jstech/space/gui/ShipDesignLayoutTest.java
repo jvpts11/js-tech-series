@@ -63,6 +63,27 @@ class ShipDesignLayoutTest {
     }
 
     @Test
+    void plansLayout_keepsEveryRowsNameFiguresAndButtonsApartAndTheHelpUnderTheLast() {
+        final GuiLayout layout = ShipDesignLayout.plansLayout();
+        assertEquals(List.of(), layout.overlaps());
+        assertEquals(List.of(), layout.outOfBounds());
+        assertTrue(ShipDesignLayout.planY(ShipDesignLayout.PLAN_ROWS - 1) + ShipDesignLayout.PLAN_H
+                <= ShipDesignLayout.PLANS_HELP_Y);
+        assertTrue(ShipDesignLayout.PLAN_DELETE_X + ShipDesignLayout.PLAN_BUTTON_W <= ShipDesignLayout.PLAN_X1);
+        assertTrue(ShipDesignLayout.PLANS_HELP_Y + 8 <= ShipDesignLayout.PLANS_Y1);
+    }
+
+    @Test
+    void plansLayout_standsOverTheMiddleBetweenThePanels() {
+        assertTrue(ShipDesignLayout.PLANS_X0 > ShipDesignLayout.MIDDLE_X0);
+        assertTrue(ShipDesignLayout.PLANS_X1 < ShipDesignLayout.MIDDLE_X1);
+        assertTrue(ShipDesignLayout.PLANS_Y0 > ShipDesignLayout.TOP_Y1);
+        assertTrue(ShipDesignLayout.PLANS_Y1 < ShipDesignLayout.BOTTOM_Y0);
+        assertTrue(ShipDesignLayout.onPlans(240, 120));
+        assertFalse(ShipDesignLayout.onPlans(240, 220));
+    }
+
+    @Test
     void onPanel_tellsThePanelsFromTheOpenMiddle() {
         assertTrue(ShipDesignLayout.onPanel(20, 120));
         assertTrue(ShipDesignLayout.onPanel(400, 120));
