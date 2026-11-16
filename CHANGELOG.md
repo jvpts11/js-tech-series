@@ -4285,6 +4285,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A ship meets the land with the whole of each of its blocks: it met it only at their middles, so a beam or a
+  slab thinner than a block could pass into its hull between two of them, and a ship rising off its cradle in the
+  Small Shipyard was caught on the crane's bridge that way, unable to move.
 - (Space) A ship built in its dock is drawn round a player standing in it: it vanished from inside, looking away from
   the dock's terminal, its walls hiding the terminal from the game's culling.
 - (Space) The Starship Design's keys along the bottom stay inside their panel: closer together where they must, and
