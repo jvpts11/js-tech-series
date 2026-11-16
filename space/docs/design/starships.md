@@ -141,7 +141,9 @@ kit for its vehicles.
 
 - **The player flies a starship in the spirit of No Man's Sky**: it goes where its nose points, with no drift and no
   orbital sums. The pilot sits in the cockpit's pilot seat, which is the helm, opens and closes the throttle (it stays
-  where it is left), turns, and pitches the nose up and down (jump up, C down). In the air its air engines push, and in the thin air of the
+  where it is left), turns, and pitches the nose up and down (jump up, C down). Its turn and its pitch gather over a
+  quarter of a second as the pilot holds and fall away as they let go, never jumping, up to eighty and fifty degrees a
+  second, first estimates. In the air its air engines push, and in the thin air of the
   climb and in space its bells push. Its wings hold it up, more the faster it goes and less in thinner air, and flying too
   slowly it sinks. In space it flies free and faster. **Weight counts**: a heavier ship gathers speed more slowly and needs
   more of it to stay up; a ship too heavy for its engines only sinks.
