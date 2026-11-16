@@ -22,6 +22,7 @@ import dev.jstech.space.JsSpace;
 import dev.jstech.space.network.ShipPulsePayload;
 import dev.jstech.space.rocket.SpaceAhead;
 import dev.jstech.space.universe.SolarBody;
+import dev.jstech.space.universe.SystemLayout;
 import dev.jstech.space.universe.SystemSpaces;
 import java.util.Locale;
 import java.util.Map;
@@ -102,12 +103,28 @@ public final class ShipPulse {
     }
 
     /**
-     * Whether {@code ship}, in flight at {@code now} in {@code level}, may jump there: in a system's space, over no
-     * world's low orbit nor the Sun, and no other ship near.
+     * Whether {@code ship}, in flight at {@code now} in {@code level} with its nose along {@code nose}, may jump there:
+     * in a system's space, not over the Sun, over a world's low orbit only heading away from it, and no other ship
+     * near.
      */
-    public static boolean mayJump(final ServerLevel level, final MovingStructure ship, final StructurePose now) {
-        return SystemSpaces.systemOf(level.dimension()).isPresent() && PulseCourse.mayBegin(now.x(), now.z())
-                && !shipNear(level, ship, now.x(), now.z());
+    public static boolean mayJump(final ServerLevel level, final MovingStructure ship, final StructurePose now,
+                                  final double[] nose) {
+        return whyNot(level, ship, now, nose).isEmpty();
+    }
+
+    /**
+     * Why {@code ship}, its nose along {@code nose}, may not jump where it stands at {@code now} in {@code level}, as
+     * a drop out's reason ({@link Drop}): the world whose low orbit it heads back over, the Sun, a ship near, or out of
+     * a system's space; none where it may. Its pilot holding its key at {@code tick} where it may not is shown why, as
+     * a ship dropping out is.
+     */
+    public static String whyNot(final ServerLevel level, final MovingStructure ship, final StructurePose now,
+                                final double[] nose, final long tick) {
+        final String why = whyNot(level, ship, now, nose);
+        if (!why.isEmpty() && held(ship, tick)) {
+            DROPPED.put(ship, new Dropped(why, tick));
+        }
+        return why;
     }
 
     /**
@@ -244,6 +261,19 @@ public final class ShipPulse {
         }
     }
 
+    /* Why {@code ship}, its nose along {@code nose}, may not jump where it stands at {@code now}; none where it may. */
+    private static String whyNot(final ServerLevel level, final MovingStructure ship, final StructurePose now,
+                                 final double[] nose) {
+        if (SystemSpaces.systemOf(level.dimension()).isEmpty()) {
+            return Drop.AIR;
+        }
+        if (!PulseCourse.mayBegin(now.x(), now.z(), nose[0], nose[2])) {
+            final SolarBody under = SystemLayout.over(now.x(), now.z());
+            return under == null ? Drop.SUN : under.name().toLowerCase(Locale.ROOT);
+        }
+        return shipNear(level, ship, now.x(), now.z()) ? Drop.SHIP : "";
+    }
+
     /* Whether another ship than {@code ship} stands near ({@code x}, {@code z}) of {@code level}. */
     private static boolean shipNear(final ServerLevel level, final MovingStructure ship, final double x,
                                     final double z) {
@@ -293,6 +323,8 @@ public final class ShipPulse {
         public static final String FUEL = "fuel";
         /** Its pilot held its key docked to another ship, or with one docked to it: it will not jump so. */
         public static final String DOCKED = "docked";
+        /** Its pilot held its key out of a system's space, in a world's air: it jumps only in space. */
+        public static final String AIR = "air";
 
         private Drop() {
         }

@@ -19,6 +19,7 @@ import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipPulse;
+import dev.jstech.space.ship.ShipReadings;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.space.universe.SolarBody;
@@ -80,6 +81,8 @@ public final class ShipPulseGameTests {
     private static final double SHORT_OF_THE_MOON = 2_000;
     /* How long its key is held where its drive should not spool, in ticks. */
     private static final int HELD = ShipPulse.SPOOL_TICKS + 10;
+    /* How far from the Overworld's middle, north or south, a ship over its low orbit stands, in degrees of latitude. */
+    private static final double LATITUDE = 30;
     private static final double SPEED_A_TICK = PulseCourse.SPEED * ShipFlightModel.TICK;
     private static final ShipDesign SHIP = new ShipDesign("JS-04", List.of(part("orbiter_cockpit"),
             part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
@@ -156,14 +159,32 @@ public final class ShipPulseGameTests {
     }
 
     @GameTest(template = ARENA, batch = ORBIT_BATCH, timeoutTicks = 3000)
-    public static void pulse_overAWorldsLowOrbitItsDriveDoesNotSpool(final GameTestHelper helper) {
-        final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 0, 0);
+    public static void pulse_overAWorldsLowOrbitHeadingInItsDriveDoesNotSpoolAndItsHudSaysWhy(
+            final GameTestHelper helper) {
+        // South of the Overworld's middle, over its low orbit, its nose north, back over the world.
+        final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 0, -LATITUDE);
         final Vec3 over = new Vec3(spot[0] + 0.5, SystemLayout.ORBIT_Y, spot[1] + 0.5);
         final MovingStructure[] ship = new MovingStructure[1];
         final ServerPlayer[] watcher = new ServerPlayer[1];
         held(helper, inSpace(helper, ship, over, watcher, "orbit_pulse_watcher"), ship).thenExecute(() -> {
-            helper.assertTrue(flight(ship[0]).pulse().isEmpty() && console(ship[0]).flight().pulse().spool() == 0,
-                    "over the Overworld's low orbit its drive does not spool: " + console(ship[0]).flight().pulse());
+            final ShipReadings.Pulse shown = console(ship[0]).flight().pulse();
+            helper.assertTrue(flight(ship[0]).pulse().isEmpty() && shown.spool() == 0, "heading back over the "
+                    + "Overworld its drive does not spool: " + shown);
+            helper.assertTrue(shown.dropped().equals("overworld"), "and its HUD says it is near it: " + shown);
+            done(helper, ship[0], BlockPos.containing(over), watcher[0]);
+        }).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = ORBIT_BATCH, timeoutTicks = 3000)
+    public static void pulse_overAWorldsLowOrbitHeadingOutItJumpsAtOnce(final GameTestHelper helper) {
+        // North of the Overworld's middle, over its low orbit, its nose north, away from the world.
+        final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 0, LATITUDE);
+        final Vec3 over = new Vec3(spot[0] + 0.5, SystemLayout.ORBIT_Y, spot[1] + 0.5);
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerPlayer[] watcher = new ServerPlayer[1];
+        spool(helper, inSpace(helper, ship, over, watcher, "orbit_out_pulse_watcher"), ship).thenExecute(() -> {
+            helper.assertTrue(flight(ship[0]).pulse().isPresent(), "come up from the Overworld and heading away, it "
+                    + "jumps at once: " + console(ship[0]).flight().pulse());
             done(helper, ship[0], BlockPos.containing(over), watcher[0]);
         }).thenSucceed();
     }

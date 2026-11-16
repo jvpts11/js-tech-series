@@ -978,6 +978,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A starship's pulse jump spools as soon as the ship is in space, over a world's low orbit too as long as its
+  nose points away from that world, where it had to fly some 4,000 blocks clear of the Overworld first, B held doing
+  nothing and saying nothing. B held where it may not jump shows PULSE OFF on the HUD with why: near the world its nose
+  points back over, near the Sun, a ship near, or alone in a world's air.
 - A starship turns and pitches the way a craft does: its turn and pitch gather over a quarter of a second as
   its pilot holds and fall away as they let go, up to eighty and fifty degrees a second, where they jumped to forty-five
   and thirty at once and stopped dead, stiff and slow.

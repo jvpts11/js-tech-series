@@ -97,6 +97,8 @@ public final class ShipRoutesGameTests {
     private static final int TRIP = 200_000;
     /* Where the dock's lowest corner stands in the arena. */
     private static final BlockPos CORNER = new BlockPos(1, 2, 1);
+    /* A nose level and north, as a ship is built, the way it jumps towards the world it was set south of. */
+    private static final double[] NORTH = {0, 0, -1};
     /* How long its pilot holds the helm's UP as it rises off the land, in ticks, and how far it rises at least. */
     private static final int RISING = 40;
     private static final double ROSE = 1;
@@ -299,7 +301,7 @@ public final class ShipRoutesGameTests {
             setAt(helper, ship[0], pilot[0], StructurePose.at(middle[0], SystemLayout.ORBIT_Y, middle[2] + reach
                     + SHORT_OF_THE_ORBIT));
             MovingStructures.move(ship[0], flight(ship[0]).with(new ShipFlightModel.State(CRUISING, 0, 1, 0, 0)));
-            helper.assertTrue(ShipPulse.mayJump((ServerLevel) ship[0].level(), ship[0], ship[0].pose()),
+            helper.assertTrue(ShipPulse.mayJump((ServerLevel) ship[0].level(), ship[0], ship[0].pose(), NORTH),
                     "out of every world's low orbit, it may jump: " + ship[0].pose());
         });
         sequence.thenExecuteAfter(1, () -> seated(helper, ship[0], pilot[0], "set south of " + to));
@@ -317,7 +319,7 @@ public final class ShipRoutesGameTests {
                     + to + ", dropping out over its low orbit by itself: " + now + ", " + flight(ship[0]).pulse()
                     + ", its console showing " + console(ship[0]).flight().pulse() + ", deuterium "
                     + console(ship[0]).deuterium() + ", may jump " + ShipPulse.mayJump((ServerLevel) ship[0].level(),
-                    ship[0], now) + ", grounded " + flight(ship[0]).grounded());
+                    ship[0], now, NORTH) + ", grounded " + flight(ship[0]).grounded());
         }).thenExecute(() -> seated(helper, ship[0], pilot[0], "dropped out over " + to + "'s low orbit"));
     }
 

@@ -157,8 +157,9 @@ kit for its vehicles.
   space, for as long as the pilot holds it. Its one cost is the ship's agility: while it boosts, the ship turns and
   pitches at four tenths of its usual rate, and the HUD says TURN SLOW. The reactor drives it, so a ship whose reactor has
   no deuterium left cannot boost.
-- **Pulse jump.** In the system's space, over no world's low orbit and not over the Sun, B held at the helm spools the
-  pulse drive for a second and a half, and the ship jumps at 3,000 metres a second, level along its nose's heading,
+- **Pulse jump.** In the system's space, as soon as the ship is there, over a world's low orbit too as long as its
+  nose points away from that world, and not over the Sun, B held at the helm spools the pulse drive for a second and a
+  half, and the ship jumps at 3,000 metres a second, level along its nose's heading,
   barely turning, its reactor burning its deuterium six times as fast: the Moon is a few seconds away, Mars a few tens.
   It drops out when the pilot holds back, by itself the moment its way comes over a world's low orbit, so it comes out
   ready to go down, at the edge of the Sun, near another ship, or with its deuterium spent. No deck can be walked at
@@ -189,7 +190,8 @@ kit for its vehicles.
   marker filling, PULSE and the seconds left under the heading tape, and HOLD B; jumping, PULSE lit there, S TO EXIT,
   the deuterium's X6, and the nearest world bracketed with how far off its low orbit is and how long away; dropped out,
   PULSE OFF framed a moment, with why. Two docked ships do not jump: they undock first, and B held docked shows PULSE
-  OFF with DOCKED: UNDOCK FIRST.
+  OFF with DOCKED: UNDOCK FIRST. B held where it may not jump shows PULSE OFF with why the same way: NEAR the world
+  its nose points back over, NEAR THE SUN, SHIP NEAR, or PULSE OFF alone in a world's air.
 
 ### Autopilots
 

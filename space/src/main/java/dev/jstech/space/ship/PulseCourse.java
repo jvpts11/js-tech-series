@@ -13,8 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Where a ship's pulse jump goes in its system's space, in the spirit of No Man's Sky: level, along its nose's
- * heading, far faster than it flies, the space being a layer the worlds hang under; never begun over a world's low
- * orbit, nor over the Sun; and dropped out of, by itself, the moment its way comes over the low orbit of a world, so
+ * heading, far faster than it flies, the space being a layer the worlds hang under; begun over a world's low orbit only
+ * heading away from it, and never over the Sun; and dropped out of, by itself, the moment its way comes over the low
+ * orbit of another world, or of the one it left from outside, so
  * it comes out of the jump ready to go down, or to the edge of the Sun. Distances in blocks, a block a metre. Every
  * figure is an estimate, set by playing. Pure: no game types.
  */
@@ -34,9 +35,21 @@ public final class PulseCourse {
     private PulseCourse() {
     }
 
-    /** Whether a jump may begin at ({@code x}, {@code z}): over no world's low orbit, and not over the Sun. */
-    public static boolean mayBegin(final double x, final double z) {
-        return SystemLayout.over(x, z) == null && !overTheSun(x, z);
+    /**
+     * Whether a jump may begin at ({@code x}, {@code z}) heading along ({@code headingX}, {@code headingZ}): anywhere
+     * but over the Sun, and over a world's low orbit only heading away from it, so a ship come up from a world jumps as
+     * soon as it is in space.
+     */
+    public static boolean mayBegin(final double x, final double z, final double headingX, final double headingZ) {
+        if (overTheSun(x, z)) {
+            return false;
+        }
+        final SolarBody under = SystemLayout.over(x, z);
+        if (under == null) {
+            return true;
+        }
+        final double[] middle = SystemLayout.centre(under);
+        return (x - middle[0]) * headingX + (z - middle[2]) * headingZ >= 0;
     }
 
     /**

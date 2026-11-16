@@ -272,7 +272,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         }
         // Its pulse jump's key held where it may jump, its drive spools, the reactor burning for it; spooled, it jumps.
         final boolean spooling = piloted && !this.grounded && ShipPulse.held(body, tick) && fuelled
-                && !ShipPulse.docked(body, tick) && ShipPulse.mayJump(level, body, now)
+                && !ShipPulse.docked(body, tick) && ShipPulse.whyNot(level, body, now, nose, tick).isEmpty()
                 && (keeper == null || keeper.burn(ShipFlightModel.TICK / REACTOR_LOAD_SECONDS
                 * (PulseCourse.BURNS - 1)));
         final int spooled = ShipPulse.spool(body, spooling);

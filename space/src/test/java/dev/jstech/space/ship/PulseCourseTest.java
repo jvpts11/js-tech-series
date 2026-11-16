@@ -22,14 +22,23 @@ class PulseCourseTest {
     private static final double CLOSE = 1e-6;
 
     @Test
-    void mayBegin_notOverAWorldsLowOrbitNorTheSunButBetweenThem() {
+    void mayBegin_overAWorldsLowOrbitOnlyHeadingAwayFromIt() {
         final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
         final double[] moon = SystemLayout.centre(SolarBody.MOON);
+        final double reach = SystemLayout.radius(SolarBody.OVERWORLD) * (1 + SystemLayout.LOW_ORBIT);
+        // Over the Overworld's low orbit, a little south of its middle.
+        final double z = home[2] + reach / 2;
+        assertTrue(PulseCourse.mayBegin(home[0], z, 0, 1), "heading south, away from it, it may jump at once");
+        assertTrue(PulseCourse.mayBegin(home[0], z, 1, 0), "heading east, along its edge, too");
+        assertFalse(PulseCourse.mayBegin(home[0], z, 0, -1), "heading north, back over it, it may not");
+        assertTrue(PulseCourse.mayBegin(home[0], home[2], 0, -1), "over its very middle, every way is away");
+        assertTrue(PulseCourse.mayBegin(home[0], (home[2] + moon[2]) / 2, 0, -1), "half way to the Moon, any way");
+    }
+
+    @Test
+    void mayBegin_neverOverTheSun() {
         final double[] sun = SystemLayout.sun();
-        assertFalse(PulseCourse.mayBegin(home[0], home[2]), "over the Overworld's low orbit");
-        assertFalse(PulseCourse.mayBegin(moon[0], moon[2]), "over the Moon's");
-        assertFalse(PulseCourse.mayBegin(sun[0], sun[2]), "over the Sun");
-        assertTrue(PulseCourse.mayBegin(home[0], (home[2] + moon[2]) / 2), "half way to the Moon");
+        assertFalse(PulseCourse.mayBegin(sun[0], sun[2] + 1, 0, 1), "over the Sun, not even heading away");
     }
 
     @Test

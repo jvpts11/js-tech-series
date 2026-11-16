@@ -4317,6 +4317,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A starship's pulse jump spools as soon as the ship is in space, over a world's low orbit too as long as its
+  nose points away from that world, where it had to fly some 4,000 blocks clear of the Overworld first, B held doing
+  nothing and saying nothing. B held where it may not jump shows PULSE OFF on the HUD with why: near the world its nose
+  points back over, near the Sun, a ship near, or alone in a world's air.
 - (Core) A formed model's door clicked by a player opens or shuts, where it moved and at once moved back, its sound
   played and nothing seen: a player's game, finding nothing to do with the main hand, tried the other one too, and
   the server moved the door again for it. A click on a door, or on a piece that works by another block, is now taken
