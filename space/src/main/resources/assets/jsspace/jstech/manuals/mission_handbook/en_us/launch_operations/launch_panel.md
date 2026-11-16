@@ -78,3 +78,6 @@ title: Leaving a world 4/4
 
 > [!PROBLEM] ABORT lights at T-0.
 > The rocket could not be released, and the launch is scrubbed.
+
+> [!PROBLEM] The rocket burnt out on the pad, or fell back onto it.
+> It stays there as it is, a rocket already let go, and the board shows it down. Mend it, fill it through the pad's service port and press RECYCLE: the count starts anew from T-60, and at T-0 the same rocket goes again.

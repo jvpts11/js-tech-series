@@ -16,6 +16,7 @@ import dev.jstech.core.moving.IStructureMotion;
 import dev.jstech.core.moving.LevelMovingStructures;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.StructureFrame;
+import dev.jstech.core.moving.StructureMounts;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.network.ShipPulsePayload;
@@ -85,6 +86,19 @@ public final class ShipPulse {
     /** Has {@code ship}'s pulse jump's key held at {@code now}, as a pilot holding it would: for a test. */
     public static void hold(final MovingStructure ship, final long now) {
         HELD.hold(ship, now);
+    }
+
+    /**
+     * Whether {@code ship} is docked, to another ship or with one docked to it: its drive does not spool till the two
+     * part, and its pilot holding its key at {@code now} is shown why, as a ship dropping out is.
+     */
+    public static boolean docked(final MovingStructure ship, final long now) {
+        final boolean docked = ship.mount() != null || StructureMounts.children(ship).stream()
+                .anyMatch(child -> child.mount() != null && child.mount().anchor().isPresent());
+        if (docked && held(ship, now)) {
+            DROPPED.put(ship, new Dropped(Drop.DOCKED, now));
+        }
+        return docked;
     }
 
     /**
@@ -263,7 +277,10 @@ public final class ShipPulse {
         }
     }
 
-    /** Why a ship dropped out of its jump, besides coming over a world's low orbit, named by the world's body. */
+    /**
+     * Why a ship dropped out of its jump, or would not begin one, besides coming over a world's low orbit, named by
+     * the world's body.
+     */
     public static final class Drop {
 
         /** Its pilot held back. */
@@ -274,6 +291,8 @@ public final class ShipPulse {
         public static final String SHIP = "ship";
         /** Its deuterium was spent. */
         public static final String FUEL = "fuel";
+        /** Its pilot held its key docked to another ship, or with one docked to it: it will not jump so. */
+        public static final String DOCKED = "docked";
 
         private Drop() {
         }

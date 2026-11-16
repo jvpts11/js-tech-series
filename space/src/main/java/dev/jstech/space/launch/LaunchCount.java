@@ -87,6 +87,7 @@ public final class LaunchCount {
     private final ValueField<UUID> pilot;
     private final ValueField<StructureUuid> flight;
     private final BoolField lifted;
+    private final BoolField down;
     private final IntField arms;
     private final IntField armsOut;
     private final IntField jawsOpen;
@@ -155,6 +156,8 @@ public final class LaunchCount {
         this.pilot = owner.fields().nullable("Pilot", UUIDUtil.CODEC).save();
         this.flight = owner.fields().nullable("Flight", StructureUuid.CODEC).save();
         this.lifted = owner.fields().flag("Lifted", false).save();
+        // Whether the rocket released has come down on its pad again, for RECYCLE to count it anew.
+        this.down = owner.fields().flag("Down", false).toClient();
         // How many arms its tower reaches the rocket with; how far they are swung away and the jaws open, in ticks.
         this.arms = owner.fields().integer("Arms", 0).toClient();
         this.armsOut = owner.fields().integer("ArmsOut", 0).save().toClient();
@@ -183,7 +186,7 @@ public final class LaunchCount {
                 this.oxidiser.get(), this.fuel.get(), this.delugeReady.get(), this.storm.get(),
                 Objects.requireNonNullElse(this.name.get(), ""), this.padNumber.get(),
                 Objects.requireNonNullElse(this.padName.get(), ""), this.panel.get() != null, this.arms.get(),
-                this.armsOut.get());
+                this.armsOut.get(), this.down.get());
     }
 
     /** How far the tower's arms are swung away from the rocket, from nought, against it, to one, turned clear. */
@@ -214,8 +217,16 @@ public final class LaunchCount {
     /** A control pressed by {@code by}, inside the rocket or out, whose rocket it is once they press LAUNCH. */
     public void press(final int control, @Nullable final UUID by) {
         final Phase now = this.phase.get();
+        // Released, nothing more is pressed, but a rocket come down on its pad again, burnt out or holed, is recycled
+        // into a count anew.
+        if (now == Phase.RELEASED) {
+            if (control == RECYCLE && this.owner.getLevel() instanceof ServerLevel server && downOnThePad(server)) {
+                recycle();
+            }
+            return;
+        }
         // From ignition on, its engines lit and its deluge poured, only a scrub calls it off: then a count anew.
-        if (now == Phase.RELEASED || lit() && control != SCRUB) {
+        if (lit() && control != SCRUB) {
             return;
         }
         switch (control) {
@@ -393,14 +404,19 @@ public final class LaunchCount {
         }
     }
 
-    /* T-0: the rocket on the pad becomes one body and is let go; where it cannot be, the launch is scrubbed. */
+    /*
+     * T-0: the rocket on the pad becomes one body and is let go, or, one let go before and come down on its pad again,
+     * goes as the body it is; where it cannot, the launch is scrubbed.
+     */
     private void release(final ServerLevel server) {
         final Optional<BlockPos> computer = this.stand == null ? Optional.empty() : this.stand.computer();
         // Its crew, off the pad, find their flight computer on the page they will fly by.
         computer.map(server::getBlockEntity).filter(FlightComputerBlockEntity.class::isInstance)
                 .map(FlightComputerBlockEntity.class::cast).ifPresent(FlightComputerBlockEntity::offThePad);
-        final Optional<MovingStructure> body = computer.flatMap(at -> RocketLaunch.release(server, at,
-                this.pilot.get()));
+        final Optional<MovingStructure> standing = computer.map(at -> MovingStructures.at(server, at))
+                .filter(MovingStructure.class::isInstance).map(MovingStructure.class::cast);
+        final Optional<MovingStructure> body = standing.isPresent() ? standing
+                : computer.flatMap(at -> RocketLaunch.release(server, at, this.pilot.get()));
         if (body.isEmpty()) {
             scrub();
             return;
@@ -458,6 +474,27 @@ public final class LaunchCount {
         this.owner.setChanged();
     }
 
+    /*
+     * Whether its rocket, let go, has come down on its pad again and stands still there, burnt out or holed: the body
+     * the launcher's axis has over it.
+     */
+    private boolean downOnThePad(final ServerLevel server) {
+        final StructureUuid id = this.flight.get();
+        final MovingStructure body = id == null ? null : MovingStructures.byId(server, id);
+        return this.lifted.get() && body != null && body.motion() == null && this.stand != null
+                && this.stand.computer().filter(at -> MovingStructures.at(server, at) == body).isPresent();
+    }
+
+    /* Its rocket down on its pad again, a structure still: a count anew from T-60 for it, to be armed again. */
+    private void recycle() {
+        this.flight.set(null);
+        this.lifted.set(false);
+        this.met.set(0);
+        this.master.set(false);
+        this.ignition.set(false);
+        scrub();
+    }
+
     /* The launch called off: the count back to T-60, LAUNCH to press again. */
     private void scrub() {
         this.phase.set(Phase.SCRUBBED);
@@ -490,6 +527,7 @@ public final class LaunchCount {
                 .map(FlightComputerBlockEntity.class::cast).orElse(null);
         this.rocket.set(found == null ? null : found.getBlockPos().immutable());
         this.vehicle.set(found != null);
+        this.down.set(this.phase.get() == Phase.RELEASED && downOnThePad(server));
         this.arms.set(this.stand == null ? 0 : this.stand.arms().size());
         this.storm.set(LaunchPads.stormHolds(server));
         // The pad's port, read once: its deluge, and who the pad is.
@@ -607,15 +645,16 @@ public final class LaunchCount {
      * @param panel       whether a Launch Panel by the pad works the count too
      * @param arms        how many arms the launcher's tower reaches the rocket with
      * @param armsOut     how far they are swung away, in ticks of their swing ({@link #SWING})
+     * @param down        whether its rocket, released, has come down on its pad again, for RECYCLE to count anew
      */
     public record Shown(Phase phase, int left, int met, int holds, boolean deluge, boolean clamps, boolean ignition,
                         boolean guard, boolean master, boolean launched, boolean vehicle, int oxidiser, int fuel,
                         boolean delugeReady, boolean storm, String rocketName, int padNumber, String padName,
-                        boolean panel, int arms, int armsOut) {
+                        boolean panel, int arms, int armsOut, boolean down) {
 
         /** No launcher in reach: safe, nothing on the pad. */
         public static final Shown NONE = new Shown(Phase.SAFE, START * SECOND, 0, 0, true, true, false, false, false,
-                false, false, 0, 0, false, false, "", 0, "", false, 0, 0);
+                false, false, 0, 0, false, false, "", 0, "", false, 0, 0, false);
 
         /** Whether the LAUNCH button's cover is up. */
         public boolean coverUp() {

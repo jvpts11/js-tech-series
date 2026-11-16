@@ -1082,6 +1082,7 @@
   "jsspace.ship_hud.pulse_near": "PERTO DE %s",
   "jsspace.ship_hud.pulse_sun": "PERTO DO SOL",
   "jsspace.ship_hud.pulse_ship": "NAVE PERTO",
+  "jsspace.ship_hud.pulse_docked": "ACOPLADA: DESACOPLE ANTES",
   "jsspace.ship_hud.pulse_spent": "D2 ESGOTADO",
   "jsspace.ship_hud.overworld": "SUPERFÍCIE",
   "jsspace.ship_hud.moon": "LUA",

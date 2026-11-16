@@ -7,6 +7,9 @@
  */
 package dev.jstech.space.pad;
 
+import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.launcher.ArmBlockEntity;
@@ -21,6 +24,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
 /**
  * The launch pad's rules, as real pads keep them. Under the launcher's exhaust opening, the flame trench: a Flame
@@ -201,7 +205,29 @@ public final class LaunchPads {
                 }
             }
         }
+        if (computer == null) {
+            computer = restingOver(level, axis).orElse(null);
+        }
         return new Stand(axis, side, Optional.ofNullable(computer), List.copyOf(arms));
+    }
+
+    /*
+     * The flight computer, in its yard, of a rocket standing still over the launcher's axis as a moving structure: one
+     * let go that came down on its pad again, burnt out or holed, to be fuelled and counted again.
+     */
+    private static Optional<BlockPos> restingOver(final ServerLevel level, final BlockPos axis) {
+        final AABB over = new AABB(axis.getX() - AXIS_ROUND, axis.getY(), axis.getZ() - AXIS_ROUND,
+                axis.getX() + AXIS_ROUND + 1, axis.getY() + TALLEST_ROCKET, axis.getZ() + AXIS_ROUND + 1);
+        for (final IStructureBody body : MovingStructures.near(level, over)) {
+            if (body instanceof MovingStructure rocket && rocket.ready() && rocket.motion() == null
+                    && rocket.mount() == null && !rocket.departing()) {
+                final Optional<FlightComputerBlockEntity> computer = FlightComputerBlockEntity.aboard(level, rocket);
+                if (computer.isPresent()) {
+                    return Optional.of(computer.get().getBlockPos());
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /**

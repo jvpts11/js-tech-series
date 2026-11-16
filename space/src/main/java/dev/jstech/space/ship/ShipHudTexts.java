@@ -47,6 +47,7 @@ public final class ShipHudTexts {
     public static final TextKey PULSE_NEAR = TextKey.of("jsspace.ship_hud.pulse_near", "NEAR %s");
     public static final TextKey PULSE_SUN = TextKey.of("jsspace.ship_hud.pulse_sun", "NEAR THE SUN");
     public static final TextKey PULSE_SHIP = TextKey.of("jsspace.ship_hud.pulse_ship", "SHIP NEAR");
+    public static final TextKey PULSE_DOCKED = TextKey.of("jsspace.ship_hud.pulse_docked", "DOCKED: UNDOCK FIRST");
     public static final TextKey PULSE_SPENT = TextKey.of("jsspace.ship_hud.pulse_spent", "D2 SPENT");
     public static final TextKey OVERWORLD = TextKey.of("jsspace.ship_hud.overworld", "OVERWORLD");
     public static final TextKey MOON = TextKey.of("jsspace.ship_hud.moon", "MOON");

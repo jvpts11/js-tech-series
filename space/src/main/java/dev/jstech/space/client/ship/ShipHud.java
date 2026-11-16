@@ -351,7 +351,10 @@ public final class ShipHud {
             small(text, tx + BRACKET + 4, ty - 4, c, Align.LEFT);
         }
 
-        /* Why a ship dropped out of its pulse jump, as its banner's second line says it; none for its pilot. */
+        /*
+         * Why a ship dropped out of its pulse jump, or would not begin one, as its banner's second line says it; none
+         * for its pilot.
+         */
         private static String why(final String dropped) {
             final SolarBody body = ShipPulse.Drop.bodyOf(dropped);
             if (body != null) {
@@ -360,6 +363,7 @@ public final class ShipHud {
             return switch (dropped) {
                 case ShipPulse.Drop.SUN -> GameText.resolve(ShipHudTexts.PULSE_SUN);
                 case ShipPulse.Drop.SHIP -> GameText.resolve(ShipHudTexts.PULSE_SHIP);
+                case ShipPulse.Drop.DOCKED -> GameText.resolve(ShipHudTexts.PULSE_DOCKED);
                 case ShipPulse.Drop.FUEL -> GameText.resolve(ShipHudTexts.PULSE_SPENT);
                 default -> "";
             };

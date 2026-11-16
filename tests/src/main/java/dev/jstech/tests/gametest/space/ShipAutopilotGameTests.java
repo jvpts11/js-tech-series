@@ -34,6 +34,7 @@ import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipImpacts;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipPulse;
 import dev.jstech.space.ship.ShipReadings;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardPlans;
@@ -47,6 +48,7 @@ import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -96,8 +98,9 @@ public final class ShipAutopilotGameTests {
     private static final int WEST_CHUNKS = 1;
     private static final TicketType<BlockPos> LAND = TicketType.create("jstests_ship_autopilot", Vec3i::compareTo);
     private static final int TICKING = 2;
-    /* How high the ship is taken up before its autopilot is engaged, in blocks. */
-    private static final double HIGH = 60;
+    /* How far ahead of a ship a failure looks for what stops it, in blocks, and how many blocks it names at most. */
+    private static final double AHEAD = 3;
+    private static final int AHEAD_SAID = 8;
     /*
      * How far north of the ship the landing platform stands, and how far below it, in blocks; how far round its
      * middle, across and along, its floor reaches for the ship to set down.
@@ -184,10 +187,10 @@ public final class ShipAutopilotGameTests {
                 .thenExecute(() -> {
                     final BlockPos seat = aboard(ship[0], plan(helper, LEGS_SHIP).where(spot(helper, LEGS_SHIP,
                             ShipKitBlocks.PILOT_SEAT.getId())));
-                    aloft(ship[0], HIGH);
+                    aloft(ship[0], OVER_THE_ARENAS);
                     pilot[0] = seated(helper, seat);
-                    // A ship landing pad of its pilot's on a floor in the sky to the north and below it: the tests
-                    // beside this one stand on the land.
+                    // A ship landing pad of its pilot's on a floor in the sky to the north and below it, the way there
+                    // over the arenas the battery left standing: the tests beside this one stand on the land.
                     floor[0] = skyPadNorthOf(level, ship[0].pose());
                     ShipLandings.notePad(level, pad, floor[0], Ownership.of(pilot[0].getUUID()));
                     spot[0] = ShipLandings.padSpot(level, ShipLandings.pad(level.getServer(), pad).orElseThrow());
@@ -207,7 +210,8 @@ public final class ShipAutopilotGameTests {
                         && flight(ship[0]).grounded(), "it flies to the pad and sets down on it, letting go once it"
                         + " stands: at " + ship[0].pose().x() + " " + ship[0].worldBox().minY + " "
                         + ship[0].pose().z() + " for " + spot[0] + ", " + flight(ship[0]).state() + ", grounded "
-                        + flight(ship[0]).grounded() + ", " + flight(ship[0]).autopilot()))
+                        + flight(ship[0]).grounded() + ", " + flight(ship[0]).autopilot() + ", ahead of it "
+                        + ahead(level, ship[0])))
                 .thenExecute(() -> {
                     final StructurePose at = ship[0].pose();
                     helper.assertTrue(Math.hypot(at.x() - spot[0].x, at.z() - spot[0].z) < ON_THE_SPOT, "on the"
@@ -241,7 +245,7 @@ public final class ShipAutopilotGameTests {
                 .thenExecute(() -> {
                     final BlockPos seat = aboard(ship[0], plan(helper, LEGS_SHIP).where(spot(helper, LEGS_SHIP,
                             ShipKitBlocks.PILOT_SEAT.getId())));
-                    aloft(ship[0], HIGH);
+                    aloft(ship[0], OVER_THE_ARENAS);
                     pilot[0] = seated(helper, seat);
                     floor[0] = skyPadNorthOf(level, ship[0].pose());
                     ShipLandings.notePad(level, pad, floor[0], Ownership.of(pilot[0].getUUID()));
@@ -590,6 +594,13 @@ public final class ShipAutopilotGameTests {
                     + " shows the docking cross, in line: " + shown);
         }).thenWaitUntil(() -> helper.assertTrue(ShipDocks.docked(ours[0]), "collar to collar, the two are made"
                 + " one"))
+                .thenWaitUntil(() -> {
+                    // Its pilot holds the pulse jump's key, docked: the drive does not spool, and the HUD says why.
+                    ShipPulse.hold(ours[0], ours[0].level().getGameTime());
+                    final ShipReadings.Pulse pulse = console(ours[0]).flight().pulse();
+                    helper.assertTrue(pulse.dropped().equals(ShipPulse.Drop.DOCKED) && pulse.spool() == 0,
+                            "docked, its pulse jump will not begin, its console shows why: " + pulse);
+                })
                 .thenExecuteAfter(HELD, () -> {
                     helper.assertTrue(flight(ours[0]).autopilot().isEmpty(), "docked, its autopilot is done");
                     helper.assertTrue(ShipCollars.mouth(space, ours[0]).orElseThrow().distanceTo(ShipCollars.mouth(
@@ -672,6 +683,26 @@ public final class ShipAutopilotGameTests {
             }
         }
         return middle;
+    }
+
+    /*
+     * What stands within a few blocks north of {@code ship}'s box, for a failure to say: the blocks not air, and the
+     * other moving structures there, and whether that land is loaded.
+     */
+    private static String ahead(final ServerLevel level, final MovingStructure ship) {
+        final AABB box = ship.worldBox();
+        final AABB front = new AABB(box.minX, box.minY, box.minZ - AHEAD, box.maxX, box.maxY, box.minZ);
+        final List<String> found = new ArrayList<>();
+        for (final BlockPos at : BlockPos.betweenClosed(Mth.floor(front.minX), Mth.floor(front.minY),
+                Mth.floor(front.minZ), Mth.floor(front.maxX), Mth.floor(front.maxY), Mth.floor(front.maxZ))) {
+            if (found.size() < AHEAD_SAID && level.isLoaded(at) && !level.getBlockState(at).isAir()) {
+                found.add(level.getBlockState(at).getBlock() + "@" + at.toShortString());
+            }
+        }
+        MovingStructures.near(level, front).stream().filter(body -> body != ship)
+                .forEach(body -> found.add("structure " + body.worldBox()));
+        return found + ", loaded " + level.isLoaded(BlockPos.containing(box.getCenter().x, box.minY,
+                box.minZ - AHEAD));
     }
 
     /* Takes the sky floor whose middle is {@code middle} away. */

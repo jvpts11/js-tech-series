@@ -942,6 +942,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   landing one.
 - A small ship's gear is down on the land and within ten metres of it, and folds away higher up, hovering or
   flying: it stayed down at any height while the ship hovered.
+- A rocket let go that burns out on its pad, or falls back onto it, stays there as it is, and its launcher's
+  count takes it again: the board shows it down, the pad's service port fills it, RECYCLE counts it anew from T-60,
+  and at T-0 the same rocket goes. The count stayed at its release for good.
+- Two docked ships do not pulse jump: they undock first, and B held docked shows PULSE OFF with DOCKED: UNDOCK
+  FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
 - A pad's service port fuels the launcher nearest it, and a launch panel works the nearest: of two launchers

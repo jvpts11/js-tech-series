@@ -24,7 +24,7 @@ Start a ship built whole in a [shipyard](jsspace:shipyard): it is yours to fly.
 3. Below 10 metres a second the air engines' nozzles turn down and the ship hovers, nose level: jump and [[C]] take it straight up and down. On wheels it comes down at 5 metres a second at most. On feet, landing and taking off fly themselves: hovering within 30 metres of the land, hold [[C]] and the ship sets itself down in about four seconds; standing, hold jump and it lifts straight up 12 metres in three seconds, then hands the helm back hovering. The helm does nothing meanwhile.
 4. Faster, the wings hold it up. Hold [[Left Control]] to boost it across an empty stretch, well clear of the land or in space, for as long as you like; while it boosts, its nose turns slowly (`TURN SLOW`).
 5. Climb on: seven hundred blocks over the world's build limit, the ship crosses into its system's space.
-6. In space, away from the worlds, hold [[B]] for a second and a half: the pulse drive spools and the ship jumps at 3,000 metres a second, level along its nose, barely turning. Hold back ([[S]]) to drop out; it drops out by itself over a world's low orbit, ready to go down.
+6. In space, away from the worlds, hold [[B]] for a second and a half: the pulse drive spools and the ship jumps at 3,000 metres a second, level along its nose, barely turning. Hold back ([[S]]) to drop out; it drops out by itself over a world's low orbit, ready to go down. Docked to another ship it does not jump: undock first.
 7. [[J]] changes the autopilot: LAND, ORBIT, DOCK, then off. Holding any key of the helm takes the helm back.
 8. Get up with sneak ([[Left Shift]]): the throttle closes, and the ship settles and stays parked.
 

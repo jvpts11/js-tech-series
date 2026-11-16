@@ -78,3 +78,6 @@ title: Deixar um mundo 4/4
 
 > [!PROBLEM] ABORTAR acende em T-0.
 > O foguete não pôde ser solto, e o lançamento foi cancelado.
+
+> [!PROBLEM] O foguete apagou na base, ou caiu de volta nela.
+> Ele fica lá do jeito que está, um foguete já solto, e o painel mostra que ele voltou à base. Conserte-o, encha-o pela porta de serviço da base e aperte VOLTAR T-10: a contagem recomeça de T-60, e em T-0 o mesmo foguete parte de novo.

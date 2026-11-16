@@ -130,7 +130,7 @@ public final class FlightLaunchPage {
         final boolean released = count.phase() == LaunchCount.Phase.RELEASED;
         return List.of(
                 legend(word(KEY_COUNT), released, count.phase() == LaunchCount.Phase.COUNTING),
-                legend(word(KEY_RECYCLE), released, false),
+                legend(word(KEY_RECYCLE), released && !count.down(), false),
                 legend(word(LaunchTexts.SCRUB), released, false),
                 new FlightComputerFace.Legend("", FlightComputerFace.Legend.State.OFF, false),
                 new FlightComputerFace.Legend(word(LaunchTexts.LAUNCH), FlightComputerFace.Legend.State.OWN, false));

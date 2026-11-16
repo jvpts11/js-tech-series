@@ -13,6 +13,8 @@ import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
@@ -269,6 +271,11 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
         }
         if (this.aboard == null) {
             watch(level);
+        }
+        // Docked to another ship, its own does not fly by itself, so it shows here why its pulse jump will not begin.
+        if (MovingStructures.at(level, getBlockPos()) instanceof MovingStructure ship && ship.mount() != null) {
+            ShipPulse.docked(ship, level.getGameTime());
+            flew(flight().withPulse(ShipPulse.shown(ship, 0, level.getGameTime())));
         }
         final Optional<Room> cabin = SealedRooms.roomBeside(level, getBlockPos());
         if (cabin.isEmpty()) {

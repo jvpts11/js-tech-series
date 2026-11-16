@@ -915,6 +915,7 @@
   "jsspace.ship_hud.pad": "PAD %s M",
   "jsspace.ship_hud.power": "PWR %s/%s MW",
   "jsspace.ship_hud.pulse": "PULSE",
+  "jsspace.ship_hud.pulse_docked": "DOCKED: UNDOCK FIRST",
   "jsspace.ship_hud.pulse_exit": "%s TO EXIT",
   "jsspace.ship_hud.pulse_fuel": "D2 %s%%  X%s",
   "jsspace.ship_hud.pulse_hold": "HOLD %s",

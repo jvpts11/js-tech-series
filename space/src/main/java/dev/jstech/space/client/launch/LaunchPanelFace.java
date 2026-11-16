@@ -103,7 +103,7 @@ public final class LaunchPanelFace {
         final LaunchCount.Phase phase = panel.phase();
         final boolean[] lit = {phase == LaunchCount.Phase.HOLDING,
             phase == LaunchCount.Phase.SCRUBBED,
-            phase == LaunchCount.Phase.HOLDING && panel.left() < LaunchCount.COVER * SECOND,
+            phase == LaunchCount.Phase.HOLDING && panel.left() < LaunchCount.COVER * SECOND || panel.down(),
             phase == LaunchCount.Phase.COUNTING || phase == LaunchCount.Phase.RELEASED};
         final TextKey[] names = {LaunchTexts.HOLD_COUNT, LaunchTexts.SCRUB, LaunchTexts.RECYCLE,
             LaunchTexts.COUNT_RUNNING};

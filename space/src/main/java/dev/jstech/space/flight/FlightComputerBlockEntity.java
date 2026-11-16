@@ -23,6 +23,7 @@ import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.core.region.Box;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.Propellants;
@@ -376,12 +377,32 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return held == null ? Map.of() : held;
     }
 
-    /** Keeps {@code load} as what its rocket's tank at {@code section} holds. */
+    /**
+     * Keeps {@code load} as what its rocket's tank at {@code section} holds. Aboard a rocket let go, as one down on
+     * its pad again, its tanks are the rocket's record's, which this follows: filled there too.
+     */
     public void load(final int section, final TankLoad load) {
         final Map<Integer, TankLoad> held = new TreeMap<>(tanks());
         held.put(section, load);
         this.tanks.set(Map.copyOf(held));
         setChanged();
+        if (this.level instanceof ServerLevel server
+                && MovingStructures.at(server, this.worldPosition) instanceof MovingStructure carried) {
+            Rockets.load(server.getServer(), carried.id(), section, load);
+        }
+    }
+
+    /** The flight computer aboard {@code body}, in its yard, keeping a rocket's plan; none on a body with none. */
+    public static Optional<FlightComputerBlockEntity> aboard(final ServerLevel level, final MovingStructure body) {
+        final Box box = body.bounds();
+        for (final BlockPos at : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(),
+                box.maxZ())) {
+            if (level.getBlockEntity(at) instanceof FlightComputerBlockEntity computer
+                    && computer.rocket().isPresent()) {
+                return Optional.of(computer);
+            }
+        }
+        return Optional.empty();
     }
 
     /**

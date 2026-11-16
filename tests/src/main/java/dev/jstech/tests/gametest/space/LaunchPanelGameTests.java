@@ -11,6 +11,7 @@ import com.mojang.authlib.GameProfile;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.region.Box;
+import dev.jstech.core.uuid.StructureUuid;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
@@ -47,6 +48,7 @@ import net.minecraft.gametest.framework.BeforeBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -334,6 +336,61 @@ public final class LaunchPanelGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * A rocket let go that comes down on its pad again, its engine holed, stays a moving structure there: the board
+     * shows it down, RECYCLE counts it anew, its tank is filled through its flight computer aboard, as a pad's port
+     * fills it, and at T-0 the same rocket, mended, climbs.
+     */
+    @GameTest(template = WIDE, batch = BATCH + "_recycle", timeoutTicks = 6000)
+    public static void recycle_aRocketDownOnItsPadAgainIsCountedAnewAndClimbs(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        fairWeather(level);
+        helper.setBlock(PANEL, LaunchPanel.BLOCK.get());
+        rocket(helper);
+        final BlockPos panel = helper.absolutePos(PANEL);
+        final StructureUuid[] id = new StructureUuid[1];
+        // This test's rocket is its flight computer alone, its other parts counted as lost once it is a body, its tank
+        // holed so: a real one stands whole, and its pad's port keeps it full through the count.
+        final Runnable whole = () -> {
+            Rockets.lost(level.getServer(), id[0], Map.of());
+            fill(level, id[0]);
+        };
+        final GameTestSequence sequence = helper.startSequence();
+        countAndLaunch(helper, sequence, panel, () -> { })
+                .thenWaitUntil(() -> helper.assertTrue(released(helper) != null
+                        && released(helper).motion() instanceof RocketAscent, "at T-0 the rocket is released and"
+                        + " climbs"))
+                .thenExecute(() -> id[0] = released(helper).id())
+                .thenWaitUntil(() -> {
+                    Rockets.lost(level.getServer(), id[0], Map.of(ENGINE, 1));
+                    helper.assertTrue(released(helper).motion() == null, "its engine holed, it stays down on its"
+                            + " pad");
+                })
+                .thenExecute(() -> Rockets.lost(level.getServer(), id[0], Map.of()))
+                .thenWaitUntil(() -> helper.assertTrue(shown(level, panel).down(), "mended, the board shows it down"
+                        + " on its pad, for RECYCLE"))
+                .thenExecute(() -> {
+                    panel(level, panel).press(LaunchCount.RECYCLE);
+                    helper.assertTrue(shown(level, panel).phase() == LaunchCount.Phase.SCRUBBED, "RECYCLE counts it"
+                            + " anew from T-60: " + shown(level, panel).phase());
+                    whole.run();
+                    final double held = Rockets.get(level.getServer(), id[0]).map(rocket -> rocket.tanks().get(1))
+                            .map(TankLoad::total).orElse(0.0);
+                    helper.assertTrue(held > FULL_LAYER * KEPT, "filled through its computer aboard, the rocket's own"
+                            + " record holds it: " + held + " kg");
+                });
+        countAndLaunch(helper, sequence, panel, whole)
+                .thenWaitUntil(() -> {
+                    Rockets.lost(level.getServer(), id[0], Map.of());
+                    final MovingStructure again = released(helper);
+                    helper.assertTrue(again != null && again.id().equals(id[0])
+                            && again.motion() instanceof RocketAscent, "at T-0 the same rocket climbs again: "
+                            + again + ", the count " + shown(level, panel));
+                })
+                .thenExecute(() -> takeAway(helper))
+                .thenSucceed();
+    }
+
     /**
      * A pad with no Launch Panel: its rocket's flight computer opens on the LAUNCH page, which works the launcher's
      * count alone, from arming to release; the rocket is the one's who pressed LAUNCH there, and once it is off the
@@ -552,10 +609,45 @@ public final class LaunchPanelGameTests {
         level.setRainLevel(0.0F);
     }
 
-    /* Turns the key and arms the ignition under its guard. */
+    /* The count armed and run, held at T-6 for LAUNCH, and LAUNCH pressed; {@code meanwhile} done every tick. */
+    private static GameTestSequence countAndLaunch(final GameTestHelper helper, final GameTestSequence sequence,
+                                                   final BlockPos panel, final Runnable meanwhile) {
+        final ServerLevel level = helper.getLevel();
+        return sequence.thenWaitUntil(() -> {
+                    meanwhile.run();
+                    helper.assertTrue(shown(level, panel).go(), "the rocket on the pad is go: "
+                            + shown(level, panel));
+                })
+                .thenExecute(() -> {
+                    final LaunchPanelBlockEntity console = panel(level, panel);
+                    arm(console);
+                    console.press(LaunchCount.RUN);
+                })
+                .thenWaitUntil(() -> {
+                    meanwhile.run();
+                    helper.assertTrue(shown(level, panel).phase() == LaunchCount.Phase.HOLDING, "without LAUNCH"
+                            + " pressed it holds at T-6: " + shown(level, panel));
+                })
+                .thenExecute(() -> panel(level, panel).press(LaunchCount.LAUNCH));
+    }
+
+    /* Fills the tank of the rocket {@code id}, a body, through its flight computer aboard, as a pad's port does. */
+    private static void fill(final ServerLevel level, final StructureUuid id) {
+        final MovingStructure body = MovingStructures.byId(level, id);
+        final FlightComputerBlockEntity aboard = body == null ? null
+                : FlightComputerBlockEntity.aboard(level, body).orElse(null);
+        if (aboard != null) {
+            Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> aboard.load(1,
+                    TankLoad.filled(SkeletonPropellants.METHALOX, methalox, FULL_LAYER)));
+        }
+    }
+
+    /* Turns the key and arms the ignition under its guard, lifting the guard where it is not lifted already. */
     private static void arm(final LaunchPanelBlockEntity console) {
         console.press(LaunchCount.MASTER);
-        console.press(LaunchCount.GUARD);
+        if (!console.shown().guard()) {
+            console.press(LaunchCount.GUARD);
+        }
         console.press(LaunchCount.IGNITION);
     }
 

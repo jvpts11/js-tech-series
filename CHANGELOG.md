@@ -4263,6 +4263,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   landing one.
 - (Space) A small ship's gear is down on the land and within ten metres of it, and folds away higher up, hovering or
   flying: it stayed down at any height while the ship hovered.
+- (Space) A rocket let go that burns out on its pad, or falls back onto it, stays there as it is, and its launcher's
+  count takes it again: the board shows it down, the pad's service port fills it, RECYCLE counts it anew from T-60,
+  and at T-0 the same rocket goes. The count stayed at its release for good.
+- (Space) Two docked ships do not pulse jump: they undock first, and B held docked shows PULSE OFF with DOCKED: UNDOCK
+  FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
 - (Core) Two structures keeping one chunk of the world loaded keep it so till the last of them lets it go: a ship

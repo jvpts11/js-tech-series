@@ -83,6 +83,13 @@ public record ShipReadings(double speed, double climb, int throttle, int boost, 
                 pulse);
     }
 
+    /** The same readings, its pulse jump shown as {@code shown}. */
+    public ShipReadings withPulse(final Pulse shown) {
+        return new ShipReadings(this.speed, this.climb, this.throttle, this.boost, this.boosting, this.nozzles,
+                this.lifting, this.thrusting, this.gearDown, this.stalled, this.altitude, this.grounded, this.pilot,
+                shown);
+    }
+
     /**
      * A ship's pulse jump as its HUD shows it: its drive spooling, how far and how long it has still to go; in the
      * jump, the world whose low orbit is nearest, how far off and how long away at the jump's speed; and a moment

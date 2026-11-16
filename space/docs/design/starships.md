@@ -159,7 +159,8 @@ kit for its vehicles.
   the ship and the HUD spreads over the screen. The pulse jump has its own: spooling, an amber ring round the flight path
   marker filling, PULSE and the seconds left under the heading tape, and HOLD B; jumping, PULSE lit there, S TO EXIT,
   the deuterium's X6, and the nearest world bracketed with how far off its low orbit is and how long away; dropped out,
-  PULSE OFF framed a moment, with why.
+  PULSE OFF framed a moment, with why. Two docked ships do not jump: they undock first, and B held docked shows PULSE
+  OFF with DOCKED: UNDOCK FIRST.
 
 ### Autopilots
 
