@@ -57,5 +57,5 @@
     "f": "gas_input",
     "g": "item_input"
   },
-  "terminal": "jsc:siemens_reactor_terminal"
+  "terminal": "jsc:machine_terminal"
 }

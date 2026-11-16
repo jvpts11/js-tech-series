@@ -47,5 +47,5 @@
     "c": "energy_input",
     "f": "item_input"
   },
-  "terminal": "jsc:grinder_terminal"
+  "terminal": "jsc:machine_terminal"
 }

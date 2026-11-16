@@ -75,5 +75,5 @@
     "i": "item_input",
     "j": "gas_input"
   },
-  "terminal": "jsc:chemical_reactor_terminal"
+  "terminal": "jsc:machine_terminal"
 }

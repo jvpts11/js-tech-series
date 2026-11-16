@@ -73,5 +73,5 @@
     "f": "item_output",
     "i": "gas_input"
   },
-  "terminal": "jsc:lithography_arf_terminal"
+  "terminal": "jsc:machine_terminal"
 }

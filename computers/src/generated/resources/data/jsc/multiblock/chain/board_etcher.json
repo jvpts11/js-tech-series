@@ -53,5 +53,5 @@
     "d": "energy_input",
     "e": "fluid_input"
   },
-  "terminal": "jsc:board_etcher_terminal"
+  "terminal": "jsc:machine_terminal"
 }

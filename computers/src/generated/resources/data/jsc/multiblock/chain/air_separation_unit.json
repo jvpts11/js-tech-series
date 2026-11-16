@@ -61,5 +61,5 @@
     "a": "energy_input",
     "f": "gas_output"
   },
-  "terminal": "jsc:air_separation_unit_terminal"
+  "terminal": "jsc:machine_terminal"
 }

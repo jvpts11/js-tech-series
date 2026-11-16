@@ -4321,6 +4321,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   installed too: their recipes went away whenever it was, waiting for recipes of its own it does not have, so they
   could not be made at all, nor what needs them, as J's Computers' cooling units. They go away now only when J's
   Industrial's new setting hands them to its own recipes, off as it comes.
+- (Computers) The page of a chain machine's multiblock in JEI, EMI and REI shows its terminal again, in the shape and
+  among the materials: it named the terminal the machine's becomes once formed, which has no item, so the page left it
+  out. It names the Machine Terminal a player places there now, and the Structure Projector's ghost asks for it too.
 - (Core) A structure that changes its build keeps its blocks merged into its model: a plain block put back where a
   merged one stood while its parts were away merges again, where it stayed a plain block in the model, and a merged
   block carried to a new place with a moving part of its structure takes the shape of the model where it stands.

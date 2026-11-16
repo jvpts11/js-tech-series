@@ -69,5 +69,5 @@
     "d": "item_input",
     "e": "energy_input"
   },
-  "terminal": "jsc:large_scale_printer_terminal"
+  "terminal": "jsc:machine_terminal"
 }

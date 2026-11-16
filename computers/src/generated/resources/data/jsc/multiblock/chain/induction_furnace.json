@@ -60,5 +60,5 @@
     "e": "energy_input",
     "g": "item_input"
   },
-  "terminal": "jsc:induction_furnace_terminal"
+  "terminal": "jsc:machine_terminal"
 }

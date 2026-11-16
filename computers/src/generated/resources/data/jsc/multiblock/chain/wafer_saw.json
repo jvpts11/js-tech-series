@@ -47,5 +47,5 @@
     "d": "energy_input",
     "f": "item_input"
   },
-  "terminal": "jsc:wafer_saw_terminal"
+  "terminal": "jsc:machine_terminal"
 }

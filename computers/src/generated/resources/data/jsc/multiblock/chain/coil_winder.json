@@ -40,5 +40,5 @@
     "b": "energy_input",
     "c": "item_input"
   },
-  "terminal": "jsc:coil_winder_terminal"
+  "terminal": "jsc:machine_terminal"
 }

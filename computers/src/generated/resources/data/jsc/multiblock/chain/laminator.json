@@ -47,5 +47,5 @@
     "c": "item_input",
     "d": "energy_input"
   },
-  "terminal": "jsc:laminator_terminal"
+  "terminal": "jsc:machine_terminal"
 }

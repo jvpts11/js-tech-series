@@ -498,7 +498,10 @@ public final class ChainMachines {
             return List.copyOf(stations);
         }
 
-        /* Its pattern: each letter its block, each entry the port it makes, the terminal its own. */
+        /*
+         * Its pattern: each letter its block, each entry the port it makes, and at the terminal's place the Machine
+         * Terminal a player puts there, which becomes the machine's own terminal once the shape stands round it.
+         */
         private static void pattern(final ChainMachine machine) {
             final MultiblockPattern.Builder drawn = MultiblockPattern.builder(machine.id());
             for (final List<String> layer : machine.layers()) {
@@ -511,7 +514,7 @@ public final class ChainMachines {
                     drawn.port(letter, port);
                 }
             });
-            drawn.terminal(JsComputers.MODID + ":" + machine.terminalPath());
+            drawn.terminal(ChainMachineBlocks.TERMINAL.getId().toString());
             MultiblockPatterns.declare(machine.patternId(), drawn.build());
         }
     }

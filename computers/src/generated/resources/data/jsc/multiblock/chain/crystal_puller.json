@@ -57,5 +57,5 @@
     "e": "gas_input",
     "g": "item_input"
   },
-  "terminal": "jsc:crystal_puller_terminal"
+  "terminal": "jsc:machine_terminal"
 }

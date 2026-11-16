@@ -54,5 +54,5 @@
     "f": "gas_output",
     "g": "item_input"
   },
-  "terminal": "jsc:electrolytic_cell_terminal"
+  "terminal": "jsc:machine_terminal"
 }
