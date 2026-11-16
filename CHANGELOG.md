@@ -4334,7 +4334,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) JEI, EMI and REI show the recipes of a chain machine by the machine itself, drawn as it stands formed and
   made small enough for a slot, where they showed one of its parts: the Advanced Electronics Assembly Line's recipes
   showed its placement head, the Crusher's its roll. An assembly line's recipes still show the Electronics Workbench
-  first, whose recipes they are.
+  first, whose recipes they are. Each machine's picture is an item of its own, its guide entry's too, in no creative
+  tab, and places nothing.
 - (Core) A model's parts hidden at rest, scaled to nothing until an animation shows them, no longer stretch the room the
   model is measured to fill: they counted as a point at the file's own origin, so most of J's Computers' chain machines
   reached 65 blocks down, were drawn from far past where they could be seen and showed as a dot wherever a model is fitted

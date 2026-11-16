@@ -2,7 +2,7 @@
 section: fab
 order: 46
 icon: jsc:large_scale_printer_print_unit
-covers: [jsc:large_scale_printer_paper_feeder, jsc:large_scale_printer_perfect_binder, jsc:large_scale_printer_print_unit, jsc:large_scale_printer_inking_unit]
+covers: [jsc:large_scale_printer_paper_feeder, jsc:large_scale_printer_perfect_binder, jsc:large_scale_printer_print_unit, jsc:large_scale_printer_inking_unit, jsc:large_scale_printer_terminal]
 ---
 # The Large Scale Printer
 

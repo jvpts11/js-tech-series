@@ -988,7 +988,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - JEI, EMI and REI show the recipes of a chain machine by the machine itself, drawn as it stands formed and
   made small enough for a slot, where they showed one of its parts: the Advanced Electronics Assembly Line's recipes
   showed its placement head, the Crusher's its roll. An assembly line's recipes still show the Electronics Workbench
-  first, whose recipes they are.
+  first, whose recipes they are. Each machine's picture is an item of its own, its guide entry's too, in no creative
+  tab, and places nothing.
 - Disks: a partition asked for with a size past what a number holds is refused, where its size wrapped
   round and it was made; a partition named by a number past any partition's names none, where the command acted on
   the one the number wrapped round to; and formatting another disk that carries a system no longer takes a

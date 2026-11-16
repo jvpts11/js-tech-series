@@ -11,15 +11,25 @@ import dev.jstech.computers.block.WorkbenchBlock;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineTerminalBlock;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -62,6 +72,21 @@ public final class ChainMachineKindsGameTests {
         }
         helper.assertTrue(wrong.isEmpty(), wrong.size() + " wrong: " + wrong);
         helper.assertTrue(kinds > 0, "the chain machines work kinds of recipe");
+        helper.succeed();
+    }
+
+    /* A machine's picture is only shown: used on the land it puts nothing there, the machine built only by its shape. */
+    @GameTest(template = ARENA)
+    public static void picture_placesNothing(final GameTestHelper helper) {
+        final ServerPlayer player = GameTestPlayers.connected(helper, "jst-picture");
+        final BlockPos ground = helper.absolutePos(new BlockPos(1, 1, 1));
+        final ItemStack picture = new ItemStack(ChainMachines.terminalOf(ChainMachines.all().iterator().next()).get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, picture);
+        final InteractionResult used = picture.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(ground), Direction.UP, ground, false)));
+        helper.assertTrue(!used.consumesAction() && helper.getLevel().isEmptyBlock(ground.above()), "used on the "
+                + "land, it puts nothing there: " + used + ", " + helper.getLevel().getBlockState(ground.above()));
+        GameTestPlayers.leave(player);
         helper.succeed();
     }
 

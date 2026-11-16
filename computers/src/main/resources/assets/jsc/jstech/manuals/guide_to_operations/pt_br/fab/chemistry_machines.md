@@ -2,7 +2,7 @@
 section: fab
 order: 39
 icon: jsc:chemical_reactor_vessel
-covers: [jsc:coke_oven_oven_chamber, jsc:coke_oven_oven_door, jsc:coke_oven_standpipe, jsc:chemical_reactor_vessel, jsc:chemical_reactor_agitator, jsc:air_separation_unit_compressor, jsc:air_separation_unit_vaporizer, jsc:air_separation_unit_adsorber, jsc:air_separation_unit_column]
+covers: [jsc:coke_oven_oven_chamber, jsc:coke_oven_oven_door, jsc:coke_oven_standpipe, jsc:chemical_reactor_vessel, jsc:chemical_reactor_agitator, jsc:air_separation_unit_compressor, jsc:air_separation_unit_vaporizer, jsc:air_separation_unit_adsorber, jsc:air_separation_unit_column, jsc:air_separation_unit_terminal, jsc:chemical_reactor_terminal, jsc:coke_oven_terminal]
 ---
 # Química e gases
 

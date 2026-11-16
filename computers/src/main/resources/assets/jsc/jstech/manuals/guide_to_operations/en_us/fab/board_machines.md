@@ -2,7 +2,7 @@
 section: fab
 order: 43
 icon: jsc:laminator_hot_platen
-covers: [jsc:laminator_hot_platen, jsc:laminator_press_crown, jsc:board_etcher_etchant_sump, jsc:board_etcher_spray_tunnel, jsc:ceramic_kiln_kiln_car, jsc:ceramic_kiln_kiln_chamber, jsc:coil_winder_supply_spool, jsc:coil_winder_winding_head, jsc:optical_polisher_polishing_lap, jsc:optical_polisher_draw_tower, jsc:display_line_fill_chamber, jsc:display_line_test_stand, jsc:display_line_gantry]
+covers: [jsc:laminator_hot_platen, jsc:laminator_press_crown, jsc:board_etcher_etchant_sump, jsc:board_etcher_spray_tunnel, jsc:ceramic_kiln_kiln_car, jsc:ceramic_kiln_kiln_chamber, jsc:coil_winder_supply_spool, jsc:coil_winder_winding_head, jsc:optical_polisher_polishing_lap, jsc:optical_polisher_draw_tower, jsc:display_line_fill_chamber, jsc:display_line_test_stand, jsc:display_line_gantry, jsc:board_etcher_terminal, jsc:ceramic_kiln_terminal, jsc:coil_winder_terminal, jsc:display_line_terminal, jsc:laminator_terminal, jsc:optical_polisher_terminal]
 ---
 # Boards, parts, glass and screens
 

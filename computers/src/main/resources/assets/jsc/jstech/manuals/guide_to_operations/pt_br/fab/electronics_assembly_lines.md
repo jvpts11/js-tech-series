@@ -2,7 +2,7 @@
 section: fab
 order: 44
 icon: jsc:assembly_vintage_placement_head
-covers: [jsc:assembly_feeder_bank, jsc:assembly_wave_solder, jsc:assembly_vintage_placement_head, jsc:assembly_legacy_placement_head, jsc:assembly_transition_reflow_oven, jsc:assembly_transition_placement_head, jsc:assembly_standard_reflow_oven, jsc:assembly_standard_placement_head, jsc:assembly_advanced_reflow_oven, jsc:assembly_advanced_placement_head]
+covers: [jsc:assembly_feeder_bank, jsc:assembly_wave_solder, jsc:assembly_vintage_placement_head, jsc:assembly_legacy_placement_head, jsc:assembly_transition_reflow_oven, jsc:assembly_transition_placement_head, jsc:assembly_standard_reflow_oven, jsc:assembly_standard_placement_head, jsc:assembly_advanced_reflow_oven, jsc:assembly_advanced_placement_head, jsc:assembly_vintage_terminal, jsc:assembly_legacy_terminal, jsc:assembly_transition_terminal, jsc:assembly_standard_terminal, jsc:assembly_advanced_terminal]
 ---
 # As Linhas de Montagem Eletrônica
 

@@ -2,7 +2,7 @@
 section: fab
 order: 38
 icon: jsc:crusher_roll
-covers: [jsc:crusher_drive, jsc:crusher_roll, jsc:grinder_drum, jsc:grinder_drive, jsc:induction_furnace_coil, jsc:induction_furnace_capacitor_bank, jsc:electrolytic_cell_cell_stack, jsc:rolling_mill_roller_table, jsc:rolling_mill_mill_housing, jsc:rolling_mill_work_roll, jsc:wire_drawer_capstan]
+covers: [jsc:crusher_drive, jsc:crusher_roll, jsc:grinder_drum, jsc:grinder_drive, jsc:induction_furnace_coil, jsc:induction_furnace_capacitor_bank, jsc:electrolytic_cell_cell_stack, jsc:rolling_mill_roller_table, jsc:rolling_mill_mill_housing, jsc:rolling_mill_work_roll, jsc:wire_drawer_capstan, jsc:crusher_terminal, jsc:grinder_terminal, jsc:induction_furnace_terminal, jsc:electrolytic_cell_terminal, jsc:rolling_mill_terminal, jsc:wire_drawer_terminal]
 ---
 # Minério e metais
 

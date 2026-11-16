@@ -2,7 +2,7 @@
 section: fab
 order: 40
 icon: jsc:crystal_puller_hot_zone
-covers: [jsc:siemens_reactor_base_plate, jsc:siemens_reactor_bell, jsc:crystal_puller_hot_zone, jsc:crystal_puller_pull_chamber, jsc:wafer_saw_wire_web, jsc:wafer_saw_wire_spool]
+covers: [jsc:siemens_reactor_base_plate, jsc:siemens_reactor_bell, jsc:crystal_puller_hot_zone, jsc:crystal_puller_pull_chamber, jsc:wafer_saw_wire_web, jsc:wafer_saw_wire_spool, jsc:siemens_reactor_terminal, jsc:crystal_puller_terminal, jsc:wafer_saw_terminal]
 ---
 # Silício
 

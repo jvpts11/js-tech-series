@@ -2,7 +2,7 @@
 section: fab
 order: 41
 icon: jsc:ion_implanter_analyzer_magnet
-covers: [jsc:plasma_etcher_etch_chamber, jsc:ion_implanter_end_station, jsc:ion_implanter_analyzer_magnet, jsc:deposition_chamber_sputter_chamber, jsc:packaging_line_mould_press, jsc:packaging_line_wire_bonder]
+covers: [jsc:plasma_etcher_etch_chamber, jsc:ion_implanter_end_station, jsc:ion_implanter_analyzer_magnet, jsc:deposition_chamber_sputter_chamber, jsc:packaging_line_mould_press, jsc:packaging_line_wire_bonder, jsc:plasma_etcher_terminal, jsc:ion_implanter_terminal, jsc:deposition_chamber_terminal, jsc:packaging_line_terminal]
 ---
 # A fábrica de chips
 

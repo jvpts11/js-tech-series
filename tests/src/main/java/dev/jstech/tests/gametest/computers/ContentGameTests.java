@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.chain.machine.ChainMachineTerminalBlock;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
@@ -186,7 +187,9 @@ public final class ContentGameTests {
 
     /**
      * Every item is in a creative tab, which is where a creative player finds it: one of the series, or one of the
-     * game's own where the series puts a thing beside its kin, as the vehicles go with the game's tools.
+     * game's own where the series puts a thing beside its kin, as the vehicles go with the game's tools. The one
+     * exception: a chain machine's picture, its own terminal's item, which only shows the formed machine in the recipe
+     * viewers and places nothing.
      */
     @GameTest(template = ARENA)
     public static void declaredItems_areInACreativeTab(final GameTestHelper helper) {
@@ -207,7 +210,8 @@ public final class ContentGameTests {
         final List<String> wrong = new ArrayList<>();
         for (final ModContent content : ModContent.all()) {
             for (final BlockEntry<?> block : content.declaredBlocks()) {
-                if (block.hasItem() && !shown.contains(block.item())) {
+                if (block.hasItem() && !shown.contains(block.item())
+                        && !(block.get() instanceof ChainMachineTerminalBlock)) {
                     wrong.add(block.getId().toString());
                 }
             }

@@ -2,7 +2,7 @@
 section: fab
 order: 45
 icon: jsc:prebuilder_robot_arm
-covers: [jsc:prebuilder_case_lift, jsc:prebuilder_robot_arm, jsc:prebuilder_parts_tray, jsc:preinstaller_cradle, jsc:preinstaller_console, jsc:preinstaller_disk_dock, jsc:preinstaller_board_fixture]
+covers: [jsc:prebuilder_case_lift, jsc:prebuilder_robot_arm, jsc:prebuilder_parts_tray, jsc:preinstaller_cradle, jsc:preinstaller_console, jsc:preinstaller_disk_dock, jsc:preinstaller_board_fixture, jsc:prebuilder_terminal, jsc:preinstaller_terminal]
 ---
 # A Pré-Montadora e a Pré-Instaladora
 

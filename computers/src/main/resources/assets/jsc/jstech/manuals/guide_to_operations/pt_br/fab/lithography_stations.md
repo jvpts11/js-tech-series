@@ -2,7 +2,7 @@
 section: fab
 order: 42
 icon: jsc:lithography_wafer_stage
-covers: [jsc:lithography_wafer_stage, jsc:lithography_glass_optics, jsc:lithography_mercury_lamp, jsc:lithography_krf_laser, jsc:lithography_arf_laser, jsc:lithography_fluoride_optics, jsc:lithography_euv_source, jsc:lithography_mirror_optics]
+covers: [jsc:lithography_wafer_stage, jsc:lithography_glass_optics, jsc:lithography_mercury_lamp, jsc:lithography_krf_laser, jsc:lithography_arf_laser, jsc:lithography_fluoride_optics, jsc:lithography_euv_source, jsc:lithography_mirror_optics, jsc:lithography_vintage_terminal, jsc:lithography_legacy_terminal, jsc:lithography_arf_terminal, jsc:lithography_advanced_terminal]
 ---
 # As Estações de Litografia
 

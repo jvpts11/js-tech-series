@@ -474,7 +474,7 @@ public final class ChainMachines {
                             new IBlockModel.ParticleOnly(machine.terminalPath() + "_formed", TEXTURES + "terminal")))
                     .drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
                     // Its item, in no tab, is the formed machine the recipe viewers show its kinds of recipe by.
-                    .item().itemLook(IItemLook.DRAWN_BY_ENTITY)
+                    .item(MachinePictureItem::new).itemLook(IItemLook.DRAWN_BY_ENTITY)
                     .register();
             final IEntityMaker maker = entity;
             final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChainMachineBlockEntity>> type =
