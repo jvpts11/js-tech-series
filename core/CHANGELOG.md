@@ -2249,6 +2249,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A formed model's door clicked by a player opens or shuts, where it moved and at once moved back, its sound
+  played and nothing seen: a player's game, finding nothing to do with the main hand, tried the other one too, and
+  the server moved the door again for it. A click on a door, or on a piece that works by another block, is now taken
+  whole on the player's game and acted on once, for the main hand.
 - J's Core's basic pipes, its Insulated Copper Cable and its Lead-Acid Battery Bank are made with J's Industrial
   installed too: their recipes went away whenever it was, waiting for recipes of its own it does not have, so they
   could not be made at all, nor what needs them, as J's Computers' cooling units. They go away now only when J's

@@ -4317,6 +4317,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) A formed model's door clicked by a player opens or shuts, where it moved and at once moved back, its sound
+  played and nothing seen: a player's game, finding nothing to do with the main hand, tried the other one too, and
+  the server moved the door again for it. A click on a door, or on a piece that works by another block, is now taken
+  whole on the player's game and acted on once, for the main hand.
 - (Space) A starship turns and pitches the way a craft does: its turn and pitch gather over a quarter of a second as
   its pilot holds and fall away as they let go, up to eighty and fifty degrees a second, where they jumped to forty-five
   and thirty at once and stopped dead, stiff and slow.

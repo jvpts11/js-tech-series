@@ -11,6 +11,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -24,8 +25,8 @@ import org.jetbrains.annotations.ApiStatus;
  * A piece of a formed model used from any block it stands in ({@link FormedPiece}): a player using a piece that works
  * by another block of the model than the one aimed at, a seat's back standing in the block over the seat, uses that
  * block, aimed at where they aimed, as if they had aimed at it there; so the whole piece outlined is the whole piece
- * used. A door used from any of its blocks shuts or opens ({@link FormedDoors}). On a server, where the use is
- * decided.
+ * used. A door used from any of its blocks shuts or opens ({@link FormedDoors}). Decided on a server, once a click,
+ * whichever hands a player's game tries.
  */
 public final class FormedPieceUses {
 
@@ -73,28 +74,31 @@ public final class FormedPieceUses {
     }
 
     /*
-     * A block used on a server: a door shuts or opens ({@link FormedDoors}); a piece that works by another block is
-     * used through that one.
+     * A block used: a door shuts or opens ({@link FormedDoors}); a piece that works by another block is used through
+     * that one. A click is tried with one hand, then the other while the first passes: it is taken whole here, on the
+     * player's game too so no other hand is tried, and acted on once, on the server, for the main hand.
      */
     private static void onUse(final PlayerInteractEvent.RightClickBlock event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel level)) {
-            return;
-        }
+        final Level level = event.getLevel();
         final Vec3 at = event.getHitVec().getLocation();
         final Optional<FormedDoors.Door> door = FormedDoors.at(level, event.getPos(), at);
-        if (door.isPresent()) {
-            event.setCanceled(true);
-            event.setCancellationResult(FormedDoors.use(level, player, door.get()) ? InteractionResult.SUCCESS
-                    : InteractionResult.FAIL);
-            return;
-        }
-        final Optional<BlockPos> works = worksBy(level, event.getPos(), at);
-        if (works.isEmpty()) {
+        final Optional<BlockPos> works = door.isPresent() ? Optional.empty() : worksBy(level, event.getPos(), at);
+        if (door.isEmpty() && works.isEmpty()) {
             return;
         }
         event.setCanceled(true);
+        if (!(event.getEntity() instanceof ServerPlayer player) || !(level instanceof ServerLevel server)
+                || event.getHand() != InteractionHand.MAIN_HAND) {
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            return;
+        }
+        if (door.isPresent()) {
+            event.setCancellationResult(FormedDoors.use(server, player, door.get()) ? InteractionResult.SUCCESS
+                    : InteractionResult.FAIL);
+            return;
+        }
         event.setCancellationResult(InteractionResult.SUCCESS);
-        player.gameMode.useItemOn(player, level, event.getItemStack(), event.getHand(),
+        player.gameMode.useItemOn(player, server, event.getItemStack(), event.getHand(),
                 new BlockHitResult(at, event.getHitVec().getDirection(), works.get(), false));
     }
 }

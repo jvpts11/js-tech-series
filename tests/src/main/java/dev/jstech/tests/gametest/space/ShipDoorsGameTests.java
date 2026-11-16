@@ -49,9 +49,11 @@ import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -97,6 +99,9 @@ public final class ShipDoorsGameTests {
     private static final double NEAR_THE_LAND = 0.6;
     /* How far round its terminal a dock's grid is looked over, in blocks. */
     private static final int DOCK_ROUND = 24;
+    /* How finely a door's blocks are searched for a point a click finds the door at, a side in so many parts. */
+    private static final int SAMPLES = 32;
+    private static final double HALF = 0.5;
 
     private ShipDoorsGameTests() {
     }
@@ -116,6 +121,29 @@ public final class ShipDoorsGameTests {
                     + volume(level, door));
             helper.assertTrue(FormedDoors.use(level, crew, door) && !FormedDoors.shut(level, door)
                     && Math.abs(volume(level, door) - open) < 1.0e-9, "used again, it opens, its leaf gone from it");
+            GameTestPlayers.leave(crew);
+        }).thenSucceed();
+    }
+
+    /*
+     * A player's click moves a door once: a player's game, its main hand's use of the door's block passing there, tries
+     * the other hand too, and the second use must not move the door back.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void click_aPlayersClickMovesADoorOnceThoughBothHandsAreTried(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final PlannedBuild[] plan = new PlannedBuild[1];
+        build(helper, plan).thenExecute(() -> {
+            final ServerPlayer crew = GameTestPlayers.connected(helper, "jst-click-crew");
+            final FormedDoors.Door door = door(level, plan[0], WORKSHOP, ShipKitBlocks.PRESSURE_DOOR.getId(),
+                    ShipDoorRules.PRESSURE_DOOR);
+            final Vec3 at = pointOn(level, door);
+            final BlockHitResult hit = new BlockHitResult(at, Direction.NORTH, BlockPos.containing(at), false);
+            final boolean wasShut = FormedDoors.shut(level, door);
+            crew.gameMode.useItemOn(crew, level, ItemStack.EMPTY, InteractionHand.MAIN_HAND, hit);
+            crew.gameMode.useItemOn(crew, level, ItemStack.EMPTY, InteractionHand.OFF_HAND, hit);
+            helper.assertTrue(FormedDoors.shut(level, door) != wasShut, "clicked once, both hands tried, the door "
+                    + "moved: shut before " + wasShut + ", now " + FormedDoors.shut(level, door));
             GameTestPlayers.leave(crew);
         }).thenSucceed();
     }
@@ -352,6 +380,25 @@ public final class ShipDoorsGameTests {
     private static FormedDoors.Door door(final ServerLevel level, final PlannedBuild plan, final int part,
                                          final ResourceLocation block, final String piece) {
         return named(level, plan.where(spot(plan, part, block)), piece);
+    }
+
+    /* A point in {@code door}'s blocks where a click finds the door, as a player's would. */
+    private static Vec3 pointOn(final ServerLevel level, final FormedDoors.Door door) {
+        for (final BlockPos block : door.blocks()) {
+            for (int x = 0; x < SAMPLES; x++) {
+                for (int y = 0; y < SAMPLES; y++) {
+                    for (int z = 0; z < SAMPLES; z++) {
+                        final Vec3 at = new Vec3(block.getX() + (x + HALF) / SAMPLES, block.getY()
+                                + (y + HALF) / SAMPLES, block.getZ() + (z + HALF) / SAMPLES);
+                        if (FormedDoors.at(level, block, at).filter(found -> found.piece().equals(door.piece()))
+                                .isPresent()) {
+                            return at;
+                        }
+                    }
+                }
+            }
+        }
+        throw new IllegalStateException("no point of " + door.piece() + " finds it");
     }
 
     /* The door {@code piece} of the model the block at {@code pos} stands as. */
