@@ -85,14 +85,14 @@ public final class FlightConsoleBlock extends ShipFixtureBlock implements Entity
             return InteractionResult.PASS;
         }
         final BlockPos dock = LevelStructures.of(server).terminalHolding(pos);
-        // Started from its console, the ship goes, or its pilot is told why it cannot yet.
+        // Started from its console, the dock opens round the ship and lets it go, or its pilot is told why it cannot.
         if (dock != null && server.getBlockEntity(dock) instanceof ShipyardTerminalBlockEntity terminal) {
             final boolean[] told = new boolean[1];
-            final boolean went = terminal.release(player.getUUID(), why -> {
+            final boolean started = terminal.launch(player.getUUID(), why -> {
                 player.displayClientMessage(GameText.component(why), true);
                 told[0] = true;
-            }).isPresent();
-            return went || told[0] ? InteractionResult.CONSUME : InteractionResult.PASS;
+            });
+            return started || told[0] ? InteractionResult.CONSUME : InteractionResult.PASS;
         }
         return InteractionResult.PASS;
     }

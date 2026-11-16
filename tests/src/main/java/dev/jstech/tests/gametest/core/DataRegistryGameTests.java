@@ -8,10 +8,15 @@
 package dev.jstech.tests.gametest.core;
 
 import dev.jstech.core.data.DataRegistries;
+import dev.jstech.core.data.DataRegistryPayload;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestData;
+import io.netty.buffer.Unpooled;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -31,8 +36,40 @@ public final class DataRegistryGameTests {
     private static final ResourceLocation SECOND = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "second");
     private static final ResourceLocation BROKEN = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "broken");
     private static final ResourceLocation REFUSED = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "refused");
+    /* A registry of forty values of sixty-four thousand bytes each: more than one message's tag may hold. */
+    private static final int BIG_VALUES = 40;
+    private static final int BIG_VALUE_INTS = 16_384;
 
     private DataRegistryGameTests() {
+    }
+
+    /*
+     * A synced registry bigger than one message's tag may be, as the formed shapes of many machines are, still reaches
+     * a joining player's game whole: sent as it is, the message's tag was refused as it was read, and the player was
+     * dropped from the server.
+     */
+    @GameTest(template = ARENA)
+    public static void dataRegistry_tooBigForOneMessageStillReachesThePlayerWhole(final GameTestHelper helper) {
+        final ResourceLocation registry = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "big");
+        final CompoundTag entries = new CompoundTag();
+        for (int value = 0; value < BIG_VALUES; value++) {
+            final CompoundTag each = new CompoundTag();
+            each.putIntArray("boxes", new int[BIG_VALUE_INTS]);
+            entries.put(JsTests.MODID + ":value_" + value, each);
+        }
+        final CompoundTag read = new CompoundTag();
+        final List<DataRegistryPayload> sent = DataRegistryPayload.parts(registry, entries);
+        for (final DataRegistryPayload part : sent) {
+            final RegistryFriendlyByteBuf wire = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                    helper.getLevel().registryAccess());
+            DataRegistryPayload.STREAM_CODEC.encode(wire, part);
+            read.merge(DataRegistryPayload.STREAM_CODEC.decode(wire).entries());
+        }
+        helper.assertTrue(sent.size() > 1 && sent.getLast().last(), "it goes in parts, the last saying so: "
+                + sent.size());
+        helper.assertTrue(read.getAllKeys().equals(entries.getAllKeys()), "every value reaches the player's game: "
+                + read.size() + " of " + entries.size());
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

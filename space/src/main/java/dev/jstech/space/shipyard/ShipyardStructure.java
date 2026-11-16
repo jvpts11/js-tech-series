@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -31,17 +32,23 @@ import net.minecraft.world.phys.Vec3;
  * to both; the crane's bridge across the bay on the rails, a floodlight on each corner tower; on the east side at the
  * back the control booth, on the first walkway, its door to the walkway, the terminal the console under its windows on
  * the bay and a bench at its back with room for a computer; at its foot the item port; and a feeder on each first
- * walkway's edge. The front, to the north, is open. Its walls and floor are the ground it is dug in, whatever that
- * is.
+ * walkway's edge. The front, to the north, is open. Its walls are the ground it is dug in, whatever that is; its floor
+ * a deck of Ship Pad Plates over the whole pit.
+ *
+ * <p>It stands two ways (space/docs/design/starships.md): closed, its deck in the layer under the pit's floor, its crane
+ * over the bay and its cradle up; open, as it lets a ship go or waits for one, its deck risen to the ground's top layer,
+ * its crane rolled to the back of the bay and no cradle, the pit under the deck no part of it.
  *
  * <p>It is drawn as it stands facing north, the open front to the north, as its formed model is made: across, x, from
  * the west tower line at -11 to the booth's outer wall at 11, the bay's middle between 0 and -1; up, y, from the
- * pit's floor at -3 to the crane at 11, the ground's top at 0; along, z, from the front at -13 to the back at 13.
+ * deck closed at -4 to the crane at 11, the ground's top layer at -1; along, z, from the front at -13 to the back at 13.
  */
 public final class ShipyardStructure {
 
-    /** The pattern's id, and its file's. */
+    /** The pattern's id, and its file's: the dock closed; and open. */
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "small_shipyard");
+    public static final ResourceLocation OPEN_ID = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
+            "small_shipyard_open");
     public static final String TERMINAL = block("shipyard_terminal");
     public static final String TOWER = block("dock_tower");
     public static final String RAIL = block("dock_rail");
@@ -55,10 +62,20 @@ public final class ShipyardStructure {
     public static final String CRADLE = block("cradle_clamp");
     public static final String RIM = block("pit_rim");
     public static final String ITEM_PORT = block("item_port");
+    public static final String DECK = block("ship_pad_plate");
+    /**
+     * Where the crane's bridge stands closed, over the bay, and open, at the back of the bay, its end trucks clear of
+     * the corner floodlights.
+     */
+    public static final int CRANE_AT = 1;
+    public static final int CRANE_PARKED = 11;
+    /** The layer of the floor's deck closed, under the pit's floor, and open, the ground's top layer. */
+    public static final int DECK_DOWN = -4;
+    public static final int DECK_UP = -1;
     /* The box the pattern is drawn in, in the dock's own blocks. */
     private static final int WEST = -11;
     private static final int EAST = 11;
-    private static final int BOTTOM = -3;
+    private static final int BOTTOM = DECK_DOWN;
     private static final int TOP = 11;
     private static final int FRONT = -13;
     private static final int BACK = 13;
@@ -80,7 +97,6 @@ public final class ShipyardStructure {
     private static final Set<Integer> WALKS = Set.of(3, 7);
     /* The crane's bridge, over the rails; the floodlights, on the corner towers. */
     private static final int CRANE = 11;
-    private static final int CRANE_AT = 1;
     /* The stair, up the west side from the ground at the back to the second walkway, past the first. */
     private static final int STAIR_LINE = -9;
     private static final int STAIR_FOOT = 13;
@@ -116,6 +132,7 @@ public final class ShipyardStructure {
     private static final int ROOM_TOP = 9;
     private static final char NONE = MultiblockPattern.IGNORE_CHAR;
     private static final char PIT = 'x';
+    private static final char FLOOR = 'K';
     /*
      * The robot arms' rails, each across from the bay's middle and from one end to the other along it, where the
      * arm's base may stand: the feeder of each side between its two; the west back one short of the stair. Each
@@ -131,7 +148,9 @@ public final class ShipyardStructure {
     private static final double ARM_FORE = 4.6;
     private static final double HALF = 0.5;
 
-    public static final MultiblockPattern PATTERN = MultiblockPatterns.declare(ID, pattern());
+    /** The dock closed, as it is built and projected; and open. */
+    public static final MultiblockPattern PATTERN = MultiblockPatterns.declare(ID, pattern(false));
+    public static final MultiblockPattern OPEN_PATTERN = MultiblockPatterns.declare(OPEN_ID, pattern(true));
 
     private ShipyardStructure() {
     }
@@ -157,6 +176,31 @@ public final class ShipyardStructure {
         final int[] at = dockOf(0, 0, 0);
         final int[] off = dock.apply(at[0] - TERMINAL_X, at[1] - BOOTH_FLOOR, at[2] - TERMINAL_Z);
         return terminal.offset(off[0], off[1], off[2]);
+    }
+
+    /**
+     * The places in the world of the crane's bridge of a dock whose terminal is at {@code terminal}, standing as
+     * {@code dock} says: over the bay closed, at the back of the bay {@code open}; across the bay, west to east.
+     */
+    public static List<BlockPos> cranePlaces(final BlockPos terminal, final Orientation dock, final boolean open) {
+        return places(terminal, dock, open, 'B');
+    }
+
+    /** The places in the world of the floor's deck, closed under the pit's floor, {@code open} at the ground's top. */
+    public static List<BlockPos> deckPlaces(final BlockPos terminal, final Orientation dock, final boolean open) {
+        return places(terminal, dock, open, FLOOR);
+    }
+
+    /** The places in the world of the cradle's blocks, which stand only while the dock is closed. */
+    public static List<BlockPos> cradlePlaces(final BlockPos terminal, final Orientation dock) {
+        return places(terminal, dock, false, 'C');
+    }
+
+    /** The bay's room in the world: over the pit, from its floor closed up to under the crane's trolley. */
+    public static AABB bay(final BlockPos terminal, final Orientation dock) {
+        final AABB deck = AABB.encapsulatingFullBlocks(deckPlaces(terminal, dock, false).getFirst(),
+                deckPlaces(terminal, dock, false).getLast());
+        return deck.setMinY(deck.maxY).setMaxY(deck.maxY + ROOM_TOP - PIT_FLOOR + 1);
     }
 
     /**
@@ -186,7 +230,7 @@ public final class ShipyardStructure {
      */
     public static boolean holds(final int x, final int y, final int z) {
         final int[] at = dockOf(x, y, z);
-        return pit(at[0], at[2]) && at[1] >= 0 && at[1] <= ROOM_TOP && letter(at[0], at[1], at[2]) == NONE;
+        return pit(at[0], at[2]) && at[1] >= 0 && at[1] <= ROOM_TOP && letter(at[0], at[1], at[2], false) == NONE;
     }
 
     /* The point ({@code x}, {@code y}, {@code z}) of the dock in the world, turning about its terminal's block. */
@@ -203,15 +247,15 @@ public final class ShipyardStructure {
                 dock.zSign() * in[dock.zFrom()]);
     }
 
-    /* The pattern, layer by layer from the pit's floor, each letter where the layout puts it. */
-    private static MultiblockPattern pattern() {
-        final MultiblockPattern.Builder builder = MultiblockPattern.builder("small_shipyard");
+    /* The pattern, closed or {@code open}, layer by layer from the deck closed, each letter where the layout puts it. */
+    private static MultiblockPattern pattern(final boolean open) {
+        final MultiblockPattern.Builder builder = MultiblockPattern.builder((open ? OPEN_ID : ID).getPath());
         for (int y = BOTTOM; y <= TOP; y++) {
             final String[] rows = new String[BACK - FRONT + 1];
             for (int z = FRONT; z <= BACK; z++) {
                 final StringBuilder row = new StringBuilder(EAST - WEST + 1);
                 for (int x = WEST; x <= EAST; x++) {
-                    row.append(letter(x, y, z));
+                    row.append(letter(x, y, z, open));
                 }
                 rows[z - FRONT] = row.toString();
             }
@@ -230,31 +274,32 @@ public final class ShipyardStructure {
                 .where('C', BlockMatch.blocks(CRADLE))
                 .where('R', BlockMatch.blocks(RIM))
                 .where('I', BlockMatch.blocks(ITEM_PORT))
+                .where(FLOOR, BlockMatch.blocks(DECK))
                 .port('I', PortKind.ITEM_INPUT)
                 .inside(PIT, InsideRule.empty())
                 .terminal(TERMINAL)
                 // Its terminal, against the windows on the bay, faces east into the booth, as a player there places it.
                 .terminalFaces(Orientation.EAST)
-                // The layer at 0 stands on the ground; the pit's three under it are dug into it.
+                // The layer at 0 stands on the ground; the pit's three under it and the deck's are dug into it.
                 .ground(-BOTTOM)
                 .build();
     }
 
-    /* What stands at ({@code x}, {@code y}, {@code z}) of the dock. */
-    private static char letter(final int x, final int y, final int z) {
+    /* What stands at ({@code x}, {@code y}, {@code z}) of the dock, closed or {@code open}. */
+    private static char letter(final int x, final int y, final int z, final boolean open) {
         if (x == TERMINAL_X && y == BOOTH_FLOOR && z == TERMINAL_Z) {
             return MultiblockPattern.TERMINAL_CHAR;
         }
         if (y < GROUND || y == GROUND && pit(x, z)) {
-            return below(x, y, z);
+            return below(x, y, z, open);
         }
         if (y == GROUND) {
             return rim(x, z) ? 'R' : NONE;
         }
-        if (STATIONS.contains(z) && y <= CRADLE_TOP && (COLUMNS.contains(x) || JAWS.contains(x))) {
+        if (!open && STATIONS.contains(z) && y <= CRADLE_TOP && (COLUMNS.contains(x) || JAWS.contains(x))) {
             return 'C';
         }
-        final char frame = frame(x, y, z);
+        final char frame = frame(x, y, z, open);
         if (frame != NONE) {
             return frame;
         }
@@ -264,9 +309,19 @@ public final class ShipyardStructure {
         return fitting(x, y, z);
     }
 
-    /* In the pit, under the ground's top: the cradle's columns and its cross beam, and the clear pit round them. */
-    private static char below(final int x, final int y, final int z) {
-        if (!pit(x, z) || y < PIT_FLOOR) {
+    /*
+     * In the pit, under the ground's top: closed, the deck under the pit's floor, the cradle's columns and its cross
+     * beam, and the clear pit round them; {@code open}, the deck risen to the ground's top layer, the pit under it no
+     * part of the dock.
+     */
+    private static char below(final int x, final int y, final int z, final boolean open) {
+        if (!pit(x, z) || y < DECK_DOWN) {
+            return NONE;
+        }
+        if (y == (open ? DECK_UP : DECK_DOWN)) {
+            return FLOOR;
+        }
+        if (open || y < PIT_FLOOR) {
             return NONE;
         }
         if (STATIONS.contains(z) && (COLUMNS.contains(x) || y == GROUND && x >= BEAM_WEST && x <= BEAM_EAST)) {
@@ -275,8 +330,11 @@ public final class ShipyardStructure {
         return PIT;
     }
 
-    /* The towers and the rails on them, the girders and the walkways, the crane, the floodlights and the stair. */
-    private static char frame(final int x, final int y, final int z) {
+    /*
+     * The towers and the rails on them, the girders and the walkways, the crane over the bay or, {@code open}, at the
+     * back of the bay, the floodlights and the stair.
+     */
+    private static char frame(final int x, final int y, final int z, final boolean open) {
         final boolean line = x == WEST_LINE || x == EAST_LINE;
         if (line && TOWERS.contains(z) && y <= TOWER_TOP) {
             return 'T';
@@ -293,7 +351,7 @@ public final class ShipyardStructure {
         if ((x == WEST_WALK || x == EAST_WALK) && WALKS.contains(y)) {
             return 'W';
         }
-        if (y == CRANE && z == CRANE_AT && x >= WEST_LINE && x <= EAST_LINE) {
+        if (y == CRANE && z == (open ? CRANE_PARKED : CRANE_AT) && x >= WEST_LINE && x <= EAST_LINE) {
             return 'B';
         }
         if (y == CRANE && line && (z == FRONT || z == BACK)) {
@@ -341,6 +399,23 @@ public final class ShipyardStructure {
     }
 
     /* Whether ({@code x}, {@code z}) is over the pit. */
+    /* The places in the world of every {@code letter} of the dock, closed or {@code open}, in the pattern's order. */
+    private static List<BlockPos> places(final BlockPos terminal, final Orientation dock, final boolean open,
+                                         final char letter) {
+        final List<BlockPos> out = new ArrayList<>();
+        for (int y = BOTTOM; y <= TOP; y++) {
+            for (int z = FRONT; z <= BACK; z++) {
+                for (int x = WEST; x <= EAST; x++) {
+                    if (letter(x, y, z, open) == letter) {
+                        final int[] off = dock.apply(x - TERMINAL_X, y - BOOTH_FLOOR, z - TERMINAL_Z);
+                        out.add(terminal.offset(off[0], off[1], off[2]));
+                    }
+                }
+            }
+        }
+        return List.copyOf(out);
+    }
+
     private static boolean pit(final int x, final int z) {
         return x > WEST_RIM && x < EAST_RIM && z >= PIT_FRONT && z <= PIT_BACK;
     }

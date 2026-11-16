@@ -10,6 +10,7 @@ package dev.jstech.tests.testkit.space;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.landing.ShipLandingBlocks;
 import dev.jstech.space.shipyard.ShipyardBlocks;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import java.util.Map;
@@ -35,20 +36,23 @@ public final class TestShipyards {
             Map.entry('S', ShipyardBlocks.STAIRS.get()), Map.entry('B', ShipyardBlocks.GANTRY.get()),
             Map.entry('F', ShipyardBlocks.FLOODLIGHT.get()), Map.entry('P', ShipyardBlocks.BOOTH.get()),
             Map.entry('D', ShipyardBlocks.FEEDER.get()), Map.entry('C', ShipyardBlocks.CRADLE.get()),
-            Map.entry('R', ShipyardBlocks.RIM.get()), Map.entry('I', HangarBlocks.ITEM_PORT.get()));
+            Map.entry('R', ShipyardBlocks.RIM.get()), Map.entry('I', HangarBlocks.ITEM_PORT.get()),
+            Map.entry('K', ShipLandingBlocks.PLATE.get()));
     /*
-     * The ground round the pit, as far as the dock reaches and a block beyond: from under the pit's floor, a block
-     * below the pattern's lowest layer, up to the layer the rim lies in, four blocks in all.
+     * The ground round the pit, as far as the dock reaches and a block beyond: from under the floor's deck, a block
+     * below the pattern's lowest layer, up to the layer the rim lies in, five blocks in all; the deck lies a layer
+     * under the pit's floor, the place the dock is built from.
      */
     private static final int MARGIN = 1;
-    private static final int GROUND_DEPTH = 4;
+    private static final int GROUND_DEPTH = 5;
+    private static final int UNDER_THE_PIT = 1;
     private static final char PIT = 'x';
 
     private TestShipyards() {
     }
 
     /**
-     * Builds the dock with the lowest corner of its pattern, the pit's floor's west front corner, at {@code corner},
+     * Builds the dock closed with the pit's floor's west front corner at {@code corner}, its floor's deck under it,
      * and returns where its terminal stands.
      */
     public static BlockPos build(final ServerLevel level, final BlockPos corner) {
@@ -56,11 +60,24 @@ public final class TestShipyards {
     }
 
     /**
-     * Builds the dock standing as {@code turn} says, the lowest corner of the box it stands in at {@code corner}, and
-     * returns where its terminal stands.
+     * Builds the dock closed standing as {@code turn} says, the pit's floor's lowest corner of the box it stands in
+     * at {@code corner}, and returns where its terminal stands.
      */
     public static BlockPos build(final ServerLevel level, final BlockPos corner, final Orientation turn) {
-        final MultiblockPattern pattern = ShipyardStructure.PATTERN;
+        return build(level, corner, turn, ShipyardStructure.PATTERN);
+    }
+
+    /**
+     * Builds the dock open, as {@link #build(ServerLevel, BlockPos)} builds it closed: its crane at the back of the
+     * bay, its floor's deck up at the ground's top, no cradle.
+     */
+    public static BlockPos buildOpen(final ServerLevel level, final BlockPos corner) {
+        return build(level, corner, Orientation.NORTH, ShipyardStructure.OPEN_PATTERN);
+    }
+
+    /* Builds the dock as {@code pattern} lays it out, standing as {@code turn} says. */
+    private static BlockPos build(final ServerLevel level, final BlockPos corner, final Orientation turn,
+                                  final MultiblockPattern pattern) {
         // The box the dock stands in, from its terminal: each corner of the pattern turned.
         final int[] low = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE};
         final int[] high = {Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};
@@ -73,10 +90,10 @@ public final class TestShipyards {
                 }
             }
         }
-        final BlockPos terminal = corner.offset(-low[0], pattern.terminalY(), -low[2]);
+        final BlockPos terminal = corner.offset(-low[0], pattern.terminalY() - UNDER_THE_PIT, -low[2]);
         for (int x = low[0] - MARGIN; x <= high[0] + MARGIN; x++) {
             for (int z = low[2] - MARGIN; z <= high[2] + MARGIN; z++) {
-                for (int y = corner.getY() - 1; y < corner.getY() + GROUND_DEPTH - 1; y++) {
+                for (int y = corner.getY() - UNDER_THE_PIT - 1; y < corner.getY() + GROUND_DEPTH - 2; y++) {
                     level.setBlock(new BlockPos(terminal.getX() + x, y, terminal.getZ() + z), Blocks.STONE
                             .defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
@@ -105,12 +122,12 @@ public final class TestShipyards {
     }
 
     /**
-     * Where the terminal stands of a dock built facing north with the lowest corner of its pattern at {@code corner},
-     * as {@link #build(ServerLevel, BlockPos)} builds it.
+     * Where the terminal stands of a dock built facing north with the pit's floor's west front corner at
+     * {@code corner}, as {@link #build(ServerLevel, BlockPos)} builds it.
      */
     public static BlockPos terminalOf(final BlockPos corner) {
         final MultiblockPattern pattern = ShipyardStructure.PATTERN;
-        return corner.offset(pattern.terminalX(), pattern.terminalY(), pattern.terminalZ());
+        return corner.offset(pattern.terminalX(), pattern.terminalY() - UNDER_THE_PIT, pattern.terminalZ());
     }
 
     /* Where the pattern's place ({@code x}, {@code y}, {@code z}) stands from its terminal, turned. */

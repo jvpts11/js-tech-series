@@ -96,6 +96,11 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     private final PlanArms arms;
     private final PartField armsField;
     private final PlanAssembler assembler;
+    /* Its crane, its floor and its cradle as they open and close, sent to the players who see them. */
+    private final ShipyardDoors doors;
+    private final PartField doorsField;
+    /* Whether its design is sent to it once it has closed, a design sent while it stood open. */
+    private final ValueField<Boolean> sendOnClose;
     /* The plan being built, on the server, while its chunks are loaded; and whether it is to start. */
     private @Nullable PlannedBuild build;
     private boolean pending;
@@ -122,7 +127,11 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
 
     public ShipyardTerminalBlockEntity(final BlockPos pos, final BlockState state) {
         super(ShipyardBlocks.TERMINAL_ENTITY.get(), pos, state, 0, MachineEnergy.fe(0, 0, 0));
-        this.structure = MachineStructure.of(ShipyardStructure.PATTERN).merges();
+        // Closed, as it builds and changes ships, or open, as it lets one go or waits for one; held as it stood while
+        // its crane and its floor move.
+        this.doors = new ShipyardDoors(this, this::doorsChanged);
+        this.structure = MachineStructure.of(ShipyardStructure.PATTERN).or(ShipyardStructure.OPEN_PATTERN).merges()
+                .holdWhile(this.doors::moving);
         formsWith(this.structure);
         this.design = fields().value("Design", ShipDesign.CODEC, EMPTY).save().toClient();
         this.plans = fields().value("Plans", ShipDesign.CODEC.listOf(0, MOST_PLANS), List.<ShipDesign>of()).save()
@@ -141,24 +150,35 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         this.armsField = fields().part("Arms", this.arms).save().toClient();
         this.assembler = new PlanAssembler(pos, this::setChanged).arms(this.arms);
         fields().part(PlanAssembler.KEY, this.assembler).save();
+        this.doorsField = fields().part("Doors", this.doors).save().toClient();
+        this.sendOnClose = fields().value("SendOnClose", Codec.BOOL, false).save();
         // Loaded, it starts building again once the chunks its plan stands in are loaded too, unless it already is.
         fields().whenLoaded(level -> this.pending = this.build == null && this.plan.get() != null);
         fields().whenBroken((level, at) -> {
             stopBuild(true);
             this.assembler.spill(level, at);
+            this.doors.broken(level, at);
         });
     }
 
-    /** One server tick: the machine's, then its plan started once all of it is loaded, and its arms at work. */
+    /**
+     * One server tick: the machine's, then its plan started once all of it is loaded, its arms at work, and its crane
+     * and its floor on their way as it opens or closes.
+     */
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final ShipyardTerminalBlockEntity terminal) {
         MachineBlockEntity.serverTick(level, pos, state, terminal);
+        if (level instanceof ServerLevel server) {
+            terminal.doors.tick(server);
+        }
         // A plan waiting for its chunks is laid out again once a second, not every tick: laying a ship out costs.
         if (terminal.pending && --terminal.pendingWait <= 0) {
             terminal.pendingWait = PENDING_RETRY;
             terminal.startBuild();
         }
-        if (terminal.build != null && level instanceof ServerLevel server) {
+        // Its arms reach the ship only round its cradle: they work while the dock stands closed.
+        if (terminal.build != null && terminal.doors() == ShipyardDoors.State.CLOSED
+                && level instanceof ServerLevel server) {
             terminal.assembler.tick(server);
         }
     }
@@ -207,6 +227,46 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     /** Whether its dock stands whole. */
     public boolean formed() {
         return this.structure.formed();
+    }
+
+    /** Whether its dock stands whole and open: its crane at the back of the bay, its floor up, no cradle. */
+    public boolean open() {
+        return formed() && this.structure.shape() == ShipyardStructure.OPEN_PATTERN;
+    }
+
+    /** How its crane, its floor and its cradle stand or move. */
+    public ShipyardDoors.State doors() {
+        return this.doors.state();
+    }
+
+    /** How far its moving part has gone at the game's tick {@code now}, from 0 to 1, as the players' games draw it. */
+    public double doorsProgress(final double now) {
+        return this.doors.progress(now);
+    }
+
+    /** How its dock stands, once formed. */
+    public Optional<Orientation> turn() {
+        return this.structure.orientation().filter(Orientation.turns()::contains);
+    }
+
+    /**
+     * Starts the ship built whole in its dock, as its pilot {@code by} does from its flight console: the dock opens
+     * round it and lets it go once the ship stands on its gear on the open floor. Whether the dock began to open; told
+     * why when it cannot: the ship not whole, the dock moving, something in its way.
+     */
+    public boolean launch(final @Nullable UUID by, final Consumer<Text> told) {
+        if (!(this.level instanceof ServerLevel server) || !whole(told)) {
+            return false;
+        }
+        if (open() && !this.doors.moving()) {
+            // Open already round it, as a ship that could not go before: it goes now.
+            return release(by, told).isPresent();
+        }
+        if (!this.doors.open(server, by, true, told)) {
+            return false;
+        }
+        told.accept(ShipyardDoorTexts.OPENING.text());
+        return true;
     }
 
     /** The design on its builder's screen. */
@@ -340,6 +400,18 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
      * plan built before comes apart, its formed parts' blocks given back, unless it is the same plan, which goes on.
      */
     public boolean confirm() {
+        if (this.doors.moving()) {
+            return false;
+        }
+        // Sent to its dock standing open, the dock closes first, for its arms to build the ship in its cradle.
+        if (open()) {
+            if (!(this.level instanceof ServerLevel server) || !ready(server, design())
+                    || !this.doors.close(server, why -> { })) {
+                return false;
+            }
+            this.sendOnClose.set(true);
+            return true;
+        }
         return send(design());
     }
 
@@ -363,6 +435,10 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         final ShipDesign design = this.plan.get();
         final BlockPos at = this.planAt.get();
         if (!(this.level instanceof ServerLevel server) || built == null || design == null || at == null) {
+            return Optional.empty();
+        }
+        if (this.doors.moving()) {
+            told.accept(ShipyardDoorTexts.MOVING.text());
             return Optional.empty();
         }
         // Every part formed: a hole in one goes with it, mended wherever a block is put back.
@@ -403,10 +479,15 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
             }
             return Optional.empty();
         }
-        keeper.carry(new ShipAboard(design, at.subtract(seat.get()), this.planTurn.get(), formed));
+        // Its blocks came into the structure at once where its plot stood loaded, its console's block entity with
+        // them, a new one there: the console is told where it stands now, or, its blocks still to come, where it was.
+        final BlockPos keeps = BlockPos.containing(MovingStructures.toYard(made.structure(),
+                Vec3.atCenterOf(seat.get())));
+        final AirReserveEntity helm = server.getBlockEntity(keeps) instanceof AirReserveEntity aboard ? aboard : keeper;
+        helm.carry(new ShipAboard(design, at.subtract(seat.get()), this.planTurn.get(), formed));
         // Its pilot who started it owns it, their team its crew; a ship back from a dock keeps its crew.
-        if (by != null && keeper.crew().isEmpty()) {
-            keeper.crew(ShipCrew.of(by, CoreTeams.nameOf(server.getServer(), by).orElse("")));
+        if (by != null && helm.crew().isEmpty()) {
+            helm.crew(ShipCrew.of(by, CoreTeams.nameOf(server.getServer(), by).orElse("")));
         }
         if (by != null) {
             SpaceFirsts.starship(server.getServer(), by);
@@ -414,12 +495,11 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         // It flies from now on as its pilot sends it, its nose the way its plan laid it, by what its parts weigh and
         // push, at rest until then, its console showing its flight.
         final int[] nose = planTurn().apply(0, 0, -1);
-        final BlockPos keeps = BlockPos.containing(MovingStructures.toYard(made.structure(),
-                Vec3.atCenterOf(seat.get())));
         MovingStructures.move(made.structure(), ShipFlight.resting(nose[0], nose[2], ShipFlight.performance(design,
                 ShipParts.all(server)), Optional.of(ShipFlight.fromPivot(made.structure(), keeps))));
         this.plan.set(null);
         this.planAt.set(null);
+        this.doors.shipLetGo();
         this.formedParts.set(List.of());
         this.missingParts.set(List.of());
         this.holes.set(List.of());
@@ -430,13 +510,14 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     /**
      * Takes the ship {@code ship} back onto the grid, a moving structure come into its bay: set down where its plan
      * goes in this dock, as the dock stands, each block and what it keeps as it was; the dock keeps its plan again,
-     * to change by its arms or by hand, and to let go once more. Whether it did: not while the dock is not formed or
-     * builds another ship, nor for a structure with no console keeping a ship's plan, or that cannot be set down.
+     * to change by its arms or by hand, and to let go once more; a dock standing open closes round it. Whether it did:
+     * not while the dock is not formed, moves or builds another ship, nor for a structure with no console keeping a
+     * ship's plan, or that cannot be set down.
      */
     public boolean seat(final MovingStructure ship) {
         final Optional<Orientation> dock = this.structure.orientation();
         if (!(this.level instanceof ServerLevel server) || !formed() || dock.isEmpty() || this.plan.get() != null
-                || !Orientation.turns().contains(dock.get())) {
+                || !Orientation.turns().contains(dock.get()) || this.doors.moving()) {
             return false;
         }
         final Optional<BlockPos> console = consoleIn(server, ship);
@@ -475,6 +556,9 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         this.planTurn.set(FormedShapes.ORIENTATIONS.indexOf(dock.get()));
         setChanged();
         startBuild();
+        if (open()) {
+            this.doors.close(server, why -> { });
+        }
         return true;
     }
 
@@ -558,6 +642,36 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         setChanged();
         startBuild();
         return true;
+    }
+
+    /* Whether the ship planned in its dock stands whole with its flight console, as it must to go; told why not. */
+    private boolean whole(final Consumer<Text> told) {
+        final PlannedBuild built = this.build;
+        if (built == null || this.plan.get() == null || this.planAt.get() == null || this.level == null) {
+            return false;
+        }
+        if (built.formedParts().size() < built.plan().parts()) {
+            told.accept(ShipFixtureTexts.NOT_WHOLE.text());
+            return false;
+        }
+        final ResourceLocation console = ShipKitBlocks.FLIGHT_CONSOLE.getId();
+        return built.plan().spots().stream().anyMatch(spot -> spot.block().equals(console)
+                && this.level.getBlockEntity(built.where(spot)) instanceof AirReserveEntity);
+    }
+
+    /* Its doors closed: a design sent while it stood open is sent now, for its arms to build. */
+    void doorsClosed() {
+        if (this.sendOnClose.get()) {
+            this.sendOnClose.set(false);
+            send(design());
+        }
+        setChanged();
+    }
+
+    /* Its doors moved on: the players who see it are told. */
+    private void doorsChanged() {
+        this.doorsField.changed();
+        setChanged();
     }
 
     /* Where in {@code ship}'s blocks the flight console keeping a ship's plan stands, if one does. */

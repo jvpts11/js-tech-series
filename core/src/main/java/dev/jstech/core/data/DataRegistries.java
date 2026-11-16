@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,9 +37,11 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  */
 public final class DataRegistries {
 
-    private static final String NETWORK_VERSION = "1";
+    private static final String NETWORK_VERSION = "2";
     private static final List<DataRegistry<?>> ALL = new CopyOnWriteArrayList<>();
     private static final Map<ResourceLocation, DataRegistry<?>> BY_ID = new ConcurrentHashMap<>();
+    /* On a player's game: the values of each registry come so far, while its last part has yet to come. */
+    private static final Map<ResourceLocation, CompoundTag> COMING = new ConcurrentHashMap<>();
 
     private DataRegistries() {
     }
@@ -77,6 +80,7 @@ public final class DataRegistries {
 
     /** The player's game left the server: the values it sent are forgotten. */
     public static void forgetClientValues() {
+        COMING.clear();
         ALL.forEach(DataRegistry::forgetClientValues);
     }
 
@@ -92,25 +96,38 @@ public final class DataRegistries {
         final List<ServerPlayer> receiving = players.toList();
         for (final DataRegistry<?> registry : ALL) {
             if (registry.synced()) {
-                final DataRegistryPayload payload = new DataRegistryPayload(registry.id(),
+                // In as many parts as keep each message's tag one a player's game reads.
+                final List<DataRegistryPayload> parts = DataRegistryPayload.parts(registry.id(),
                         registry.encode(server.registryAccess()));
                 /*
                  * Only to a game that took the payload when it joined: a player made by a test, or by another mod,
                  * stands on a connection that agreed on nothing, and sending it what it does not know is an error.
                  */
                 receiving.stream().filter(player -> player.connection.hasChannel(DataRegistryPayload.TYPE))
-                        .forEach(player -> PacketDistributor.sendToPlayer(player, payload));
+                        .forEach(player -> parts.forEach(part -> PacketDistributor.sendToPlayer(player, part)));
             }
         }
     }
 
-    /* Runs on a player's game: the payload is only ever sent to one. */
+    /*
+     * Runs on a player's game, the payload only ever sent to one: each part's values gathered, from the first on, and
+     * the registry's values taken once its last part has come.
+     */
     private static void onValues(final DataRegistryPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> {
             final DataRegistry<?> registry = BY_ID.get(payload.registry());
-            if (registry != null) {
-                registry.acceptFromServer(payload.entries(), context.player().registryAccess());
+            if (registry == null) {
+                return;
             }
+            final CompoundTag whole = payload.part() == 0 ? new CompoundTag()
+                    : COMING.getOrDefault(payload.registry(), new CompoundTag());
+            whole.merge(payload.entries());
+            if (!payload.last()) {
+                COMING.put(payload.registry(), whole);
+                return;
+            }
+            COMING.remove(payload.registry());
+            registry.acceptFromServer(whole, context.player().registryAccess());
         });
     }
 

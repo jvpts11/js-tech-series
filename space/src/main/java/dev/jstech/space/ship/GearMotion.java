@@ -33,6 +33,11 @@ public final class GearMotion {
         return new GearMotion(down ? 0 : 1);
     }
 
+    /** Gear {@code up} of the way up, from nought, all the way down, to one, all the way up. */
+    public static GearMotion at(final double up) {
+        return new GearMotion(Math.clamp(up, 0.0, 1.0));
+    }
+
     /** Moves it on {@code seconds}: toward all the way down while {@code down}, else toward all the way up. */
     public void advance(final double seconds, final boolean down) {
         final double step = Math.max(0, seconds) / CYCLE;

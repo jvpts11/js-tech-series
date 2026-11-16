@@ -1,5 +1,5 @@
 {
-  "ground": 3,
+  "ground": 4,
   "inside": {
     "letter": "x",
     "rule": {
@@ -41,6 +41,11 @@
         "jsspace:item_port"
       ]
     },
+    "K": {
+      "blocks": [
+        "jsspace:ship_pad_plate"
+      ]
+    },
     "L": {
       "blocks": [
         "jsspace:dock_rail"
@@ -73,6 +78,35 @@
     }
   },
   "layers": [
+    [
+      "                       ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "   KKKKKKKKKKKKKKKK    ",
+      "                       ",
+      "                       "
+    ],
     [
       "                       ",
       "   xxxxxxxxxxxxxxxx    ",

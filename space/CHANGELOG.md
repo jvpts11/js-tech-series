@@ -79,6 +79,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the player's game was sent, else the declared. Experimental.
 
 ### Added
+- The Small Shipyard opens round a finished ship and closes round one taken back, so any small ship leaves
+  and comes back: started from its flight console, the dock's crane rolls back along its rails to the back of the bay
+  in three seconds, its hook drawn up, then a floor of Ship Pad Plates rises from under the pit to the ground's top in
+  five as the cradle's rams sink and its jaws fold flat into it, and only then is the ship let go, standing on its own
+  gear: on wheels it rolls out of the open front, on legs it lifts off out of the open top. A ship set down on the
+  open floor and taken back has the dock close round it the same way back. A dock just formed with nothing to build
+  opens by itself and stands open, ready for a ship to come in; a design sent to it closes it for the arms to build.
+  Nothing starts that cannot finish: the pilot is told when something stands in the crane's or the floor's way, or
+  someone is in the pit; a dock broken while it moves sets its parts down and drops its cradle's blocks; a ship that
+  cannot go at the end has the dock close back round it, its plan kept. The ship in a closed dock has its gear
+  stowed, coming down as the floor rises to meet it.
 - The Small Shipyard's Item Port is a store with a screen: a hold of two rows of nine places a player fills
   by hand, and a chest, a hopper or a pipe fills too, which takes only the blocks the ship being built still lacks,
   no more of each than it lacks, and passes them on to the dock's arms. Its screen shows on a display across its top
@@ -961,6 +972,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A ship let go from a dock keeps its plan aboard however soon its blocks come into it: where they came in at
+  once, the plan was given to its flight console's block as it stood in the dock, left behind, and the ship flew with
+  none, its parts not drawn and no dock able to take it back.
 - A ship that runs into something is holed where it met it, its top going up and its nose going on, no longer
   always at its feet; and one that rises into what is over it stops climbing, where it ran into it again at once on
   every tick, as hard, and was holed away from the bottom up while its pilot held up.

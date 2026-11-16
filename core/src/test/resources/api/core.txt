@@ -3304,8 +3304,10 @@ stable 4
 10 dev.jstech.core.data.DataRegistry.Builder  Builder<T> onReload(Consumer<Map<ResourceLocation, T>>)
 10 dev.jstech.core.data.DataRegistry.Builder  Builder<T> synced()
 10 dev.jstech.core.data.DataRegistry.Builder  DataRegistry<T> register()
-10 dev.jstech.core.data.DataRegistryPayload  type record(ResourceLocation registry, CompoundTag entries) implements CustomPacketPayload
+65 dev.jstech.core.data.DataRegistryPayload  type record(ResourceLocation registry, CompoundTag entries, int part, int parts) implements CustomPacketPayload
 10 dev.jstech.core.data.DataRegistryPayload  Type<? extends CustomPacketPayload> type()
+65 dev.jstech.core.data.DataRegistryPayload  boolean last()
+65 dev.jstech.core.data.DataRegistryPayload  static List<DataRegistryPayload> parts(ResourceLocation, CompoundTag)
 10 dev.jstech.core.data.DataRegistryPayload  static final StreamCodec<ByteBuf, DataRegistryPayload> STREAM_CODEC
 10 dev.jstech.core.data.DataRegistryPayload  static final Type<DataRegistryPayload> TYPE
 10 dev.jstech.core.data.DeclaredData  type final class<T>
@@ -8199,6 +8201,7 @@ stable 4
 10 dev.jstech.core.machine.MachineStructure  MachineStructure formingAnimation(String)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure formingSound(SoundKey)
 12 dev.jstech.core.machine.MachineStructure  MachineStructure handsOn(InteractiveModel)
+64 dev.jstech.core.machine.MachineStructure  MachineStructure holdWhile(BooleanSupplier)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure merges()
 60 dev.jstech.core.machine.MachineStructure  MachineStructure or(IStructureShape)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure parallel(ToIntFunction<ShapeMatch.Formed>)

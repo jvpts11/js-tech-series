@@ -73,8 +73,9 @@ bunk is a respawn point only while its cabin has air.
 
 ### Building
 
-The **Small Shipyard** is a dry dock: a pit sixteen blocks wide and twenty-four long, dug three deep, with a rim of
-hazard concrete and a cradle of clamps rising from its floor; four lattice towers down each side, eleven blocks to the
+The **Small Shipyard** is a dry dock: a pit sixteen blocks wide and twenty-four long, dug three deep, its floor a deck
+of Ship Pad Plates on four lift rams, with a rim of hazard concrete and a cradle of clamps rising from the deck; four
+lattice towers down each side, eleven blocks to the
 rails of a gantry crane, with walkways at two heights and a stair; floodlights at the corners; at the back a control
 booth, and at its foot an **Item Port**. The pit must be clear. The booth is entered by its door: the **Shipyard
 Terminal** is the first half of its console under the windows on the bay, the parts list on the other half, and behind
@@ -107,10 +108,24 @@ grows, the yard's booth and the hangar's control room get **a place for a comput
 Computer runs AeroCAD and the other programs of the building, and J's Core's **network port** in the wall, which joins
 that computer to the network; both are optional places of the structure ([J's Computers](computers.md)).
 
-A ship built whole leaves the dock when its pilot uses its flight console: it becomes one moving structure, once, and
-stays one, standing still or flying. A ship is changed only in a dock: its pilot brings it into a free dock's bay and uses
-its console, and the dock takes it back onto the grid to change by the arms or by hand and let go again. A repair can be
-made anywhere, by putting the right block back.
+A ship built whole leaves the dock when its pilot uses its flight console, and the dock opens round it first, its
+crane and its floor real moving structures of J's Core's kit: the crane rolls back along its rails to the back of the
+bay, in about three seconds; then the ship's gear comes down, the floor rises three blocks to the level of the ground
+outside, and the cradle's rams sink into it as its jaws swing out and lie flat in their slots, in about five. Only
+then is the ship let go, standing on its own gear on the open floor: it becomes one moving structure, once, and stays
+one, standing still or flying. A ship on wheels rolls out of the dock's open front, one on legs rises out of its open
+top. Everything the release needs is checked before the dock opens and again at the end; a release that fails at the
+end closes the dock back round the ship, its plan kept, and its pilot is told why.
+
+An empty dock stands open, ready for a ship to come in, whether it has just formed or its plan was put away before
+anything was built. A ship comes back the same way it left: one on legs comes down through the open top onto the floor,
+one on wheels rolls in from the front. Its pilot uses its console, and the dock takes it back onto the grid, set
+straight in the bay, and closes round it: the cradle rises and closes on its hull as its gear folds and the floor goes
+down, then the crane rolls back over the bay. A design sent to an open, empty dock closes it the same way, for the arms
+to build. A ship is changed only in a dock, closed round it. A dock broken while it moves sets its moving parts down
+where they are and comes apart as any broken structure does, the cradle's blocks it held dropping as items. A repair
+can be made anywhere, by putting the right block back; in its dock, the arms put back what the ship lost, from the
+blocks that come in through the Item Port.
 
 ### A starship really flies
 

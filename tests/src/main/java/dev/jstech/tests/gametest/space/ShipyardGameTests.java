@@ -103,6 +103,17 @@ public final class ShipyardGameTests {
     private static final BlockPos WALKWAY = dock(-10, 3, 0);
     private static final BlockPos PORT = dock(10, 0, 9);
     private static final BlockPos PIT = dock(-5, -2, -9);
+    /*
+     * The floor's deck, closed under the pit's floor and open at the ground's top; the crane over the bay closed and
+     * parked at the back of the bay open; how near its block's top the deck's top stands, at least.
+     */
+    private static final BlockPos DECK_DOWN = dock(-5, -4, -9);
+    private static final BlockPos DECK_UP = dock(-5, -1, -9);
+    private static final BlockPos CRANE_OVER_THE_BAY = dock(0, 11, 1);
+    private static final BlockPos CRANE_PARKED = dock(0, 11, 11);
+    private static final double DECK_TOP = 0.05;
+    /* How long a dock is let stand before it is looked at, in ticks: past the checks a change waits for. */
+    private static final int SETTLED = 60;
     /* Over half the block: a deck lies at its block's top. */
     private static final double DECK = 0.5;
     /* The pattern's size, less a block each way: from its lowest corner to its highest. */
@@ -132,7 +143,8 @@ public final class ShipyardGameTests {
      */
     private static final String EMPTY = "empty";
     private static final BlockPos PROJECTOR = new BlockPos(2, 2, 5);
-    private static final int PIT_LAYERS = 3;
+    /* The pit's three layers and, under them, the floor's deck, all dug under the ground. */
+    private static final int PIT_LAYERS = 4;
     private static final int BOOTH_ABOVE = 4;
     /*
      * The builder's tests: a ground of earth four blocks deep, grass on top; a projector on it at the arena's south
@@ -164,7 +176,8 @@ public final class ShipyardGameTests {
         projector.apply(ProjectorSettings.FRESH.choosing(ShipyardStructure.ID));
         final ShapePreview preview = projector.preview().orElseThrow();
         helper.assertTrue(preview.ground() - preview.minY() == PIT_LAYERS,
-                "the dock's pit is three layers dug under the ground; got " + (preview.ground() - preview.minY()));
+                "the dock's pit and its floor's deck are four layers dug under the ground; got " + (preview.ground()
+                        - preview.minY()));
         final int above = projector.terminalOf(preview).getY() - helper.absolutePos(PROJECTOR).getY();
         helper.assertTrue(above == BOOTH_ABOVE, "its booth's terminal stands four blocks over the ground the projector"
                 + " stands on, not over the pit's floor; got " + above);
@@ -217,6 +230,49 @@ public final class ShipyardGameTests {
             helper.assertTrue(!lattice.isEmpty() && !Block.isShapeFullBlock(lattice),
                     "a tower is its lattice, not a whole block");
         });
+    }
+
+    /* Built closed, its floor's deck in the layer under the pit's floor, it forms closed, the deck merged into it. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void closed_formsWithItsDeckUnderThePitsFloor(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(formed(level, terminal) && !terminal(level, terminal).open(), "built closed, the dock"
+                    + " forms closed");
+            helper.assertBlockPresent(FormedParts.BLOCK.get(), DECK_DOWN);
+            helper.assertBlockPresent(FormedParts.BLOCK.get(), CRANE_OVER_THE_BAY);
+        });
+    }
+
+    /* Built open, its crane at the back of the bay, its deck up at the ground's top, no cradle, it forms open. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void open_formsWithTheCraneParkedAndTheDeckUp(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.buildOpen(level, helper.absolutePos(CORNER));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(formed(level, terminal) && terminal(level, terminal).open(), "built open, the dock forms"
+                    + " open");
+            helper.assertBlockPresent(FormedParts.BLOCK.get(), DECK_UP);
+            helper.assertBlockPresent(FormedParts.BLOCK.get(), CRANE_PARKED);
+            final BlockPos deck = helper.absolutePos(DECK_UP);
+            final VoxelShape plates = level.getBlockState(deck).getCollisionShape(level, deck);
+            helper.assertTrue(!plates.isEmpty() && plates.max(Direction.Axis.Y) > 1 - DECK_TOP, "its deck is solid to"
+                    + " its block's top, level with the ground: " + plates.bounds());
+        });
+    }
+
+    /* A dock whose floor has no deck forms neither closed nor open, and says what its closed build lacks. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void deck_aDockWithoutItsDeckDoesNotForm(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        helper.setBlock(DECK_DOWN, Blocks.STONE);
+        helper.startSequence()
+                .thenIdle(SETTLED)
+                .thenExecute(() -> helper.assertTrue(!formed(level, terminal), "a stone where a plate of its deck"
+                        + " goes, the dock does not form"))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
@@ -632,6 +688,10 @@ public final class ShipyardGameTests {
 
     private static boolean formed(final ServerLevel level, final BlockPos terminal) {
         return level.getBlockEntity(terminal) instanceof ShipyardTerminalBlockEntity dock && dock.formed();
+    }
+
+    private static ShipyardTerminalBlockEntity terminal(final ServerLevel level, final BlockPos terminal) {
+        return (ShipyardTerminalBlockEntity) level.getBlockEntity(terminal);
     }
 
     /*

@@ -22,6 +22,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -58,6 +59,22 @@ public final class FormedModelGameTests {
                         && part.original().is(Blocks.IRON_BLOCK), "and remembers being iron");
             }
             helper.assertBlockPresent(TestModels.TURBINE_BLOCK.get(), TERMINAL);
+        });
+    }
+
+    /*
+     * Merged, its blocks are still the ground to whatever looks down on them, as the iron was: the world's height of
+     * what stops a mover counts them, as it counts the iron.
+     */
+    @GameTest(template = ARENA, timeoutTicks = WAIT)
+    public static void merged_aMergedBlockIsStillGroundToWhatLooksDownOnIt(final GameTestHelper helper) {
+        final List<BlockPos> iron = build(helper, false);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(structure(helper).merged(), "the turbine forms and merges");
+            for (final BlockPos at : iron) {
+                helper.assertTrue(Heightmap.Types.MOTION_BLOCKING.isOpaque().test(helper.getBlockState(at)),
+                        "a merged block stops what comes down on it, as its iron did; not " + at);
+            }
         });
     }
 

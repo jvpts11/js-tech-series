@@ -1,0 +1,6 @@
+{
+  "model": "jsspace:jsmodels/shipyard/shipyard_crane.gltf",
+  "textures": [
+    "jsspace:textures/models/shipyard/shipyard_crane.png"
+  ]
+}

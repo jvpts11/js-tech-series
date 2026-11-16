@@ -16,6 +16,7 @@ import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.IItemLook;
+import dev.jstech.core.content.ModelBuilder;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.space.SpaceContent;
 import java.util.List;
@@ -70,18 +71,19 @@ public final class ShipyardBlocks {
                     "block/shipyard/pit_rim_side", "block/shipyard/pit_rim", null)))
             .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(SHIPYARD).register();
     /**
-     * The dock formed, drawn by its terminal over the whole structure, whose blocks take their shapes from it; and,
-     * drawn with it and shaping nothing, the crane's hook hanging over the bay and the booth's glass.
+     * The dock formed closed and open, whose blocks take their shapes from them, never drawn; and what its terminal
+     * draws: the frame, and the crane, the floor and the cradle each where the dock has them as it opens and closes, the
+     * crane's cables and hook and each of the cradle's columns, rams and jaws a bone; and, drawn with them and shaping
+     * nothing, the booth's glass.
      */
-    public static final DeclaredModel MODEL = SpaceContent.CONTENT.model("shipyard/small_shipyard")
-            .file("jsmodels/shipyard/small_shipyard.gltf")
-            .texture("textures/models/shipyard/small_shipyard.png")
-            .formedFrom(ShipyardStructure.ID)
+    public static final DeclaredModel CLOSED_MODEL = model("small_shipyard_closed").formedFrom(ShipyardStructure.ID)
             .register();
-    public static final DeclaredModel HOOK = SpaceContent.CONTENT.model("shipyard/crane_hook")
-            .file("jsmodels/shipyard/crane_hook.gltf")
-            .texture("textures/models/shipyard/crane_hook.png")
+    public static final DeclaredModel OPEN_MODEL = model("small_shipyard_open").formedFrom(ShipyardStructure.OPEN_ID)
             .register();
+    public static final DeclaredModel FRAME_MODEL = model("shipyard_frame").register();
+    public static final DeclaredModel CRANE_MODEL = model("shipyard_crane").register();
+    public static final DeclaredModel FLOOR_MODEL = model("shipyard_floor").register();
+    public static final DeclaredModel CRADLE_MODEL = model("shipyard_cradle").register();
     public static final DeclaredModel GLASS = SpaceContent.CONTENT.model("shipyard/booth_glass")
             .file("jsmodels/shipyard/booth_glass.gltf")
             .texture("textures/models/shipyard/booth_glass.png")
@@ -105,6 +107,12 @@ public final class ShipyardBlocks {
     public static List<BlockEntry<?>> blocks() {
         return List.of(TERMINAL, TOWER, RAIL, GIRDER, WALKWAY, STAIRS, GANTRY, FLOODLIGHT, BOOTH, FEEDER, CRADLE,
                 RIM);
+    }
+
+    /* A model of the dock, from {@code jsmodels/shipyard/<name>.gltf} and its texture. */
+    private static ModelBuilder model(final String name) {
+        return SpaceContent.CONTENT.model("shipyard/" + name).file("jsmodels/shipyard/" + name + ".gltf")
+                .texture("textures/models/shipyard/" + name + ".png");
     }
 
     /* A block of the kit: metal, as hard as iron, its face {@code block/shipyard/<id>} on all six sides. */

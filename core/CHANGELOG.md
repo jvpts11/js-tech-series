@@ -512,6 +512,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Changes of a structure's blocks: J's Core's API is at version 63. `MovingStructure.changes()` counts each
   change of one of its blocks since it was made or loaded, put down, taken away or set to another, for what reads its
   blocks to read them again only once they have changed. Experimental.
+- A structure held while its parts are away: J's Core's API is at version 64.
+  `MachineStructure.holdWhile(BooleanSupplier)` holds a structure as it stands while the supplier says so: it is not
+  checked, and it holds every place, so its blocks carried off as a moving structure keep themselves, as a dock holds
+  itself while its crane and its floor move. Let go, it is checked again at once. Experimental.
+- A synced data registry sent in parts: J's Core's API is at version 65. `DataRegistryPayload` carries some
+  of a registry's values, with `part` and `parts`; `DataRegistryPayload.parts(ResourceLocation, CompoundTag)` makes
+  the messages that carry all of them, each under what a message's tag may hold, and `last()` says the last has come.
+  Its record's components changed: a mod that built one with two arguments builds it with four now, or asks `parts`.
+  The data registries' network version is 2. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2237,6 +2246,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A player joins a world whatever its synced data adds up to: a data registry bigger than one message may hold,
+  as the formed shapes of many machines are, was sent whole, and its message was refused as the player's game read it,
+  dropping the player as they joined. It goes in parts now, and a single value too big for any message stays behind,
+  told in the log, instead of dropping everyone.
+- A block merged into a formed structure is still the ground under whatever comes down on it, as the plain
+  block it took the place of was: the world's heights a mover reads the land by passed through it, so a ship on legs
+  standing on a formed floor read the land as under it and would not lift off by itself.
 - Two structures keeping one chunk of the world loaded keep it so till the last of them lets it go: a ship
   arriving where another with a chunk loader aboard keeps the land, or the other of two such ships over one chunk
   going, let the chunk go, and the ship left there froze.

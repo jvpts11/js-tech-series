@@ -44,6 +44,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BooleanSupplier;
 import java.util.function.ToIntFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -105,6 +106,8 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     private boolean filed;
     private long notBefore;
     private long recheckAt;
+    /* Whether it is held as it stands now: not checked, its blocks carried off keeping themselves. */
+    private BooleanSupplier holding = () -> false;
 
     public static final TextKey FORMED = TextKey.of("jscore.multiblock.formed", "Formed");
     public static final TextKey FORMED_SIZE = TextKey.of("jscore.multiblock.formed_size", "Formed: %s by %s by %s");
@@ -214,6 +217,16 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         return this;
     }
 
+    /**
+     * While {@code holding} says so, it stands as it stood: it is not checked, and it holds every place, so its blocks
+     * carried off as a moving structure keep themselves; a dock whose crane and floor are away moving holds itself so.
+     * Let go, it is checked again at once.
+     */
+    public MachineStructure holdWhile(final BooleanSupplier holding) {
+        this.holding = Objects.requireNonNull(holding, "holding");
+        return this;
+    }
+
     /** What of its formed model is worked by hand, and how its doors stand; none unless it says. */
     public Optional<StructureHands> hands() {
         return Optional.ofNullable(this.hands);
@@ -235,9 +248,12 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         return this.formed && (this.mergedOnClient || !this.merged.isEmpty());
     }
 
-    /** Whether its formed structure holds the place {@code pos}, as saved, before it is checked again. */
+    /**
+     * Whether its formed structure holds the place {@code pos}, as saved, before it is checked again; any place while
+     * it is held ({@link #holdWhile}).
+     */
     public boolean holdsPlace(final BlockPos pos) {
-        return holds(PatternMatcher.encodePosition(pos.getX(), pos.getY(), pos.getZ()));
+        return this.holding.getAsBoolean() || holds(PatternMatcher.encodePosition(pos.getX(), pos.getY(), pos.getZ()));
     }
 
     /**
@@ -410,6 +426,11 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
             forgetFarPlaces(pos);
             file(level, pos);
             this.dirty = true;
+        }
+        if (this.holding.getAsBoolean()) {
+            // Held, it waits; let go, it is checked as soon as it may be.
+            this.dirty = true;
+            return;
         }
         if (now < this.notBefore || !this.dirty && now < this.recheckAt) {
             return;
