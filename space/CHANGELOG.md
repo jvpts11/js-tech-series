@@ -86,10 +86,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   gear: on wheels it rolls out of the open front, on legs it lifts off out of the open top. A ship set down on the
   open floor and taken back has the dock close round it the same way back. A dock just formed with nothing to build
   opens by itself and stands open, ready for a ship to come in; a design sent to it closes it for the arms to build.
-  Nothing starts that cannot finish: the pilot is told when something stands in the crane's or the floor's way, or
-  someone is in the pit; a dock broken while it moves sets its parts down and drops its cradle's blocks; a ship that
-  cannot go at the end has the dock close back round it, its plan kept. The ship in a closed dock has its gear
-  stowed, coming down as the floor rises to meet it.
+  Nothing starts that cannot finish: the pilot is told when something stands in the crane's or the floor's way, and
+  where, when a ship stands in the bay, when someone is in the pit, and, before the dock opens, when the ship could
+  not go, at their limit of moving structures or too big to move; someone who walks into the pit as it opens holds
+  the floor till they are out, and a closing refused is tried again once a second till its way is clear. A ship
+  standing on the open floor is never dropped into the pit. A dock broken while it moves sets its parts down and
+  drops its cradle's blocks; a ship that cannot go at the end has the dock close back round it, its plan kept; a
+  world closed while the dock moves finishes the move when it opens again, the moving part waited for till its land
+  has loaded. The ship in a closed dock has its gear stowed, coming down as the floor rises to meet it.
 - The Small Shipyard's Item Port is a store with a screen: a hold of two rows of nine places a player fills
   by hand, and a chest, a hopper or a pipe fills too, which takes only the blocks the ship being built still lacks,
   no more of each than it lacks, and passes them on to the dock's arms. Its screen shows on a display across its top

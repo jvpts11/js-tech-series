@@ -3307,6 +3307,7 @@ stable 4
 65 dev.jstech.core.data.DataRegistryPayload  type record(ResourceLocation registry, CompoundTag entries, int part, int parts) implements CustomPacketPayload
 10 dev.jstech.core.data.DataRegistryPayload  Type<? extends CustomPacketPayload> type()
 65 dev.jstech.core.data.DataRegistryPayload  boolean last()
+66 dev.jstech.core.data.DataRegistryPayload  new(ResourceLocation, CompoundTag)
 65 dev.jstech.core.data.DataRegistryPayload  static List<DataRegistryPayload> parts(ResourceLocation, CompoundTag)
 10 dev.jstech.core.data.DataRegistryPayload  static final StreamCodec<ByteBuf, DataRegistryPayload> STREAM_CODEC
 10 dev.jstech.core.data.DataRegistryPayload  static final Type<DataRegistryPayload> TYPE

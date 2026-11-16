@@ -11,9 +11,13 @@ import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
+import dev.jstech.core.moving.StructureYard;
+import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.protection.PlayerLimits;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipDesign;
@@ -30,6 +34,7 @@ import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -39,6 +44,7 @@ import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.ChunkPos;
@@ -76,6 +82,14 @@ public final class ShipyardDoorsGameTests {
     private static final int TICKING = 2;
     /* How long a dock left empty is watched, in ticks: well past when one just formed opens by itself. */
     private static final int STAYS = 300;
+    /* How long a dock waits with its floor not loaded, and tries a blocked closing again, in ticks, in the tests. */
+    private static final int UNLOADED_WAIT = 200;
+    private static final int RETRIES = 100;
+    /* How long after its crane has rolled back a dock with someone in its pit is watched, in ticks. */
+    private static final int AFTER_THE_CRANE = 60;
+    /* How far a ship standing still may seem to move, in blocks; how many structures a pilot is given at most. */
+    private static final double STILL = 0.1;
+    private static final int MOST_TAKEN = 1000;
     /* How long it opens, at the least, in ticks: its crane's seconds and its floor's. */
     private static final long OPENS_IN = (long) ((ShipyardDoors.CRANE_SECONDS + ShipyardDoors.FLOOR_SECONDS) * 20);
     private static final ShipDesign WHEELS = new ShipDesign("JS-02", List.of(part("orbiter_cockpit"),
@@ -260,8 +274,9 @@ public final class ShipyardDoorsGameTests {
                     level.setBlockAndUpdate(inTheWay, Blocks.STONE.defaultBlockState());
                     helper.assertFalse(dock(level, terminal).launch(null, told::add), "a stone in its crane's way,"
                             + " it does not open");
-                    helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED && !told.isEmpty(),
-                            "and says why: " + told);
+                    helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED && !told.isEmpty()
+                            && GameText.resolve(told.getFirst()).contains(inTheWay.toShortString()), "and says why,"
+                            + " naming the place: " + told.stream().map(GameText::resolve).toList());
                     level.setBlockAndUpdate(inTheWay, Blocks.AIR.defaultBlockState());
                     told.clear();
                     final AABB pit = ShipyardStructure.bay(terminal, Orientation.NORTH);
@@ -343,6 +358,181 @@ public final class ShipyardDoorsGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED
                         && dock(level, terminal).plan().isPresent() && shipIn(level, terminal) == null, "its console"
                         + " gone, the ship cannot go: the dock closes back round it, its plan kept"))
+                .thenSucceed();
+    }
+
+    /*
+     * Its cradle taken off the grid as it opens and put back as it closes, the dock is none the worse: none of its
+     * blocks carries the mark of a block lost, as a block broken out of it would.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    public static void cycle_openedAndClosedTheDockCarriesNoMarkOfALostBlock(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final MovingStructure[] ship = new MovingStructure[1];
+        opened(helper, terminal, WHEELS, ship)
+                .thenExecute(() -> helper.assertTrue(dock(level, terminal).seat(ship[0]), "the ship taken back"))
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED
+                        && dock(level, terminal).formed() && !dock(level, terminal).open(), "the dock closed again"))
+                .thenExecute(() -> {
+                    final List<BlockPos> dockBlocks = new ArrayList<>(ShipyardStructure.deckPlaces(terminal,
+                            Orientation.NORTH, false));
+                    dockBlocks.addAll(ShipyardStructure.cradlePlaces(terminal, Orientation.NORTH));
+                    dockBlocks.addAll(ShipyardStructure.cranePlaces(terminal, Orientation.NORTH, false));
+                    final long marked = dockBlocks.stream().filter(place -> level.getBlockEntity(place)
+                            instanceof FormedPartBlockEntity part && !part.damage().isEmpty()).count();
+                    helper.assertTrue(marked == 0, "none of its blocks marked as a block lost: " + marked);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Its moving floor not loaded as the dock ticks, as after the world is opened again with the floor's land not yet
+     * loaded, the dock waits for it: it is not taken to have arrived, and the ship is not let go onto nothing.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void unloaded_aMovingFloorNotLoadedIsWaitedFor(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final int[] plot = new int[1];
+        final int deck = ShipyardStructure.deckPlaces(terminal, Orientation.NORTH, false).size();
+        built(helper, terminal, WHEELS, new int[1])
+                .thenExecute(() -> dock(level, terminal).launch(null, why -> { }))
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.FLOOR_UP
+                        && dock(level, terminal).doorsProgress(level.getGameTime()) > 0, "its floor rising"))
+                .thenExecute(() -> {
+                    final MovingStructure floor = MovingStructures.near(level, ShipyardStructure.bay(terminal,
+                            Orientation.NORTH).inflate(2)).stream().filter(MovingStructure.class::isInstance)
+                            .map(MovingStructure.class::cast).filter(body -> body.blocks() == deck).findFirst()
+                            .orElseThrow();
+                    plot[0] = floor.plot();
+                    floor.entity().remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+                })
+                .thenIdle(UNLOADED_WAIT)
+                .thenExecute(() -> {
+                    helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.FLOOR_UP
+                            && shipIn(level, terminal) == null, "it waits for its floor, the ship kept: "
+                            + dock(level, terminal).doors());
+                    StructureYard.giveBack(level, plot[0]);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A design sent to an open dock whose crane's way is blocked: the player is told what is in the way and where, and
+     * the dock closes for it of itself once the way is clear.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void closing_refusedIsToldAndTriedAgainOnceClear(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final List<Text> told = new ArrayList<>();
+        final BlockPos inTheWay = ShipyardStructure.cranePlaces(terminal, Orientation.NORTH, true).getFirst()
+                .offset(0, 0, -4);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).open(), "empty, it opens by itself"))
+                .thenExecute(() -> {
+                    level.setBlockAndUpdate(inTheWay, Blocks.STONE.defaultBlockState());
+                    dock(level, terminal).design(WHEELS);
+                    helper.assertTrue(dock(level, terminal).confirm(told::add), "the design is taken");
+                    helper.assertTrue(!told.isEmpty() && GameText.resolve(told.getFirst()).contains(inTheWay
+                            .toShortString()), "the player told what is in the crane's way, and where: "
+                            + told.stream().map(GameText::resolve).toList());
+                })
+                .thenIdle(RETRIES)
+                .thenExecute(() -> {
+                    helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.OPEN, "it stays open"
+                            + " while the way is blocked");
+                    level.setBlockAndUpdate(inTheWay, Blocks.AIR.defaultBlockState());
+                })
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED
+                        && dock(level, terminal).build().isPresent(), "the way clear, it closes of itself and builds"))
+                .thenSucceed();
+    }
+
+    /* A ship standing on the open floor is never dropped into the pit: a design sent meanwhile waits for it to go. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    public static void closing_aShipStandingOnTheOpenFloorKeepsTheDockOpen(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final MovingStructure[] ship = new MovingStructure[1];
+        final double[] standing = new double[1];
+        final List<Text> told = new ArrayList<>();
+        opened(helper, terminal, WHEELS, ship)
+                .thenExecute(() -> {
+                    standing[0] = ship[0].pose().y();
+                    dock(level, terminal).design(LEGS);
+                    helper.assertTrue(dock(level, terminal).confirm(told::add) && !told.isEmpty(), "a design sent"
+                            + " with a ship on the floor: the player told why it waits: " + told);
+                })
+                .thenIdle(RETRIES)
+                .thenExecute(() -> {
+                    helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.OPEN, "the dock stays open"
+                            + " under the ship: " + dock(level, terminal).doors());
+                    helper.assertTrue(Math.abs(ship[0].pose().y() - standing[0]) < STILL, "the ship still on the"
+                            + " floor: " + (ship[0].pose().y() - standing[0]));
+                    MovingStructures.takeAway(ship[0]);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Someone walking into the pit as the crane rolls back holds the floor: the cradle stays and the floor waits till
+     * they are out, then rises.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    public static void opening_someoneWhoWalksInMeanwhileHoldsTheFloor(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final Entity[] pig = new Entity[1];
+        built(helper, terminal, WHEELS, new int[1])
+                .thenExecute(() -> {
+                    helper.assertTrue(dock(level, terminal).launch(null, why -> { }), "it opens");
+                    final AABB pit = ShipyardStructure.bay(terminal, Orientation.NORTH);
+                    pig[0] = EntityType.PIG.spawn(level, BlockPos.containing(pit.minX + 1, pit.minY, pit.minZ + 1),
+                            null);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(standing(level, ShipyardStructure.cranePlaces(terminal,
+                        Orientation.NORTH, true)), "its crane rolled back to the back of the bay"))
+                .thenIdle(AFTER_THE_CRANE)
+                .thenExecute(() -> {
+                    helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CRANE_BACK
+                            && ShipyardStructure.cradlePlaces(terminal, Orientation.NORTH).stream()
+                            .noneMatch(level::isEmptyBlock), "someone in the pit, the cradle stays and the floor"
+                            + " waits: " + dock(level, terminal).doors());
+                    pig[0].discard();
+                })
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).open() && shipIn(level, terminal)
+                        != null, "out of the pit, the floor rises and the ship goes"))
+                .thenExecute(() -> MovingStructures.takeAway(shipIn(level, terminal)))
+                .thenSucceed();
+    }
+
+    /* A pilot at their limit of moving structures is told so before the dock opens, which then does not open. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 800)
+    public static void launch_aPilotAtTheirLimitIsToldBeforeTheDockOpens(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final UUID pilot = UUID.randomUUID();
+        final List<Text> told = new ArrayList<>();
+        built(helper, terminal, WHEELS, new int[1])
+                .thenExecute(() -> {
+                    int taken = 0;
+                    while (taken < MOST_TAKEN && PlayerLimits.take(level.getServer(), pilot,
+                            PlayerLimits.MOVING_STRUCTURES)) {
+                        taken++;
+                    }
+                    try {
+                        helper.assertFalse(dock(level, terminal).launch(pilot, told::add), "at their limit, the"
+                                + " dock does not open");
+                        helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED
+                                && !told.isEmpty(), "and the pilot is told: " + told);
+                    } finally {
+                        for (int each = 0; each < taken; each++) {
+                            PlayerLimits.giveBack(level.getServer(), pilot, PlayerLimits.MOVING_STRUCTURES);
+                        }
+                    }
+                })
                 .thenSucceed();
     }
 

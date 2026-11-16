@@ -16,6 +16,7 @@ import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.multiblock.plan.PlanArms;
 import dev.jstech.space.JsSpace;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -35,13 +36,14 @@ import net.minecraft.world.phys.Vec3;
  * walkway's edge. The front, to the north, is open. Its walls are the ground it is dug in, whatever that is; its floor
  * a deck of Ship Pad Plates over the whole pit.
  *
- * <p>It stands two ways (space/docs/design/starships.md): closed, its deck in the layer under the pit's floor, its crane
- * over the bay and its cradle up; open, as it lets a ship go or waits for one, its deck risen to the ground's top layer,
- * its crane rolled to the back of the bay and no cradle, the pit under the deck no part of it.
+ * <p>It stands two ways (space/docs/design/starships.md): closed, its deck in the layer under the pit's floor, its
+ * crane over the bay and its cradle up; open, as it lets a ship go or waits for one, its deck risen to the ground's
+ * top layer, its crane rolled to the back of the bay and no cradle, the pit under the deck no part of it.
  *
  * <p>It is drawn as it stands facing north, the open front to the north, as its formed model is made: across, x, from
  * the west tower line at -11 to the booth's outer wall at 11, the bay's middle between 0 and -1; up, y, from the
- * deck closed at -4 to the crane at 11, the ground's top layer at -1; along, z, from the front at -13 to the back at 13.
+ * deck closed at -4 to the crane at 11, the ground's top layer at -1; along, z, from the front at -13 to the back at
+ * 13.
  */
 public final class ShipyardStructure {
 
@@ -151,6 +153,12 @@ public final class ShipyardStructure {
     /** The dock closed, as it is built and projected; and open. */
     public static final MultiblockPattern PATTERN = MultiblockPatterns.declare(ID, pattern(false));
     public static final MultiblockPattern OPEN_PATTERN = MultiblockPatterns.declare(OPEN_ID, pattern(true));
+    /* Where its moving parts stand from its terminal, closed and open, worked out once. */
+    private static final List<int[]> CRANE_CLOSED = offsets(false, 'B');
+    private static final List<int[]> CRANE_OPEN = offsets(true, 'B');
+    private static final List<int[]> DECK_CLOSED = offsets(false, FLOOR);
+    private static final List<int[]> DECK_OPEN = offsets(true, FLOOR);
+    private static final List<int[]> CRADLE_CLOSED = offsets(false, 'C');
 
     private ShipyardStructure() {
     }
@@ -183,23 +191,23 @@ public final class ShipyardStructure {
      * {@code dock} says: over the bay closed, at the back of the bay {@code open}; across the bay, west to east.
      */
     public static List<BlockPos> cranePlaces(final BlockPos terminal, final Orientation dock, final boolean open) {
-        return places(terminal, dock, open, 'B');
+        return places(terminal, dock, open ? CRANE_OPEN : CRANE_CLOSED);
     }
 
     /** The places in the world of the floor's deck, closed under the pit's floor, {@code open} at the ground's top. */
     public static List<BlockPos> deckPlaces(final BlockPos terminal, final Orientation dock, final boolean open) {
-        return places(terminal, dock, open, FLOOR);
+        return places(terminal, dock, open ? DECK_OPEN : DECK_CLOSED);
     }
 
     /** The places in the world of the cradle's blocks, which stand only while the dock is closed. */
     public static List<BlockPos> cradlePlaces(final BlockPos terminal, final Orientation dock) {
-        return places(terminal, dock, false, 'C');
+        return places(terminal, dock, CRADLE_CLOSED);
     }
 
     /** The bay's room in the world: over the pit, from its floor closed up to under the crane's trolley. */
     public static AABB bay(final BlockPos terminal, final Orientation dock) {
-        final AABB deck = AABB.encapsulatingFullBlocks(deckPlaces(terminal, dock, false).getFirst(),
-                deckPlaces(terminal, dock, false).getLast());
+        final List<BlockPos> corners = places(terminal, dock, List.of(DECK_CLOSED.getFirst(), DECK_CLOSED.getLast()));
+        final AABB deck = AABB.encapsulatingFullBlocks(corners.getFirst(), corners.getLast());
         return deck.setMinY(deck.maxY).setMaxY(deck.maxY + ROOM_TOP - PIT_FLOOR + 1);
     }
 
@@ -247,7 +255,7 @@ public final class ShipyardStructure {
                 dock.zSign() * in[dock.zFrom()]);
     }
 
-    /* The pattern, closed or {@code open}, layer by layer from the deck closed, each letter where the layout puts it. */
+    /* The pattern, closed or {@code open}, layer by layer from the deck closed, each letter where the layout has it. */
     private static MultiblockPattern pattern(final boolean open) {
         final MultiblockPattern.Builder builder = MultiblockPattern.builder((open ? OPEN_ID : ID).getPath());
         for (int y = BOTTOM; y <= TOP; y++) {
@@ -398,17 +406,28 @@ public final class ShipyardStructure {
         return NONE;
     }
 
-    /* Whether ({@code x}, {@code z}) is over the pit. */
-    /* The places in the world of every {@code letter} of the dock, closed or {@code open}, in the pattern's order. */
-    private static List<BlockPos> places(final BlockPos terminal, final Orientation dock, final boolean open,
-                                         final char letter) {
-        final List<BlockPos> out = new ArrayList<>();
+    /* The places in the world of {@code offsets}, from a terminal at {@code terminal} standing as {@code dock} says. */
+    private static List<BlockPos> places(final BlockPos terminal, final Orientation dock, final List<int[]> offsets) {
+        final List<BlockPos> out = new ArrayList<>(offsets.size());
+        for (final int[] offset : offsets) {
+            final int[] off = dock.apply(offset[0], offset[1], offset[2]);
+            out.add(terminal.offset(off[0], off[1], off[2]));
+        }
+        return Collections.unmodifiableList(out);
+    }
+
+    /*
+     * Where every {@code letter} of the dock, closed or {@code open}, stands from its terminal as it is drawn, in the
+     * pattern's order: worked out once, so the places of its moving parts cost a turn and a sum each, not a look over
+     * the whole dock.
+     */
+    private static List<int[]> offsets(final boolean open, final char letter) {
+        final List<int[]> out = new ArrayList<>();
         for (int y = BOTTOM; y <= TOP; y++) {
             for (int z = FRONT; z <= BACK; z++) {
                 for (int x = WEST; x <= EAST; x++) {
                     if (letter(x, y, z, open) == letter) {
-                        final int[] off = dock.apply(x - TERMINAL_X, y - BOOTH_FLOOR, z - TERMINAL_Z);
-                        out.add(terminal.offset(off[0], off[1], off[2]));
+                        out.add(new int[] {x - TERMINAL_X, y - BOOTH_FLOOR, z - TERMINAL_Z});
                     }
                 }
             }
@@ -416,6 +435,7 @@ public final class ShipyardStructure {
         return List.copyOf(out);
     }
 
+    /* Whether ({@code x}, {@code z}) is over the pit. */
     private static boolean pit(final int x, final int z) {
         return x > WEST_RIM && x < EAST_RIM && z >= PIT_FRONT && z <= PIT_BACK;
     }

@@ -521,6 +521,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the messages that carry all of them, each under what a message's tag may hold, and `last()` says the last has come.
   Its record's components changed: a mod that built one with two arguments builds it with four now, or asks `parts`.
   The data registries' network version is 2. Experimental.
+- A data registry's values in one part, as before: J's Core's API is at version 66.
+  `new DataRegistryPayload(ResourceLocation, CompoundTag)` builds a payload holding all of them as its only part, so
+  a mod that built one with two arguments goes on building it so. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

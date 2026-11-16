@@ -72,9 +72,9 @@ public final class ShipyardBlocks {
             .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(SHIPYARD).register();
     /**
      * The dock formed closed and open, whose blocks take their shapes from them, never drawn; and what its terminal
-     * draws: the frame, and the crane, the floor and the cradle each where the dock has them as it opens and closes, the
-     * crane's cables and hook and each of the cradle's columns, rams and jaws a bone; and, drawn with them and shaping
-     * nothing, the booth's glass.
+     * draws: the frame, and the crane, the floor and the cradle each where the dock has them as it opens and closes,
+     * the crane's cables and hook and each of the cradle's columns, rams and jaws a bone; and, drawn with them and
+     * shaping nothing, the booth's glass.
      */
     public static final DeclaredModel CLOSED_MODEL = model("small_shipyard_closed").formedFrom(ShipyardStructure.ID)
             .register();

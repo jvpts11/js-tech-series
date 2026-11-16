@@ -72,7 +72,7 @@ public final class FlightConsoleBlock extends ShipFixtureBlock implements Entity
                 final Vec3 here = Vec3.atCenterOf(MovingStructures.inWorld(server, pos));
                 for (final ShipyardTerminalBlockEntity dock : ShipyardTerminalBlockEntity.near(server, here,
                         DOCK_REACH)) {
-                    if (dock.seat(ship)) {
+                    if (dock.seat(ship, why -> using.displayClientMessage(GameText.component(why), true))) {
                         return InteractionResult.CONSUME;
                     }
                 }

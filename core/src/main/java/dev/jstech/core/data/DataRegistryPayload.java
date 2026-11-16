@@ -49,6 +49,11 @@ public record DataRegistryPayload(ResourceLocation registry, CompoundTag entries
     private static final long TAG_COST = 48;
     private static final long VALUE_COST = 64;
 
+    /** All of a registry's values in one part, as before they could go in parts. */
+    public DataRegistryPayload(final ResourceLocation registry, final CompoundTag entries) {
+        this(registry, entries, 0, 1);
+    }
+
     /**
      * The values {@code entries} of {@code registry} as the messages that carry them: as few as keep each part under
      * what one message's tag may be, in the order of the values' ids. A value too big to go in any message stays

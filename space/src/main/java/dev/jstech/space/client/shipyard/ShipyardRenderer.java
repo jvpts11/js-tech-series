@@ -65,7 +65,7 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
     /* How far the crane rolls back along its rails, and the floor rises, opening, in blocks. */
     private static final double CRANE_TRAVEL = ShipyardStructure.CRANE_PARKED - ShipyardStructure.CRANE_AT;
     private static final double FLOOR_RISE = ShipyardStructure.DECK_UP - ShipyardStructure.DECK_DOWN;
-    /* How far under the trolley the hook hangs over the bay, and how far it is drawn up, in blocks, as its model has. */
+    /* How far under the trolley the hook hangs over the bay, and how far it is drawn up, in blocks, as modelled. */
     private static final double HOOK_HANG = 4.45;
     private static final double HOOK_UP = 3.85;
     /* The floor's top closed, from the ground's; the top of a cradle's ram standing; its jaws' pivots' height. */

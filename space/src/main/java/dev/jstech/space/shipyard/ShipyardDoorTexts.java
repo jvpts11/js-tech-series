@@ -24,8 +24,12 @@ public final class ShipyardDoorTexts {
             "Something stands in the floor's way at %s");
     public static final TextKey SOMEONE_IN_THE_PIT = TextKey.of("jsspace.shipyard.doors.someone_in_the_pit",
             "Someone is in the pit: the floor cannot move");
+    public static final TextKey SHIP_IN_THE_BAY = TextKey.of("jsspace.shipyard.doors.ship_in_the_bay",
+            "A ship stands in the bay: the floor cannot move under it");
     public static final TextKey CANNOT_GO = TextKey.of("jsspace.shipyard.doors.cannot_go",
             "The ship cannot go: %s. The dock closes round it again");
+    public static final TextKey NOT_READY = TextKey.of("jsspace.shipyard.doors.not_ready",
+            "it is not whole, or its flight console is gone");
 
     private ShipyardDoorTexts() {
     }

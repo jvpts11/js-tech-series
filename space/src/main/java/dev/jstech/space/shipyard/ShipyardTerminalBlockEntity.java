@@ -18,10 +18,12 @@ import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureAssembly;
+import dev.jstech.core.moving.StructureBalance;
 import dev.jstech.core.moving.StructureDisassembly;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureResult;
+import dev.jstech.core.moving.StructureTexts;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.multiblock.plan.PlanArms;
@@ -29,6 +31,7 @@ import dev.jstech.core.multiblock.plan.PlanAssembler;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedShapes;
+import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.text.Text;
@@ -252,10 +255,11 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     /**
      * Starts the ship built whole in its dock, as its pilot {@code by} does from its flight console: the dock opens
      * round it and lets it go once the ship stands on its gear on the open floor. Whether the dock began to open; told
-     * why when it cannot: the ship not whole, the dock moving, something in its way.
+     * why when it cannot: the ship not whole, more blocks than a moving structure may be, its pilot at their limit of
+     * moving structures, the dock moving, something in its way. All its letting go needs is asked before it opens.
      */
     public boolean launch(final @Nullable UUID by, final Consumer<Text> told) {
-        if (!(this.level instanceof ServerLevel server) || !whole(told)) {
+        if (!(this.level instanceof ServerLevel server) || !whole(told) || !mayGo(server, by, told)) {
             return false;
         }
         if (open() && !this.doors.moving()) {
@@ -396,23 +400,30 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     }
 
     /**
-     * Sends the design to the dock to be built, when it is ready to fly and fits the dock; whether it was sent. The
+     * Sends the design to the dock to be built, when it is ready to fly and fits the dock; whether it was taken. The
      * plan built before comes apart, its formed parts' blocks given back, unless it is the same plan, which goes on.
+     * Sent to the dock standing open, the dock closes first, for its arms to build the ship in its cradle; told why
+     * when it cannot close yet, it closes once its way is clear.
      */
-    public boolean confirm() {
+    public boolean confirm(final Consumer<Text> told) {
         if (this.doors.moving()) {
+            told.accept(ShipyardDoorTexts.MOVING.text());
             return false;
         }
-        // Sent to its dock standing open, the dock closes first, for its arms to build the ship in its cradle.
         if (open()) {
-            if (!(this.level instanceof ServerLevel server) || !ready(server, design())
-                    || !this.doors.close(server, why -> { })) {
+            if (!(this.level instanceof ServerLevel server) || !ready(server, design())) {
                 return false;
             }
             this.sendOnClose.set(true);
+            this.doors.close(server, told);
             return true;
         }
         return send(design());
+    }
+
+    /** Sends the design as {@link #confirm(Consumer)} does, telling no one why the dock waits. */
+    public boolean confirm() {
+        return confirm(why -> { });
     }
 
     /**
@@ -483,7 +494,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         // them, a new one there: the console is told where it stands now, or, its blocks still to come, where it was.
         final BlockPos keeps = BlockPos.containing(MovingStructures.toYard(made.structure(),
                 Vec3.atCenterOf(seat.get())));
-        final AirReserveEntity helm = server.getBlockEntity(keeps) instanceof AirReserveEntity aboard ? aboard : keeper;
+        final AirReserveEntity helm = server.isLoaded(keeps) && server.getBlockEntity(keeps)
+                instanceof AirReserveEntity aboard ? aboard : keeper;
         helm.carry(new ShipAboard(design, at.subtract(seat.get()), this.planTurn.get(), formed));
         // Its pilot who started it owns it, their team its crew; a ship back from a dock keeps its crew.
         if (by != null && helm.crew().isEmpty()) {
@@ -515,6 +527,14 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
      * ship's plan, or that cannot be set down.
      */
     public boolean seat(final MovingStructure ship) {
+        return seat(ship, why -> { });
+    }
+
+    /**
+     * Takes the ship back as {@link #seat(MovingStructure)} does, telling {@code told} why the dock standing open
+     * cannot close round it yet: it closes once its way is clear.
+     */
+    public boolean seat(final MovingStructure ship, final Consumer<Text> told) {
         final Optional<Orientation> dock = this.structure.orientation();
         if (!(this.level instanceof ServerLevel server) || !formed() || dock.isEmpty() || this.plan.get() != null
                 || !Orientation.turns().contains(dock.get()) || this.doors.moving()) {
@@ -554,10 +574,12 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         this.plan.set(aboard.design());
         this.planAt.set(at);
         this.planTurn.set(FormedShapes.ORIENTATIONS.indexOf(dock.get()));
+        // The ship taken back is the dock's plan now: a design sent while it stood open waits no more.
+        this.sendOnClose.set(false);
         setChanged();
         startBuild();
         if (open()) {
-            this.doors.close(server, why -> { });
+            this.doors.close(server, told);
         }
         return true;
     }
@@ -641,6 +663,29 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         this.planTurn.set(turn);
         setChanged();
         startBuild();
+        return true;
+    }
+
+    /*
+     * Whether the ship standing whole may go as its letting go makes it: no more blocks than a moving structure may
+     * be, its pilot under their limit of moving structures; told why not.
+     */
+    private boolean mayGo(final ServerLevel server, final @Nullable UUID by, final Consumer<Text> told) {
+        final PlannedBuild built = this.build;
+        if (built == null) {
+            return false;
+        }
+        final long blocks = built.plan().spots().stream().map(built::where).filter(place -> !server
+                .getBlockState(place).isAir()).count();
+        if (blocks > StructureBalance.mostBlocks()) {
+            told.accept(StructureTexts.TOO_MANY.with(StructureBalance.mostBlocks(), blocks));
+            return false;
+        }
+        if (by != null && !PlayerLimits.allows(by, PlayerLimits.MOVING_STRUCTURES, PlayerLimits.count(
+                server.getServer(), by, PlayerLimits.MOVING_STRUCTURES))) {
+            told.accept(PlayerLimits.reached(server.getServer(), by, PlayerLimits.MOVING_STRUCTURES));
+            return false;
+        }
         return true;
     }
 
