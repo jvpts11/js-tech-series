@@ -143,13 +143,16 @@ public final class ShipFlightModel {
         // away from the land it is not held back.
         final double approach = pull > 0 && pitch < CLIMBS_AWAY ? Math.pow(Math.clamp((air.height() - APPROACH_LOW)
                 / (APPROACH_HIGH - APPROACH_LOW), 0.0, 1.0), 2) : 1.0;
-        final double cruise = CRUISE_AIR + (cruiseIn(thick) - CRUISE_AIR) * approach;
-        final double boosted = BOOSTED_AIR + (between(BOOSTED_SPACE, BOOSTED_AIR, thick) - BOOSTED_AIR) * approach;
+        final double cruise = cruiseIn(thick);
+        final double boosted = between(BOOSTED_SPACE, BOOSTED_AIR, thick);
+        // The most its height lets it go: a cap, its throttle still meaning the same speed under it.
+        final double allowed = boosting ? BOOSTED_AIR + (boosted - BOOSTED_AIR) * approach
+                : CRUISE_AIR + (cruise - CRUISE_AIR) * approach;
         final boolean stood = air.grounded() && ship.gear() != Gear.WHEELS && rise <= 0;
-        final double wanted = stood ? 0 : boosting ? boosted : throttle * cruise;
+        final double wanted = stood ? 0 : Math.min(boosting ? boosted : throttle * cruise, allowed);
         final double gathers = ship.mass() > 0 ? push / ship.mass() : 0;
-        final double sheds = stood ? BRAKES : approach < 1.0 && now.speed() > (boosting ? boosted : cruise)
-                ? APPROACH_BRAKES : between(SLOWING_SPACE, SLOWING_AIR, thick);
+        final double sheds = stood ? BRAKES : approach < 1.0 && now.speed() > allowed ? APPROACH_BRAKES
+                : between(SLOWING_SPACE, SLOWING_AIR, thick);
         final double speed = now.speed() < wanted ? Math.min(wanted, now.speed() + gathers * TICK)
                 : Math.max(wanted, now.speed() - sheds * TICK);
         // What holds it up, its wings and what its nozzles and thrusters push down, against what keeps it going as its

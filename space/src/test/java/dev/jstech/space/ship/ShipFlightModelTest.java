@@ -323,6 +323,16 @@ class ShipFlightModelTest {
     }
 
     @Test
+    void step_nearAWorldsLandASpeedUnderItsApproachIsFlownAsItsThrottleSays() {
+        final ShipFlightModel.Air low = new ShipFlightModel.Air(0.0, 0.165, true, false, APPROACH_LOW);
+        final double slow = 16;
+        final ShipFlightModel.State flown = fly(SHIP, CRUISING, low, 10 * SECONDS,
+                new ShipFlightModel.State(slow, 0, slow / CRUISE_SPACE, 0, 0));
+        assertEquals(slow, flown.speed(), CLOSE, "its throttle's share of its cruise is the speed it keeps, as LAND "
+                + "flies its final: " + flown);
+    }
+
+    @Test
     void step_comingDownFastOnAWorldItBrakesHardToItsApproachSpeed() {
         final ShipFlightModel.Air low = new ShipFlightModel.Air(0.0, 0.165, true, false, APPROACH_LOW);
         final ShipFlightModel.State braked = fly(SHIP, BOOSTING, low, SECONDS,
