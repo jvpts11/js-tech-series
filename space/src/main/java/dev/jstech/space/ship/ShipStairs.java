@@ -46,9 +46,9 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * airlock's floor, coming down to the land as the outer door opens while the ship stands on the land and going up
  * again as the door shuts or the ship lifts off; and its Ramp hold's ramp, its walking face laid on the land as it
  * opens there. In the air and in space a door opens with no stair, and the ramp swings down to its full angle with
- * nothing to climb; lifting off, a ship shuts its ramp, as it folds its gear. Let down, a way is the blocks that hold
- * its treads ({@link ShipStairBlock}), beside the airlock or behind the tail, set down in the ship's yard so they go
- * with it; the door's model draws it.
+ * nothing to climb; lifting off, a ship shuts its holds' doors, its ramp and its roof, as it folds its gear. Let down, a
+ * way is the blocks that hold its treads ({@link ShipStairBlock}), beside the airlock or behind the tail, set down in
+ * the ship's yard so they go with it; the door's model draws it.
  */
 public final class ShipStairs {
 
@@ -64,7 +64,7 @@ public final class ShipStairs {
             SpaceContent.CONTENT.blockEntity("boarding_stair", ShipStairEntity::new, BLOCK);
     /* The end of the Ramp hold's models' names, in each finish. */
     private static final String RAMP_MODEL = "/small_ramp";
-    /* Each ship's doors with a way down, its outer door and its ramp, as last found, by the ship. */
+    /* Each ship's doors out to the world, its outer door and its holds' ramp and roof, as last found, by the ship. */
     private static final Map<MovingStructure, List<FormedDoors.Door>> DOORS = new WeakHashMap<>();
 
     private ShipStairs() {
@@ -90,8 +90,9 @@ public final class ShipStairs {
             return;
         }
         BlockPos moved = null;
+        // A hold's roof has no way down.
         final List<int[]> cells = ShipDoorRules.RAMP.equals(door.piece()) ? ShipRampGeometry.CELLS
-                : ShipStairGeometry.CELLS;
+                : ShipDoorRules.OUTER_DOOR.equals(door.piece()) ? ShipStairGeometry.CELLS : List.of();
         for (final int[] cell : cells) {
             final BlockPos at = FormedDoors.blockOf(door.uses(), place.get(), MeshCells.key(cell[0], cell[1],
                     cell[2]));
@@ -128,12 +129,12 @@ public final class ShipStairs {
 
     /**
      * {@code ship} came down onto the land, or lifted off it ({@code grounded}): after its tick, its ways down come
-     * down where their doors stand open, or go up; lifting off, it shuts its ramp first, as it folds its gear.
+     * down where their doors stand open, or go up; lifting off, it shuts its holds' doors first, as it folds its gear.
      */
     public static void groundChanged(final ServerLevel level, final MovingStructure ship, final boolean grounded) {
         level.getServer().tell(new TickTask(level.getServer().getTickCount(), () -> {
             for (final FormedDoors.Door door : doors(level, ship)) {
-                if (!grounded && ShipDoorRules.RAMP.equals(door.piece()) && !FormedDoors.shut(level, door)) {
+                if (!grounded && !ShipDoorRules.OUTER_DOOR.equals(door.piece()) && !FormedDoors.shut(level, door)) {
                     FormedDoors.set(level, door, true);
                 }
                 stand(level, door, grounded && !FormedDoors.shut(level, door));
@@ -162,8 +163,8 @@ public final class ShipStairs {
     }
 
     /*
-     * The doors of {@code ship} with a way down, its airlock's outer door and its ramp, found among its blocks once,
-     * and again once one of them is not there.
+     * The doors of {@code ship} out to the world, its airlock's outer door and its holds' ramp and roof, found among
+     * its blocks once, and again once one of them is not there.
      */
     private static List<FormedDoors.Door> doors(final ServerLevel level, final MovingStructure ship) {
         final List<FormedDoors.Door> known = DOORS.get(ship);
@@ -179,7 +180,8 @@ public final class ShipStairs {
                     at.set(x, y, z);
                     final BlockState original = FormedPartBlock.originalAt(level, at, level.getBlockState(at));
                     final String piece = original.is(ShipKitBlocks.AIRLOCK_DOOR.get()) ? ShipDoorRules.OUTER_DOOR
-                            : original.is(ShipKitBlocks.RAMP_PLATE.get()) ? ShipDoorRules.RAMP : null;
+                            : original.is(ShipKitBlocks.RAMP_PLATE.get()) ? ShipDoorRules.RAMP
+                            : original.is(ShipKitBlocks.HULL_PLATING.get()) ? ShipDoorRules.BAY_DOORS : null;
                     if (piece == null || !(level.getBlockEntity(at) instanceof IFormedPlaced placed)) {
                         continue;
                     }

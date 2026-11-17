@@ -177,11 +177,12 @@ public final class ShipDoors {
      * @param startsShut whether it stands shut as its part forms
      * @param stair      the stair its opening lets down on the land, if it has one
      * @param swing      how its leaf turns open about its hinge, if it swings rather than slides
-     * @param toe        a second leaf hinged on the first that unfolds as it opens, if it has one
+     * @param turns      the other bones that turn as it opens, each from a share of its opening: a ramp's toe, a
+     *                   pair's other leaf
      */
     public record Door(String piece, String leaf, Vector3f travel, String shutLamp, String openLamp,
                        List<Integer> cell, boolean startsShut, Optional<Stair> stair, Optional<Swing> swing,
-                       Optional<Toe> toe) {
+                       List<Turn> turns) {
 
         public static final Codec<Door> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("piece").forGetter(Door::piece),
@@ -193,12 +194,13 @@ public final class ShipDoors {
                 Codec.BOOL.optionalFieldOf("starts_shut", false).forGetter(Door::startsShut),
                 Stair.CODEC.optionalFieldOf("stair").forGetter(Door::stair),
                 Swing.CODEC.optionalFieldOf("swing").forGetter(Door::swing),
-                Toe.CODEC.optionalFieldOf("toe").forGetter(Door::toe)
+                Turn.CODEC.listOf().optionalFieldOf("turns", List.of()).forGetter(Door::turns)
         ).apply(instance, Door::new));
 
         public Door {
             travel = new Vector3f(travel);
             cell = List.copyOf(cell);
+            turns = List.copyOf(turns);
         }
     }
 
@@ -221,24 +223,24 @@ public final class ShipDoors {
     }
 
     /**
-     * A second leaf hinged on a door's leaf, folded against it shut, which unfolds once the leaf has swung a share of
-     * the way open: a ramp's toe, reaching the land as the ramp lies down.
+     * Another bone that turns as a door opens, once the leaf has opened a share of the way: a ramp's toe, folded
+     * against the ramp and unfolding to reach the land as it lies down; a pair's other leaf, turning with the first.
      *
-     * @param bone    its bone, hanging from the leaf's, turning about its own pivot
-     * @param axis    its hinge's way in the leaf's space
-     * @param degrees how far it turns, unfolding
-     * @param from    the share of the leaf's opening after which it unfolds, over the rest of it
+     * @param bone    its bone, turning about its own pivot, in the space of the bone it hangs from
+     * @param axis    its hinge's way
+     * @param degrees how far it turns, opening
+     * @param from    the share of the leaf's opening after which it turns, over the rest of it; nought, with it
      */
-    public record Toe(String bone, Vector3f axis, float degrees, float from) {
+    public record Turn(String bone, Vector3f axis, float degrees, float from) {
 
-        public static final Codec<Toe> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Codec.STRING.fieldOf("bone").forGetter(Toe::bone),
-                ExtraCodecs.VECTOR3F.fieldOf("axis").forGetter(Toe::axis),
-                Codec.FLOAT.fieldOf("degrees").forGetter(Toe::degrees),
-                Codec.FLOAT.fieldOf("from").forGetter(Toe::from)
-        ).apply(instance, Toe::new));
+        public static final Codec<Turn> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.STRING.fieldOf("bone").forGetter(Turn::bone),
+                ExtraCodecs.VECTOR3F.fieldOf("axis").forGetter(Turn::axis),
+                Codec.FLOAT.fieldOf("degrees").forGetter(Turn::degrees),
+                Codec.FLOAT.optionalFieldOf("from", 0.0F).forGetter(Turn::from)
+        ).apply(instance, Turn::new));
 
-        public Toe {
+        public Turn {
             axis = new Vector3f(axis).normalize();
         }
     }
@@ -311,8 +313,10 @@ public final class ShipDoors {
                 }
                 door.swing().ifPresent(swing -> turn(pose, door.leaf(), swing.axis(),
                         Math.toRadians(swing.degrees() * motion.leaf())));
-                door.toe().ifPresent(toe -> turn(pose, toe.bone(), toe.axis(),
-                        Math.toRadians(toe.degrees() * DoorMotion.after(motion.leaf(), toe.from()))));
+                for (final Turn other : door.turns()) {
+                    turn(pose, other.bone(), other.axis(),
+                            Math.toRadians(other.degrees() * DoorMotion.after(motion.leaf(), other.from())));
+                }
                 door.stair().ifPresent(stair -> stair(stair, motion, pose));
             }
         }

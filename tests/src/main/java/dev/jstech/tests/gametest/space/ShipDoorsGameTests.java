@@ -568,13 +568,14 @@ public final class ShipDoorsGameTests {
         }).thenSucceed();
     }
 
-    /* Every door of the ship of {@code plan}: its pressure doors, its airlock's outer door and its ramp, each once. */
+    /* Every door of the ship of {@code plan}: its pressure doors, its airlock's outer door, its ramp and roof, once. */
     private static List<FormedDoors.Door> doorsOf(final ServerLevel level, final PlannedBuild plan) {
         final Map<BlockPos, FormedDoors.Door> out = new LinkedHashMap<>();
         for (final PlanSpot spot : plan.plan().spots()) {
             final String piece = spot.block().equals(ShipKitBlocks.PRESSURE_DOOR.getId()) ? ShipDoorRules.PRESSURE_DOOR
                     : spot.block().equals(ShipKitBlocks.AIRLOCK_DOOR.getId()) ? ShipDoorRules.OUTER_DOOR
-                    : spot.block().equals(ShipKitBlocks.RAMP_PLATE.getId()) ? ShipDoorRules.RAMP : null;
+                    : spot.block().equals(ShipKitBlocks.RAMP_PLATE.getId()) ? ShipDoorRules.RAMP
+                    : spot.block().equals(ShipKitBlocks.HULL_PLATING.getId()) ? ShipDoorRules.BAY_DOORS : null;
             // A block a door's model makes its own: a ramp plate is the Side Door hold's door as well, no ramp of it.
             if (piece != null) {
                 final BlockPos at = plan.where(spot);
@@ -656,6 +657,11 @@ public final class ShipDoorsGameTests {
             throw new IllegalStateException(door.piece() + " at " + door.uses() + " fills nothing shut");
         }
         final Vec3 middle = leaf.getCenter();
+        if (leaf.getYsize() < leaf.getXsize() && leaf.getYsize() < leaf.getZsize()) {
+            // A door overhead, a hold's roof: its way is up through it, a player's width square, its leaf's depth.
+            return new AABB(middle.x - HALF_A_PLAYER, leaf.minY, middle.z - HALF_A_PLAYER, middle.x + HALF_A_PLAYER,
+                    leaf.maxY, middle.z + HALF_A_PLAYER);
+        }
         // Across its way a player's width, along it its leaf's own depth: the doorway itself, whatever step lies
         // before or past it, a step a player climbs.
         final boolean alongX = leaf.getXsize() < leaf.getZsize();

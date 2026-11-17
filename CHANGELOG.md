@@ -4018,6 +4018,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   it, its toe unfolding past level, till its foot rests on the land and it is walked up, a step every quarter block. In
   the air it swings down to its full angle, nothing to climb; lifting off, a ship shuts it; open in space, the hold
   loses its air. It was drawn always down, its opening only painted.
+- (Space) The Bay Doors hold's roof opens: its two leaves, each half of its flat roof and painted as the hull, swing up
+  and over about the roof's edges to lie along the hull's upper flanks, as the Space Shuttle's, over two and a half
+  seconds, used from under them or over them by a crew member who may come aboard; the hold under them opens to the
+  sky, its hoist rail left out and its lamps at its walls. Lifting off, a ship shuts them. Its roof was only seamed.
 
 ### Changed
 - (Space) A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

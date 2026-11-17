@@ -36,7 +36,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * A starship's holds' doors as the player's game draws them moving, as the approved storyboard has them: the Ramp
- * hold's ramp shut across the tail, swinging down, and lying on the land, seen from behind the ship.
+ * hold's ramp shut across the tail, swinging down, and lying on the land, seen from behind the ship; the Bay Doors
+ * hold's roof shut, its leaves standing up, and lying along the hull's flanks, seen from over it.
  */
 public final class ShipHoldDoorsClientTests {
 
@@ -65,17 +66,43 @@ public final class ShipHoldDoorsClientTests {
             part("airlock"), part("reactor_flush"), part("ramp")), List.of(part("magnetic_nozzle"),
             part("stub_wings"), part("legs")));
     private static final int RAMP_PART = 3;
+    private static final ShipDesign BAY_SHIP = new ShipDesign("JS-H2", List.of(part("orbiter_cockpit"),
+            part("airlock"), part("bay"), part("reactor_flush")), List.of(part("twin_bells"), part("blended_delta"),
+            part("twin_canted_fins"), part("wheels")));
+    private static final int BAY_PART = 2;
+    /* The camera over the hold's roof, how far across the ship from its middle and how high over it, in blocks. */
+    private static final double ABOVE_ACROSS = 5.0;
+    private static final double ABOVE = 6.0;
 
     private ShipHoldDoorsClientTests() {
     }
 
     @ClientTest(timeoutTicks = 2400)
     public static void ramp_swingsDownFromTheTailOntoTheLandAsItOpens(final ClientTestContext ctx) {
+        swing(ctx, RAMP_SHIP, RAMP_PART, ShipKitBlocks.RAMP_PLATE.getId(), ShipDoorRules.RAMP, "ship-ramp",
+                new Vec3(0, OVER, BEHIND), new Vec3(0, -1, 0));
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void bayDoors_swingUpAndOverOntoTheHullsFlanksAsTheyOpen(final ClientTestContext ctx) {
+        swing(ctx, BAY_SHIP, BAY_PART, ShipKitBlocks.HULL_PLATING.getId(), ShipDoorRules.BAY_DOORS, "ship-bay-doors",
+                new Vec3(ABOVE_ACROSS, ABOVE, 0), Vec3.ZERO);
+    }
+
+    /*
+     * The ship of {@code design} let go on the land, its door {@code piece} found through its part numbered
+     * {@code part}'s block {@code block}, seen from {@code eyes} off the door's block, across the ship, up and along it
+     * aft, looking at {@code look} off it: drawn shut, half way and open, each screenshot named after {@code name}.
+     * Open, it is drawn away from where it stood shut; half way, between the two.
+     */
+    private static void swing(final ClientTestContext ctx, final ShipDesign design, final int part,
+                              final ResourceLocation block, final String piece, final String name, final Vec3 eyes,
+                              final Vec3 look) {
         final ServerLevel[] built = new ServerLevel[1];
         final BlockPos[] terminal = new BlockPos[1];
         final PlannedBuild[] plan = new PlannedBuild[1];
         final MovingStructure[] ship = new MovingStructure[1];
-        final FormedDoors.Door[] ramp = new FormedDoors.Door[1];
+        final FormedDoors.Door[] moving = new FormedDoors.Door[1];
         final int[][] frames = new int[3][];
         ctx.afterTest(() -> {
             ctx.mc().options.hideGui = false;
@@ -99,7 +126,7 @@ public final class ShipHoldDoorsClientTests {
                 .thenServer(0, level -> {
                     final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
                             .getBlockEntity(terminal[0]);
-                    dock.design(RAMP_SHIP);
+                    dock.design(design);
                     ctx.assertTrue(dock.confirm(), "the ship is sent to the dock");
                     plan[0] = dock.build().orElseThrow();
                     for (final PlanSpot spot : plan[0].plan().spots()) {
@@ -112,42 +139,46 @@ public final class ShipHoldDoorsClientTests {
                 .thenWaitUntilServer(level -> ship[0].ready() && ship[0].motion() instanceof ShipFlight flight
                         && flight.grounded(), ARRIVE, "the ship let go to stand on the land", level -> "arriving")
                 .thenServer(0, level -> {
-                    final PlanSpot spot = plan[0].plan().spots().stream().filter(each -> each.part() == RAMP_PART
-                            && each.block().equals(ShipKitBlocks.RAMP_PLATE.getId())).findFirst().orElseThrow();
-                    final BlockPos aboard = BlockPos.containing(MovingStructures.toYard(ship[0],
-                            Vec3.atCenterOf(plan[0].where(spot))));
-                    for (final FormedPlace place : ((IFormedPlaced) level.getBlockEntity(aboard)).places()) {
-                        FormedDoors.named(level, aboard, place, ShipDoorRules.RAMP).ifPresent(door -> ramp[0] = door);
+                    for (final PlanSpot spot : plan[0].plan().spots()) {
+                        if (spot.part() != part || !spot.block().equals(block)) {
+                            continue;
+                        }
+                        final BlockPos aboard = BlockPos.containing(MovingStructures.toYard(ship[0],
+                                Vec3.atCenterOf(plan[0].where(spot))));
+                        for (final FormedPlace place : ((IFormedPlaced) level.getBlockEntity(aboard)).places()) {
+                            FormedDoors.named(level, aboard, place, piece).ifPresent(door -> moving[0] = door);
+                        }
                     }
-                    ctx.assertTrue(ramp[0] != null && FormedDoors.shut(level, ramp[0]), "its ramp stands shut");
-                    // Behind the tail, looking at the ramp's block.
-                    final Vec3 tail = MovingStructures.inWorld(level, Vec3.atCenterOf(ramp[0].uses()));
-                    final Vec3 aft = MovingStructures.inWorld(level, Vec3.atCenterOf(ramp[0].uses()).add(0, 0, 1))
-                            .subtract(tail).normalize();
-                    final Vec3 eyes = tail.add(aft.scale(BEHIND)).add(0, OVER, 0);
-                    ctx.serverPlayer().teleportTo(level, eyes.x, eyes.y - ctx.serverPlayer().getEyeHeight(), eyes.z,
-                            0, 0);
+                    ctx.assertTrue(moving[0] != null && FormedDoors.shut(level, moving[0]), "its " + piece
+                            + " stands shut");
+                    final Vec3 there = seen(level, moving[0], eyes);
+                    ctx.serverPlayer().teleportTo(level, there.x, there.y - ctx.serverPlayer().getEyeHeight(),
+                            there.z, 0, 0);
                 })
                 .then(SETTLE, () -> {
-                    final Vec3 tail = ctx.server().submit(() -> MovingStructures.inWorld(built[0],
-                            Vec3.atCenterOf(ramp[0].uses()))).join();
-                    ctx.lookAt(tail.subtract(0, 1, 0));
+                    ctx.lookAt(ctx.server().submit(() -> seen(built[0], moving[0], look)).join());
                     ctx.mc().options.hideGui = true;
                 })
                 .then(SETTLE, () -> frames[0] = frame(ctx))
-                .thenScreenshot(0, "ship-ramp-shut")
-                .thenServer(0, level -> FormedDoors.set(level, ramp[0], false))
+                .thenScreenshot(0, name + "-shut")
+                .thenServer(0, level -> FormedDoors.set(level, moving[0], false))
                 .then(HALF_SWING, () -> frames[1] = frame(ctx))
-                .thenScreenshot(0, "ship-ramp-swinging")
+                .thenScreenshot(0, name + "-swinging")
                 .then(SWUNG, () -> {
                     frames[2] = frame(ctx);
-                    ctx.assertTrue(changed(frames[0], frames[2]) >= MOVED, "open, the ramp is drawn away from the"
-                            + " tail, down on the land: " + changed(frames[0], frames[2]) + " pixels");
+                    ctx.assertTrue(changed(frames[0], frames[2]) >= MOVED, "open, it is drawn away from where it"
+                            + " stood shut: " + changed(frames[0], frames[2]) + " pixels");
                     ctx.assertTrue(changed(frames[0], frames[1]) >= MOVED && changed(frames[1], frames[2]) >= MOVED,
                             "half way, it is drawn between shut and open: " + changed(frames[0], frames[1]) + " and "
                                     + changed(frames[1], frames[2]) + " pixels");
                 })
-                .thenScreenshot(0, "ship-ramp-open");
+                .thenScreenshot(0, name + "-open");
+    }
+
+    /* Where {@code off} is off the block {@code door} works by, in the world: across the ship, up, along it aft. */
+    private static Vec3 seen(final ServerLevel level, final FormedDoors.Door door, final Vec3 off) {
+        final Vec3 at = Vec3.atCenterOf(door.uses());
+        return MovingStructures.inWorld(level, at.add(off.x, 0, off.z)).add(0, off.y, 0);
     }
 
     /* How many pixels of {@code a} and {@code b} differ. */
