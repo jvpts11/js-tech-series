@@ -80,6 +80,12 @@ public final class ShipyardDoorsGameTests {
     private static final int OUT_CHUNKS = 2;
     /* How far past the dock its test's walls and roof are taken away, in blocks, for a ship leaving it. */
     private static final int OUT = 24;
+    /*
+     * A ship leaving its dock goes past its test's walls, into where the tests beside it stand when they run with it:
+     * each that leaves runs in a batch of its own, none beside it.
+     */
+    private static final String LEAVING_BY_THE_FRONT = BATCH + "_leaving_front";
+    private static final String LEAVING_BY_THE_TOP = BATCH + "_leaving_top";
     private static final TicketType<BlockPos> LAND = TicketType.create("jstests_shipyard_doors", Vec3i::compareTo);
     private static final int TICKING = 2;
     /* How long a dock left empty is watched, in ticks: well past when one just formed opens by itself. */
@@ -149,7 +155,7 @@ public final class ShipyardDoorsGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    @GameTest(template = ARENA, batch = LEAVING_BY_THE_FRONT, timeoutTicks = 1600)
     public static void open_aShipOnWheelsRollsOutOfTheFront(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
@@ -172,7 +178,7 @@ public final class ShipyardDoorsGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    @GameTest(template = ARENA, batch = LEAVING_BY_THE_TOP, timeoutTicks = 1600)
     public static void open_aShipOnLegsRisesOutOfTheTop(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));

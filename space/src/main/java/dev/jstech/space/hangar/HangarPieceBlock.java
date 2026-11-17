@@ -47,8 +47,8 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
     /** Whether a bay door stands open, drawn back out of the way of what passes through it. */
     public static final BooleanProperty OPEN = BooleanProperty.create("open");
     /**
-     * Whether a bay door is moving, drawn by its hangar's terminal as it goes ({@link HangarDoorMotion}), standing as it
-     * stood, open or shut, until it has gone all the way.
+     * Whether a bay door is moving, drawn by its hangar's terminal as it goes ({@link HangarDoorMotion}), standing as
+     * it stood, open or shut, until it has gone all the way.
      */
     public static final BooleanProperty MOVING = BooleanProperty.create("moving");
     private static final double PIXEL = 1.0 / 16;
