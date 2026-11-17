@@ -94,6 +94,19 @@ class ShipAutopilotsTest {
     }
 
     @Test
+    void settle_flownFromLevelJustOverThePlaneComesDownOntoIt() {
+        // Over the line already level, five metres over the plane, as a climb out of the Moon once left it.
+        final Flight flight = new Flight(new ShipFlightModel.State(120, 0, 1, 0, 0), 0, PLANE + 5, 0, 0, 0, false);
+        int ticks = 0;
+        while (!ShipAutopilots.settled(flight.pitch, flight.y - PLANE) && ticks < 120 * TICKS_A_SECOND) {
+            flight.flyInSpace(ShipAutopilots.settle(flight.pitch, flight.y - PLANE));
+            ticks++;
+        }
+        assertTrue(ShipAutopilots.settled(flight.pitch, flight.y - PLANE), "levels on the plane: " + flight);
+        assertTrue(ticks < 60 * TICKS_A_SECOND, "within a minute: " + ticks / TICKS_A_SECOND + " s");
+    }
+
+    @Test
     void land_turnsTowardTheSpot() {
         final ShipFlightModel.Held east = ShipAutopilots.land(CRUISING, 0, 0, 200, 0, 0, AIR);
         assertTrue(east.right() > 0 && east.left() == 0, "a spot to the east, its nose north, turns right");

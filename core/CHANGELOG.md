@@ -2256,6 +2256,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- Land left behind by anything moving fast into new land is let go again, and the server no longer slows down
+  for good behind it: the game serves the chunks' waiting tasks nearest first and a chunk no longer wanted last of
+  all, so while something kept moving into new land (a ship crossing space, or a flat world, both made fast), the
+  tasks of the land it left never ran, each holding the land round it; the chunks waiting to unload grew by thousands
+  a minute and every tick went through them all. The Core serves those tasks first, small as they are, so the land
+  goes as it would the moment the server was idle. This was the game's own.
 - A formed model's door struck, its blocks dented, still lets a player through open: a struck block took its
   shape from its model's faces with its doors' leaves in them, and from its dents, so a door drawn open could still
   stand solid where its leaf rests or where a dent reached into its doorway, and a starship's crew could not get out

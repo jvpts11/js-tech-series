@@ -4333,6 +4333,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) Land left behind by anything moving fast into new land is let go again, and the server no longer slows down
+  for good behind it: the game serves the chunks' waiting tasks nearest first and a chunk no longer wanted last of
+  all, so while something kept moving into new land (a ship crossing space, or a flat world, both made fast), the
+  tasks of the land it left never ran, each holding the land round it; the chunks waiting to unload grew by thousands
+  a minute and every tick went through them all. The Core serves those tasks first, small as they are, so the land
+  goes as it would the moment the server was idle. This was the game's own.
+- (Space) ORBIT settles a ship come out into space just over the plane of the low orbits: one come over the line
+  level and a few metres off the plane held its nose inside the band ORBIT keeps it in, flew on level for good, and
+  never handed the helm back. It now pitches toward the plane until it is on it.
 - (Space) A starship's engines no longer buzz as it turns: heard inside it from its engines, their sound swung round
   its crew's heads a step a tick, as the game moves a sound, while their view turned smoothly. Inside, its engines and
   its pulse drive are heard all round, through the hull; from outside, still from its engines.

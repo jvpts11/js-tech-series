@@ -46,10 +46,13 @@ public final class ShipAutopilots {
     private static final double PITCH_OFF = 1.5;
     /*
      * ORBIT over the line: how far it pitches toward the plane of the low orbits for each metre off it, in degrees,
-     * and at most; how near the plane it counts as on it, in metres.
+     * at most, and at least while it is off the plane: twice the band it holds its nose within, so a ship come over
+     * the line level just off the plane pitches toward it rather than flying on level inside that band for good; how
+     * near the plane it counts as on it, in metres.
      */
     private static final double SETTLE_GAIN = 0.2;
     private static final double MOST_SETTLE = 20;
+    private static final double LEAST_SETTLE = 2 * PITCH_OFF;
     private static final double ON_THE_PLANE = 2;
     /*
      * The fastest LAND closes on its spot or a runway's gate, in metres a second: the air's cruise, in every world.
@@ -231,7 +234,8 @@ public final class ShipAutopilots {
      * plane, its throttle and heading left as they are and no boost, so it stays in orbit instead of climbing on.
      */
     public static ShipFlightModel.Held settle(final double pitch, final double over) {
-        final double wanted = Math.clamp(-over * SETTLE_GAIN, -MOST_SETTLE, MOST_SETTLE);
+        final double wanted = Math.abs(over) <= ON_THE_PLANE ? 0
+                : -Math.signum(over) * Math.clamp(Math.abs(over) * SETTLE_GAIN, LEAST_SETTLE, MOST_SETTLE);
         final double up = pitch < wanted - PITCH_OFF ? 1 : 0;
         final double down = pitch > wanted + PITCH_OFF ? 1 : 0;
         return new ShipFlightModel.Held(0, 0, 0, 0, up, down, false, true);

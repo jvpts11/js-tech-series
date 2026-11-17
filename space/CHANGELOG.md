@@ -987,6 +987,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- ORBIT settles a ship come out into space just over the plane of the low orbits: one come over the line
+  level and a few metres off the plane held its nose inside the band ORBIT keeps it in, flew on level for good, and
+  never handed the helm back. It now pitches toward the plane until it is on it.
 - A starship's engines no longer buzz as it turns: heard inside it from its engines, their sound swung round
   its crew's heads a step a tick, as the game moves a sound, while their view turned smoothly. Inside, its engines and
   its pulse drive are heard all round, through the hull; from outside, still from its engines.

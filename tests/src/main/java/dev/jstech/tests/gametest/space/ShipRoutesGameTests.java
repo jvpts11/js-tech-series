@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import com.mojang.logging.LogUtils;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -73,6 +75,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * A starship's trips between the worlds, end to end, its pilot at the helm all the way: built in the shipyard and let
@@ -85,6 +89,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class ShipRoutesGameTests {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final String ARENA = "shipyard";
     /* Each its own batch: the ships go to the same places of space and of the worlds. */
     private static final String PADS_BATCH = "jsspace_ship_routes_pads";
@@ -95,6 +100,12 @@ public final class ShipRoutesGameTests {
      * makes land, the more ticks the trip takes.
      */
     private static final int TRIP = 200_000;
+    /*
+     * How long one step of the trip may take at the most, in ticks: a step still waited on past it fails the test
+     * there, saying where the ship is, rather than the whole trip running on toward its timeout, which a server slowed
+     * by a stall puts hours away.
+     */
+    private static final int STEP = 60_000;
     /* Where the dock's lowest corner stands in the arena. */
     private static final BlockPos CORNER = new BlockPos(1, 2, 1);
     /* A nose level and north, as a ship is built, the way it jumps towards the world it was set south of. */
@@ -193,6 +204,7 @@ public final class ShipRoutesGameTests {
         final MovingStructure[] ship = new MovingStructure[1];
         final ServerPlayer[] pilot = new ServerPlayer[1];
         final List<Runnable> kept = new ArrayList<>();
+        final Steps steps = new Steps(helper, () -> where(ship[0]));
         GameTestSequence sequence = letGo(helper, design, ship).thenExecute(() -> {
             pilot[0] = GameTestPlayers.connected(helper, "ship_route_pilot");
             pilot[0].setGameMode(GameType.SURVIVAL);
@@ -200,27 +212,29 @@ public final class ShipRoutesGameTests {
                     ShipKitBlocks.PILOT_SEAT.getId())));
             helper.assertTrue(MovingStructures.sit(pilot[0], seat), "the pilot sits at its helm");
         });
-        sequence = rise(helper, sequence, ship, pilot, "its cradle").thenExecute(() -> {
-            // Taken over the arenas laid north of its own, which it would fly into, ORBIT is engaged.
-            final StructurePose now = ship[0].pose();
-            setAt(helper, ship[0], pilot[0], now.movedTo(now.x(), now.y() + OVER_THE_ARENAS, now.z()));
-            engage(helper, ship[0], pilot[0], ShipAutopilot.Mode.ORBIT);
-        }).thenExecuteAfter(1, () -> seated(helper, ship[0], pilot[0], "taken over the arenas"));
-        sequence = orbit(helper, sequence, ship, pilot, overworld, space);
+        sequence = rise(helper, steps.begin(sequence, "rises off its cradle"), ship, pilot, "its cradle")
+                .thenExecute(() -> {
+                    // Taken over the arenas laid north of its own, which it would fly into, ORBIT is engaged.
+                    final StructurePose now = ship[0].pose();
+                    setAt(helper, ship[0], pilot[0], now.movedTo(now.x(), now.y() + OVER_THE_ARENAS, now.z()));
+                    engage(helper, ship[0], pilot[0], ShipAutopilot.Mode.ORBIT);
+                }).thenExecuteAfter(1, () -> seated(helper, ship[0], pilot[0], "taken over the arenas"));
+        sequence = orbit(helper, steps.begin(sequence, "ORBIT out of the Overworld"), ship, pilot, overworld, space);
         ServerLevel from = overworld;
         for (final SolarBody to : List.of(SolarBody.MOON, SolarBody.MARS, SolarBody.OVERWORLD)) {
             final ServerLevel world = to == SolarBody.OVERWORLD ? overworld : levelOf(space, to);
             if (from != overworld) {
-                sequence = rise(helper, sequence, ship, pilot, "the land of " + from.dimension().location())
+                final String land = from.dimension().location().toString();
+                sequence = rise(helper, steps.begin(sequence, "rises off " + land), ship, pilot, "the land of " + land)
                         .thenExecute(() -> engage(helper, ship[0], pilot[0], ShipAutopilot.Mode.ORBIT));
-                sequence = orbit(helper, sequence, ship, pilot, from, space);
+                sequence = orbit(helper, steps.begin(sequence, "ORBIT out of " + land), ship, pilot, from, space);
             }
-            sequence = across(helper, sequence, ship, pilot, to, kept);
-            sequence = down(helper, sequence, ship, pilot, world, to, kept);
-            sequence = landing.on(helper, sequence, ship, pilot, world, kept);
+            sequence = across(helper, steps.begin(sequence, "jumps across to " + to), ship, pilot, to, kept);
+            sequence = down(helper, steps.begin(sequence, "comes down into " + to), ship, pilot, world, to, kept);
+            sequence = landing.on(helper, steps.begin(sequence, "sets down on " + to), ship, pilot, world, kept);
             from = world;
         }
-        sequence.thenExecute(() -> {
+        steps.end(sequence).thenExecute(() -> {
             kept.forEach(Runnable::run);
             GameTestPlayers.leave(pilot[0]);
             MovingStructures.takeAway(ship[0]);
@@ -695,6 +709,12 @@ public final class ShipRoutesGameTests {
         return ship.motion() instanceof ShipFlight flight ? flight.state() + ", " + flight.autopilot() : "no flight";
     }
 
+    /* Where {@code ship} is and how it flies, for the trip's log and a step's failure. */
+    private static String where(final @Nullable MovingStructure ship) {
+        return ship == null ? "no ship yet" : "in " + ship.level().dimension().location() + " at " + ship.pose()
+                + ", " + state(ship);
+    }
+
     private static ResourceLocation part(final String path) {
         return SmallShipParts.id("small_" + path);
     }
@@ -705,5 +725,43 @@ public final class ShipRoutesGameTests {
 
         GameTestSequence on(GameTestHelper helper, GameTestSequence sequence, MovingStructure[] ship,
                             ServerPlayer[] pilot, ServerLevel world, List<Runnable> kept);
+    }
+
+    /*
+     * The trip's steps, one after another: each named in the log as it begins, with the tick and where the ship is, and
+     * failing the test there if it is still waited on STEP ticks later.
+     */
+    private static final class Steps {
+
+        private final GameTestHelper helper;
+        private final Supplier<String> where;
+        /* The step going on, counted from the first: a step's deadline finding a later one going lets it be. */
+        private int current;
+
+        private Steps(final GameTestHelper helper, final Supplier<String> where) {
+            this.helper = helper;
+            this.where = where;
+        }
+
+        /* {@code sequence} going on with the step {@code name}. */
+        private GameTestSequence begin(final GameTestSequence sequence, final String name) {
+            return sequence.thenExecute(() -> {
+                final int step = ++this.current;
+                LOGGER.info("Ship route, tick {}: {}; {}", this.helper.getTick(), name, this.where.get());
+                this.helper.runAtTickTime(this.helper.getTick() + STEP, () -> {
+                    if (this.current == step) {
+                        this.helper.fail("it " + name + " in no more than " + STEP + " ticks: " + this.where.get());
+                    }
+                });
+            });
+        }
+
+        /* {@code sequence} with its last step done. */
+        private GameTestSequence end(final GameTestSequence sequence) {
+            return sequence.thenExecute(() -> {
+                this.current++;
+                LOGGER.info("Ship route, tick {}: home; {}", this.helper.getTick(), this.where.get());
+            });
+        }
     }
 }
