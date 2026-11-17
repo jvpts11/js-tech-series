@@ -39,7 +39,9 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -135,6 +137,45 @@ public final class ShipDoorsGameTests {
                     && Math.abs(volume(level, door) - open) < 1.0e-9, "used again, it opens, its leaf gone from it");
             GameTestPlayers.leave(crew);
         }).thenSucceed();
+    }
+
+    /*
+     * Every door of every module, its pressure doors and its airlock's outer door, in five ships that hold every module
+     * between them: a player's click moves it once and a second click back, whichever hands their game tries, and
+     * struck, its blocks dented, it still opens out of its doorway.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void everyDoor_ofAShipOfThreeModules(final GameTestHelper helper) {
+        everyDoor(helper, new ShipDesign("JS-E1", List.of(part("orbiter_cockpit"), part("airlock"), part("workshop"),
+                part("lab"), part("quarters"), part("reactor_flush")), List.of(part("twin_bells"),
+                part("blended_delta"), part("twin_canted_fins"), part("wheels"))));
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void everyDoor_ofAShipOfTheOtherModules(final GameTestHelper helper) {
+        everyDoor(helper, new ShipDesign("JS-E2", List.of(part("cab_cockpit"), part("docking"), part("corridor"),
+                part("computing"), part("small_cargo"), part("reactor_fins")), List.of(part("cluster"),
+                part("stub_wings"), part("single_fin"), part("legs"))));
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void everyDoor_ofAShipWithASideDoorHold(final GameTestHelper helper) {
+        everyDoor(helper, new ShipDesign("JS-E3", List.of(part("greenhouse_cockpit"), part("airlock"),
+                part("side_door"), part("reactor_flush")), List.of(part("twin_bells"), part("swept_wings"),
+                part("wheels"))));
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void everyDoor_ofAShipWithABay(final GameTestHelper helper) {
+        everyDoor(helper, new ShipDesign("JS-E4", List.of(part("cab_cockpit"), part("docking"), part("bay"),
+                part("reactor_fins")), List.of(part("cluster"), part("stub_wings"), part("legs"))));
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void everyDoor_ofAShipWithARamp(final GameTestHelper helper) {
+        everyDoor(helper, new ShipDesign("JS-E5", List.of(part("orbiter_cockpit"), part("airlock"),
+                part("reactor_flush"), part("ramp")), List.of(part("magnetic_nozzle"), part("stub_wings"),
+                part("legs"))));
     }
 
     /* A door struck, its blocks dented, still lets a player through open: its leaf is out of its doorway. */
@@ -394,6 +435,12 @@ public final class ShipDoorsGameTests {
     /* The ship built whole and formed in a dock, its plan kept in {@code plan}, the dock's terminal in {@code at}. */
     private static GameTestSequence build(final GameTestHelper helper, final PlannedBuild[] plan,
                                           final BlockPos[] at) {
+        return build(helper, plan, at, SHIP);
+    }
+
+    /* The ship of {@code design} built and formed in a dock, its plan in {@code plan}, its terminal {@code at}. */
+    private static GameTestSequence build(final GameTestHelper helper, final PlannedBuild[] plan, final BlockPos[] at,
+                                          final ShipDesign design) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         at[0] = terminal;
@@ -403,8 +450,8 @@ public final class ShipDoorsGameTests {
                 .thenExecute(() -> {
                     final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
                             .getBlockEntity(terminal);
-                    dock.design(SHIP);
-                    helper.assertTrue(dock.confirm(), "the ship is sent to the dock");
+                    dock.design(design);
+                    helper.assertTrue(dock.confirm(), "the ship " + design.name() + " is sent to the dock");
                     plan[0] = dock.build().orElseThrow();
                     for (final PlanSpot spot : plan[0].plan().spots()) {
                         level.setBlockAndUpdate(plan[0].where(spot), BuiltInRegistries.BLOCK.get(spot.block())
@@ -412,6 +459,77 @@ public final class ShipDoorsGameTests {
                     }
                 })
                 .thenWaitUntil(() -> helper.assertTrue(plan[0].complete(), "the ship stands whole and formed"));
+    }
+
+    /*
+     * The ship of {@code design} built, then each of its doors clicked by a player, both hands tried, once and again,
+     * and each struck open: every door that does not move once a click, or whose struck open leaf stands in its
+     * doorway, named.
+     */
+    private static void everyDoor(final GameTestHelper helper, final ShipDesign design) {
+        final ServerLevel level = helper.getLevel();
+        final PlannedBuild[] plan = new PlannedBuild[1];
+        build(helper, plan, new BlockPos[1], design).thenExecute(() -> {
+            final ServerPlayer crew = GameTestPlayers.connected(helper, "jst-every-door");
+            final List<FormedDoors.Door> doors = doorsOf(level, plan[0]);
+            final List<String> wrong = new ArrayList<>();
+            for (final FormedDoors.Door door : doors) {
+                final Vec3 at = pointOn(level, door);
+                final BlockHitResult hit = new BlockHitResult(at, Direction.NORTH, BlockPos.containing(at), false);
+                final boolean was = FormedDoors.shut(level, door);
+                click(crew, level, hit);
+                if (FormedDoors.shut(level, door) == was) {
+                    wrong.add(door.piece() + " at " + door.uses().toShortString() + " did not move on a click");
+                }
+                click(crew, level, hit);
+                if (FormedDoors.shut(level, door) != was) {
+                    wrong.add(door.piece() + " at " + door.uses().toShortString() + " did not move back");
+                }
+            }
+            for (final FormedDoors.Door door : doors) {
+                final String name = door.piece() + " at " + door.uses().toShortString();
+                final AABB doorway = doorway(level, door);
+                FormedDoors.set(level, door, false);
+                if (!blocking(level, doorway).isEmpty()) {
+                    wrong.add(name + " open is in a player's way: " + blocking(level, doorway));
+                }
+                FormedDoors.set(level, door, true);
+                if (blocking(level, doorway).isEmpty()) {
+                    wrong.add(name + " shut lets a player through");
+                }
+                FormedDoors.set(level, door, false);
+                for (final BlockPos leaf : door.leaf()) {
+                    FormedDamage.strike(level, leaf, DamageStamps.IMPACT, Vec3.atCenterOf(leaf), new Vec3(0, 1, 0),
+                            STRUCK, SEED);
+                }
+                if (!blocking(level, doorway).isEmpty()) {
+                    wrong.add(name + " struck open is in a player's way: " + blocking(level, doorway));
+                }
+            }
+            GameTestPlayers.leave(crew);
+            helper.assertTrue(!doors.isEmpty(), design.name() + " has doors");
+            helper.assertTrue(wrong.isEmpty(), design.name() + "'s " + doors.size() + " doors: " + wrong);
+        }).thenSucceed();
+    }
+
+    /* Every door of the ship of {@code plan}: its sections' pressure doors and its airlock's outer door, each once. */
+    private static List<FormedDoors.Door> doorsOf(final ServerLevel level, final PlannedBuild plan) {
+        final Map<BlockPos, FormedDoors.Door> out = new LinkedHashMap<>();
+        for (final PlanSpot spot : plan.plan().spots()) {
+            final String piece = spot.block().equals(ShipKitBlocks.PRESSURE_DOOR.getId()) ? ShipDoorRules.PRESSURE_DOOR
+                    : spot.block().equals(ShipKitBlocks.AIRLOCK_DOOR.getId()) ? ShipDoorRules.OUTER_DOOR : null;
+            if (piece != null) {
+                final FormedDoors.Door door = named(level, plan.where(spot), piece);
+                out.putIfAbsent(door.uses(), door);
+            }
+        }
+        return List.copyOf(out.values());
+    }
+
+    /* {@code player} clicks where {@code hit} is, as their game does: the main hand, then the other too. */
+    private static void click(final ServerPlayer player, final ServerLevel level, final BlockHitResult hit) {
+        player.gameMode.useItemOn(player, level, ItemStack.EMPTY, InteractionHand.MAIN_HAND, hit);
+        player.gameMode.useItemOn(player, level, ItemStack.EMPTY, InteractionHand.OFF_HAND, hit);
     }
 
     /* The door {@code piece} of the part numbered {@code part}, through a block of it that wants {@code block}. */
@@ -457,7 +575,7 @@ public final class ShipDoorsGameTests {
 
     /*
      * Where a player walks through {@code door}: a player's width and height, standing on the foot of the room its
-     * leaf fills shut and leaves open, in the middle of it, as deep as they are wide. Read with the door as it stands
+     * leaf fills shut and leaves open, in the middle of it, as deep as its leaf. Read with the door as it stands
      * intact, shut and then open; it is left as it stood.
      */
     private static AABB doorway(final ServerLevel level, final FormedDoors.Door door) {
@@ -478,10 +596,15 @@ public final class ShipDoorsGameTests {
             throw new IllegalStateException(door.piece() + " at " + door.uses() + " fills nothing shut");
         }
         final Vec3 middle = leaf.getCenter();
+        // Across its way a player's width, along it its leaf's own depth: the doorway itself, whatever step lies
+        // before or past it, a step a player climbs.
+        final boolean alongX = leaf.getXsize() < leaf.getZsize();
+        final double halfX = alongX ? leaf.getXsize() / 2 : HALF_A_PLAYER;
+        final double halfZ = alongX ? HALF_A_PLAYER : leaf.getZsize() / 2;
         // Its foot: the top of the floor under it, open, a step over or under where its leaf comes down to.
         FormedDoors.set(level, door, false);
-        final AABB foot = new AABB(middle.x - HALF_A_PLAYER, leaf.minY - STEP_UP, middle.z - HALF_A_PLAYER,
-                middle.x + HALF_A_PLAYER, leaf.minY + STEP_UP, middle.z + HALF_A_PLAYER);
+        final AABB foot = new AABB(middle.x - halfX, leaf.minY - STEP_UP, middle.z - halfZ, middle.x + halfX,
+                leaf.minY + STEP_UP, middle.z + halfZ);
         double floor = foot.minY;
         for (final BlockPos at : BlockPos.betweenClosed(BlockPos.containing(foot.minX, foot.minY, foot.minZ),
                 BlockPos.containing(foot.maxX, foot.maxY, foot.maxZ))) {
@@ -492,8 +615,8 @@ public final class ShipDoorsGameTests {
             }
         }
         FormedDoors.set(level, door, was);
-        return new AABB(middle.x - HALF_A_PLAYER, floor + OFF_THE_SILL, middle.z - HALF_A_PLAYER,
-                middle.x + HALF_A_PLAYER, floor + OFF_THE_SILL + A_PLAYER_TALL, middle.z + HALF_A_PLAYER);
+        return new AABB(middle.x - halfX, floor + OFF_THE_SILL, middle.z - halfZ, middle.x + halfX,
+                floor + OFF_THE_SILL + A_PLAYER_TALL, middle.z + halfZ);
     }
 
     /* The shapes of {@code door}'s leaf's blocks as they stand, where they stand in the world. */
