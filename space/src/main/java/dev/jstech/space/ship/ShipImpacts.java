@@ -8,22 +8,14 @@
 package dev.jstech.space.ship;
 
 import dev.jstech.core.moving.MovingStructure;
-import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.region.Box;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.ExplosionDamageCalculator;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 /**
  * What a ship that meets the land too fast suffers. Up to {@link #SAFE} blocks a second it touches down as a ship
@@ -47,22 +39,6 @@ public final class ShipImpacts {
     /* How far round the ship's box one aboard may be, in blocks, to be hurt with it. */
     private static final double ABOARD = 1;
     private static final double HALF = 0.5;
-    /* How big a crash's burst is, as the game's explosions are sized: least, most, and more each block a second. */
-    private static final double LEAST_BURST = 2;
-    private static final double MOST_BURST = 8;
-    private static final double BURST_PER = 0.05;
-    /* A burst that only shows and sounds: it hurts no one and pushes no one. */
-    private static final ExplosionDamageCalculator HARMLESS = new ExplosionDamageCalculator() {
-        @Override
-        public boolean shouldDamageEntity(final Explosion explosion, final Entity entity) {
-            return false;
-        }
-
-        @Override
-        public float getKnockbackMultiplier(final Entity entity) {
-            return 0;
-        }
-    };
 
     private ShipImpacts() {
     }
@@ -103,7 +79,7 @@ public final class ShipImpacts {
             }
             final List<BlockPos> struck = foremost(level, ship, Math.max(1, holes), wayX, wayY, wayZ);
             if (hurt > 0 && !struck.isEmpty()) {
-                burst(level, struck.getFirst(), speed);
+                ShipBursts.burst(level, struck.getFirst(), speed);
             } else if (holes > 0 && !struck.isEmpty()) {
                 ShipSounds.impact(level, struck.getFirst());
             }
@@ -117,18 +93,6 @@ public final class ShipImpacts {
                 }
             }
         });
-    }
-
-    /*
-     * A crash its crew are hurt by bursts where the ship is seen meeting the land, at its block {@code at} of the yard,
-     * the bigger the faster: the game's explosion, seen and heard, breaking nothing and hurting no one, the crash
-     * itself doing that.
-     */
-    private static void burst(final ServerLevel level, final BlockPos at, final double speed) {
-        final Vec3 seen = MovingStructures.inWorld(level, Vec3.atCenterOf(at));
-        final float size = (float) Math.min(MOST_BURST, LEAST_BURST + (speed - HURTS) * BURST_PER);
-        level.explode(null, null, HARMLESS, seen.x, seen.y, seen.z, size, false, Level.ExplosionInteraction.NONE,
-                ParticleTypes.EXPLOSION_EMITTER, ParticleTypes.EXPLOSION_EMITTER, SoundEvents.GENERIC_EXPLODE);
     }
 
     /*
