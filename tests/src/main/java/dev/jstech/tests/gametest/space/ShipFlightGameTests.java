@@ -103,6 +103,12 @@ public final class ShipFlightGameTests {
 
     private static final String ARENA = "shipyard";
     private static final String BATCH = "jsspace_ship_flight";
+    /*
+     * How long a test whose ship is built, let go and then watched a while may take, in ticks: the test server runs
+     * its ticks as fast as it can while the land its ship's yard stands in loads at its own pace, slower on a busy
+     * machine, so the ticks it waits on the yard are not the test's to count.
+     */
+    private static final int WITH_ITS_YARD_LOADING = 1200;
     /* The pattern's lowest corner, the pit floor's west front corner, a ground of stone under it. */
     private static final BlockPos CORNER = new BlockPos(1, 2, 1);
     /* How long the pilot holds a control, how long a ship is watched at rest and boosted, in ticks. */
@@ -223,7 +229,7 @@ public final class ShipFlightGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WITH_ITS_YARD_LOADING)
     public static void flight_theShipFliesAlongItsNoseTurnsAndClimbsAsItsPilotHolds(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[1];
@@ -401,7 +407,7 @@ public final class ShipFlightGameTests {
     }
 
     /* Turning, it banks into the turn, as a craft leans into its turns, and levels again as the turn falls away. */
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WITH_ITS_YARD_LOADING)
     public static void bank_turningItBanksIntoTheTurnAndLevelsAsItLetsGo(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final GameTestSequence sequence = flying(helper, ship, STRAIGHT_WEST).thenExecute(() -> {
@@ -661,7 +667,7 @@ public final class ShipFlightGameTests {
         }).thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WITH_ITS_YARD_LOADING)
     public static void flight_aParkedShipStaysWhereItIsWhatWorksAboardWorksAndAPersistorKeepsIt(
             final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
