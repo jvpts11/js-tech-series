@@ -4358,6 +4358,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) A structure the world turns raises its big blocks whole: their parts were turned twice, so a rack of a
+  datacenter turned half round raised its parts into the aisle before it, over the raised floor's tiles; and a big
+  block across a chunk's edge lost the parts on the far side from its origin, left there as blocks with nothing drawn.
+- (Core) A placed structure stands on the ground that was read for it: it was laid out from the middle of that ground
+  towards one corner, so half of it stood over ground nobody looked at, and a datacenter could stand out over a shore
+  on its foundations. Wanting dry land, it now wants it at its corners and the middle of each side, not only at its
+  middle.
+- (Computers) The abandoned buildings' monitors look into their rooms, the way the computers beside them on their
+  desks look; every one of them was turned to the wall, its screen hidden.
 - (Space) A rocket's live cabin, drawn by its flight computer on the pad and in flight, shows its panels as near as it
   is to the eye: its distance was measured from where the rocket's foot is from the computer, as though from the
   world's middle, so far from it the panels were left blank.

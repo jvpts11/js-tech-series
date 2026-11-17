@@ -11,10 +11,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 /**
- * Where a structure may stand on the land, and how it sits there: the ground under it read at its corners and its
- * middle, {@code footprint} blocks out; none where the ground rises more than {@code slope} across that, lies outside
- * its heights, or, when it wants {@code dry} land, under water; and it is sunk {@code sunk} blocks into the ground,
- * half of its height for one half buried, all of it for one buried whole.
+ * Where a structure may stand on the land, and how it sits there: the ground under it read at its middle, its corners
+ * and the middle of its sides, {@code footprint} blocks out from its middle; none where the ground rises more than
+ * {@code slope} across that, lies outside its heights, or, when it wants {@code dry} land, lies under water anywhere it
+ * is read; and it is sunk {@code sunk} blocks into the ground, half of its height for one half buried, all of it for
+ * one buried whole.
  *
  * <pre>{@code
  * { "footprint": 12, "slope": 6, "min_y": 60, "max_y": 160, "dry": true, "sunk": 0 }

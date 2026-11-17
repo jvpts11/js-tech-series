@@ -38,6 +38,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -234,6 +235,38 @@ public final class PlacedStructureGameTests {
             helper.assertTrue(far >= 64L * 64L, "far enough from the origin");
             helper.assertTrue(!land.getFluidState(new BlockPos(box.getCenter().getX(), box.minY(),
                     box.getCenter().getZ())).isSource(), "on dry land");
+        } finally {
+            RuntimeDimensions.remove(server, copy);
+        }
+        helper.succeed();
+    }
+
+    /*
+     * A hut stands on the ground that was read for it: its middle where its chunk's middle is, the ground read round
+     * it, so no corner of it hangs out over ground nobody looked at, and dry under each corner.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void testLand_standsAHutOnTheGroundReadForIt(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final ResourceKey<Level> copy = copy("hut_ground");
+        final ServerLevel land = RuntimeDimensions.getOrCreate(server, copy, TestWorldGen.TEST_LAND.id());
+        try {
+            final StructureStart start = placeWhereSpread(land, TestWorldGen.HUT.id());
+            helper.assertTrue(start != null, "a hut stands at one of the places its spread picks");
+            // Its own blocks' box: the structure's is widened round it for the land to blend into it.
+            final BoundingBox box = StructurePiece.createBoundingBox(start.getPieces().stream());
+            final int middleX = start.getChunkPos().getMiddleBlockX();
+            final int middleZ = start.getChunkPos().getMiddleBlockZ();
+            helper.assertTrue(Math.abs((box.minX() + box.maxX()) / 2 - middleX) <= 1
+                    && Math.abs((box.minZ() + box.maxZ()) / 2 - middleZ) <= 1, "its middle at its chunk's middle "
+                    + middleX + ", " + middleZ + ": " + box);
+            for (final int[] corner : new int[][] {{box.minX(), box.minZ()}, {box.maxX(), box.minZ()},
+                    {box.minX(), box.maxZ()}, {box.maxX(), box.maxZ()}}) {
+                final BlockPos top = land.getHeightmapPos(Heightmap.Types.WORLD_SURFACE,
+                        new BlockPos(corner[0], 0, corner[1]));
+                helper.assertTrue(!land.getFluidState(top.below()).is(FluidTags.WATER), "dry under its corner at "
+                        + top);
+            }
         } finally {
             RuntimeDimensions.remove(server, copy);
         }

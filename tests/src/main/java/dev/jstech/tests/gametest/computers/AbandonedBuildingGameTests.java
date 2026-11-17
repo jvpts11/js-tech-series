@@ -21,6 +21,10 @@ import dev.jstech.computers.abandoned.AbandonedSoftware;
 import dev.jstech.computers.abandoned.HardwareBoxBlock;
 import dev.jstech.computers.abandoned.HardwareBoxBlockEntity;
 import dev.jstech.computers.abandoned.HardwareBoxKind;
+import dev.jstech.computers.block.AbstractSmallComputerBlock;
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.block.ServerRackBlock;
+import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
@@ -39,22 +43,34 @@ import dev.jstech.core.worldgen.structure.ITemplateChooser;
 import dev.jstech.core.worldgen.structure.TemplateChoosers;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalLong;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -76,6 +92,12 @@ public final class AbandonedBuildingGameTests {
 
     private static final String ARENA = "abandoned";
     private static final String SMALL = "empty";
+    private static final String TURNED = "abandoned_turned";
+    /* A chunk's edge: how far its blocks' places are shifted, and its last block from its first. */
+    private static final int CHUNK_SHIFT = 4;
+    private static final int CHUNK_EDGE = 15;
+    /* How many of the wrong ones a failure names. */
+    private static final int SHOWN = 8;
     private static final BlockPos FOOT = new BlockPos(1, 1, 1);
     private static final int FAR = 6000;
     private static final int NEAR_LEGACY = 800;
@@ -123,6 +145,51 @@ public final class AbandonedBuildingGameTests {
             }
         }
         helper.assertTrue(missing.isEmpty(), "nothing missing: " + missing);
+        helper.succeed();
+    }
+
+    /*
+     * In every building of every era, worn or whole, each monitor's screen looks into the room, never against a wall,
+     * and the way the computer beside it on its desk looks. The e-waste dump's monitors lie thrown on its heaps.
+     */
+    @GameTest(template = SMALL)
+    public static void monitors_screensLookIntoTheRoomAsTheirComputers(final GameTestHelper helper) {
+        final List<String> wrong = new ArrayList<>();
+        int screens = 0;
+        for (final AbandonedBuilding building : AbandonedBuilding.values()) {
+            if (building == AbandonedBuilding.EWASTE_DUMP) {
+                continue;
+            }
+            for (final Era era : building.eras()) {
+                for (final boolean working : new boolean[] {true, false}) {
+                    final ResourceLocation id = AbandonedBuildings.template(building, era, working);
+                    final Map<BlockPos, BlockState> blocks = blocksOf(helper,
+                            helper.getLevel().getStructureManager().get(id).orElseThrow());
+                    for (final Map.Entry<BlockPos, BlockState> monitor : blocks.entrySet()) {
+                        if (!(monitor.getValue().getBlock() instanceof MonitorBlock)) {
+                            continue;
+                        }
+                        screens++;
+                        final Direction screen = monitor.getValue().getValue(MonitorBlock.FACING).getOpposite();
+                        final BlockPos front = monitor.getKey().relative(screen);
+                        if (blocks.getOrDefault(front, Blocks.AIR.defaultBlockState())
+                                .isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)) {
+                            wrong.add(id + " " + monitor.getKey() + " against a wall");
+                        }
+                        for (final Direction side : Direction.Plane.HORIZONTAL) {
+                            final BlockState beside = blocks.get(monitor.getKey().relative(side));
+                            if (beside != null && beside.getBlock() instanceof AbstractSmallComputerBlock<?>
+                                    && beside.getValue(AbstractSmallComputerBlock.FACING) != screen) {
+                                wrong.add(id + " " + monitor.getKey() + " away from its computer");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        helper.assertTrue(screens > 0, "the buildings have monitors");
+        helper.assertTrue(wrong.isEmpty(), wrong.size() + " of " + screens + " screens turned wrong: "
+                + wrong.subList(0, Math.min(wrong.size(), SHOWN)));
         helper.succeed();
     }
 
@@ -243,6 +310,26 @@ public final class AbandonedBuildingGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = TURNED, timeoutTicks = 200)
+    public static void turned_racksStandWholeUnturned(final GameTestHelper helper) {
+        racksStandWhole(helper, Rotation.NONE);
+    }
+
+    @GameTest(template = TURNED, timeoutTicks = 200)
+    public static void turned_racksStandWholeTurnedAQuarter(final GameTestHelper helper) {
+        racksStandWhole(helper, Rotation.CLOCKWISE_90);
+    }
+
+    @GameTest(template = TURNED, timeoutTicks = 200)
+    public static void turned_racksStandWholeTurnedAHalf(final GameTestHelper helper) {
+        racksStandWhole(helper, Rotation.CLOCKWISE_180);
+    }
+
+    @GameTest(template = TURNED, timeoutTicks = 200)
+    public static void turned_racksStandWholeTurnedAQuarterBack(final GameTestHelper helper) {
+        racksStandWhole(helper, Rotation.COUNTERCLOCKWISE_90);
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void miningFarm_rigsStandWholeOnTheirShelves(final GameTestHelper helper) {
         place(helper, AbandonedBuilding.MINING_FARM, HardwareEra.STANDARD, true);
@@ -328,6 +415,69 @@ public final class AbandonedBuildingGameTests {
         final BlockPos at = helper.absolutePos(FOOT);
         ChosenElement.placeTemplate(id, template, helper.getLevel(), at, at, new StructurePlaceSettings()
                 .addProcessor(new AbandonedMachines(building, era, working)), RandomSource.create(1));
+    }
+
+    /*
+     * A datacenter's ruin placed as the world places it, a chunk at a time and turned by {@code rotation}, its turned
+     * corner at the arena's foot: each of its racks stands whole, every part of it where it faces and bound to it,
+     * and none raised over the raised floor's tiles before them.
+     */
+    private static void racksStandWhole(final GameTestHelper helper, final Rotation rotation) {
+        final ResourceLocation id = AbandonedBuildings.template(AbandonedBuilding.DATACENTER, HardwareEra.TRANSITION,
+                false);
+        final StructureTemplate template = helper.getLevel().getStructureManager().get(id).orElseThrow();
+        final BoundingBox turned = template.getBoundingBox(new StructurePlaceSettings().setRotation(rotation),
+                BlockPos.ZERO);
+        final BlockPos at = helper.absolutePos(FOOT).offset(-turned.minX(), -turned.minY(), -turned.minZ());
+        final BoundingBox box = turned.moved(at.getX(), at.getY(), at.getZ());
+        for (int cx = box.minX() >> CHUNK_SHIFT; cx <= box.maxX() >> CHUNK_SHIFT; cx++) {
+            for (int cz = box.minZ() >> CHUNK_SHIFT; cz <= box.maxZ() >> CHUNK_SHIFT; cz++) {
+                final BoundingBox chunk = new BoundingBox(cx << CHUNK_SHIFT, helper.getLevel().getMinBuildHeight(),
+                        cz << CHUNK_SHIFT, (cx << CHUNK_SHIFT) + CHUNK_EDGE, helper.getLevel().getMaxBuildHeight(),
+                        (cz << CHUNK_SHIFT) + CHUNK_EDGE);
+                ChosenElement.placeTemplate(id, template, helper.getLevel(), at, at, new StructurePlaceSettings()
+                        .setRotation(rotation).setBoundingBox(chunk).addProcessor(new AbandonedMachines(
+                                AbandonedBuilding.DATACENTER, HardwareEra.TRANSITION, false)), RandomSource.create(1));
+            }
+        }
+        final List<ServerRackBlockEntity> racks = found(helper, ServerRackBlockEntity.class);
+        helper.assertTrue(!racks.isEmpty(), "the datacenter has its racks");
+        for (final ServerRackBlockEntity rack : racks) {
+            final BlockPos origin = rack.getBlockPos();
+            final Direction facing = rack.getBlockState().getValue(ServerRackBlock.FACING);
+            for (final BlockPos part : ServerRackStructure.allPositions(origin, facing)) {
+                if (part.equals(origin)) {
+                    continue;
+                }
+                helper.assertTrue(helper.getLevel().getBlockEntity(part) instanceof BigBlockPartBlockEntity bound
+                        && origin.equals(bound.originPos()), "the rack at " + helper.relativePos(origin) + " facing "
+                        + facing + " has its part at " + helper.relativePos(part) + ", bound to it: "
+                        + helper.getLevel().getBlockState(part));
+            }
+        }
+        final int tiles = template.filterBlocks(BlockPos.ZERO, new StructurePlaceSettings(), Blocks.IRON_TRAPDOOR,
+                false).size();
+        final int[] laid = new int[1];
+        helper.forEveryBlockInStructure(pos -> laid[0] += helper.getBlockState(pos).is(Blocks.IRON_TRAPDOOR) ? 1 : 0);
+        helper.assertValueEqual(laid[0], tiles, "the raised floor's tiles all laid");
+        helper.succeed();
+    }
+
+    /* Every block {@code template} holds, by its place in it, as it was saved. */
+    private static Map<BlockPos, BlockState> blocksOf(final GameTestHelper helper, final StructureTemplate template) {
+        final CompoundTag saved = template.save(new CompoundTag());
+        final HolderGetter<Block> blocks = helper.getLevel().holderLookup(Registries.BLOCK);
+        final List<BlockState> palette = new ArrayList<>();
+        for (final Tag state : saved.getList("palette", Tag.TAG_COMPOUND)) {
+            palette.add(NbtUtils.readBlockState(blocks, (CompoundTag) state));
+        }
+        final Map<BlockPos, BlockState> out = new HashMap<>();
+        for (final Tag tag : saved.getList("blocks", Tag.TAG_COMPOUND)) {
+            final CompoundTag block = (CompoundTag) tag;
+            final ListTag pos = block.getList("pos", Tag.TAG_INT);
+            out.put(new BlockPos(pos.getInt(0), pos.getInt(1), pos.getInt(2)), palette.get(block.getInt("state")));
+        }
+        return out;
     }
 
     /* Every block entity of {@code type} in the arena. */

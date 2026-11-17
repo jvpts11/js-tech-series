@@ -64,6 +64,9 @@ public final class PlacedStructure extends Structure {
     private static final int MOST_PIECES_DEEP = 20;
     private static final int WIDEST = 128;
     private static final int UPDATE = 2;
+    /* Where round its middle the ground is read, in footprints: the middle, the corners, the middle of each side. */
+    private static final int[][] READ_AT = {{0, 0}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1}, {0, -1}, {0, 1}, {-1, 0},
+            {1, 0}};
     public static final MapCodec<PlacedStructure> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             settingsCodec(instance),
             StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(PlacedStructure::startPool),
@@ -173,23 +176,36 @@ public final class PlacedStructure extends Structure {
         final int middle = generator.getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, height, random);
         int lowest = middle;
         int highest = middle;
-        for (final int[] corner : new int[][] {{-out, -out}, {out, -out}, {-out, out}, {out, out}}) {
-            final int ground = generator.getFirstOccupiedHeight(x + corner[0], z + corner[1],
-                    Heightmap.Types.WORLD_SURFACE_WG, height, random);
+        // The ground is read at its middle, its corners and the middle of each side; wanting dry land, none of them
+        // may lie under water, as a building on a shore would stand half in the sea.
+        for (final int[] at : READ_AT) {
+            final int px = x + at[0] * out;
+            final int pz = z + at[1] * out;
+            final int ground = generator.getFirstOccupiedHeight(px, pz, Heightmap.Types.WORLD_SURFACE_WG, height,
+                    random);
+            if (this.fit.dry() && generator.getFirstOccupiedHeight(px, pz, Heightmap.Types.OCEAN_FLOOR_WG, height,
+                    random) < ground) {
+                return Optional.empty();
+            }
             lowest = Math.min(lowest, ground);
             highest = Math.max(highest, ground);
         }
-        if (!this.fit.suits(lowest, highest) || this.fit.dry() && generator.getFirstOccupiedHeight(x, z,
-                Heightmap.Types.OCEAN_FLOOR_WG, height, random) < middle) {
+        if (!this.fit.suits(lowest, highest)) {
             return Optional.empty();
+        }
+        // The jigsaw lays its first piece out from the start, turned as it turns it, and says where that piece's
+        // middle falls. Laid first on a context of the same seed, it falls the same way; so the start is moved for
+        // that middle to stand where the ground was read, and the whole layout laid out from there.
+        final Optional<Structure.GenerationStub> first = lay(sameSeed(context), new BlockPos(x, middle, z));
+        if (first.isEmpty()) {
+            return first;
         }
         // On foundations it stands level with the highest of its ground, nothing of it buried, the foundations
         // reaching down to the rest; without, on the ground at its middle, as the game's own structures do.
-        final BlockPos start = new BlockPos(x, (this.foundation.isPresent() ? highest : middle) - this.fit.sunk(),
-                z);
-        final Optional<Structure.GenerationStub> laid = JigsawPlacement.addPieces(context, this.startPool,
-                Optional.empty(), this.size, start, this.expansionHack, Optional.empty(), this.reach,
-                PoolAliasLookup.EMPTY, DimensionPadding.ZERO, LiquidSettings.APPLY_WATERLOGGING);
+        final BlockPos firstMiddle = first.get().position();
+        final BlockPos start = new BlockPos(2 * x - firstMiddle.getX(),
+                (this.foundation.isPresent() ? highest : middle) - this.fit.sunk(), 2 * z - firstMiddle.getZ());
+        final Optional<Structure.GenerationStub> laid = lay(context, start);
         if (laid.isEmpty() || this.growth.isEmpty()) {
             return laid;
         }
@@ -210,5 +226,19 @@ public final class PlacedStructure extends Structure {
                 builder.addPiece(new SettlementPlan(all.getFirst().getBoundingBox(), later));
             }
         }));
+    }
+
+    /* Its layout laid out by the game's jigsaw from {@code start}, drawing on {@code context}'s random. */
+    private Optional<Structure.GenerationStub> lay(final Structure.GenerationContext context, final BlockPos start) {
+        return JigsawPlacement.addPieces(context, this.startPool, Optional.empty(), this.size, start,
+                this.expansionHack, Optional.empty(), this.reach, PoolAliasLookup.EMPTY, DimensionPadding.ZERO,
+                LiquidSettings.APPLY_WATERLOGGING);
+    }
+
+    /* A context like {@code context}, its random started afresh from the same seed, as the game starts its own. */
+    private static Structure.GenerationContext sameSeed(final Structure.GenerationContext context) {
+        return new Structure.GenerationContext(context.registryAccess(), context.chunkGenerator(),
+                context.biomeSource(), context.randomState(), context.structureTemplateManager(), context.seed(),
+                context.chunkPos(), context.heightAccessor(), context.validBiome());
     }
 }

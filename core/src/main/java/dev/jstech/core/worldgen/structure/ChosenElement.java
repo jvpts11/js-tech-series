@@ -28,6 +28,7 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -148,11 +149,17 @@ public final class ChosenElement extends StructurePoolElement {
         }
         final BoundingBox box = settings.getBoundingBox() != null ? settings.getBoundingBox()
                 : template.getBoundingBox(settings, offset);
+        // Every origin the template holds, as it was saved, wherever it stands: the world places a structure a chunk
+        // at a time, and a big block across a chunk's edge raises the parts on this side of it while its origin is
+        // placed with the chunk beside. Each is put where the piece puts it and turned as the piece is.
+        final StructurePlaceSettings saved = settings.copy().setRotation(Rotation.NONE).setMirror(Mirror.NONE)
+                .setBoundingBox(null);
         for (final Block block : bigBlocks(template)) {
-            for (final StructureTemplate.StructureBlockInfo origin : template.filterBlocks(offset, settings, block)) {
-                // The template keeps a block as it was saved: turned as the piece is, the origin faces its way.
+            for (final StructureTemplate.StructureBlockInfo origin : template.filterBlocks(offset, saved, block,
+                    false)) {
+                final BlockPos at = StructureTemplate.calculateRelativePosition(settings, origin.pos()).offset(offset);
                 final BlockState turned = origin.state().mirror(settings.getMirror()).rotate(settings.getRotation());
-                ((AbstractBigBlock) block).raise(level, origin.pos(), turned, box);
+                ((AbstractBigBlock) block).raise(level, at, turned, box);
             }
         }
         return true;

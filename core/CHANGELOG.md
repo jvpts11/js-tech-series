@@ -2258,6 +2258,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A structure the world turns raises its big blocks whole: their parts were turned twice, so a rack of a
+  datacenter turned half round raised its parts into the aisle before it, over the raised floor's tiles; and a big
+  block across a chunk's edge lost the parts on the far side from its origin, left there as blocks with nothing drawn.
+- A placed structure stands on the ground that was read for it: it was laid out from the middle of that ground
+  towards one corner, so half of it stood over ground nobody looked at, and a datacenter could stand out over a shore
+  on its foundations. Wanting dry land, it now wants it at its corners and the middle of each side, not only at its
+  middle.
 - A formed model's door struck, its blocks dented, still lets a player through open: a struck block took its
   shape from its model's faces with its doors' leaves in them, and from its dents, so a door drawn open could still
   stand solid where its leaf rests or where a dent reached into its doorway, and a starship's crew could not get out

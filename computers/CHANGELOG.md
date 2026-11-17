@@ -982,6 +982,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- The abandoned buildings' monitors look into their rooms, the way the computers beside them on their
+  desks look; every one of them was turned to the wall, its screen hidden.
 - The page of a chain machine's multiblock in JEI, EMI and REI shows its terminal again, in the shape and
   among the materials: it named the terminal the machine's becomes once formed, which has no item, so the page left it
   out. It names the Machine Terminal a player places there now, and the Structure Projector's ghost asks for it too.
