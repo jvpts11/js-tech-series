@@ -1,0 +1,31 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "jscore:setting",
+      "file": "jscomputers-server",
+      "setting": "survival.own_chain"
+    }
+  ],
+  "type": "jsc:crusher",
+  "byproducts": [
+    {
+      "chance": 0.1,
+      "item": {
+        "count": 1,
+        "id": "jscore:fluorspar_crystal"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/fluorspar"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:fluorspar_dust"
+    }
+  ]
+}

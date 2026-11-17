@@ -982,6 +982,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- Fluorspar is good for something as it is mined: the Crusher crushes its ore, in any rock, or raw
+  fluorspar into 2 fluorspar dust, the dust the chain's hydrofluoric acid, liquid crystal and calcium fluoride take,
+  with a fluorspar crystal one time in ten. Nothing took the ore or the raw before, so a recipe viewer showed no use
+  for them.
 - The abandoned buildings' monitors look into their rooms, the way the computers beside them on their
   desks look; every one of them was turned to the wall, its screen hidden.
 - The page of a chain machine's multiblock in JEI, EMI and REI shows its terminal again, in the shape and

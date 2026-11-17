@@ -92,10 +92,11 @@ unless another mod asks for it. Where each metal becomes an ingot is in *The cha
 | Silicon | lump (metallurgical silicon), rod (polysilicon), boule, wafer |
 | Hydrogen, oxygen, nitrogen, argon, krypton, chlorine | gas |
 
-Fluorine comes in fluorspar, J's Core's mineral: its ore in five rocks, raw, dust and crystal. An ore, its raw
-form and its crushed ore take the colour of the mineral (red bauxite, green garnierite, lilac spodumene), as
-vanilla's raw iron is the colour of rust; the ingot and every later form take the colour of the metal, each its
-own hue so that no two read alike, as J's Core's materials page sets them.
+Fluorine comes in fluorspar, J's Core's mineral: its ore in five rocks, raw, dust and crystal. The Crusher crushes the
+ore or the raw into 2 dust, with a crystal of it one time in ten. An ore, its raw form and its crushed ore take the
+colour of the mineral (red bauxite, green garnierite, lilac spodumene), as vanilla's raw iron is the colour of rust;
+the ingot and every later form take the colour of the metal, each its own hue so that no two read alike, as J's
+Core's materials page sets them.
 
 ### The chain's compounds in J's Core
 

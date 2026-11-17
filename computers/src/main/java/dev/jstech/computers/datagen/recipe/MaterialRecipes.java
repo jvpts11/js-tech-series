@@ -78,6 +78,8 @@ final class MaterialRecipes {
     /* The foils the chain only ever uses as foil, rolled from the ingot straight. */
     private static final List<Material> FOIL_ONLY = List.of(Elements.of(Element.NICKEL), Elements.of(Element.SILVER),
             SeriesAlloys.PERMALLOY, SeriesAlloys.INDIUM_TIN_OXIDE);
+    /* The chance a crushed fluorspar gives a crystal of it besides its dust. */
+    private static final float FLUORSPAR_CRYSTAL = 0.10F;
     private static final int FURNACE_TICKS = 200;
     private static final float FURNACE_XP = 0.7F;
     private static final int TICKS = 20;
@@ -115,6 +117,15 @@ final class MaterialRecipes {
                 }
                 crushed.save(output);
             }
+        }
+        // Fluorspar, a mineral and no metal, crushes straight to the dust the chain's acid and its optics take, now
+        // and then with a clear crystal of it.
+        for (final Form from : List.of(Forms.ORE, Forms.RAW)) {
+            final ChainRecipeItems.Saved crushed = recipe(crusher, "fluorspar_dust_from_" + from.id().getPath());
+            crushed.builder().input(from.itemTag(SeriesMinerals.FLUORSPAR), 1)
+                    .output(of(SeriesMinerals.FLUORSPAR, Forms.DUST), 2)
+                    .byproduct(new ItemStack(of(SeriesMinerals.FLUORSPAR, Forms.CRYSTAL)), FLUORSPAR_CRYSTAL);
+            crushed.save(output);
         }
     }
 

@@ -4358,6 +4358,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Computers) Fluorspar is good for something as it is mined: the Crusher crushes its ore, in any rock, or raw
+  fluorspar into 2 fluorspar dust, the dust the chain's hydrofluoric acid, liquid crystal and calcium fluoride take,
+  with a fluorspar crystal one time in ten. Nothing took the ore or the raw before, so a recipe viewer showed no use
+  for them.
 - (Core) A structure the world turns raises its big blocks whole: their parts were turned twice, so a rack of a
   datacenter turned half round raised its parts into the aisle before it, over the raised floor's tiles; and a big
   block across a chunk's edge lost the parts on the far side from its origin, left there as blocks with nothing drawn.
