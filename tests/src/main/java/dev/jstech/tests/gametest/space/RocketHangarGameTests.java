@@ -16,6 +16,7 @@ import dev.jstech.space.hangar.HangarPieceBlock;
 import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.PersonnelDoorBlock;
+import dev.jstech.space.hangar.PersonnelDoorBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestHangars;
 import java.util.List;
@@ -197,6 +198,11 @@ public final class RocketHangarGameTests {
                         helper.assertTrue(level.getBlockState(foot).getValue(PersonnelDoorBlock.OPEN)
                                 && level.getBlockState(foot.above()).getValue(PersonnelDoorBlock.OPEN),
                                 "a personnel door used opens, its other block with it");
+                        for (final BlockPos leaf : List.of(foot, foot.above())) {
+                            helper.assertTrue(level.getBlockEntity(leaf) instanceof PersonnelDoorBlockEntity swung
+                                    && swung.swungAt() == level.getGameTime(), "each of its blocks swings its leaf"
+                                    + " open from now, for players' games to draw it turning");
+                        }
                         press(helper, player, foot.above(), LOWER);
                         helper.assertTrue(!level.getBlockState(foot).getValue(PersonnelDoorBlock.OPEN),
                                 "used again, it shuts");

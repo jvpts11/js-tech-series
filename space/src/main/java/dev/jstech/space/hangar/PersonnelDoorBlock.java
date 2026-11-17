@@ -20,7 +20,10 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -32,9 +35,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /**
  * A block of a personnel door of the Rocket Hangar, a door one block wide and two high: one in the control room's outer
  * wall, one from the control room onto the bay's floor. Used, it opens, swinging in against its hinge's side, the
- * door's other block with it; used again, it shuts.
+ * door's other block with it; used again, it shuts. Its shape changes at once; its leaf is drawn turning, by its block
+ * entity's renderer ({@link PersonnelDoorBlockEntity}).
  */
-public final class PersonnelDoorBlock extends HorizontalDirectionalBlock {
+public final class PersonnelDoorBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
     private final Map<Direction, VoxelShape> shut = new EnumMap<>(Direction.class);
     private final Map<Direction, VoxelShape> opened = new EnumMap<>(Direction.class);
@@ -60,6 +64,17 @@ public final class PersonnelDoorBlock extends HorizontalDirectionalBlock {
     @Override
     public BlockState getStateForPlacement(final BlockPlaceContext context) {
         return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
+        return new PersonnelDoorBlockEntity(pos, state);
+    }
+
+    /* Its leaf is drawn by its block entity's renderer, turning as it swings. */
+    @Override
+    protected RenderShape getRenderShape(final BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
@@ -98,11 +113,14 @@ public final class PersonnelDoorBlock extends HorizontalDirectionalBlock {
         builder.add(FACING, OPEN);
     }
 
-    /* Opens or shuts the door's block at {@code at}. */
+    /* Opens or shuts the door's block at {@code at}, its leaf swinging from now. */
     private static void swing(final Level level, final BlockPos at, final boolean open) {
         final BlockState state = level.getBlockState(at);
         if (state.getValue(OPEN) != open) {
             level.setBlock(at, state.setValue(OPEN, open), Block.UPDATE_ALL);
+            if (level.getBlockEntity(at) instanceof PersonnelDoorBlockEntity door) {
+                door.swung(level.getGameTime());
+            }
         }
     }
 }

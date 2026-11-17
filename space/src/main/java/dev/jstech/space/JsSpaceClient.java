@@ -16,6 +16,7 @@ import dev.jstech.space.client.launch.LaunchPanelScreen;
 import dev.jstech.space.client.flight.FlightComputerScreen;
 import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.client.hangar.HangarTerminalRenderer;
+import dev.jstech.space.client.hangar.PersonnelDoorRenderer;
 import dev.jstech.space.client.hangar.RocketDesignScene;
 import dev.jstech.space.client.hangar.RocketHolograms;
 import dev.jstech.space.client.hangar.RocketDesignScreen;
@@ -129,6 +130,7 @@ public final class JsSpaceClient {
         RocketDesignScene.listen();
         // The rocket the hangar builds, each part drawn with its model once it has formed, and its hologram till then.
         HangarTerminalRenderer.listen(modEventBus);
+        PersonnelDoorRenderer.listen(modEventBus);
         PlanHologram.show(RocketHolograms::shown);
         // A formed mobile launcher's deck, the crane on its tower's top and its arms, drawn whole as the approved ones.
         LauncherDeckRenderer.listen(modEventBus);

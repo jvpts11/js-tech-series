@@ -4040,6 +4040,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   halves slide apart and its slot's leaves fold up, and back as it shuts, from its console or as a crawler comes
   through. Its way is clear only once it is all the way open, and a crawler waits for it before setting off. It
   flipped open and shut at once before.
+- (Space) The Rocket Hangar's personnel doors swing: used, a door's leaf turns a quarter turn about its hinge into the
+  room in under a second, easing out of rest and into it, and back as it shuts. They flipped before.
 
 ### Changed
 - (Space) A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

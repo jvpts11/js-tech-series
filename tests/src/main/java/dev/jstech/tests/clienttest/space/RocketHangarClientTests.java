@@ -13,6 +13,7 @@ import dev.jstech.space.hangar.HangarDoorMotion;
 import dev.jstech.space.hangar.HangarPieceBlock;
 import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
+import dev.jstech.space.hangar.PersonnelDoorSwing;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestHangars;
@@ -24,6 +25,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -96,8 +98,63 @@ public final class RocketHangarClientTests {
     private static final double LOOK_UP = 14;
     private static final int SAME = 6;
     private static final int MOVED = 400;
+    /*
+     * The control room's outer personnel door, its foot's place in the pattern; a player in the room a few blocks from
+     * it, along it, at a person's eye's height, and the door's middle across.
+     */
+    private static final int[] OUTER_DOOR = {27, 0, -4};
+    private static final double IN_THE_ROOM = 23.5;
+    private static final double AT_THE_DOOR = 27.5;
+    private static final double BY_THE_DOOR = -3.5;
+    private static final double PERSON_EYE = 1.6;
 
     private RocketHangarClientTests() {
+    }
+
+    /*
+     * The control room's outer personnel door seen from inside the room: shut, swinging, and open, each drawn otherwise
+     * than the one before; half way through its swing, its leaf turned part way about its hinge.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void personnelDoor_swingsItsLeafAboutItsHingeAsItOpens(final ClientTestContext ctx) {
+        final BlockPos terminal = ctx.abs(TERMINAL);
+        final int[][] frames = new int[3][];
+        final Vec3[] look = new Vec3[1];
+        ctx.afterTest(() -> {
+            ctx.mc().options.hideGui = false;
+            ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), terminal, TURN));
+        });
+        ctx.thenServer(0, level -> TestHangars.build(level, terminal, TURN))
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(terminal)
+                        instanceof HangarTerminalBlockEntity hangar && hangar.formed(), ARRIVE,
+                        "the formed hangar to reach the player")
+                .thenServer(0, level -> {
+                    final Vec3 eye = HangarStructure.point(terminal, TURN, IN_THE_ROOM, PERSON_EYE, BY_THE_DOOR);
+                    look[0] = HangarStructure.point(terminal, TURN, AT_THE_DOOR, PERSON_EYE - 0.5, BY_THE_DOOR);
+                    ctx.serverPlayer().teleportTo(level, eye.x, eye.y - ctx.serverPlayer().getEyeHeight(), eye.z, 0,
+                            0);
+                })
+                .then(SETTLE, () -> {
+                    ctx.lookAt(look[0]);
+                    ctx.mc().options.hideGui = true;
+                })
+                .then(SETTLE * 2, () -> frames[0] = frame(ctx))
+                .thenScreenshot(0, "hangar-personnel-door-shut")
+                .thenServer(0, level -> {
+                    final BlockPos door = TestHangars.at(terminal, TURN, OUTER_DOOR[0], OUTER_DOOR[1], OUTER_DOOR[2]);
+                    level.getBlockState(door).useWithoutItem(level, ctx.serverPlayer(), new BlockHitResult(
+                            Vec3.atCenterOf(door), Direction.WEST, door, false));
+                })
+                .then(PersonnelDoorSwing.TICKS / 2, () -> frames[1] = frame(ctx))
+                .thenScreenshot(0, "hangar-personnel-door-swinging")
+                .then(PersonnelDoorSwing.TICKS + SETTLE, () -> {
+                    frames[2] = frame(ctx);
+                    ctx.assertTrue(changed(frames[0], frames[1]) > MOVED && changed(frames[1], frames[2]) > MOVED,
+                            "half way through its swing, its leaf is drawn between shut and open: "
+                                    + changed(frames[0], frames[1]) + " and " + changed(frames[1], frames[2])
+                                    + " pixels");
+                })
+                .thenScreenshot(0, "hangar-personnel-door-open");
     }
 
     /*

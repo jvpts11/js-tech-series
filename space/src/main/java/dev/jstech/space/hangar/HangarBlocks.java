@@ -133,6 +133,10 @@ public final class HangarBlocks {
                     ? HAND + "personnel_door_open" : HAND + "personnel_door")))
             .item().itemLook(IItemLook.parent(BLOCK + HAND + "personnel_door")).drops(Drops.SELF)
             .tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(HANGAR).register();
+    /** What a personnel door's block keeps: when its leaf last swung, for its renderer to turn it. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PersonnelDoorBlockEntity>>
+            PERSONNEL_DOOR_ENTITY = SpaceContent.CONTENT.blockEntity("personnel_door", PersonnelDoorBlockEntity::new,
+            PERSONNEL_DOOR);
     public static final BlockEntry<Block> CEILING_LIGHT = cube("ceiling_light").named("Ceiling Light")
             .properties(properties -> metal(properties).lightLevel(state -> LIT)).register();
     /** The loading dock in the control room's outer wall, the blocks of the rocket the crane builds come in through. */
