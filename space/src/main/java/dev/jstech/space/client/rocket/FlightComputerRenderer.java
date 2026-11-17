@@ -72,9 +72,10 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
                 .filter(model -> formed.contains(model.part())).toList();
         poses.pushPose();
         poses.translate(foot.get().getX() + 0.5, foot.get().getY(), foot.get().getZ() + 0.5);
-        // The cabin's live panels show the flight as the computer reads it, and on the ground the launch panel's count.
-        RocketPartsRenderer.draw(computer, foot.get(), placed, computer.readings().orElseGet(() ->
-                CabinReadings.AT_REST.clocked(computer.clock())), poses, buffers, light, overlay);
+        // The cabin's live panels show the flight as the computer reads it, and on the ground the launch panel's count;
+        // the rocket's foot where it stands, as the hangar's terminal gives it.
+        RocketPartsRenderer.draw(computer, computer.getBlockPos().offset(foot.get()), placed, computer.readings()
+                .orElseGet(() -> CabinReadings.AT_REST.clocked(computer.clock())), poses, buffers, light, overlay);
         if (computer.descent() == DescentPhase.PARACHUTES) {
             // Its parachutes open over the top of what is left of it, as wide as its widest part.
             final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);

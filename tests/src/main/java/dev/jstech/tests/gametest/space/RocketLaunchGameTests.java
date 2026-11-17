@@ -12,6 +12,8 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.FormedDoors;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.flight.FlightComputerBlock;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
@@ -36,6 +38,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -118,6 +121,61 @@ public final class RocketLaunchGameTests {
                 })
                 .thenExecute(() -> MovingStructures.takeAway(body))
                 .thenSucceed();
+    }
+
+    /*
+     * A capsule's side hatch is a door: it stands shut as the rocket is built, opens used, its leaf out of its block,
+     * and shuts used again; left open, it shuts as the rocket lifts off.
+     */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 400)
+    public static void hatch_opensUsedAndShutsAsTheRocketLiftsOff(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final RocketStack stack = RocketStack.of(new RocketStack.Part(SkeletonRocketParts.id("sea_level_engine_3"), 1),
+                new RocketStack.Part(SkeletonRocketParts.id("tank_3"), 1),
+                new RocketStack.Part(SkeletonRocketParts.id("capsule_3"), 1));
+        final BlockPos foot = helper.absolutePos(FOOT);
+        final PlannedBuild build = new PlannedBuild(RocketPlans.of(level, stack), foot);
+        build.start(level, helper.absolutePos(OWNER), () -> { });
+        for (final PlanSpot spot : build.plan().spots()) {
+            level.setBlockAndUpdate(build.where(spot), BuiltInRegistries.BLOCK.get(spot.block()).defaultBlockState());
+        }
+        helper.assertTrue(build.complete(), "the rocket is built whole, every part formed");
+        build.stop(false);
+        final BlockPos at = where(build, RocketKitBlocks.CAPSULE_HATCH.getId());
+        final FormedDoors.Door hatch = ((IFormedPlaced) level.getBlockEntity(at)).places().stream()
+                .flatMap(place -> FormedDoors.named(level, at, place, RocketLaunch.HATCH).stream()).findFirst()
+                .orElseThrow(() -> new IllegalStateException("the capsule's hatch is no door"));
+        helper.assertTrue(FormedDoors.shut(level, hatch), "built, its hatch stands shut");
+        final double shut = leafVolume(level, hatch);
+        helper.assertTrue(FormedDoors.use(level, null, hatch) && !FormedDoors.shut(level, hatch)
+                && leafVolume(level, hatch) < shut, "used, it opens, its leaf out of its block: " + shut + " to "
+                + leafVolume(level, hatch));
+        helper.assertTrue(FormedDoors.use(level, null, hatch) && FormedDoors.shut(level, hatch), "used again, it"
+                + " shuts");
+        FormedDoors.use(level, null, hatch);
+        final BlockPos computer = where(build, RocketKitBlocks.FLIGHT_COMPUTER.getId());
+        final FlightComputerBlockEntity rocket = (FlightComputerBlockEntity) level.getBlockEntity(computer);
+        rocket.carry(new RocketDesign("HATCH", stack), foot.subtract(computer), List.of(0, 1, 2));
+        final Optional<MovingStructure> released = RocketLaunch.release(level, computer, null);
+        helper.assertTrue(released.isPresent(), "released, the rocket becomes one moving structure");
+        final MovingStructure body = released.get();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(body.ready(), "its body stands ready"))
+                .thenExecute(() -> helper.assertTrue(FormedDoors.shut(level, aboard(body, hatch.uses()),
+                        RocketLaunch.HATCH, true), "left open, its hatch shut as it lifted off"))
+                .thenExecute(() -> MovingStructures.takeAway(body))
+                .thenSucceed();
+    }
+
+    /* How much the blocks of {@code door}'s leaf stand as, all their boxes' volumes added up. */
+    private static double leafVolume(final ServerLevel level, final FormedDoors.Door door) {
+        double out = 0;
+        for (final BlockPos at : door.leaf()) {
+            for (final AABB box : level.getBlockState(at).getCollisionShape(level, at).toAabbs()) {
+                out += box.getXsize() * box.getYsize() * box.getZsize();
+            }
+        }
+        return out;
     }
 
     /* Where the block that stood at the world's {@code pos} is aboard {@code body} now. */

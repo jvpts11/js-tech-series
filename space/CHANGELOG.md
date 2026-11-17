@@ -985,6 +985,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   flipped open and shut at once before.
 - The Rocket Hangar's personnel doors swing: used, a door's leaf turns a quarter turn about its hinge into the
   room in under a second, easing out of rest and into it, and back as it shuts. They flipped before.
+- A capsule's side hatch is a door: used, it swings out a hundred degrees about its hinge along the cone's
+  face, as Apollo's did, the cone open behind it and its frame kept round the opening, letting the cabin's air out
+  while it stands open; used again it swings shut, and the rocket shuts it as it lifts off. It was only drawn before.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and
@@ -1007,6 +1010,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A rocket's live cabin, drawn by its flight computer on the pad and in flight, shows its panels as near as it
+  is to the eye: its distance was measured from where the rocket's foot is from the computer, as though from the
+  world's middle, so far from it the panels were left blank.
 - ORBIT settles a ship come out into space just over the plane of the low orbits: one come over the line
   level and a few metres off the plane held its nose inside the band ORBIT keeps it in, flew on level for good, and
   never handed the helm back. It now pitches toward the plane until it is on it.

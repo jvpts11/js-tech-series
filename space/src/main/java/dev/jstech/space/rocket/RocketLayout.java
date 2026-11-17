@@ -93,6 +93,22 @@ public final class RocketLayout {
     }
 
     /**
+     * Where the cell {@code x, layer, z} of the model {@code placed}, its kit {@code diameter} blocks wide, is from the
+     * middle of the rocket's foot, turned as its part is about its own middle: the rocket's axis, or a booster's.
+     */
+    public static BlockPos at(final RocketPartModels.Placed placed, final int diameter, final int x, final int layer,
+                              final int z) {
+        int dx = x - (diameter - 1) / 2;
+        int dz = z - (diameter - 1) / 2;
+        for (int t = 0; t < Math.floorMod(placed.turns(), TURNS.size()); t++) {
+            final int was = dx;
+            dx = -dz;
+            dz = was;
+        }
+        return new BlockPos(placed.x() + dx, placed.y() + layer, placed.z() + dz);
+    }
+
+    /**
      * A model of a part, laid.
      *
      * @param placed   the model, where it stands and how it is turned
@@ -110,14 +126,7 @@ public final class RocketLayout {
          * own middle: the rocket's axis, or a booster's beside it.
          */
         public BlockPos at(final int x, final int layer, final int z) {
-            int dx = x - (this.diameter - 1) / 2;
-            int dz = z - (this.diameter - 1) / 2;
-            for (int t = 0; t < Math.floorMod(this.placed.turns(), TURNS.size()); t++) {
-                final int was = dx;
-                dx = -dz;
-                dz = was;
-            }
-            return new BlockPos(this.placed.x() + dx, this.placed.y() + layer, this.placed.z() + dz);
+            return RocketLayout.at(this.placed, this.diameter, x, layer, z);
         }
 
         /** The cell of it the place {@code offset} from the middle of the rocket's foot is, turned back. */

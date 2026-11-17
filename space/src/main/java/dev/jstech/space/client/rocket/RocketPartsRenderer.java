@@ -17,10 +17,17 @@ import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.KitRenderer;
 import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelDefinition;
+import dev.jstech.core.multiblock.shape.FormedDoors;
+import dev.jstech.space.api.RocketKit;
+import dev.jstech.space.api.RocketKits;
+import dev.jstech.space.client.ship.ShipDoors;
 import dev.jstech.space.rocket.CabinReadings;
+import dev.jstech.space.rocket.RocketLayout;
 import dev.jstech.space.rocket.RocketPartModels;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
@@ -32,7 +39,8 @@ import net.minecraft.world.phys.Vec3;
  * middle of the rocket's foot: for whatever holds a rocket to be drawn, the hangar's terminal while it is built, the
  * moving structure that carries it. Each model is an instance of its own, kept with the block entity that draws it. A
  * part with a live cabin, a capsule or the lander's cabin, has it drawn over its model as the readings say
- * ({@link RocketCabinRenderer}).
+ * ({@link RocketCabinRenderer}); a part with a door, a capsule's hatch, has it standing as the block it works by keeps
+ * it, swinging between ({@link ShipDoors}).
  */
 public final class RocketPartsRenderer {
 
@@ -44,7 +52,8 @@ public final class RocketPartsRenderer {
 
     /**
      * Draws {@code placed}, the models of a rocket's parts, for {@code owner}, its cabins showing {@code readings}; the
-     * rocket stands on {@code foot}, which is where how far each cabin is from the eye is measured from.
+     * rocket stands on {@code foot}, where it stands in its level, which is where how far each cabin is from the eye is
+     * measured from and its doors' blocks are found from.
      */
     public static void draw(final BlockEntity owner, final BlockPos foot, final List<RocketPartModels.Placed> placed,
                             final CabinReadings readings, final PoseStack poses, final MultiBufferSource buffers,
@@ -58,8 +67,20 @@ public final class RocketPartsRenderer {
             final String name = part.part() + "@" + part.y();
             final KitInstance instance = KitAnimations.part(owner, name, model.get());
             final Optional<RocketCabins.Cabin> cabin = RocketCabins.of(part.model());
-            cabin.ifPresent(live -> instance.animate(KitClock.frame(), KitClock.now(),
-                    RocketCabinRenderer.driver(live), readings, IAnimationListener.NONE));
+            // A door of the part, a capsule's hatch, stands as the block it works by keeps it; its cabin and its door
+            // move the model together, a model being moved once a frame.
+            final Optional<ShipDoors.Rig> doors = ShipDoors.rigOf(part.model());
+            final Predicate<ShipDoors.Door> shut = door -> FormedDoors.shut(owner.getLevel(),
+                    blockOf(owner, foot, part, door.cell()), door.piece(), door.startsShut());
+            if (doors.isPresent() && cabin.isPresent()) {
+                ShipDoors.pose(instance, doors.get(), shut, door -> false, new HashSet<>(),
+                        RocketCabinRenderer.driver(cabin.get()), readings);
+            } else if (doors.isPresent()) {
+                ShipDoors.pose(instance, doors.get(), shut, door -> false, new HashSet<>());
+            } else {
+                cabin.ifPresent(live -> instance.animate(KitClock.frame(), KitClock.now(),
+                        RocketCabinRenderer.driver(live), readings, IAnimationListener.NONE));
+            }
             poses.pushPose();
             // A booster's parts stand beside the core, the rest on its axis.
             poses.translate(part.x(), part.y(), part.z());
@@ -75,5 +96,14 @@ public final class RocketPartsRenderer {
             }
             poses.popPose();
         }
+    }
+
+    /* Where the block {@code cell} of the model of {@code part} stands, the rocket's foot at {@code foot}. */
+    private static BlockPos blockOf(final BlockEntity owner, final BlockPos foot, final RocketPartModels.Placed part,
+                                    final List<Integer> cell) {
+        final RocketKit kit = owner.getLevel() == null ? null : RocketKits.all(owner.getLevel())
+                .get(part.piece().part().id());
+        final int diameter = kit == null ? 1 : kit.width();
+        return foot.offset(RocketLayout.at(part, diameter, cell.get(0), cell.get(1), cell.get(2)));
     }
 }

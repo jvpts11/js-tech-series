@@ -45,10 +45,11 @@ import org.slf4j.Logger;
  * airlock's outer door's along the hull, and the lamp over each, red while it is shut and green while it is open; and
  * the boarding stair the outer door lets down on the land, coming down and going up as the approved storyboard has it
  * ({@link DoorMotion}); a hold's leaf swinging about its hinge; a roller door's slats running up the hull into their
- * drum ({@link RollPath}), out of sight once wound. How each model's doors move is read from the file beside it,
- * {@code jsmodels/ship/<model>.doors.json}: each door by its piece's name, the bone of its leaf and how far it slides
- * open, its lamps' bones, the block of the model it works by, which keeps whether it is shut, and its stair's bones.
- * Each part drawn keeps its doors' motion, moved on once a frame by the time since the last.
+ * drum ({@link RollPath}), out of sight once wound; and a rocket capsule's hatch swinging out. How each model's doors
+ * move is read from the file beside it, {@code jsmodels/<model>.doors.json}: each door by its piece's name, the bone of
+ * its leaf and how far it slides open, its lamps' bones, the block of the model it works by, which keeps whether it is
+ * shut, and its stair's bones. Each part drawn keeps its doors' motion, moved on once a frame by the time since the
+ * last.
  */
 public final class ShipDoors {
 
@@ -86,6 +87,45 @@ public final class ShipDoors {
      */
     public static void pose(final KitInstance instance, final Rig rig, final Predicate<Door> shut,
                             final Predicate<Door> down, final Set<String> hidden) {
+        instance.animate(KitClock.frame(), KitClock.now(), DRIVER, moving(instance, rig, shut, down, hidden),
+                IAnimationListener.NONE);
+    }
+
+    /**
+     * Stands the doors of {@code rig} in {@code instance} as {@link #pose} does, {@code other} moving {@code thing}'s
+     * bones first, in the same frame: for a model another driver moves too, a capsule's cabin and its hatch, since a
+     * model's pose is worked out once a frame.
+     */
+    public static <T> void pose(final KitInstance instance, final Rig rig, final Predicate<Door> shut,
+                                final Predicate<Door> down, final Set<String> hidden,
+                                final IKitDriver<? super T> other, final T thing) {
+        final Posed doors = moving(instance, rig, shut, down, hidden);
+        instance.animate(KitClock.frame(), KitClock.now(), new IKitDriver<T>() {
+            @Override
+            public void drive(final T moved, final ModelAnimator animator, final double seconds) {
+                other.drive(moved, animator, seconds);
+                DRIVER.drive(doors, animator, seconds);
+            }
+
+            @Override
+            public void move(final T moved, final ModelPose pose, final double seconds) {
+                other.move(moved, pose, seconds);
+                DRIVER.move(doors, pose, seconds);
+            }
+
+            @Override
+            public boolean movesBones() {
+                return true;
+            }
+        }, thing, IAnimationListener.NONE);
+    }
+
+    /*
+     * The doors of {@code rig} in {@code instance} moved on for this frame toward how {@code shut} and {@code down}
+     * say they stand, and the bones each hides put in {@code hidden}: what the driver stands them by.
+     */
+    private static Posed moving(final KitInstance instance, final Rig rig, final Predicate<Door> shut,
+                                final Predicate<Door> down, final Set<String> hidden) {
         final int count = rig.doors().size();
         final boolean[] open = new boolean[count];
         final boolean[] letDown = new boolean[count];
@@ -142,7 +182,7 @@ public final class ShipDoors {
                 hidden.addAll(door.shownOpen());
             }
         }
-        instance.animate(frame, KitClock.now(), DRIVER, new Posed(rig, moving), IAnimationListener.NONE);
+        return new Posed(rig, moving);
     }
 
     private static Optional<Rig> read(final ResourceLocation model) {

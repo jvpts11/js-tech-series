@@ -1,0 +1,22 @@
+{
+  "doors": [
+    {
+      "piece": "hatch",
+      "leaf": "hatch_leaf",
+      "swing": {
+        "axis": [
+          -0.510519,
+          0.85357,
+          0.103866
+        ],
+        "degrees": 100.0
+      },
+      "cell": [
+        4,
+        1,
+        2
+      ],
+      "starts_shut": true
+    }
+  ]
+}

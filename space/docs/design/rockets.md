@@ -81,7 +81,7 @@ Real rules that become play, each with a consequence setting:
 | **Tank** | for methalox, of **variable height**, standing on a skirt over an engine | |
 | **Separation ring** | marks a stage and drops it, with retro rockets below the line and ullage motors above it | the interstages of Saturn V |
 | **Instrument ring** | the guidance platform in its middle, the telemetry antenna, avionics and battery panels, and the umbilical plate where the tower's arm plugs in. With a guidance platform formed, the landing ellipse is smaller | Saturn V's Instrument Unit |
-| **Capsule** | the crew, with windows, a **heat shield** below, **parachutes**, a **flight computer**, thrusters, and a docking port on top; 1 seat at diameter 3, 3 at diameter 5, the crew lying on couches facing the nose | Vostok 1, Soyuz, Orion |
+| **Capsule** | the crew, with windows, a **heat shield** below, **parachutes**, a **flight computer**, thrusters, a side hatch that swings out on its hinge as Apollo's did, shut as the rocket lifts off, and a docking port on top; 1 seat at diameter 3, 3 at diameter 5, the crew lying on couches facing the nose | Vostok 1, Soyuz, Orion |
 | **Landing legs** | for stages that come back and land; folded on the way up and spread to land | Falcon 9's legs |
 | **Lander** | a **descent stage** (legs, engine, tanks, left on the ground as the launch platform) and an **ascent stage** (cabin with a flight computer, engine, and, unlike Apollo's, a heat shield and parachutes and propellant enough to climb off the Moon and come home, 2,600 m/s); the instrument ring of diameter 5 closes four panels round it | the Apollo lunar module |
 

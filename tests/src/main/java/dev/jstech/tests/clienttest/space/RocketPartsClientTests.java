@@ -7,8 +7,18 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.FormedDoors;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
+import dev.jstech.space.flight.FlightComputerBlockEntity;
+import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.hangar.RocketPlans;
+import dev.jstech.space.launch.RocketLaunch;
+import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonRocketParts;
+import dev.jstech.space.ship.DoorMotion;
 import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.TestRockets;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -16,6 +26,8 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -49,6 +61,20 @@ public final class RocketPartsClientTests {
     private static final int ARRIVE = 600;
     private static final int SETTLE = 10;
     private static final int CHANNEL = 0xFF;
+    /*
+     * The capsule's hatch seen from out beside it, how far out and how far up; how long it takes to swing half way
+     * and all the way, in ticks; how much two pixels may differ and be the same, and how many must differ to move.
+     */
+    private static final double HATCH_OUT = 3.5;
+    private static final double HATCH_UP = 0.3;
+    private static final double HALF = 0.5;
+    private static final int HALF_SWING = (int) Math.round(DoorMotion.SWING * 20 / 2);
+    private static final int SWUNG = (int) Math.ceil(DoorMotion.SWING * 20) + 10;
+    private static final int SAME = 6;
+    private static final int MOVED = 200;
+    private static final int DUST_SETTLES = 80;
+    /* How far round the middle of the frame its pixels are compared, in the game's scaled pixels. */
+    private static final int LOOKED_AT = 50;
 
     private RocketPartsClientTests() {
     }
@@ -94,6 +120,70 @@ public final class RocketPartsClientTests {
                         + " blocks up: " + str(drawn[k]) + " where the bare stand shows " + str(bare));
             });
         }
+    }
+
+    /*
+     * A capsule built on a short rocket, its flight computer drawing it, seen from out beside its hatch: shut,
+     * swinging, and open, each drawn otherwise than the one before, the hatch turned out about its hinge.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void capsuleHatch_swingsOutAboutItsHingeAsItOpens(final ClientTestContext ctx) {
+        final RocketStack stack = RocketStack.of(part("sea_level_engine_3", 1), part("tank_3", 1),
+                part("capsule_3", 1));
+        final PlannedBuild[] build = new PlannedBuild[1];
+        final BlockPos[] hatch = new BlockPos[1];
+        final int[][] frames = new int[3][];
+        ctx.afterTest(() -> {
+            ctx.mc().options.hideGui = false;
+            ctx.server().execute(() -> {
+                if (build[0] != null) {
+                    build[0].plan().spots().forEach(spot -> ctx.serverLevel().removeBlock(build[0].where(spot),
+                            false));
+                }
+            });
+        });
+        ctx.thenServer(0, level -> {
+            final BlockPos foot = ctx.abs(STAND);
+            build[0] = new PlannedBuild(RocketPlans.of(level, stack), foot);
+            build[0].start(level, foot.below(), () -> { });
+            for (final PlanSpot spot : build[0].plan().spots()) {
+                level.setBlockAndUpdate(build[0].where(spot), BuiltInRegistries.BLOCK.get(spot.block())
+                        .defaultBlockState());
+            }
+            build[0].stop(false);
+            final BlockPos computer = where(build[0], RocketKitBlocks.FLIGHT_COMPUTER.getId());
+            ((FlightComputerBlockEntity) level.getBlockEntity(computer)).carry(new RocketDesign("HATCH", stack),
+                    foot.subtract(computer), List.of(0, 1, 2));
+            hatch[0] = where(build[0], RocketKitBlocks.CAPSULE_HATCH.getId());
+            // Out from the hatch, away from the capsule's axis, a little up, looking back at it.
+            final Vec3 middle = Vec3.atCenterOf(hatch[0]);
+            final Vec3 out = middle.subtract(foot.getX() + HALF, middle.y, foot.getZ() + HALF).normalize();
+            final Vec3 eye = middle.add(out.scale(HATCH_OUT)).add(0, HATCH_UP, 0);
+            ctx.serverPlayer().teleportTo(level, eye.x, eye.y - ctx.serverPlayer().getEyeHeight(), eye.z, 0, 0);
+        })
+                .then(SETTLE * 2, () -> {
+                    ctx.lookAt(Vec3.atCenterOf(hatch[0]));
+                    ctx.mc().options.hideGui = true;
+                })
+                // Long enough for the dust of its blocks set down to settle, so only the hatch moves after.
+                .then(DUST_SETTLES, () -> frames[0] = frame(ctx))
+                .thenScreenshot(0, "capsule-hatch-shut")
+                .thenServer(0, level -> ((IFormedPlaced) level.getBlockEntity(hatch[0])).places().stream()
+                        .flatMap(place -> FormedDoors.named(level, hatch[0], place, RocketLaunch.HATCH).stream())
+                        .findFirst().ifPresent(door -> FormedDoors.use(level, null, door)))
+                .then(HALF_SWING, () -> {
+                    frames[1] = frame(ctx);
+                    ctx.assertTrue(!FormedDoors.shut(ctx.mc().level, hatch[0], RocketLaunch.HATCH, true),
+                            "the player's game holds the hatch open");
+                })
+                .thenScreenshot(0, "capsule-hatch-swinging")
+                .then(SWUNG, () -> {
+                    frames[2] = frame(ctx);
+                    ctx.assertTrue(changed(frames[0], frames[1]) > MOVED && changed(frames[1], frames[2]) > MOVED,
+                            "half way, its hatch is drawn between shut and open: " + changed(frames[0], frames[1])
+                                    + " and " + changed(frames[1], frames[2]) + " pixels");
+                })
+                .thenScreenshot(0, "capsule-hatch-open");
     }
 
     /*
@@ -151,5 +241,48 @@ public final class RocketPartsClientTests {
 
     private static String str(final int[] colour) {
         return "(" + colour[0] + ", " + colour[1] + ", " + colour[2] + ")";
+    }
+
+    /* Where the plan of {@code build} wants the block {@code block}, the first place of it. */
+    private static BlockPos where(final PlannedBuild build, final ResourceLocation block) {
+        return build.where(build.plan().spots().stream().filter(spot -> spot.block().equals(block)).findFirst()
+                .orElseThrow());
+    }
+
+    /* How many pixels of {@code a} and {@code b} differ. */
+    private static int changed(final int[] a, final int[] b) {
+        int out = 0;
+        for (int i = 0; i < Math.min(a.length, b.length); i++) {
+            if (differ(a[i], b[i])) {
+                out++;
+            }
+        }
+        return out;
+    }
+
+    /* The frame's middle, round where the eye looks, its pixels row by row: the sky's drifting clouds left out. */
+    private static int[] frame(final ClientTestContext ctx) {
+        final int x0 = ctx.mc().getWindow().getGuiScaledWidth() / 2 - LOOKED_AT;
+        final int y0 = ctx.mc().getWindow().getGuiScaledHeight() / 2 - LOOKED_AT;
+        final int side = 2 * LOOKED_AT;
+        final int[] out = new int[side * side];
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = 0; y < side; y++) {
+                for (int x = 0; x < side; x++) {
+                    out[y * side + x] = frame.pixel(x0 + x, y0 + y);
+                }
+            }
+        }
+        return out;
+    }
+
+    /* Whether two pixels differ by more than {@link #SAME} in a channel. */
+    private static boolean differ(final int a, final int b) {
+        for (int shift = 0; shift <= 16; shift += 8) {
+            if (Math.abs((a >> shift & CHANNEL) - (b >> shift & CHANNEL)) > SAME) {
+                return true;
+            }
+        }
+        return false;
     }
 }

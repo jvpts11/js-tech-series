@@ -13,6 +13,9 @@ import dev.jstech.core.moving.StructureAssembly;
 import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.core.multiblock.shape.FormedDoors;
+import dev.jstech.core.multiblock.shape.FormedPlace;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketParts;
@@ -48,6 +51,8 @@ public final class RocketLaunch {
 
     /** The pad's ignition. */
     public static final ResourceLocation IGNITION = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "launch");
+    /** The piece of a capsule's model that is its side hatch, a door: it shuts as the rocket lifts off. */
+    public static final String HATCH = "hatch";
     /* How far the launch is seen and felt, in blocks. */
     private static final int SEEN = 256;
     private static final UUID NOBODY = new UUID(0, 0);
@@ -100,6 +105,8 @@ public final class RocketLaunch {
                 places.add(at);
             }
         }
+        // Its hatches shut as it lifts off, as a ship's doors do.
+        shutHatches(level, places);
         // Its computer goes with it, its clock counting the flight from now.
         rocket.liftOff(level.getGameTime());
         final StructureResult made = StructureAssembly.blocks(level, places, Vec3.atBottomCenterOf(foot), by);
@@ -127,6 +134,18 @@ public final class RocketLaunch {
             // Its plumes from the first second, its boosters' too; its flight computer keeps them every second after.
             ClimbEffects.burning(level, body, Rockets.get(level.getServer(), body.id()).map(rocket ->
                     RocketPieces.boosterFeet(RocketParts.all(level), rocket.stack())).orElse(List.of()));
+        }
+    }
+
+    /* Shuts the hatches standing open among the rocket's blocks at {@code places}: a capsule's side hatch. */
+    private static void shutHatches(final ServerLevel level, final List<BlockPos> places) {
+        for (final BlockPos at : places) {
+            if (level.getBlockEntity(at) instanceof IFormedPlaced placed) {
+                for (final FormedPlace place : placed.places()) {
+                    FormedDoors.named(level, at, place, HATCH).filter(door -> !FormedDoors.shut(level, door))
+                            .ifPresent(door -> FormedDoors.set(level, door, true));
+                }
+            }
         }
     }
 }
