@@ -968,13 +968,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Side Door hold opens its right flank: an opening from the deck to the roof's edge between yellow and
   black stripes, shut by a roller door of seventeen slats that runs up the wall and over the chamfer into a drum under
   the roof over two and a half seconds, used from either side by a crew member who may come aboard. Lifting off, a
-  ship shuts it. Beside swept or stub wings, whose roots stand a block over the deck, the hold is built with two steps
-  inside up to the wing's root; beside a blended delta or no wing, its floor runs level to the door.
+  ship shuts it. Where swept or stub wings run along its door, their roots a block over the deck, the hold is built
+  with two steps inside up to the wing's root; along a blended delta, its floor runs level to the door. A wing runs
+  along it at the wings' roots, and past a short section there too, its trailing part reaching on.
 - The swept wings, the stub wings and the blended delta each carry a stair folded flat under them, one under
-  each wing: as the Side Door hold beside them opens on the land, the stair on its side swings down from the wing's
+  each wing: as the Side Door hold along them opens on the land, the stair on its side swings down from the wing's
   trailing edge to the land behind it, its treads staying level and its handrails standing once it is down, and a crew
   member walks out of the hold onto the wing and down it. It goes up as the door shuts, and lifting off, the ship
   shuts the door and the stair with it; in the air or in space it stays folded.
+- Away from the wings, the Side Door hold carries the airlock's boarding stair under its door, on its right
+  flank: on the land it unfolds from its bay under the sill as the door opens, a crew member walking out of the hold
+  and down it, and folds away as the door shuts or the ship lifts off.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

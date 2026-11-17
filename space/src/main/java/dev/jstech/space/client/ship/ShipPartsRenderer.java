@@ -27,7 +27,6 @@ import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.ship.GearMotion;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipPartModels;
-import dev.jstech.space.ship.ShipStairGeometry;
 import dev.jstech.space.ship.ShipStairs;
 import dev.jstech.space.ship.SuitLockerEntity;
 import java.util.HashSet;
@@ -182,12 +181,13 @@ public final class ShipPartsRenderer {
         poses.mulPose(turned(turn));
         poses.translate(-HALF, -HALF, -HALF);
         // A door stands as the block it works by keeps it, that block found from the nose's as the ship stands; its
-        // stair is down where the stair's blocks are.
+        // stair is down where the stair's blocks are, the airlock's or the Side Door hold's.
         final BlockPos noseAt = owner.getBlockPos().offset(nose);
-        final int[] stair = ShipStairGeometry.CELLS.getFirst();
         draw(owner, placed, holes, gear, (part, door) -> FormedDoors.shut(level, blockOf(noseAt, turn, part,
-                door.cell()), door.piece(), door.startsShut()), (part, door) -> ShipStairs.down(level,
-                blockOf(noseAt, turn, part, List.of(stair[0], stair[1], stair[2]))),
+                door.cell()), door.piece(), door.startsShut()), (part, door) -> {
+                    final int[] stair = ShipStairs.stairBlock(part.model());
+                    return ShipStairs.down(level, blockOf(noseAt, turn, part, List.of(stair[0], stair[1], stair[2])));
+                },
                 (part, cell) -> level.getBlockEntity(blockOf(noseAt, turn, part, cell)) instanceof SuitLockerEntity
                         locker ? locker : null, readings, poses, buffers, light, overlay);
         poses.popPose();

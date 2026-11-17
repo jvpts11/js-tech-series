@@ -1,0 +1,66 @@
+{
+  "doors": [
+    {
+      "piece": "pressure_door",
+      "leaf": "door_leaf",
+      "travel": [
+        -1.12,
+        0.0,
+        0.0
+      ],
+      "shut_lamp": "door_lamp_shut",
+      "open_lamp": "door_lamp_open",
+      "cell": [
+        -1,
+        1,
+        0
+      ],
+      "starts_shut": false
+    },
+    {
+      "piece": "side_door",
+      "leaf": "side_slat_0",
+      "roll": {
+        "slats": [
+          "side_slat_0",
+          "side_slat_1",
+          "side_slat_2",
+          "side_slat_3",
+          "side_slat_4",
+          "side_slat_5",
+          "side_slat_6",
+          "side_slat_7",
+          "side_slat_8",
+          "side_slat_9",
+          "side_slat_10",
+          "side_slat_11",
+          "side_slat_12",
+          "side_slat_13",
+          "side_slat_14",
+          "side_slat_15",
+          "side_slat_16"
+        ],
+        "path": [
+          [
+            1.8699999999999999,
+            0.3499999999999943
+          ],
+          [
+            1.8699999999999999,
+            2.087573593128809
+          ],
+          [
+            0.9787867965644036,
+            2.978786796564407
+          ]
+        ]
+      },
+      "cell": [
+        1,
+        1,
+        2
+      ],
+      "starts_shut": true
+    }
+  ]
+}

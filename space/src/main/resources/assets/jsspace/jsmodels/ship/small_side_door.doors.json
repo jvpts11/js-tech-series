@@ -60,7 +60,33 @@
         1,
         2
       ],
-      "starts_shut": true
+      "starts_shut": true,
+      "stair": {
+        "bay": [
+          "bay_door_a",
+          "bay_door_b"
+        ],
+        "flights": [
+          "stair_flight_1",
+          "stair_flight_2",
+          "stair_flight_3"
+        ],
+        "treads": [
+          "stair_tread_1_1",
+          "stair_tread_1_2",
+          "stair_tread_2_1",
+          "stair_tread_2_2",
+          "stair_tread_3_1",
+          "stair_tread_3_2"
+        ],
+        "rails": "stair_rails",
+        "slide": [
+          0.6699999999999999,
+          0.0,
+          0.0
+        ],
+        "mirrored": true
+      }
     }
   ]
 }

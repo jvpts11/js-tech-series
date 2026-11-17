@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_side_door_level.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_side_door_level_bare_metal.png"
+  ],
+  "triangles": 9000
+}

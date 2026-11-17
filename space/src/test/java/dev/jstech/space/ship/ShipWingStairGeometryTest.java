@@ -75,11 +75,53 @@ public class ShipWingStairGeometryTest {
     }
 
     @Test
+    public void cells_ofTheLeftWingAreTheRightsTurnedAcrossTheMiddleLine() {
+        for (final ShipWingStairGeometry wing : ShipWingStairGeometry.ALL) {
+            final List<int[]> right = wing.cells(false);
+            final List<int[]> left = wing.cells(true);
+            assertEquals(right.size(), left.size(), wing.model());
+            for (final int[] cell : right) {
+                assertTrue(left.stream().anyMatch(other -> other[0] == -1 - cell[0] && other[1] == cell[1]
+                        && other[2] == cell[2]), wing.model());
+                final List<double[]> mirrored = wing.treads(-1 - cell[0], cell[1], cell[2]);
+                final List<double[]> own = wing.treads(cell[0], cell[1], cell[2]);
+                assertEquals(own.size(), mirrored.size(), wing.model());
+                for (int k = 0; k < own.size(); k++) {
+                    assertEquals(1 - own.get(k)[AXES], mirrored.get(k)[0], CLOSE, wing.model());
+                    assertEquals(1 - own.get(k)[0], mirrored.get(k)[AXES], CLOSE, wing.model());
+                    assertEquals(own.get(k)[AXES + 1], mirrored.get(k)[AXES + 1], CLOSE, wing.model());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void stateCell_isABlockOfTheWingByItsRootOnEachSide() {
+        for (final ShipWingStairGeometry wing : ShipWingStairGeometry.ALL) {
+            final int[] right = wing.stateCell(false);
+            final int[] left = wing.stateCell(true);
+            assertEquals(2, right[0], wing.model());
+            assertEquals(-1 - right[0], left[0], wing.model());
+            assertEquals(right[1], left[1], wing.model());
+            assertEquals(right[2], left[2], wing.model());
+            assertTrue(right[2] > wing.lead() && right[2] + 1 < wing.trail(), wing.model() + ": within its chord");
+        }
+    }
+
+    @Test
+    public void lead_andTrailAreTheRootsChordAlongTheHullsSide() {
+        for (final ShipWingStairGeometry wing : ShipWingStairGeometry.ALL) {
+            assertTrue(wing.lead() < wing.trail(), wing.model());
+            assertTrue(Math.abs(wing.hingeZ() - wing.trail()) < 0.1, wing.model() + ": hinged at its trailing edge");
+        }
+    }
+
+    @Test
     public void treads_eachBlockHoldsItsPartsOfTheSteps() {
         for (final ShipWingStairGeometry wing : ShipWingStairGeometry.ALL) {
-            assertFalse(wing.cells().isEmpty(), wing.model());
+            assertFalse(wing.cells(false).isEmpty(), wing.model());
             double volume = 0;
-            for (final int[] cell : wing.cells()) {
+            for (final int[] cell : wing.cells(false)) {
                 for (final double[] tread : wing.treads(cell[0], cell[1], cell[2])) {
                     for (int axis = 0; axis < AXES; axis++) {
                         assertTrue(tread[axis] >= -CLOSE && tread[axis + AXES] <= 1 + CLOSE, wing.model());

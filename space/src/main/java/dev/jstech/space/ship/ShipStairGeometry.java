@@ -15,12 +15,16 @@ import java.util.List;
  * door's sill, three flights a little over three quarters of a block each fall at 55 degrees out from the hull and
  * down to the land, each with two treads, the floor 2.35 over the land. Its treads, in the airlock's model's space
  * (across from the middle line, up from the hull's foot, along from the airlock's front), are what a player climbs; the
- * blocks of the stair hold them, each the treads within it. Pure, so it is tested without the game.
+ * blocks of the stair hold them, each the treads within it. The Side Door hold away from the wings has the same stair
+ * turned across the middle line onto its right flank, under its door's front, its floor as high: its treads are the
+ * mirrored ones, in the hold's model's space. Pure, so it is tested without the game.
  */
 public final class ShipStairGeometry {
 
     /** The blocks of the airlock's model the stair stands in, let down, by their places. */
     public static final List<int[]> CELLS;
+    /** The blocks of the Side Door hold's model its stair stands in, let down: the airlock's, mirrored. */
+    public static final List<int[]> MIRRORED_CELLS;
     /* Where the stair's hinge stands, under the door's sill, and how far over the hull's foot. */
     private static final double HINGE_X = -2.05;
     private static final double HINGE_Y = 0.02;
@@ -36,10 +40,13 @@ public final class ShipStairGeometry {
     private static final double DOOR_Z0 = 1.45;
     private static final double DOOR_Z1 = 2.55;
     private static final double WITHIN = 0.06;
-    /* Each tread, its lowest corner then its highest, in the model's space. */
+    /* Each tread, its lowest corner then its highest, in the model's space; the same turned across the middle line. */
     private static final List<double[]> STEPS;
-    /* The treads within each block of the stair, in the block's own space, by its place. */
+    private static final List<double[]> MIRRORED;
+    /* The treads within each block of the stair, in the block's own space, by its place; the same, mirrored. */
     private static final TreadCells BY_CELL;
+    private static final TreadCells MIRRORED_BY_CELL;
+    private static final int AXES = 3;
 
     static {
         final List<double[]> steps = new ArrayList<>();
@@ -57,6 +64,10 @@ public final class ShipStairGeometry {
         STEPS = List.copyOf(steps);
         BY_CELL = TreadCells.of(STEPS);
         CELLS = BY_CELL.cells();
+        MIRRORED = STEPS.stream().map(step -> new double[] {-step[AXES], step[1], step[2], -step[0], step[AXES + 1],
+            step[AXES + 2]}).toList();
+        MIRRORED_BY_CELL = TreadCells.of(MIRRORED);
+        MIRRORED_CELLS = MIRRORED_BY_CELL.cells();
     }
 
     private ShipStairGeometry() {
@@ -73,5 +84,18 @@ public final class ShipStairGeometry {
      */
     public static List<double[]> treads(final int x, final int y, final int z) {
         return BY_CELL.within(x, y, z);
+    }
+
+    /** Every tread of the Side Door hold's stair, its lowest corner then its highest, in the hold's model's space. */
+    public static List<double[]> mirroredSteps() {
+        return MIRRORED.stream().map(double[]::clone).toList();
+    }
+
+    /**
+     * The treads of the Side Door hold's stair within the block {@code (x, y, z)} of the hold's model, each its lowest
+     * corner then its highest in the block's own space; none for a block the stair does not stand in.
+     */
+    public static List<double[]> mirroredTreads(final int x, final int y, final int z) {
+        return MIRRORED_BY_CELL.within(x, y, z);
     }
 }

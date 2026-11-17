@@ -52,14 +52,22 @@ public final class ShipPartModels {
     /* The cluster's four bells have the most triangles. */
     private static final int MOST_TRIANGLES = 9_000;
     /*
-     * The model a piece is drawn and shaped with instead, by its own model's name, when its section stands beside
-     * wings whose root is a block over its deck: the Side Door hold's raised one, two steps inside up to the wing's
-     * root, its door's sill there, so its crew steps out onto the wing.
+     * The models a piece is drawn and shaped with instead, by its own model's name, by the wings hung beside its
+     * section: the Side Door hold's raised one beside wings whose root stands a block over its deck, two steps inside
+     * up to the wing's root, so its crew steps out onto the wing, and its level one beside the blended delta, level
+     * with its deck. Away from the wings it is its own, with its boarding stair.
      */
-    private static final Map<String, String> RAISED = Map.of("small_side_door", "small_side_door_raised");
-    /* The wings whose root stands a block over the deck of the section beside it. */
-    private static final Set<ResourceLocation> HIGH_WINGS = Set.of(SmallShipParts.id("small_swept_wings"),
-            SmallShipParts.id("small_stub_wings"));
+    private static final Map<String, Map<ResourceLocation, String>> BY_THE_WING = Map.of("small_side_door",
+            Map.of(SmallShipParts.id("small_swept_wings"), "small_side_door_raised",
+                    SmallShipParts.id("small_stub_wings"), "small_side_door_raised",
+                    SmallShipParts.id("small_blended_delta"), "small_side_door_level"));
+    /*
+     * Along its section, where the Side Door hold's door stands, from a block past its front to a block short of its
+     * end; and how much of it a wing must run along for a player to step out onto it.
+     */
+    private static final double SIDE_DOOR_FROM = 1.0;
+    private static final double SIDE_DOOR_TO = 4.0;
+    private static final double A_PLAYERS_WIDTH = 0.6;
     /** A pilot seat aboard: sat on upright, half a block over its block's bottom, the ship's helm. */
     public static final BlockAboard PILOT = new BlockAboard(Optional.of(new BlockAboard.Seat(0.5, true)),
             Optional.empty(), Optional.empty(), Optional.empty());
@@ -77,7 +85,7 @@ public final class ShipPartModels {
             for (final ShipKit.Piece piece : kit.pieces()) {
                 final String name = name(part, kit, piece);
                 declare(name, declared);
-                raised(name).ifPresent(other -> declare(other, declared));
+                variants(name).forEach(other -> declare(other, declared));
             }
         });
     }
@@ -88,20 +96,39 @@ public final class ShipPartModels {
     }
 
     /**
-     * The name of the model the piece of the model {@code name} takes instead beside wings whose root is a block over
-     * its deck, if it has one.
+     * The names of the models the piece of the model {@code name} takes instead beside the wings, in order; none for a
+     * piece drawn the same wherever it stands.
      */
-    public static Optional<String> raised(final String name) {
-        return Optional.ofNullable(RAISED.get(name));
+    public static List<String> variants(final String name) {
+        return BY_THE_WING.getOrDefault(name, Map.of()).values().stream().distinct().sorted().toList();
     }
 
     /**
-     * Whether the section {@code section} of the ship of {@code design}, the cockpit's nought, stands beside wings
-     * whose root is a block over its deck.
+     * The wings beside the Side Door hold's door at the section {@code section} of the ship of {@code design}, the
+     * cockpit's nought, its sections beginning at {@code fronts}: those whose root's chord runs along at least a
+     * player's width of the door, so its crew steps out onto them; none for a door away from the wings.
      */
-    public static boolean besideHighWings(final ShipDesign design, final int section) {
-        return section == ShipLayout.wingRootSection(design.spine().size())
-                && design.hung().stream().anyMatch(HIGH_WINGS::contains);
+    public static Optional<ResourceLocation> wingBeside(final ShipDesign design, final int section,
+                                                        final int[] fronts) {
+        final int root = fronts[ShipLayout.wingRootSection(design.spine().size())];
+        for (final ResourceLocation part : design.hung()) {
+            final Optional<ShipWingStairGeometry> wing = ShipWingStairGeometry.of(part.getPath());
+            if (wing.isPresent() && Math.min(root + wing.get().trail(), fronts[section] + SIDE_DOOR_TO)
+                    - Math.max(root + wing.get().lead(), fronts[section] + SIDE_DOOR_FROM) >= A_PLAYERS_WIDTH) {
+                return Optional.of(part);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Where the sections of the ship of {@code design} begin along it, of the parts {@code parts}, and its end. */
+    public static int[] fronts(final Map<ResourceLocation, ShipPart> parts, final ShipDesign design) {
+        final List<Integer> lengths = new ArrayList<>();
+        for (final ResourceLocation id : design.spine()) {
+            final ShipPart part = parts.get(id);
+            lengths.add(part == null ? 0 : (int) part.length());
+        }
+        return ShipLayout.fronts(lengths);
     }
 
     /** The model of {@code id}, if it is one of the parts' models. */
@@ -139,23 +166,18 @@ public final class ShipPartModels {
     public static List<Placed> of(final Map<ResourceLocation, ShipPart> parts,
                                   final Map<ResourceLocation, ShipKit> kits, final ShipDesign design,
                                   final IntPredicate drawn) {
-        final List<Integer> lengths = new ArrayList<>();
-        for (final ResourceLocation id : design.spine()) {
-            final ShipPart part = parts.get(id);
-            lengths.add(part == null ? 0 : (int) part.length());
-        }
-        final int[] fronts = ShipLayout.fronts(lengths);
+        final int[] fronts = fronts(parts, design);
         final List<Placed> placed = new ArrayList<>();
         for (int k = 0; k < design.spine().size(); k++) {
             if (drawn.test(k)) {
                 add(design.spine().get(k), kits.get(design.spine().get(k)), fronts, k, k, design.flips(k),
-                        besideHighWings(design, k), design.finish(), placed);
+                        wingBeside(design, k, fronts), design.finish(), placed);
             }
         }
         for (int k = 0; k < design.hung().size(); k++) {
             final int part = design.spine().size() + k;
             if (drawn.test(part)) {
-                add(design.hung().get(k), kits.get(design.hung().get(k)), fronts, 0, part, false, false,
+                add(design.hung().get(k), kits.get(design.hung().get(k)), fronts, 0, part, false, Optional.empty(),
                         design.finish(), placed);
             }
         }
@@ -183,12 +205,14 @@ public final class ShipPartModels {
 
     /**
      * The model the blocks of {@code piece} take their shapes from once formed as the part numbered {@code number} of
-     * the ship of {@code design}: the raised one beside wings whose root is a block over its deck, if it has one.
+     * the ship of {@code design}, its sections beginning at {@code fronts}: the one it takes beside the wings, if it
+     * has one.
      */
     public static ResourceLocation shape(final ResourceLocation part, final ShipKit kit, final ShipKit.Piece piece,
-                                         final ShipDesign design, final int number) {
-        final boolean high = number < design.spine().size() && besideHighWings(design, number);
-        return id(FINISHES.getFirst(), drawnAs(name(part, kit, piece), high));
+                                         final ShipDesign design, final int number, final int[] fronts) {
+        final Optional<ResourceLocation> wing = number < design.spine().size() ? wingBeside(design, number, fronts)
+                : Optional.empty();
+        return id(FINISHES.getFirst(), drawnAs(name(part, kit, piece), wing));
     }
 
     private static void declare(final String name, final @Nullable ShipPart declared) {
@@ -213,22 +237,23 @@ public final class ShipPartModels {
     }
 
     private static void add(final ResourceLocation part, final ShipKit kit, final int[] fronts, final int section,
-                            final int number, final boolean flipped, final boolean high, final ResourceLocation finish,
-                            final List<Placed> placed) {
+                            final int number, final boolean flipped, final Optional<ResourceLocation> wing,
+                            final ResourceLocation finish, final List<Placed> placed) {
         if (kit == null) {
             return;
         }
         for (final ShipKit.Piece piece : kit.pieces()) {
-            final ResourceLocation model = id(finish.getPath(), drawnAs(name(part, kit, piece), high));
+            final ResourceLocation model = id(finish.getPath(), drawnAs(name(part, kit, piece), wing));
             if (MODELS.containsKey(model)) {
                 placed.add(new Placed(model, ShipLayout.anchor(piece.anchor(), fronts, section), flipped, number));
             }
         }
     }
 
-    /* The name of the model the piece of the model {@code name} is drawn with, beside {@code high} wings or not. */
-    private static String drawnAs(final String name, final boolean high) {
-        return high ? raised(name).orElse(name) : name;
+    /* The name of the model the piece of the model {@code name} is drawn with beside the wings {@code wing}, if any. */
+    private static String drawnAs(final String name, final Optional<ResourceLocation> wing) {
+        final Map<ResourceLocation, String> byWing = BY_THE_WING.getOrDefault(name, Map.of());
+        return wing.map(beside -> byWing.getOrDefault(beside, name)).orElse(name);
     }
 
     /* A piece's model's name: its part's, and its anchor's for a part of more than one piece. */

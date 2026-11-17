@@ -181,24 +181,32 @@ public final class ShipDoorsGameTests {
 
     /**
      * The Side Door hold beside wings whose root stands a block over its deck, swept or stub, is the raised one, two
-     * steps inside up to the wing's root; beside the blended delta, level with its deck, and away from the wings, it
-     * is the level one: the dock builds each with its own model.
+     * steps inside up to the wing's root; beside the blended delta, level with its deck, the level one; and away from
+     * the wings, the one with its own boarding stair: the dock builds each with its own model.
      */
     @GameTest(template = ARENA, batch = BATCH)
-    public static void sideDoor_isRaisedBesideHighWingsAndLevelElsewhere(final GameTestHelper helper) {
+    public static void sideDoor_isBuiltByTheWingBesideIt(final GameTestHelper helper) {
         final List<ResourceLocation> atTheWings = List.of(part("greenhouse_cockpit"), part("airlock"),
                 part("side_door"), part("reactor_flush"));
+        // Past a short section at the wings' roots, the wings still run along the next one's door.
         final List<ResourceLocation> past = List.of(part("greenhouse_cockpit"), part("airlock"),
+                part("reactor_flush"), part("side_door"));
+        final List<ResourceLocation> away = List.of(part("greenhouse_cockpit"), part("airlock"), part("bay"),
                 part("reactor_flush"), part("side_door"));
         final List<ResourceLocation> tail = List.of(part("twin_bells"), part("wheels"));
         helper.assertValueEqual(sideDoorModel(helper, atTheWings, part("swept_wings"), tail),
                 "small_side_door_raised", "beside swept wings");
         helper.assertValueEqual(sideDoorModel(helper, atTheWings, part("stub_wings"), tail),
                 "small_side_door_raised", "beside stub wings");
-        helper.assertValueEqual(sideDoorModel(helper, atTheWings, part("blended_delta"), tail), "small_side_door",
-                "beside the blended delta");
-        helper.assertValueEqual(sideDoorModel(helper, past, part("swept_wings"), tail), "small_side_door",
-                "a section past the wings");
+        helper.assertValueEqual(sideDoorModel(helper, atTheWings, part("blended_delta"), tail),
+                "small_side_door_level", "beside the blended delta");
+        helper.assertValueEqual(sideDoorModel(helper, past, part("swept_wings"), tail), "small_side_door_raised",
+                "past a short section at the swept wings' roots, along their trailing part");
+        helper.assertValueEqual(sideDoorModel(helper, away, part("swept_wings"), tail), "small_side_door",
+                "away from the wings");
+        helper.assertValueEqual(sideDoorModel(helper, List.of(part("greenhouse_cockpit"), part("airlock"),
+                part("reactor_flush"), part("workshop"), part("side_door")), part("blended_delta"), tail),
+                "small_side_door_level", "the delta's long root along a door two short sections on");
         helper.succeed();
     }
 

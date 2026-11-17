@@ -308,16 +308,20 @@ public final class ShipDoors {
      * @param flights the three flights, each hanging from the one before, the first turning about the hinge
      * @param treads  each flight's two treads, kept level, the first flight's first
      * @param rails   the handrails, drawn as they stand with the stair down
-     * @param slide   how far the folded stair slides out under the sill, in blocks, in the model's own space
+     * @param slide    how far the folded stair slides out under the sill, in blocks, in the model's own space
+     * @param mirrored whether it is the airlock's turned across the middle line, as the Side Door hold's stands on its
+     *                 right flank: each of its bones turns the other way
      */
-    public record Stair(List<String> bay, List<String> flights, List<String> treads, String rails, Vector3f slide) {
+    public record Stair(List<String> bay, List<String> flights, List<String> treads, String rails, Vector3f slide,
+                        boolean mirrored) {
 
         public static final Codec<Stair> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.listOf(2, 2).fieldOf("bay").forGetter(Stair::bay),
                 Codec.STRING.listOf(3, 3).fieldOf("flights").forGetter(Stair::flights),
                 Codec.STRING.listOf(6, 6).fieldOf("treads").forGetter(Stair::treads),
                 Codec.STRING.fieldOf("rails").forGetter(Stair::rails),
-                ExtraCodecs.VECTOR3F.fieldOf("slide").forGetter(Stair::slide)
+                ExtraCodecs.VECTOR3F.fieldOf("slide").forGetter(Stair::slide),
+                Codec.BOOL.optionalFieldOf("mirrored", false).forGetter(Stair::mirrored)
         ).apply(instance, Stair::new));
 
         public Stair {
@@ -384,11 +388,13 @@ public final class ShipDoors {
 
         /* The stair's bones where the storyboard has them now. */
         private void stair(final Stair stair, final DoorMotion motion, final ModelPose pose) {
-            final double bay = Math.toRadians(motion.bay());
+            // Turned across the middle line, every turn about the model's z axis goes the other way.
+            final double sign = stair.mirrored() ? -1 : 1;
+            final double bay = sign * Math.toRadians(motion.bay());
             turn(pose, stair.bay().get(0), -bay);
             turn(pose, stair.bay().get(1), bay);
-            final double first = Math.toRadians(motion.firstFlight());
-            final double folded = Math.toRadians(HALF_TURN * motion.fold());
+            final double first = sign * Math.toRadians(motion.firstFlight());
+            final double folded = sign * Math.toRadians(HALF_TURN * motion.fold());
             // Each flight's turn in the model, the second folded back on the first, the third out along it again.
             final double[] along = {first, first + folded, first};
             final int hinge = pose.index(stair.flights().get(0));

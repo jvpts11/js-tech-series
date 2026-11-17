@@ -3872,7 +3872,19 @@
         "side_slat_13",
         "side_slat_14",
         "side_slat_15",
-        "side_slat_16"
+        "side_slat_16",
+        "bay_door_a",
+        "bay_door_b",
+        "stair_flight_1",
+        "stair_flight_2",
+        "stair_flight_3",
+        "stair_rails",
+        "stair_tread_1_1",
+        "stair_tread_1_2",
+        "stair_tread_2_1",
+        "stair_tread_2_2",
+        "stair_tread_3_1",
+        "stair_tread_3_2"
       ],
       "name": "side_door",
       "rooms": [

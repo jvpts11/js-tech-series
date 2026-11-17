@@ -53,6 +53,7 @@ public final class ShipyardPlans {
         final Map<ResourceLocation, ShipKit> kits = ShipKits.all(level);
         final int turned = FormedShapes.ORIENTATIONS.indexOf(dock);
         final int mirrored = FormedShapes.ORIENTATIONS.indexOf(MIRROR.then(dock));
+        final int[] fronts = ShipPartModels.fronts(parts, design);
         final List<PlanSpot> spots = new ArrayList<>();
         for (final ShipLayout.Block block : ShipyardLayout.blocks(parts, kits, design)) {
             final ResourceLocation id = partOf(design, block.part());
@@ -64,7 +65,8 @@ public final class ShipyardPlans {
             final int[] at = dock.apply(block.cell().x(), block.cell().y(), block.cell().z());
             // A block of the game keeps itself, and has no place in its piece's model.
             final Optional<FormedPlace> place = JsSpace.MODID.equals(wanted.getNamespace())
-                    ? Optional.of(new FormedPlace(ShipPartModels.shape(id, kit, block.piece(), design, block.part()),
+                    ? Optional.of(new FormedPlace(ShipPartModels.shape(id, kit, block.piece(), design, block.part(),
+                            fronts),
                             block.flipped() ? mirrored : turned, block.model().x(), block.model().y(),
                             block.model().z()))
                     : Optional.empty();

@@ -71,9 +71,9 @@
         "wing_stair_right_rails"
       ],
       "cell": [
-        1,
-        1,
-        2
+        2,
+        0,
+        1
       ],
       "starts_shut": true
     },
@@ -148,9 +148,9 @@
         "wing_stair_left_rails"
       ],
       "cell": [
-        -2,
-        1,
-        2
+        -3,
+        0,
+        1
       ],
       "starts_shut": true
     }

@@ -87,6 +87,14 @@ public final class ShipHoldDoorsClientTests {
      */
     private static final Vec3 BEHIND_THE_WING = new Vec3(5.0, -1.5, 6.5);
     private static final Vec3 AT_THE_STAIR = new Vec3(1.0, -1.5, 3.4);
+    /* A ship whose Side Door hold stands ahead of the wings, with its own boarding stair, and its part's number. */
+    private static final ShipDesign STAIR_SHIP = new ShipDesign("JS-H4", List.of(part("greenhouse_cockpit"),
+            part("side_door"), part("airlock"), part("reactor_flush")), List.of(part("twin_bells"),
+            part("swept_wings"), part("wheels")));
+    private static final int STAIR_PART = 1;
+    /* The camera out from the flank and aft, low over the land; where it looks, the stair let down from the sill. */
+    private static final Vec3 OFF_THE_FLANK = new Vec3(5.0, -1.0, 2.0);
+    private static final Vec3 AT_THE_SILL_STAIR = new Vec3(1.2, -2.0, -0.5);
 
     private ShipHoldDoorsClientTests() {
     }
@@ -113,6 +121,12 @@ public final class ShipHoldDoorsClientTests {
     public static void wingStair_swingsDownBehindTheWingAsTheSideDoorOpens(final ClientTestContext ctx) {
         swing(ctx, SIDE_SHIP, SIDE_PART, ShipKitBlocks.RAMP_PLATE.getId(), ShipDoorRules.SIDE_DOOR,
                 "ship-wing-stair", BEHIND_THE_WING, AT_THE_STAIR);
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void boardingStair_unfoldsFromUnderTheSideDoorsSillAwayFromTheWings(final ClientTestContext ctx) {
+        swing(ctx, STAIR_SHIP, STAIR_PART, ShipKitBlocks.RAMP_PLATE.getId(), ShipDoorRules.SIDE_DOOR,
+                "ship-side-stair", OFF_THE_FLANK, AT_THE_SILL_STAIR);
     }
 
     /*

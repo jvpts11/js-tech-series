@@ -61,7 +61,8 @@ half seconds, its toe unfolding past level, until its foot rests on the land and
 steps; in the air it swings to its full angle with nothing under it. The Side Door hold's door rolls up into the roof
 from the deck, two blocks high and three long, and its crew steps out onto the wing that joins the ship there, up two
 steps inside where the wing stands higher than the deck, a stair folded under the wing swinging down from its trailing
-edge to the land. The Bay Doors hold's roof opens as two leaves hinged at its edges, swinging up and over to lie along
+edge to the land; away from the wings it carries the airlock's boarding stair under its door instead. The Bay Doors
+hold's roof opens as two leaves hinged at its edges, swinging up and over to lie along
 the hull's flanks, as the Space Shuttle's. A ship lifting off shuts its holds' doors, as it folds its gear; a hold open
 in space loses its air as any room open to it, its pressure door keeping the rest of the ship's.
 
