@@ -2262,6 +2262,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   turned structure's ways as a diamond nearly half again as wide as the entity, so a player who stood up in a ship
   that had turned was stuck in its cockpit and its doorways. The box turns with the structure's heading now, as
   whoever walks in it does, still upright in the world.
+- A player seated on a moving structure that turns has their view turned with it smoothly, frame by frame as
+  the structure is drawn, where it stepped once a tick: a starship's pilot saw the world step past as the ship turned,
+  stiff as no mouse is.
 - A formed model's door clicked by a player opens or shuts, where it moved and at once moved back, its sound
   played and nothing seen: a player's game, finding nothing to do with the main hand, tried the other one too, and
   the server moved the door again for it. A click on a door, or on a piece that works by another block, is now taken

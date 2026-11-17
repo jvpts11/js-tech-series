@@ -43,6 +43,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class StructureSeatEntity extends Entity {
 
+    /*
+     * On a player's game, how far the structure turned this tick that its own player sitting on it is still to be
+     * turned, in degrees: given them as they are set on the seat, after their tick began from where they faced.
+     */
+    private float toTurn;
+
     private static final EntityDataAccessor<BlockPos> DATA_SEAT =
             SynchedEntityData.defineId(StructureSeatEntity.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<Float> DATA_HEIGHT =
@@ -243,6 +249,11 @@ public final class StructureSeatEntity extends Entity {
      */
     @Override
     protected void positionRider(final Entity passenger, final MoveFunction move) {
+        if (this.toTurn != 0 && passenger.isControlledByLocalInstance()) {
+            passenger.setYRot(passenger.getYRot() + this.toTurn);
+            passenger.setYHeadRot(passenger.getYHeadRot() + this.toTurn);
+            this.toTurn = 0;
+        }
         final Direction head = lyingHead();
         if (head == null) {
             super.positionRider(passenger, move);
@@ -410,10 +421,12 @@ public final class StructureSeatEntity extends Entity {
         final float turn = (float) Mth.wrapDegrees(now.pose().yawDegrees() - before.pose().yawDegrees());
         if (Math.abs(turn) > 1.0e-4F) {
             for (final Entity sitter : getPassengers()) {
-                // A player's own game turns them; the server turns the rest.
-                final boolean turns = level().isClientSide() ? sitter.isControlledByLocalInstance()
-                        : !(sitter instanceof Player);
-                if (turns) {
+                // A player's own game turns them as they are set on the seat after their tick, so their view turns
+                // from where it faced at its start, drawn frame by frame as the structure is; the server turns the
+                // rest.
+                if (level().isClientSide() && sitter.isControlledByLocalInstance()) {
+                    this.toTurn += turn;
+                } else if (!level().isClientSide() && !(sitter instanceof Player)) {
                     sitter.setYRot(sitter.getYRot() + turn);
                     sitter.setYHeadRot(sitter.getYHeadRot() + turn);
                 }

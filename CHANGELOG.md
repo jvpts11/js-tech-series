@@ -4330,6 +4330,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   turned structure's ways as a diamond nearly half again as wide as the entity, so a player who stood up in a ship
   that had turned was stuck in its cockpit and its doorways. The box turns with the structure's heading now, as
   whoever walks in it does, still upright in the world.
+- (Core) A player seated on a moving structure that turns has their view turned with it smoothly, frame by frame as
+  the structure is drawn, where it stepped once a tick: a starship's pilot saw the world step past as the ship turned,
+  stiff as no mouse is.
 - (Space) A starship banks into its turns, as No Man's Sky's ships do: the whole ship and whoever is aboard lean up to
   thirty-five degrees at its fastest turn flying the air's cruise or faster, less the slower it turns and the slower
   it flies, not at all hovering, and come level again as the turn falls away; on the land it stands level.

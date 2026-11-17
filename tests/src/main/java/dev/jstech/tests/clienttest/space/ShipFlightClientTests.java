@@ -12,6 +12,7 @@ import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
+import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
@@ -30,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -77,6 +79,12 @@ public final class ShipFlightClientTests {
     private static final int STOOD = 20;
     private static final double GOT_UP = 0.3;
     private static final double STEADY = 0.02;
+    /* How long the pilot holds left, in ticks, and how far their view turns a tick at least, in degrees. */
+    private static final int TURNING = 15;
+    private static final float TURN_STEP = 0.5F;
+    /* How little a ship turns in a tick and still stands still, in radians; how upright it stands level. */
+    private static final double STILL = 1.0e-4;
+    private static final double UPRIGHT = 0.9999;
 
     private ShipFlightClientTests() {
     }
@@ -87,6 +95,8 @@ public final class ShipFlightClientTests {
         final BlockPos[] terminal = new BlockPos[1];
         final PlannedBuild[] plan = new PlannedBuild[1];
         final MovingStructure[] ship = new MovingStructure[1];
+        final StructurePose[] last = new StructurePose[1];
+        final float[] turn = new float[1];
         final BlockPos[] seat = new BlockPos[1];
         final Vec3[] from = new Vec3[2];
         final boolean[] cruising = new boolean[1];
@@ -109,6 +119,7 @@ public final class ShipFlightClientTests {
                 standing[0].stop();
             }
             ctx.mc().options.keyUp.setDown(false);
+            ctx.mc().options.keyLeft.setDown(false);
             ctx.server().execute(() -> {
                 ctx.serverPlayer().stopRiding();
                 if (ship[0] != null) {
@@ -161,6 +172,21 @@ public final class ShipFlightClientTests {
                 .thenWaitUntilServer(level -> from[0].z - ship[0].pose().z() > FLOWN, ARRIVE,
                         "held forward, the ship to fly north along its nose", level -> ship[0].pose().toString())
                 .thenScreenshot(0, "ship-flight-helm")
+                // Held left, the ship turns and the pilot's view turns with it, frame by frame within each tick as
+                // the ship is drawn, never a step at once at the tick.
+                .then(0, () -> {
+                    ctx.mc().options.keyUp.setDown(false);
+                    ctx.mc().options.keyLeft.setDown(true);
+                })
+                .then(TURNING, () -> {
+                    final float step = Mth.wrapDegrees(ctx.player().getYRot() - ctx.player().yRotO);
+                    ctx.mc().options.keyLeft.setDown(false);
+                    ctx.assertTrue(Math.abs(step) > TURN_STEP, "turning, the pilot's view turns between its last "
+                            + "tick and this one, drawn smoothly: " + step + " degrees");
+                })
+                // Let go, its turn eases away and it rolls level before anyone stands up in it.
+                .thenWaitUntilServer(level -> settled(ship[0], last), ARRIVE, "let go, the ship stops turning and"
+                        + " comes level", level -> ship[0].pose().toString())
                 // A crew member takes the helm and holds the throttle open; the player gets up as it flies on, and is
                 // drawn first on the seat and then where they stand beside it, in one step, never a frame between.
                 .then(0, () -> {
@@ -179,8 +205,9 @@ public final class ShipFlightClientTests {
                 .then(STOOD, () -> {
                     standing[0].stop();
                     standing[0].assertSteady(STEADY);
-                    ctx.player().setYRot(ACROSS);
-                    ctx.player().yRotO = ACROSS;
+                    turn[0] = ctx.server().submit(() -> heading(ship[0])).join();
+                    ctx.player().setYRot(ACROSS + turn[0]);
+                    ctx.player().yRotO = ACROSS + turn[0];
                     ctx.player().setXRot(0);
                     ctx.player().xRotO = 0;
                     standing[0] = StandingWatch.of(ship[0], ctx);
@@ -192,7 +219,7 @@ public final class ShipFlightClientTests {
                 })
                 .thenScreenshot(0, "ship-flight-aim")
                 .then(0, () -> {
-                    ctx.player().setYRot(AFT);
+                    ctx.player().setYRot(AFT + turn[0]);
                     ctx.player().setXRot(0);
                     from[0] = ctx.server().submit(() -> MovingStructures.toYard(ship[0], ctx.serverPlayer()
                             .position())).join();
@@ -204,12 +231,35 @@ public final class ShipFlightClientTests {
                 .thenServer(SETTLE, level -> {
                     final Vec3 now = MovingStructures.toYard(ship[0], ctx.serverPlayer().position());
                     ctx.assertTrue(now.z - from[0].z > WALKED && Math.abs(now.y - from[0].y) < 0.5,
-                            "the player walked aft inside the ship, on its floor: from " + from[0] + " to " + now);
-                    ctx.assertTrue(from[1].z - ship[0].pose().z() > 1, "while it flew on north: from " + from[1]
+                            "the player walked aft inside the ship, on its floor: from " + from[0] + " to " + now
+                            + ", the ship turned " + turn[0] + " degrees");
+                    ctx.assertTrue(from[1].distanceTo(where(ship[0])) > 1, "while it flew on: from " + from[1]
                             + " to " + ship[0].pose());
                     ctx.assertTrue(ship[0].worldBox().inflate(0.5).contains(ctx.serverPlayer().position()),
                             "carried with it, inside its box");
                 });
+    }
+
+    /* Whether {@code ship} has turned no more since {@code last} held its pose, a tick ago, and stands level. */
+    private static boolean settled(final MovingStructure ship, final StructurePose[] last) {
+        final StructurePose now = ship.pose();
+        final boolean still = last[0] != null && now.angleTo(last[0]) < STILL;
+        last[0] = now;
+        // Its up, as far as it stands up in the world's: one less twice the squares of its tilt.
+        return still && 1 - 2 * (now.qx() * now.qx() + now.qz() * now.qz()) > UPRIGHT;
+    }
+
+    /*
+     * How far {@code ship} has turned from the way its yard faces, as a player's view turns, in degrees: so a view
+     * set aft or across in its yard is set aft or across in the ship, wherever it heads.
+     */
+    private static float heading(final MovingStructure ship) {
+        final Vec3 here = where(ship);
+        final Vec3 at = MovingStructures.toYard(ship, here);
+        // Its yard's south in the world: how far a step east and a step south in the world go south in its yard.
+        final double east = MovingStructures.toYard(ship, here.add(1, 0, 0)).z - at.z;
+        final double south = MovingStructures.toYard(ship, here.add(0, 0, 1)).z - at.z;
+        return (float) Math.toDegrees(Math.atan2(-east, south));
     }
 
     /* Where the ship's pivot is in the world. */
