@@ -2257,6 +2257,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stand solid where its leaf rests or where a dent reached into its doorway, and a starship's crew could not get out
   of a ship struck by a crash. A struck block's leaves take their shape from their door alone, shut or open, and a
   dent, drawn as it is, never fills more of a block than it filled whole, so no doorway or corridor is shut by one.
+- A moving structure turned off the world's axes, as a starship heading anywhere but north, south, east or
+  west, no longer holds whoever walks in it in its narrow ways: an entity's box, square to the world, stood across a
+  turned structure's ways as a diamond nearly half again as wide as the entity, so a player who stood up in a ship
+  that had turned was stuck in its cockpit and its doorways. The box turns with the structure's heading now, as
+  whoever walks in it does, still upright in the world.
 - A formed model's door clicked by a player opens or shuts, where it moved and at once moved back, its sound
   played and nothing seen: a player's game, finding nothing to do with the main hand, tried the other one too, and
   the server moved the door again for it. A click on a door, or on a piece that works by another block, is now taken

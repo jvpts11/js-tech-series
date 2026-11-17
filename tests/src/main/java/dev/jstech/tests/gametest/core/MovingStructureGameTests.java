@@ -15,6 +15,7 @@ import dev.jstech.core.moving.RailsMotion;
 import dev.jstech.core.moving.SpinMotion;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureFootingPayload;
+import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureMount;
 import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.moving.StructureSync;
@@ -123,6 +124,9 @@ public final class MovingStructureGameTests {
     /* How far a walker goes a tick through the doorway, and for how many ticks: from before it to past it. */
     private static final double DOORWAY_STRIDE = 0.15;
     private static final int DOORWAY_STRIDES = 20;
+    /* How far a structure with a narrow way is turned, in degrees; how far along it a walker is past the way. */
+    private static final double HALFWAY = 45;
+    private static final double PAST_THE_WAY = 3.0;
     /* How far up a structure is put at once, in blocks. */
     private static final double RAISED = 2.0;
     /* How far into the Nether a structure is sent to wait on its way for land that is not loaded, in blocks. */
@@ -415,6 +419,41 @@ public final class MovingStructureGameTests {
                 .thenExecute(() -> {
                     creeper.discard();
                     MovingStructures.takeAway(doorway);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Turned halfway round, a structure's narrow way still lets through whoever fits it square: their box turns with
+     * the structure's heading, as they turn with it, never standing across its way as a diamond wider than they are.
+     */
+    @GameTest(template = ARENA, batch = "jscore_moving_standing", timeoutTicks = 200)
+    public static void creeper_walksANarrowWayOfAStructureTurnedHalfwayRound(final GameTestHelper helper) {
+        final MovingStructure way = narrowWay(helper);
+        final StructurePose at = way.pose();
+        way.teleport(StructurePose.turned(at.x(), at.y(), at.z(), 0, 1, 0, Math.toRadians(HALFWAY)));
+        final Box box = way.bounds();
+        final StructureFrame frame = way.frame();
+        // In the way's line, between the rods, on the floor of its first row.
+        final double x = box.minX() + 1.0;
+        final double y = box.minY() + 1.0;
+        final double z = box.minZ() + 0.5;
+        final Creeper creeper = EntityType.CREEPER.create(helper.getLevel());
+        creeper.setNoAi(true);
+        creeper.moveTo(frame.worldX(x, y, z), frame.worldY(x, y, z) + 0.01, frame.worldZ(x, y, z), 0, 0);
+        helper.getLevel().addFreshEntity(creeper);
+        final Vec3 along = new Vec3(frame.turnX(0, 0, 1), 0, frame.turnZ(0, 0, 1)).normalize();
+        helper.startSequence()
+                .thenExecuteFor(DOORWAY_STRIDES, () -> creeper.move(MoverType.SELF, new Vec3(along.x
+                        * DOORWAY_STRIDE, -0.08, along.z * DOORWAY_STRIDE)))
+                .thenExecute(() -> {
+                    final double through = frame.yardZ(creeper.getX(), creeper.getY(), creeper.getZ()) - box.minZ();
+                    helper.assertTrue(through > PAST_THE_WAY, "the creeper walks through the narrow way: "
+                            + through + " along it, in its yard");
+                })
+                .thenExecute(() -> {
+                    creeper.discard();
+                    MovingStructures.takeAway(way);
                 })
                 .thenSucceed();
     }
@@ -1144,6 +1183,28 @@ public final class MovingStructureGameTests {
         final StructureResult made = MovingStructures.assemble(helper.getLevel(),
                 helper.absolutePos(new BlockPos(3, 3, 3)), helper.absolutePos(new BlockPos(5, 6, 7)));
         helper.assertTrue(made.ok() && made.structure() != null, "a doorway is made: " + refusal(made));
+        return made.structure();
+    }
+
+    /*
+     * A floor of stone three wide and five long, and across its middle at z 5 a way three quarters of a block wide
+     * between two lightning rods three high, a pillar of stone past the second; made a structure.
+     */
+    private static MovingStructure narrowWay(final GameTestHelper helper) {
+        for (int x = 3; x <= 5; x++) {
+            for (int z = 3; z <= 7; z++) {
+                helper.setBlock(new BlockPos(x, 3, z), Blocks.STONE);
+            }
+        }
+        for (int y = 4; y <= 6; y++) {
+            helper.setBlock(new BlockPos(3, y, 5), Blocks.LIGHTNING_ROD);
+            helper.setBlock(new BlockPos(4, y, 5), Blocks.LIGHTNING_ROD);
+            helper.setBlock(new BlockPos(5, y, 5), Blocks.STONE);
+        }
+        warm(helper.getLevel());
+        final StructureResult made = MovingStructures.assemble(helper.getLevel(),
+                helper.absolutePos(new BlockPos(3, 3, 3)), helper.absolutePos(new BlockPos(5, 6, 7)));
+        helper.assertTrue(made.ok() && made.structure() != null, "a narrow way is made: " + refusal(made));
         return made.structure();
     }
 

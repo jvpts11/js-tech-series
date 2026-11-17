@@ -24,8 +24,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Entities against the blocks of moving structures, however the structures are turned: an entity's box, square to the
- * world, is seen from each structure near it as a turned box, and swept against the blocks there ({@link SweptBoxes})
+ * Entities against the blocks of moving structures, however the structures are turned: an entity's box, upright in
+ * the world and turned with each structure's heading as whoever walks in it turns with it, is seen from each structure
+ * near it as a turned box, square to it unless it tips, and swept against the blocks there ({@link SweptBoxes})
  * until it touches, then slides along what it touched. What lands on a floor stays on it, never sliding down a
  * gently tilted deck; a step is climbed as on the ground; and an entity is told it stands on the structure, so the
  * structure carries it ({@link StructureFooting}). The game's own move goes first, against the world's blocks; this
@@ -175,6 +176,19 @@ public final class StructureCollisions {
                 StructureFooting.stood(entity, body, scratch.block(deepestBox));
             }
         }
+    }
+
+    /*
+     * How far {@code frame}'s structure heads round the world's up from the world's south, in radians: its yard's
+     * south laid flat on the world's ground, or its east should its south stand upright. An entity's box turns by it.
+     */
+    static double heading(final StructureFrame frame) {
+        final double southX = frame.rotation(0, 2);
+        final double southZ = frame.rotation(2, 2);
+        final double eastX = frame.rotation(0, 0);
+        final double eastZ = frame.rotation(2, 0);
+        return southX * southX + southZ * southZ >= eastX * eastX + eastZ * eastZ ? Math.atan2(southX, southZ)
+                : Math.atan2(-eastZ, eastX);
     }
 
     /* Sweeps a move against every structure near, in pieces no longer than LONGEST, stopping when one is held. */
@@ -458,16 +472,27 @@ public final class StructureCollisions {
         return scratch.count;
     }
 
-    /* Sets {@code turned} to the world's box {@code box} as a structure sees it: turned, in the yard's places. */
+    /*
+     * Sets {@code turned} to the world's box {@code box} as a structure sees it, in the yard's places: turned about
+     * the world's up as the structure heads, as whoever walks in it turns with it, still upright in the world. A box
+     * square to the world would stand across a structure turned halfway round as a diamond, wider than its entity by
+     * half again, and a way it fits through square would hold it.
+     */
     private static void turn(final StructureFrame frame, final AABB box, final SweptBoxes.Turned turned) {
         final double cx = (box.minX + box.maxX) / 2;
         final double cy = (box.minY + box.maxY) / 2;
         final double cz = (box.minZ + box.maxZ) / 2;
+        final double heading = heading(frame);
+        final double cos = Math.cos(heading);
+        final double sin = Math.sin(heading);
+        // The box's sides, the world's east, up and south turned by its heading, each seen in its yard.
         final double[] rows = SCRATCH.get().rows;
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 3; column++) {
-                rows[row * 3 + column] = frame.rotation(row, column);
-            }
+        for (int column = 0; column < 3; column++) {
+            final double east = frame.rotation(0, column);
+            final double south = frame.rotation(2, column);
+            rows[column] = east * cos - south * sin;
+            rows[3 + column] = frame.rotation(1, column);
+            rows[6 + column] = east * sin + south * cos;
         }
         turned.set(frame.yardX(cx, cy, cz), frame.yardY(cx, cy, cz), frame.yardZ(cx, cy, cz),
                 (box.maxX - box.minX) / 2, (box.maxY - box.minY) / 2, (box.maxZ - box.minZ) / 2, rows);

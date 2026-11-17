@@ -4325,6 +4325,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   stand solid where its leaf rests or where a dent reached into its doorway, and a starship's crew could not get out
   of a ship struck by a crash. A struck block's leaves take their shape from their door alone, shut or open, and a
   dent, drawn as it is, never fills more of a block than it filled whole, so no doorway or corridor is shut by one.
+- (Core) A moving structure turned off the world's axes, as a starship heading anywhere but north, south, east or
+  west, no longer holds whoever walks in it in its narrow ways: an entity's box, square to the world, stood across a
+  turned structure's ways as a diamond nearly half again as wide as the entity, so a player who stood up in a ship
+  that had turned was stuck in its cockpit and its doorways. The box turns with the structure's heading now, as
+  whoever walks in it does, still upright in the world.
 - (Space) A starship banks into its turns, as No Man's Sky's ships do: the whole ship and whoever is aboard lean up to
   thirty-five degrees at its fastest turn flying the air's cruise or faster, less the slower it turns and the slower
   it flies, not at all hovering, and come level again as the turn falls away; on the land it stands level.

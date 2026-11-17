@@ -9,10 +9,10 @@ package dev.jstech.core.moving;
 
 /**
  * When a turned box moving in a straight line first touches a box standing square to the axes, and from which side:
- * the arithmetic under walking on a structure turned any way. An entity's box is square to the world, a structure's
- * blocks are square to the structure; seen from the structure, the entity's box is turned. Two boxes are apart while
- * some axis keeps their shadows apart, and for two boxes the axes worth trying are fifteen: the three sides of each
- * and the nine crossings of a side of one with a side of the other. Pure: no part of the game.
+ * the arithmetic under walking on a structure turned any way. An entity's box stands upright in the world, a
+ * structure's blocks are square to the structure; seen from a structure tipped, the entity's box is turned. Two boxes
+ * are apart while some axis keeps their shadows apart, and for two boxes the axes worth trying are fifteen: the three
+ * sides of each and the nine crossings of a side of one with a side of the other. Pure: no part of the game.
  *
  * <pre>{@code
  * SweptBoxes.Turned box = new SweptBoxes.Turned();

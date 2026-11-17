@@ -158,15 +158,19 @@ final class StructureDismount {
 
     /*
      * The box of the yard someone standing at {@code feet} fills, {@code half} wide each way and {@code height} high,
-     * as the game keeps their box in the world, square to the world's ways and not the structure's, turned back into
-     * the yard: wider than their own where the structure is turned, as its walls meet it, and lifted a hair off the
-     * floor, which a structure tipped a little would otherwise have it dip into.
+     * as the structure's blocks meet their box: upright in the world and turned with the structure's heading
+     * ({@link StructureCollisions#heading}), turned back into the yard; so a structure turned halfway round stands them
+     * where it would turned square, and lifted a hair off the floor, which a structure tipped a little would otherwise
+     * have it dip into.
      */
     private static AABB asInTheWorld(final StructureFrame frame, final Vec3 feet, final double half,
                                      final double height) {
         final double wx = frame.worldX(feet.x, feet.y, feet.z);
         final double wy = frame.worldY(feet.x, feet.y, feet.z);
         final double wz = frame.worldZ(feet.x, feet.y, feet.z);
+        final double heading = StructureCollisions.heading(frame);
+        final double cos = Math.cos(heading);
+        final double sin = Math.sin(heading);
         double minX = Double.POSITIVE_INFINITY;
         double minZ = Double.POSITIVE_INFINITY;
         double maxX = Double.NEGATIVE_INFINITY;
@@ -175,12 +179,15 @@ final class StructureDismount {
         for (final double dx : new double[] {-half, half}) {
             for (final double dy : new double[] {0, height}) {
                 for (final double dz : new double[] {-half, half}) {
-                    final double x = frame.yardX(wx + dx, wy + dy, wz + dz);
-                    final double z = frame.yardZ(wx + dx, wy + dy, wz + dz);
+                    // Along the world's east and south turned by its heading.
+                    final double cx = wx + dx * cos + dz * sin;
+                    final double cz = wz - dx * sin + dz * cos;
+                    final double x = frame.yardX(cx, wy + dy, cz);
+                    final double z = frame.yardZ(cx, wy + dy, cz);
                     minX = Math.min(minX, x);
                     minZ = Math.min(minZ, z);
                     maxX = Math.max(maxX, x);
-                    maxY = Math.max(maxY, frame.yardY(wx + dx, wy + dy, wz + dz));
+                    maxY = Math.max(maxY, frame.yardY(cx, wy + dy, cz));
                     maxZ = Math.max(maxZ, z);
                 }
             }
