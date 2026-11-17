@@ -312,7 +312,10 @@ public final class NetworkOperationGameTests {
                     helper.assertTrue(mainframe.submitNetworkInsert(Items.COBBLESTONE, 200_000L, "test") != null,
                             "the large INSERT should dispatch");
                 })
-                .thenExecuteAfter(4, () -> {
+                // Its first items move as soon as its work is first scheduled, sooner or later on a busy server.
+                .thenWaitUntil(() -> helper.assertTrue(mainframe.activeOperationRecords().stream()
+                        .anyMatch(started -> started.moved() > 0L), "the Operation moves its first items"))
+                .thenExecute(() -> {
                     helper.assertTrue(mainframe.hasActiveOperations(), "an Operation should be in flight");
                     final var live = mainframe.activeOperationRecords();
                     helper.assertTrue(live.size() == 1, "exactly one in-flight Operation; got " + live.size());
