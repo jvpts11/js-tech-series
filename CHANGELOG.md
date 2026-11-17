@@ -657,6 +657,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A data registry's values in one part, as before: J's Core's API is at version 66.
   `new DataRegistryPayload(ResourceLocation, CompoundTag)` builds a payload holding all of them as its only part, so
   a mod that built one with two arguments goes on building it so. Experimental.
+- (Core) A grip with no limit: J's Core's API is at version 69. `MovingStructures.hold(MovingStructure, Vec3, Vec3,
+  long)` and `StructurePhysics.hold(Vector3d, Vector3d, long)` no longer take the most newtons a grip pulls with: a
+  grip bears the whole weight of what it holds, however heavy, as Garry's Mod's physics gun does. A mod that passed a
+  force drops that argument. Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -4358,6 +4362,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) The physics tool's grip holds any moving structure, however heavy, as Garry's Mod's physics gun does: a
+  ship, a full rocket, a cart alike, carried where the player looks. Its grip pulled with at most 600 kN, 240 kN as it
+  comes, so a small ship sank out of it and could not be freed; its strength now sets only how hard it pushes.
 - (Computers) Fluorspar is good for something as it is mined: the Crusher crushes its ore, in any rock, or raw
   fluorspar into 2 fluorspar dust, the dust the chain's hydrofluoric acid, liquid crystal and calcium fluoride take,
   with a fluorspar crystal one time in ten. Nothing took the ore or the raw before, so a recipe viewer showed no use

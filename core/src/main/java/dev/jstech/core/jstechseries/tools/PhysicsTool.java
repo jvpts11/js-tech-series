@@ -44,9 +44,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The physics tool, which moves moving structures by hand: aimed at one, it grabs it where it is aimed and holds that
- * point before the player as they move and look, as a stiff spring that bears its weight; it pushes it with a blow
- * where it is aimed; or it freezes it where it stands, in the air too, and lets it go again. Its strength, from a
- * tenth to the whole, is how hard it holds and pushes. The wheel changes its mode, and with shift its strength.
+ * point before the player as they move and look, as a stiff spring that bears its weight, however heavy it is; it
+ * pushes it with a blow where it is aimed; or it freezes it where it stands, in the air too, and lets it go again. Its
+ * strength, from a tenth to the whole, is how hard it pushes. The wheel changes its mode, and with shift its strength.
  */
 @TextHolder
 public final class PhysicsTool {

@@ -27,8 +27,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class PhysicsToolItem extends Item {
 
-    /* The most it holds with and pushes with, at its whole strength: newtons, and newton seconds. */
-    private static final double MOST_HOLD = 600_000;
+    /* How hard it pushes at its whole strength, in newton seconds; its grip holds anything, however heavy. */
     private static final double MOST_PUSH = 150_000;
     /* How long a hold lasts once it is not renewed, and the time between two pushes, in ticks. */
     private static final int HOLD_TICKS = 3;
@@ -84,8 +83,7 @@ public final class PhysicsToolItem extends Item {
         }
         if (!level.isClientSide() && grab.body() instanceof MovingStructure structure) {
             final Vec3 target = player.getEyePosition().add(player.getLookAngle().scale(grab.distance()));
-            MovingStructures.hold(structure, grab.place(), target, MOST_HOLD * share(stack),
-                    level.getGameTime() + HOLD_TICKS);
+            MovingStructures.hold(structure, grab.place(), target, level.getGameTime() + HOLD_TICKS);
         }
     }
 

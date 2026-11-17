@@ -248,11 +248,11 @@ public final class StructurePhysics {
 
     /**
      * Holds its point at the yard's place {@code point} towards the world's place {@code target}, as a stiff spring
-     * damped to stop it swinging, bearing its weight, with at most {@code most} newtons, until the game's tick
-     * {@code until}: the physics tool's grip, renewed each tick it holds. It wakes.
+     * damped to stop it swinging, bearing its whole weight however heavy it is, until the game's tick {@code until}:
+     * the physics tool's grip, renewed each tick it holds. It wakes.
      */
-    public void hold(final Vector3d point, final Vector3d target, final double most, final long until) {
-        hold = new Hold(new Vector3d(point), new Vector3d(target), most, until);
+    public void hold(final Vector3d point, final Vector3d target, final long until) {
+        hold = new Hold(new Vector3d(point), new Vector3d(target), until);
         wake();
     }
 
@@ -941,9 +941,9 @@ public final class StructurePhysics {
     }
 
     /*
-     * The pull of what holds it from outside: a spring from its held point to the place it is held towards, as stiff
-     * as swings it there in about a second and damped so it comes to rest there, bearing its weight, no harder than the
-     * hold allows; its spinning held back alike, so a structure held does not twirl.
+     * The pull of what holds it from outside, as hard as it takes, however heavy it is: its weight borne whole and a
+     * spring from its held point to the place it is held towards, as stiff for its mass as swings it there in about a
+     * second, damped so it comes to rest there; its spinning held back alike, so a structure held does not twirl.
      */
     private void pullTowards(final Hold holding) {
         if (mass <= 0) {
@@ -954,16 +954,9 @@ public final class StructurePhysics {
         final double stiffness = mass * HOLD_SWING * HOLD_SWING;
         final Vector3d pull = new Vector3d(holding.target()).sub(point).mul(stiffness)
                 .fma(-2 * mass * HOLD_SWING, going).fma(-mass, own.gather.gravity());
-        if (pull.length() > holding.most()) {
-            pull.mul(holding.most() / pull.length());
-        }
         forces.add(ForceSum.ForceKind.HELD, pull, point);
         final double reach = Math.max(1, reach() * HALF);
-        final Vector3d turning = new Vector3d(body.spin()).mul(-2 * HOLD_SWING * mass * reach * reach);
-        if (turning.length() > holding.most() * reach) {
-            turning.mul(holding.most() * reach / turning.length());
-        }
-        forces.addTurning(turning);
+        forces.addTurning(new Vector3d(body.spin()).mul(-2 * HOLD_SWING * mass * reach * reach));
     }
 
     /*
@@ -1046,9 +1039,9 @@ public final class StructurePhysics {
     }
 
     /*
-     * A hold from outside: the point held, a place of the yard; the place it is held towards, of the world; the most it
-     * pulls with, in newtons; and the last tick it holds.
+     * A hold from outside: the point held, a place of the yard; the place it is held towards, of the world; and the
+     * last tick it holds.
      */
-    private record Hold(Vector3d point, Vector3d target, double most, long until) {
+    private record Hold(Vector3d point, Vector3d target, long until) {
     }
 }

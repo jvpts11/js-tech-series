@@ -10047,7 +10047,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructures  static final EntityEntry<ZiplineEntity> ZIPLINE
 10 dev.jstech.core.moving.MovingStructures  static final Section SECTION
 10 dev.jstech.core.moving.MovingStructures  static void freeze(MovingStructure, boolean)
-10 dev.jstech.core.moving.MovingStructures  static void hold(MovingStructure, Vec3, Vec3, double, long)
+69 dev.jstech.core.moving.MovingStructures  static void hold(MovingStructure, Vec3, Vec3, long)
 10 dev.jstech.core.moving.MovingStructures  static void letGo(MovingStructure)
 10 dev.jstech.core.moving.MovingStructures  static void listen(IEventBus)
 10 dev.jstech.core.moving.MovingStructures  static void move(MovingStructure, IStructureMotion)
@@ -10761,7 +10761,7 @@ stable 4
 10 dev.jstech.core.moving.physics.StructurePhysics  static final double TICKS
 10 dev.jstech.core.moving.physics.StructurePhysics  static void wakeAround(MovingStructure)
 10 dev.jstech.core.moving.physics.StructurePhysics  void blockChanged(ServerLevel, BlockPos, BlockState, BlockState)
-10 dev.jstech.core.moving.physics.StructurePhysics  void hold(Vector3d, Vector3d, double, long)
+69 dev.jstech.core.moving.physics.StructurePhysics  void hold(Vector3d, Vector3d, long)
 10 dev.jstech.core.moving.physics.StructurePhysics  void letGo()
 10 dev.jstech.core.moving.physics.StructurePhysics  void pieceChanged(MovingStructure, ServerLevel, BlockPos, BlockState, BlockState)
 10 dev.jstech.core.moving.physics.StructurePhysics  void prepareBody()

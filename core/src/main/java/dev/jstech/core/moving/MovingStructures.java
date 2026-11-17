@@ -290,19 +290,18 @@ public final class MovingStructures {
 
     /**
      * Holds the place {@code place} of {@code structure}'s yard towards the world's place {@code target}, as a stiff
-     * spring damped to stop it swinging, bearing its weight, with at most {@code most} newtons, until the game's tick
-     * {@code until}: a grip from outside, as the physics tool's, renewed each tick it holds. One at rest or moved by a
-     * rule is let go to its physics first; one held by another pulls what holds it.
+     * spring damped to stop it swinging, bearing its whole weight however heavy it is, until the game's tick
+     * {@code until}: a grip from outside, as the physics tool's, renewed each tick it holds, with no limit to how hard
+     * it pulls. One at rest or moved by a rule is let go to its physics first; one held by another pulls what holds it.
      */
-    public static void hold(final MovingStructure structure, final Vec3 place, final Vec3 target, final double most,
-                            final long until) {
+    public static void hold(final MovingStructure structure, final Vec3 place, final Vec3 target, final long until) {
         final MovingStructure root = StructureMounts.rootOf(structure);
         if (!(root.motion() instanceof PhysicsMotion)) {
             root.move(PhysicsMotion.AT_REST);
         }
         final Vec3 held = toYard(root, toWorld(structure, place));
         root.physicsMade().hold(new Vector3d(held.x, held.y, held.z), new Vector3d(target.x, target.y, target.z),
-                most, until);
+                until);
     }
 
     /** Lets go of what held {@code structure} from outside. */

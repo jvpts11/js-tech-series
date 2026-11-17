@@ -108,6 +108,8 @@ public final class MovingStructureToolsGameTests {
     private static final int FLOOR = 2;
     /* How long the weather a test sets lasts, in ticks. */
     private static final int WEATHER = 12_000;
+    /* A weight of tens of tonnes, in kilograms. */
+    private static final double HEAVY = 20_000;
     private static final int DOWN = SpaceSlots.face(Direction.DOWN.get3DDataValue());
 
     private MovingStructureToolsGameTests() {
@@ -328,7 +330,7 @@ public final class MovingStructureToolsGameTests {
         final boolean[] holding = {true};
         helper.onEachTick(() -> {
             if (holding[0]) {
-                MovingStructures.hold(block, place, target, 200_000, helper.getLevel().getGameTime() + 3);
+                MovingStructures.hold(block, place, target, helper.getLevel().getGameTime() + 3);
             }
         });
         helper.startSequence()
@@ -344,6 +346,39 @@ public final class MovingStructureToolsGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(asleep(block)
                         && Math.abs(block.worldBox().minY - y(helper, FLOOR)) < RESTS, "let go, it falls back"))
                 .thenExecute(() -> MovingStructures.takeAway(block))
+                .thenSucceed();
+    }
+
+    /* A grip bears whatever weight it holds, with no limit: a cube of iron blocks, tens of tonnes, is carried up. */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 200)
+    public static void hold_aGripBearsAStructureHoweverHeavy(final GameTestHelper helper) {
+        final List<BlockPos> cube = new ArrayList<>();
+        for (final BlockPos at : BlockPos.betweenClosed(new BlockPos(3, 2, 3), new BlockPos(5, 4, 5))) {
+            cube.add(at.immutable());
+        }
+        final MovingStructure heavy = made(helper, cube, Blocks.IRON_BLOCK);
+        final Box box = heavy.bounds();
+        final Vec3 place = new Vec3((box.minX() + box.maxX()) / 2.0 + 0.5, (box.minY() + box.maxY()) / 2.0 + 0.5,
+                (box.minZ() + box.maxZ()) / 2.0 + 0.5);
+        final Vec3 target = heavy.worldBox().getCenter().add(0, 3, 0);
+        final boolean[] holding = {true};
+        helper.onEachTick(() -> {
+            if (holding[0]) {
+                MovingStructures.hold(heavy, place, target, helper.getLevel().getGameTime() + 3);
+            }
+        });
+        helper.startSequence()
+                .thenExecuteAfter(80, () -> {
+                    final Vec3 at = heavy.worldBox().getCenter();
+                    helper.assertTrue(heavy.physics() != null && heavy.physics().mass() > HEAVY,
+                            "it weighs tens of tonnes: " + (heavy.physics() == null ? 0 : heavy.physics().mass()));
+                    helper.assertTrue(at.distanceTo(target) < 0.25, "held at the target: " + at + " for " + target);
+                    holding[0] = false;
+                    MovingStructures.letGo(heavy);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(asleep(heavy)
+                        && Math.abs(heavy.worldBox().minY - y(helper, FLOOR)) < RESTS, "let go, it falls back"))
+                .thenExecute(() -> MovingStructures.takeAway(heavy))
                 .thenSucceed();
     }
 
