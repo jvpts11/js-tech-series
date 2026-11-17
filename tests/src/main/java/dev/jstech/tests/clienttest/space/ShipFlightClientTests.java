@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.client.audio.SoundDirector;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructure;
@@ -18,6 +19,7 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipSounds;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -172,6 +174,14 @@ public final class ShipFlightClientTests {
                 .thenWaitUntilServer(level -> from[0].z - ship[0].pose().z() > FLOWN, ARRIVE,
                         "held forward, the ship to fly north along its nose", level -> ship[0].pose().toString())
                 .thenScreenshot(0, "ship-flight-helm")
+                // At the helm, inside it, its engines are heard all round, from no place a turn would swing round.
+                .then(0, () -> {
+                    SoundDirector.updateNow();
+                    ctx.assertTrue(SoundDirector.playing().stream().anyMatch(id -> id.endsWith("|around|"
+                            + ShipSounds.ENGINE_THRUST_INSIDE.id()) || id.endsWith("|around|"
+                            + ShipSounds.ENGINE_IDLE_INSIDE.id())), "at the helm its engines are heard all round: "
+                            + SoundDirector.playing());
+                })
                 // Held left, the ship turns and the pilot's view turns with it, frame by frame within each tick as
                 // the ship is drawn, never a step at once at the tick.
                 .then(0, () -> {

@@ -524,6 +524,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A data registry's values in one part, as before: J's Core's API is at version 66.
   `new DataRegistryPayload(ResourceLocation, CompoundTag)` builds a payload holding all of them as its only part, so
   a mod that built one with two arguments goes on building it so. Experimental.
+- A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
+  `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
+  engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
+  its source's place, so a mod that built one with four arguments goes on building it so. Experimental.
 - A model's faces still: J's Core's API is at version 67. `ModelTriangles.still(ModelData, BakedGeometry,
   Set<String>, double)` gives a model's faces at rest but for the bones named and every bone hanging from them, as a
   formed model's doors' leaves are left out of its blocks' shapes. Experimental.

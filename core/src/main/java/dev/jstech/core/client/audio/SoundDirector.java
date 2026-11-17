@@ -175,7 +175,7 @@ public final class SoundDirector {
             LoopSoundInstance sound = PLAYING.get(id);
             final boolean fresh = sound == null;
             if (fresh) {
-                sound = new LoopSoundInstance(one.sound, one.place, one.volume, one.pitch);
+                sound = new LoopSoundInstance(one.sound, one.place, one.volume, one.pitch, one.around);
                 PLAYING.put(id, sound);
             } else {
                 sound.retarget(one.place, one.volume, one.pitch);
@@ -204,12 +204,13 @@ public final class SoundDirector {
             final Vec3 place = new Vec3(source.audioX(), source.audioY(), source.audioZ());
             final Vec3 at = MovingStructures.inWorld(level, place);
             for (final LoopRequest request : loops) {
-                final String id = who + "|" + request.sound().id();
+                // Heard all round or from its place, it is a sound of its own: asked the other way, it starts anew.
+                final String id = who + (request.around() ? "|around|" : "|") + request.sound().id();
                 if (AudioPrefsStore.prefs().isMuted(request.sound().id().toString())) {
                     continue;
                 }
                 final Wanted one = new Wanted(request.sound(), place, at, request.volume(), request.pitch(),
-                        listener);
+                        listener, request.around());
                 if (one.distance > request.sound().spec().range() + RANGE_SLACK) {
                     continue;
                 }
@@ -236,15 +237,15 @@ public final class SoundDirector {
             if (!AudioPrefsStore.prefs().isMuted(sound.id().toString())) {
                 final Vec3 middle = new Vec3(bed.x(), bed.y(), bed.z());
                 wanted.put("bed|" + bed.field() + "|" + bed.members().getFirst(),
-                        new Wanted(sound, middle, middle, (float) bed.volume(), 1.0F, listener));
+                        new Wanted(sound, middle, middle, (float) bed.volume(), 1.0F, listener, false));
             }
         }
         return wanted;
     }
 
     /**
-     * One sound wanted now: the place its source gives, where that is in the world now, how loud and how high, and
-     * how far from the listener.
+     * One sound wanted now: the place its source gives, where that is in the world now, how loud and how high, how
+     * far from the listener, and whether it is heard all round them rather than from there.
      */
     private static final class Wanted {
 
@@ -256,9 +257,10 @@ public final class SoundDirector {
         private final float volume;
         private final float pitch;
         private final double distance;
+        private final boolean around;
 
         Wanted(final SoundKey sound, final Vec3 place, final Vec3 at, final float volume, final float pitch,
-               final Vec3 listener) {
+               final Vec3 listener, final boolean around) {
             this.sound = sound;
             this.place = place;
             this.x = at.x;
@@ -267,6 +269,7 @@ public final class SoundDirector {
             this.volume = volume;
             this.pitch = pitch;
             this.distance = listener.distanceTo(at);
+            this.around = around;
         }
     }
 }

@@ -657,6 +657,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A data registry's values in one part, as before: J's Core's API is at version 66.
   `new DataRegistryPayload(ResourceLocation, CompoundTag)` builds a payload holding all of them as its only part, so
   a mod that built one with two arguments goes on building it so. Experimental.
+- (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
+  `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
+  engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
+  its source's place, so a mod that built one with four arguments goes on building it so. Experimental.
 - (Core) A model's faces still: J's Core's API is at version 67. `ModelTriangles.still(ModelData, BakedGeometry,
   Set<String>, double)` gives a model's faces at rest but for the bones named and every bone hanging from them, as a
   formed model's doors' leaves are left out of its blocks' shapes. Experimental.
@@ -4320,6 +4324,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A starship's engines no longer buzz as it turns: heard inside it from its engines, their sound swung round
+  its crew's heads a step a tick, as the game moves a sound, while their view turned smoothly. Inside, its engines and
+  its pulse drive are heard all round, through the hull; from outside, still from its engines.
 - (Core) A formed model's door struck, its blocks dented, still lets a player through open: a struck block took its
   shape from its model's faces with its doors' leaves in them, and from its dents, so a door drawn open could still
   stand solid where its leaf rests or where a dent reached into its doorway, and a starship's crew could not get out

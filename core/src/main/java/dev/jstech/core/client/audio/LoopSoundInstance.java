@@ -22,6 +22,8 @@ import net.minecraft.world.phys.Vec3;
 final class LoopSoundInstance extends AbstractTickableSoundInstance {
 
     private final SoundKey sound;
+    /* Heard all round its listener, from no place: it stands on them, where the game plays a sound of no place. */
+    private final boolean around;
     private Vec3 place;
     private float wantedVolume;
     private float wantedPitch;
@@ -35,15 +37,18 @@ final class LoopSoundInstance extends AbstractTickableSoundInstance {
 
     /**
      * A sound running from {@code place}, as its source gives it: a place among a moving structure's blocks is
-     * followed every tick to where the structure carries it.
+     * followed every tick to where the structure carries it; or, {@code around}, heard all round its listener from
+     * no place at all.
      */
-    LoopSoundInstance(final SoundKey sound, final Vec3 place, final float volume, final float pitch) {
+    LoopSoundInstance(final SoundKey sound, final Vec3 place, final float volume, final float pitch,
+                      final boolean around) {
         super(sound.event().get(), sound.spec().channel().source(), SoundInstance.createUnseededRandom());
         this.sound = sound;
+        this.around = around;
         this.looping = true;
         this.delay = 0;
-        this.attenuation = SoundInstance.Attenuation.LINEAR;
-        this.relative = false;
+        this.attenuation = around ? SoundInstance.Attenuation.NONE : SoundInstance.Attenuation.LINEAR;
+        this.relative = around;
         this.volume = 0.0F;
         this.pitch = pitch;
         this.place = place;
@@ -106,8 +111,14 @@ final class LoopSoundInstance extends AbstractTickableSoundInstance {
         }
     }
 
-    /* Stands where its place is in the world now. */
+    /* Stands where its place is in the world now; heard all round, on its listener. */
     private void follow() {
+        if (this.around) {
+            this.x = 0;
+            this.y = 0;
+            this.z = 0;
+            return;
+        }
         final Level level = Minecraft.getInstance().level;
         final Vec3 at = level == null ? this.place : MovingStructures.inWorld(level, this.place);
         this.x = at.x;

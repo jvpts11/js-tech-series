@@ -978,6 +978,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A starship's engines no longer buzz as it turns: heard inside it from its engines, their sound swung round
+  its crew's heads a step a tick, as the game moves a sound, while their view turned smoothly. Inside, its engines and
+  its pulse drive are heard all round, through the hull; from outside, still from its engines.
 - A starship banks into its turns, as No Man's Sky's ships do: the whole ship and whoever is aboard lean up to
   thirty-five degrees at its fastest turn flying the air's cruise or faster, less the slower it turns and the slower
   it flies, not at all hovering, and come level again as the turn falls away; on the land it stands level.

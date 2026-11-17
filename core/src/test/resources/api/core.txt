@@ -262,7 +262,8 @@ stable 4
 10 dev.jstech.core.audio.LastSoundToggle.Kind  NOTHING
 10 dev.jstech.core.audio.LastSoundToggle.Kind  TURNED_OFF
 10 dev.jstech.core.audio.LastSoundToggle.Outcome  type record(Kind kind, String sound)
-10 dev.jstech.core.audio.LoopRequest  type record(SoundKey sound, float volume, float pitch, ResourceLocation field)
+68 dev.jstech.core.audio.LoopRequest  type record(SoundKey sound, float volume, float pitch, ResourceLocation field, boolean around)
+68 dev.jstech.core.audio.LoopRequest  new(SoundKey, float, float, ResourceLocation)
 10 dev.jstech.core.audio.LoopRequest  static LoopRequest of(SoundKey)
 10 dev.jstech.core.audio.Occlusion  type final class
 10 dev.jstech.core.audio.Occlusion  static final float THROUGH_ONE_BLOCK

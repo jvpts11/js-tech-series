@@ -160,18 +160,20 @@ public final class ShipEngineSounds {
             if (!now.running() || this.console.ship().isEmpty()) {
                 return List.of();
             }
+            // Inside, its crew hear it all round them through the hull: from its engines, a turn would swing the
+            // sound round their heads a step a tick as their view turns smoothly, and buzz.
+            final boolean inside = inside();
             if (now.pulse().on()) {
                 // In a jump its pulse drive roars over its engines.
-                return List.of(new LoopRequest(ShipSounds.PULSE_LOOP, 1.0F, 1.0F, null));
+                return List.of(new LoopRequest(ShipSounds.PULSE_LOOP, 1.0F, 1.0F, null, inside));
             }
-            final boolean inside = inside();
             if (now.throttle() > 0 || now.boosting()) {
                 final float open = now.boosting() ? 1.0F : now.throttle() / PERCENT;
                 return List.of(new LoopRequest(inside ? ShipSounds.ENGINE_THRUST_INSIDE : ShipSounds.ENGINE_THRUST,
-                        THRUST_LEAST + (1 - THRUST_LEAST) * open, 1.0F, null));
+                        THRUST_LEAST + (1 - THRUST_LEAST) * open, 1.0F, null, inside));
             }
             return List.of(new LoopRequest(inside ? ShipSounds.ENGINE_IDLE_INSIDE : ShipSounds.ENGINE_IDLE, IDLE,
-                    1.0F, null));
+                    1.0F, null, inside));
         }
 
         @Override
