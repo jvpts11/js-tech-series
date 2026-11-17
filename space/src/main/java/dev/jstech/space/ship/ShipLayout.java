@@ -74,6 +74,14 @@ public final class ShipLayout {
     }
 
     /**
+     * The section of a spine of {@code sections} sections, the cockpit's first, the wings hang beside: the third, or
+     * the last of a shorter spine.
+     */
+    public static int wingRootSection(final int sections) {
+        return sections > 2 ? 2 : Math.min(1, sections);
+    }
+
+    /**
      * Where along a spine whose sections begin at {@code fronts} the anchor {@code anchor} stands; a section's own
      * front is that of its section {@code section}, the nose for a part hung on the spine.
      */
@@ -82,7 +90,7 @@ public final class ShipLayout {
         return switch (anchor) {
             case SECTION -> fronts[Math.min(section, sections)];
             case COCKPIT_JOINT -> fronts[Math.min(1, sections)];
-            case WING_ROOT -> fronts[sections > 2 ? 2 : Math.min(1, sections)];
+            case WING_ROOT -> fronts[wingRootSection(sections)];
             case SPINE_END -> fronts[sections];
         };
     }

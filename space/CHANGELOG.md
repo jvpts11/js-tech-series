@@ -965,6 +965,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   and over about the roof's edges to lie along the hull's upper flanks, as the Space Shuttle's, over two and a half
   seconds, used from under them or over them by a crew member who may come aboard; the hold under them opens to the
   sky, its hoist rail left out and its lamps at its walls. Lifting off, a ship shuts them. Its roof was only seamed.
+- The Side Door hold opens its right flank: an opening from the deck to the roof's edge between yellow and
+  black stripes, shut by a roller door of seventeen slats that runs up the wall and over the chamfer into a drum under
+  the roof over two and a half seconds, used from either side by a crew member who may come aboard. Lifting off, a
+  ship shuts it. Beside swept or stub wings, whose roots stand a block over the deck, the hold is built with two steps
+  inside up to the wing's root; beside a blended delta or no wing, its floor runs level to the door.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

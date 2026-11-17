@@ -2104,6 +2104,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for energy it would never draw.
 - A formed multiblock fills the place of a block its model shows no face of when the block's middle lies
   within the model's solid, so a closed machine is solid through.
+- A block of a formed model that holds only a door's leaf, as a roller door's opening does, is the door's: the
+  data run no longer takes it for a block the model left empty, and the door's piece makes it solid while it is shut.
 - A notification that says where it came from says so after its mod's name, on the screen and in the history.
 - The catalogue of the electronics chain: crushed ore, drawn from a picture of broken ore in the colour of the
   material's ore, and lumps (coke, calcium carbide); polymers as plate, sheet and dust, and crystals grown as rods

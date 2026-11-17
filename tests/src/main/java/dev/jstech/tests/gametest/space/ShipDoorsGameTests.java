@@ -11,8 +11,10 @@ import dev.jstech.core.air.AirMix;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.damage.DamageStamps;
 import dev.jstech.core.multiblock.damage.FormedDamage;
+import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedDoors;
@@ -30,10 +32,12 @@ import dev.jstech.space.ship.OxygenPanelBlock;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.ShipRampGeometry;
 import dev.jstech.space.ship.ShipStairGeometry;
 import dev.jstech.space.ship.ShipStairs;
 import dev.jstech.space.ship.SmallShipParts;
+import dev.jstech.space.shipyard.ShipyardPlans;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
@@ -83,6 +87,9 @@ public final class ShipDoorsGameTests {
 
     private static final String ARENA = "shipyard";
     private static final String BATCH = "jsspace_ship_doors";
+    /* Each hold's door out of the ship, by its piece, and the hold it is of. */
+    private static final Map<String, String> HOLDS = Map.of(ShipDoorRules.RAMP, "ramp", ShipDoorRules.SIDE_DOOR,
+            "side_door", ShipDoorRules.BAY_DOORS, "bay");
     private static final BlockPos CORNER = new BlockPos(1, 2, 1);
     private static final int WAIT = 600;
     private static final ShipDesign SHIP = new ShipDesign("JS-D1", List.of(part("orbiter_cockpit"), part("airlock"),
@@ -170,6 +177,29 @@ public final class ShipDoorsGameTests {
         everyDoor(helper, new ShipDesign("JS-E3", List.of(part("greenhouse_cockpit"), part("airlock"),
                 part("side_door"), part("reactor_flush")), List.of(part("twin_bells"), part("swept_wings"),
                 part("wheels"))));
+    }
+
+    /**
+     * The Side Door hold beside wings whose root stands a block over its deck, swept or stub, is the raised one, two
+     * steps inside up to the wing's root; beside the blended delta, level with its deck, and away from the wings, it
+     * is the level one: the dock builds each with its own model.
+     */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void sideDoor_isRaisedBesideHighWingsAndLevelElsewhere(final GameTestHelper helper) {
+        final List<ResourceLocation> atTheWings = List.of(part("greenhouse_cockpit"), part("airlock"),
+                part("side_door"), part("reactor_flush"));
+        final List<ResourceLocation> past = List.of(part("greenhouse_cockpit"), part("airlock"),
+                part("reactor_flush"), part("side_door"));
+        final List<ResourceLocation> tail = List.of(part("twin_bells"), part("wheels"));
+        helper.assertValueEqual(sideDoorModel(helper, atTheWings, part("swept_wings"), tail),
+                "small_side_door_raised", "beside swept wings");
+        helper.assertValueEqual(sideDoorModel(helper, atTheWings, part("stub_wings"), tail),
+                "small_side_door_raised", "beside stub wings");
+        helper.assertValueEqual(sideDoorModel(helper, atTheWings, part("blended_delta"), tail), "small_side_door",
+                "beside the blended delta");
+        helper.assertValueEqual(sideDoorModel(helper, past, part("swept_wings"), tail), "small_side_door",
+                "a section past the wings");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
@@ -564,21 +594,34 @@ public final class ShipDoorsGameTests {
             }
             GameTestPlayers.leave(crew);
             helper.assertTrue(!doors.isEmpty(), design.name() + " has doors");
+            // Every hold's door out of the ship among them: a hold of the design with no door found is a door untried.
+            for (final String hold : List.of(ShipDoorRules.RAMP, ShipDoorRules.SIDE_DOOR, ShipDoorRules.BAY_DOORS)) {
+                final boolean has = design.spine().contains(part(HOLDS.get(hold)));
+                helper.assertTrue(!has || doors.stream().anyMatch(door -> hold.equals(door.piece())),
+                        design.name() + "'s " + hold + " is among its doors: " + doors.stream()
+                                .map(FormedDoors.Door::piece).toList());
+            }
             helper.assertTrue(wrong.isEmpty(), design.name() + "'s " + doors.size() + " doors: " + wrong);
         }).thenSucceed();
     }
 
-    /* Every door of the ship of {@code plan}: its pressure doors, its airlock's outer door, its ramp and roof, once. */
+    /*
+     * Every door of the ship of {@code plan}: its pressure doors, its airlock's outer door, its ramp, side door and
+     * roof, once.
+     */
     private static List<FormedDoors.Door> doorsOf(final ServerLevel level, final PlannedBuild plan) {
         final Map<BlockPos, FormedDoors.Door> out = new LinkedHashMap<>();
         for (final PlanSpot spot : plan.plan().spots()) {
-            final String piece = spot.block().equals(ShipKitBlocks.PRESSURE_DOOR.getId()) ? ShipDoorRules.PRESSURE_DOOR
-                    : spot.block().equals(ShipKitBlocks.AIRLOCK_DOOR.getId()) ? ShipDoorRules.OUTER_DOOR
-                    : spot.block().equals(ShipKitBlocks.RAMP_PLATE.getId()) ? ShipDoorRules.RAMP
-                    : spot.block().equals(ShipKitBlocks.HULL_PLATING.getId()) ? ShipDoorRules.BAY_DOORS : null;
-            // A block a door's model makes its own: a ramp plate is the Side Door hold's door as well, no ramp of it.
-            if (piece != null) {
-                final BlockPos at = plan.where(spot);
+            // A ramp plate is the Ramp hold's ramp or the Side Door hold's door, whichever its model has.
+            final List<String> pieces = spot.block().equals(ShipKitBlocks.PRESSURE_DOOR.getId())
+                    ? List.of(ShipDoorRules.PRESSURE_DOOR)
+                    : spot.block().equals(ShipKitBlocks.AIRLOCK_DOOR.getId()) ? List.of(ShipDoorRules.OUTER_DOOR)
+                    : spot.block().equals(ShipKitBlocks.RAMP_PLATE.getId())
+                    ? List.of(ShipDoorRules.RAMP, ShipDoorRules.SIDE_DOOR)
+                    : spot.block().equals(ShipKitBlocks.HULL_PLATING.getId()) ? List.of(ShipDoorRules.BAY_DOORS)
+                    : List.of();
+            final BlockPos at = plan.where(spot);
+            for (final String piece : pieces) {
                 for (final FormedPlace place : ((IFormedPlaced) level.getBlockEntity(at)).places()) {
                     FormedDoors.named(level, at, place, piece).ifPresent(door -> out.putIfAbsent(door.uses(), door));
                 }
@@ -803,5 +846,17 @@ public final class ShipDoorsGameTests {
 
     private static ResourceLocation part(final String path) {
         return SmallShipParts.id("small_" + path);
+    }
+
+    /* The model the dock builds the Side Door hold with, of a ship of {@code spine}, {@code wings} and {@code tail}. */
+    private static String sideDoorModel(final GameTestHelper helper, final List<ResourceLocation> spine,
+                                        final ResourceLocation wings, final List<ResourceLocation> tail) {
+        final List<ResourceLocation> hung = new ArrayList<>(tail);
+        hung.add(wings);
+        final BuildPlan plan = ShipyardPlans.of(helper.getLevel(), new ShipDesign("JS-S", spine, hung),
+                Orientation.turns().getFirst());
+        return plan.spots().stream().filter(spot -> spot.block().equals(ShipKitBlocks.RAMP_PLATE.getId()))
+                .flatMap(spot -> spot.place().stream()).map(place -> ShipPartModels.name(place.model())).findFirst()
+                .orElse("none");
     }
 }

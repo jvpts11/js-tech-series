@@ -73,6 +73,14 @@ public final class ShipHoldDoorsClientTests {
     /* The camera over the hold's roof, how far across the ship from its middle and how high over it, in blocks. */
     private static final double ABOVE_ACROSS = 5.0;
     private static final double ABOVE = 6.0;
+    /* A ship whose Side Door hold stands beside its swept wings, the raised one, and its part's number. */
+    private static final ShipDesign SIDE_SHIP = new ShipDesign("JS-H3", List.of(part("greenhouse_cockpit"),
+            part("airlock"), part("side_door"), part("reactor_flush")), List.of(part("twin_bells"),
+            part("swept_wings"), part("wheels")));
+    private static final int SIDE_PART = 2;
+    /* The camera beside the door, out over the wing and a little up, in blocks. */
+    private static final double BESIDE = 4.5;
+    private static final double BESIDE_UP = 0.8;
 
     private ShipHoldDoorsClientTests() {
     }
@@ -87,6 +95,12 @@ public final class ShipHoldDoorsClientTests {
     public static void bayDoors_swingUpAndOverOntoTheHullsFlanksAsTheyOpen(final ClientTestContext ctx) {
         swing(ctx, BAY_SHIP, BAY_PART, ShipKitBlocks.HULL_PLATING.getId(), ShipDoorRules.BAY_DOORS, "ship-bay-doors",
                 new Vec3(ABOVE_ACROSS, ABOVE, 0), Vec3.ZERO);
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void sideDoor_rollsUpTheFlankIntoItsDrumAsItOpens(final ClientTestContext ctx) {
+        swing(ctx, SIDE_SHIP, SIDE_PART, ShipKitBlocks.RAMP_PLATE.getId(), ShipDoorRules.SIDE_DOOR,
+                "ship-side-door", new Vec3(BESIDE, BESIDE_UP, 0), new Vec3(0, BESIDE_UP, 0));
     }
 
     /*

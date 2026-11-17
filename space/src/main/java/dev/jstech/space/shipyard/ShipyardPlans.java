@@ -64,7 +64,7 @@ public final class ShipyardPlans {
             final int[] at = dock.apply(block.cell().x(), block.cell().y(), block.cell().z());
             // A block of the game keeps itself, and has no place in its piece's model.
             final Optional<FormedPlace> place = JsSpace.MODID.equals(wanted.getNamespace())
-                    ? Optional.of(new FormedPlace(ShipPartModels.shape(id, kit, block.piece()),
+                    ? Optional.of(new FormedPlace(ShipPartModels.shape(id, kit, block.piece(), design, block.part()),
                             block.flipped() ? mirrored : turned, block.model().x(), block.model().y(),
                             block.model().z()))
                     : Optional.empty();

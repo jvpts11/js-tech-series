@@ -30,6 +30,7 @@ import java.util.function.IntPredicate;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModFileInfo;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The formed models of the small starship's parts, as the approved catalogue drew them, with the joints drawn on the
@@ -50,6 +51,15 @@ public final class ShipPartModels {
     private static final Set<String> NAMES = new LinkedHashSet<>();
     /* The cluster's four bells have the most triangles. */
     private static final int MOST_TRIANGLES = 9_000;
+    /*
+     * The model a piece is drawn and shaped with instead, by its own model's name, when its section stands beside
+     * wings whose root is a block over its deck: the Side Door hold's raised one, two steps inside up to the wing's
+     * root, its door's sill there, so its crew steps out onto the wing.
+     */
+    private static final Map<String, String> RAISED = Map.of("small_side_door", "small_side_door_raised");
+    /* The wings whose root stands a block over the deck of the section beside it. */
+    private static final Set<ResourceLocation> HIGH_WINGS = Set.of(SmallShipParts.id("small_swept_wings"),
+            SmallShipParts.id("small_stub_wings"));
     /** A pilot seat aboard: sat on upright, half a block over its block's bottom, the ship's helm. */
     public static final BlockAboard PILOT = new BlockAboard(Optional.of(new BlockAboard.Seat(0.5, true)),
             Optional.empty(), Optional.empty(), Optional.empty());
@@ -66,24 +76,8 @@ public final class ShipPartModels {
             final ShipPart declared = ShipParts.declared().get(part);
             for (final ShipKit.Piece piece : kit.pieces()) {
                 final String name = name(part, kit, piece);
-                NAMES.add(name);
-                final boolean showsTheGames = showsTheGamesBlocks(name);
-                for (final String finish : FINISHES) {
-                    if (showsTheGames) {
-                        // Its texture is drawn as the game loads, the game's own blocks drawn in from its files.
-                        RuntimePacks.promise(ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
-                                "models/ship/" + name + "_" + finish));
-                    }
-                    final ModelBuilder model = SpaceContent.CONTENT.model("ship/" + finish + "/" + name)
-                            .file("jsmodels/ship/" + name + ".gltf")
-                            .texture("textures/models/ship/" + name + "_" + finish + ".png")
-                            .triangles(MOST_TRIANGLES);
-                    if (declared != null && declared.kind() == ShipPartKind.COCKPIT) {
-                        // A cockpit's pilot seat is its helm: the pilot sitting in it flies the ship.
-                        model.aboard(ShipKitBlocks.PILOT_SEAT.getId(), PILOT);
-                    }
-                    MODELS.put(id(finish, name), model.register());
-                }
+                declare(name, declared);
+                raised(name).ifPresent(other -> declare(other, declared));
             }
         });
     }
@@ -91,6 +85,23 @@ public final class ShipPartModels {
     /** Every model's name, as its files are named, the same in every finish. */
     public static List<String> names() {
         return List.copyOf(NAMES);
+    }
+
+    /**
+     * The name of the model the piece of the model {@code name} takes instead beside wings whose root is a block over
+     * its deck, if it has one.
+     */
+    public static Optional<String> raised(final String name) {
+        return Optional.ofNullable(RAISED.get(name));
+    }
+
+    /**
+     * Whether the section {@code section} of the ship of {@code design}, the cockpit's nought, stands beside wings
+     * whose root is a block over its deck.
+     */
+    public static boolean besideHighWings(final ShipDesign design, final int section) {
+        return section == ShipLayout.wingRootSection(design.spine().size())
+                && design.hung().stream().anyMatch(HIGH_WINGS::contains);
     }
 
     /** The model of {@code id}, if it is one of the parts' models. */
@@ -138,14 +149,14 @@ public final class ShipPartModels {
         for (int k = 0; k < design.spine().size(); k++) {
             if (drawn.test(k)) {
                 add(design.spine().get(k), kits.get(design.spine().get(k)), fronts, k, k, design.flips(k),
-                        design.finish(), placed);
+                        besideHighWings(design, k), design.finish(), placed);
             }
         }
         for (int k = 0; k < design.hung().size(); k++) {
             final int part = design.spine().size() + k;
             if (drawn.test(part)) {
-                add(design.hung().get(k), kits.get(design.hung().get(k)), fronts, 0, part, false, design.finish(),
-                        placed);
+                add(design.hung().get(k), kits.get(design.hung().get(k)), fronts, 0, part, false, false,
+                        design.finish(), placed);
             }
         }
         return List.copyOf(placed);
@@ -170,18 +181,54 @@ public final class ShipPartModels {
         return id(FINISHES.getFirst(), name(part, kit, piece));
     }
 
+    /**
+     * The model the blocks of {@code piece} take their shapes from once formed as the part numbered {@code number} of
+     * the ship of {@code design}: the raised one beside wings whose root is a block over its deck, if it has one.
+     */
+    public static ResourceLocation shape(final ResourceLocation part, final ShipKit kit, final ShipKit.Piece piece,
+                                         final ShipDesign design, final int number) {
+        final boolean high = number < design.spine().size() && besideHighWings(design, number);
+        return id(FINISHES.getFirst(), drawnAs(name(part, kit, piece), high));
+    }
+
+    private static void declare(final String name, final @Nullable ShipPart declared) {
+        NAMES.add(name);
+        final boolean showsTheGames = showsTheGamesBlocks(name);
+        for (final String finish : FINISHES) {
+            if (showsTheGames) {
+                // Its texture is drawn as the game loads, the game's own blocks drawn in from its files.
+                RuntimePacks.promise(ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
+                        "models/ship/" + name + "_" + finish));
+            }
+            final ModelBuilder model = SpaceContent.CONTENT.model("ship/" + finish + "/" + name)
+                    .file("jsmodels/ship/" + name + ".gltf")
+                    .texture("textures/models/ship/" + name + "_" + finish + ".png")
+                    .triangles(MOST_TRIANGLES);
+            if (declared != null && declared.kind() == ShipPartKind.COCKPIT) {
+                // A cockpit's pilot seat is its helm: the pilot sitting in it flies the ship.
+                model.aboard(ShipKitBlocks.PILOT_SEAT.getId(), PILOT);
+            }
+            MODELS.put(id(finish, name), model.register());
+        }
+    }
+
     private static void add(final ResourceLocation part, final ShipKit kit, final int[] fronts, final int section,
-                            final int number, final boolean flipped, final ResourceLocation finish,
+                            final int number, final boolean flipped, final boolean high, final ResourceLocation finish,
                             final List<Placed> placed) {
         if (kit == null) {
             return;
         }
         for (final ShipKit.Piece piece : kit.pieces()) {
-            final ResourceLocation model = id(finish.getPath(), name(part, kit, piece));
+            final ResourceLocation model = id(finish.getPath(), drawnAs(name(part, kit, piece), high));
             if (MODELS.containsKey(model)) {
                 placed.add(new Placed(model, ShipLayout.anchor(piece.anchor(), fronts, section), flipped, number));
             }
         }
+    }
+
+    /* The name of the model the piece of the model {@code name} is drawn with, beside {@code high} wings or not. */
+    private static String drawnAs(final String name, final boolean high) {
+        return high ? raised(name).orElse(name) : name;
     }
 
     /* A piece's model's name: its part's, and its anchor's for a part of more than one piece. */

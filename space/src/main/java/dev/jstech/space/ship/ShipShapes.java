@@ -52,8 +52,12 @@ public final class ShipShapes {
             }
             for (final ShipKit.Piece piece : kit.pieces()) {
                 final ResourceLocation model = ShipPartModels.shape(part, kit, piece);
-                final String name = model.getPath().substring(model.getPath().lastIndexOf('/') + 1);
+                final String name = ShipPartModels.name(model);
                 FormedShapes.declareLaid(model, ORIGIN, own(kit, piece), reach(REACH.get(name)), Set.of());
+                // The piece's raised model, beside wings whose root is over its deck, laid over the same blocks.
+                ShipPartModels.raised(name).ifPresent(raised -> FormedShapes.declareLaid(model.withPath(path ->
+                        path.substring(0, path.length() - name.length()) + raised), ORIGIN, own(kit, piece),
+                        reach(REACH.get(raised)), Set.of()));
             }
         });
     }

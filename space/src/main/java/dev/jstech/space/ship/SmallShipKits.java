@@ -80,7 +80,7 @@ public final class SmallShipKits {
                 List.of("bCYF", "HIIH", "bCYb", "HCYH", "bMMb"));
         section("side_door", hold, List.of("TWWT", "TWWT", "TWWT", "TWWT", "TWWT"),
                 List.of("bPBb", "b  M", "b  M", "b  M", "b  b"),
-                List.of("bCYb", "HIIH", "bCYF", "HCYH", "bIIb"));
+                List.of("bCYb", "HIIM", "bCYM", "HCYM", "bIIb"));
         // The small functional modules: the workshop's crafting table, smithing table, furnace and barrel against its
         // walls; the lab's panels and sample racks along its walls; the quarters' bunk; the computing module's server
         // panels and its antenna feed; small cargo's barrels in their racks.

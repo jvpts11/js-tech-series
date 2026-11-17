@@ -46,9 +46,9 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * airlock's floor, coming down to the land as the outer door opens while the ship stands on the land and going up
  * again as the door shuts or the ship lifts off; and its Ramp hold's ramp, its walking face laid on the land as it
  * opens there. In the air and in space a door opens with no stair, and the ramp swings down to its full angle with
- * nothing to climb; lifting off, a ship shuts its holds' doors, its ramp and its roof, as it folds its gear. Let down, a
- * way is the blocks that hold its treads ({@link ShipStairBlock}), beside the airlock or behind the tail, set down in
- * the ship's yard so they go with it; the door's model draws it.
+ * nothing to climb; lifting off, a ship shuts its holds' doors, its ramp, its side door and its roof, as it folds its
+ * gear. Let down, a way is the blocks that hold its treads ({@link ShipStairBlock}), beside the airlock or behind the
+ * tail, set down in the ship's yard so they go with it; the door's model draws it.
  */
 public final class ShipStairs {
 
@@ -163,8 +163,8 @@ public final class ShipStairs {
     }
 
     /*
-     * The doors of {@code ship} out to the world, its airlock's outer door and its holds' ramp and roof, found among
-     * its blocks once, and again once one of them is not there.
+     * The doors of {@code ship} out to the world, its airlock's outer door and its holds' ramp, side door and roof,
+     * found among its blocks once, and again once one of them is not there.
      */
     private static List<FormedDoors.Door> doors(final ServerLevel level, final MovingStructure ship) {
         final List<FormedDoors.Door> known = DOORS.get(ship);
@@ -179,15 +179,21 @@ public final class ShipStairs {
                 for (int z = box.minZ(); z <= box.maxZ(); z++) {
                     at.set(x, y, z);
                     final BlockState original = FormedPartBlock.originalAt(level, at, level.getBlockState(at));
-                    final String piece = original.is(ShipKitBlocks.AIRLOCK_DOOR.get()) ? ShipDoorRules.OUTER_DOOR
-                            : original.is(ShipKitBlocks.RAMP_PLATE.get()) ? ShipDoorRules.RAMP
-                            : original.is(ShipKitBlocks.HULL_PLATING.get()) ? ShipDoorRules.BAY_DOORS : null;
-                    if (piece == null || !(level.getBlockEntity(at) instanceof IFormedPlaced placed)) {
+                    // A door plate is a ramp's or a side door's, whichever its hold's model has.
+                    final List<String> pieces = original.is(ShipKitBlocks.AIRLOCK_DOOR.get())
+                            ? List.of(ShipDoorRules.OUTER_DOOR)
+                            : original.is(ShipKitBlocks.RAMP_PLATE.get())
+                            ? List.of(ShipDoorRules.RAMP, ShipDoorRules.SIDE_DOOR)
+                            : original.is(ShipKitBlocks.HULL_PLATING.get()) ? List.of(ShipDoorRules.BAY_DOORS)
+                            : List.of();
+                    if (pieces.isEmpty() || !(level.getBlockEntity(at) instanceof IFormedPlaced placed)) {
                         continue;
                     }
                     for (final FormedPlace place : placed.places()) {
-                        FormedDoors.named(level, at.immutable(), place, piece)
-                                .ifPresent(door -> found.putIfAbsent(door.uses(), door));
+                        for (final String piece : pieces) {
+                            FormedDoors.named(level, at.immutable(), place, piece)
+                                    .ifPresent(door -> found.putIfAbsent(door.uses(), door));
+                        }
                     }
                 }
             }

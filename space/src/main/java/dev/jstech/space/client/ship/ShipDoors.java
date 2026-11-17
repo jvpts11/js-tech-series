@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.client.model.kit.IKitDriver;
@@ -21,6 +22,7 @@ import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelAnimator;
 import dev.jstech.core.model.ModelPose;
 import dev.jstech.space.ship.DoorMotion;
+import dev.jstech.space.ship.RollPath;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
@@ -42,7 +44,8 @@ import org.slf4j.Logger;
  * A small ship's doors as they move: a pressure door's leaf sliding into its bulkhead's wall as it opens, the
  * airlock's outer door's along the hull, and the lamp over each, red while it is shut and green while it is open; and
  * the boarding stair the outer door lets down on the land, coming down and going up as the approved storyboard has it
- * ({@link DoorMotion}). How each model's doors move is read from the file beside it,
+ * ({@link DoorMotion}); a hold's leaf swinging about its hinge; a roller door's slats running up the hull into their
+ * drum ({@link RollPath}), out of sight once wound. How each model's doors move is read from the file beside it,
  * {@code jsmodels/ship/<model>.doors.json}: each door by its piece's name, the bone of its leaf and how far it slides
  * open, its lamps' bones, the block of the model it works by, which keeps whether it is shut, and its stair's bones.
  * Each part drawn keeps its doors' motion, moved on once a frame by the time since the last.
@@ -105,8 +108,9 @@ public final class ShipDoors {
             final double seconds = moving.frame < 0 ? 0 : Math.clamp(now - moving.at, 0, LONGEST_FRAME);
             for (int k = 0; k < count; k++) {
                 final Door door = rig.doors().get(k);
-                moving.doors[k].advance(seconds, open[k], letDown[k], door.swing().isPresent() ? DoorMotion.SWING
-                        : door.stair().isPresent() ? DoorMotion.OUTER_DOOR : DoorMotion.PRESSURE_DOOR);
+                moving.doors[k].advance(seconds, open[k], letDown[k],
+                        door.swing().isPresent() || door.roll().isPresent() ? DoorMotion.SWING
+                                : door.stair().isPresent() ? DoorMotion.OUTER_DOOR : DoorMotion.PRESSURE_DOOR);
             }
             moving.frame = frame;
             moving.at = now;
@@ -125,6 +129,13 @@ public final class ShipDoors {
                 }
                 if (motion.rails() <= 0) {
                     hidden.add(stair.rails());
+                }
+            });
+            door.roll().ifPresent(roll -> {
+                for (int s = 0; s < roll.slats().size(); s++) {
+                    if (roll.shift(s, motion.leaf()).isEmpty()) {
+                        hidden.add(roll.slats().get(s));
+                    }
                 }
             });
         }
@@ -179,10 +190,11 @@ public final class ShipDoors {
      * @param swing      how its leaf turns open about its hinge, if it swings rather than slides
      * @param turns      the other bones that turn as it opens, each from a share of its opening: a ramp's toe, a
      *                   pair's other leaf
+     * @param roll       how its slats roll up into its drum, if it is a roller door
      */
     public record Door(String piece, String leaf, Vector3f travel, String shutLamp, String openLamp,
                        List<Integer> cell, boolean startsShut, Optional<Stair> stair, Optional<Swing> swing,
-                       List<Turn> turns) {
+                       List<Turn> turns, Optional<Roll> roll) {
 
         public static final Codec<Door> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("piece").forGetter(Door::piece),
@@ -194,7 +206,8 @@ public final class ShipDoors {
                 Codec.BOOL.optionalFieldOf("starts_shut", false).forGetter(Door::startsShut),
                 Stair.CODEC.optionalFieldOf("stair").forGetter(Door::stair),
                 Swing.CODEC.optionalFieldOf("swing").forGetter(Door::swing),
-                Turn.CODEC.listOf().optionalFieldOf("turns", List.of()).forGetter(Door::turns)
+                Turn.CODEC.listOf().optionalFieldOf("turns", List.of()).forGetter(Door::turns),
+                Roll.CODEC.optionalFieldOf("roll").forGetter(Door::roll)
         ).apply(instance, Door::new));
 
         public Door {
@@ -242,6 +255,42 @@ public final class ShipDoors {
 
         public Turn {
             axis = new Vector3f(axis).normalize();
+        }
+    }
+
+    /**
+     * How a roller door's slats roll up into its drum: shut, they share its way evenly from the sill up, each drawn at
+     * its place on the way and turning about its own pivot there; opening, each is carried the same share of the way
+     * on, and the door is open once the lowest is wound.
+     *
+     * @param slats its slats' bones, from the sill up
+     * @param path  the way they run, in blocks across and up the model, from the sill to the drum's mouth
+     */
+    public record Roll(List<String> slats, RollPath path) {
+
+        /* A corner of the way, as the rig writes it: across, then up. */
+        private static final Codec<RollPath.Point> POINT = Codec.DOUBLE.listOf(2, 2).xmap(
+                xy -> new RollPath.Point(xy.get(0), xy.get(1)), point -> List.of(point.x(), point.y()));
+        private static final Codec<RollPath> PATH = POINT.listOf().comapFlatMap(points -> {
+            try {
+                return DataResult.success(new RollPath(points));
+            } catch (final IllegalArgumentException wrong) {
+                return DataResult.error(wrong::getMessage);
+            }
+        }, RollPath::points);
+        public static final Codec<Roll> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.STRING.listOf(1, Integer.MAX_VALUE).fieldOf("slats").forGetter(Roll::slats),
+                PATH.fieldOf("path").forGetter(Roll::path)
+        ).apply(instance, Roll::new));
+
+        public Roll {
+            slats = List.copyOf(slats);
+        }
+
+        /** How the slat {@code k} has moved with the door open {@code share} of the way; none once it is wound. */
+        public Optional<RollPath.Shift> shift(final int k, final double share) {
+            final double length = this.path.length();
+            return this.path.shift((k + 0.5) * length / this.slats.size(), length, share);
         }
     }
 
@@ -318,6 +367,7 @@ public final class ShipDoors {
                             Math.toRadians(other.degrees() * DoorMotion.after(motion.leaf(), other.from())));
                 }
                 door.stair().ifPresent(stair -> stair(stair, motion, pose));
+                door.roll().ifPresent(roll -> roll(roll, motion.leaf(), pose));
             }
         }
 
@@ -354,6 +404,21 @@ public final class ShipDoors {
             final int rails = pose.index(stair.rails());
             if (rails >= 0 && motion.rails() < 1) {
                 pose.addMove(rails, 0, (float) (motion.rails() - 1) * RAILS_DROP * PIXELS, 0);
+            }
+        }
+
+        /*
+         * The roller door's slats where the door open {@code share} of the way has carried them: moved along its way
+         * and turned with it about the model's z axis, along the ship; those wound are hidden by {@link #pose}.
+         */
+        private void roll(final Roll roll, final double share, final ModelPose pose) {
+            for (int k = 0; k < roll.slats().size(); k++) {
+                final int index = pose.index(roll.slats().get(k));
+                final Optional<RollPath.Shift> shift = roll.shift(k, share);
+                if (index >= 0 && shift.isPresent() && share > 0) {
+                    pose.addMove(index, (float) shift.get().dx() * PIXELS, (float) shift.get().dy() * PIXELS, 0);
+                    pose.setTurn(index, this.turn.identity().rotationZ((float) Math.toRadians(shift.get().turn())));
+                }
             }
         }
 

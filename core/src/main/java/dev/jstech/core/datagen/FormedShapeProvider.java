@@ -123,18 +123,27 @@ public final class FormedShapeProvider implements DataProvider {
         final DeclaredModel model = declared(id);
         final Set<Long> shaped = new LinkedHashSet<>(laid.own());
         shaped.addAll(laid.reach());
-        final float[] faces = faces(model);
+        final float[] faces = faces(model, true);
         final MeshCells.Split split = MeshCells.split(faces, laid.origin(), shaped, Set.of());
-        final List<Long> bare = split.bare().stream().filter(cell -> laid.own().contains(cell)
+        // A block holding only a door's leaf, as a roller door's opening does, is the door's, its shape the leaf's
+        // while it is shut, from its piece: the model fills its blocks with its doors' leaves in them.
+        final MeshCells.Split whole = MeshCells.split(faces(model, false), laid.origin(), shaped, Set.of());
+        final List<Long> bare = whole.bare().stream().filter(cell -> laid.own().contains(cell)
                 && !laid.hollow().contains(cell)).toList();
         if (!bare.isEmpty() || !split.outside().isEmpty()) {
             misfits.add(new Misfit(id, bare, split.outside().keySet()));
             return Optional.empty();
         }
         final Map<Long, int[]> cells = boxes(MeshSolid.of(faces), laid.origin(), split, List.of());
-        // A hollow block with none of the model's faces is written with no boxes: it merges with no shape at all.
+        // A hollow block with none of the model's faces is written with no boxes: it merges with no shape at all;
+        // so is a block holding only a door's leaf, which its piece makes solid while the door is shut.
         for (final long cell : laid.hollow()) {
             cells.putIfAbsent(cell, new int[0]);
+        }
+        for (final long cell : split.bare()) {
+            if (laid.own().contains(cell)) {
+                cells.putIfAbsent(cell, new int[0]);
+            }
         }
         return Optional.of(new FormedShape(laid.origin(), Set.of(), cells, FormedShapes.aboardDeclared(id),
                 pieces(model)));
@@ -148,15 +157,17 @@ public final class FormedShapeProvider implements DataProvider {
     }
 
     /*
-     * The faces of {@code model} at rest, nine numbers to a triangle, in blocks; but for the bones that move with its
-     * doors, so their blocks take a leaf's shape from the door's shut leaf alone.
+     * The faces of {@code model} at rest, nine numbers to a triangle, in blocks; {@code still}, but for the bones that
+     * move with its doors, so their blocks take a leaf's shape from the door's shut leaf alone.
      */
-    private float[] faces(final DeclaredModel model) {
+    private float[] faces(final DeclaredModel model, final boolean still) {
         final List<ModelData> read = ModelDefinitionProvider.read(model, model.definition().model(), this.files);
         final ModelData data = read.getFirst();
         final Set<String> moving = new LinkedHashSet<>();
-        for (final FormedPiece piece : pieces(model)) {
-            moving.addAll(piece.moves());
+        if (still) {
+            for (final FormedPiece piece : pieces(model)) {
+                moving.addAll(piece.moves());
+            }
         }
         return ModelTriangles.still(data, GeometryBaker.bake(data, Set.of()), moving,
                 model.definition().detail().scale());
@@ -189,7 +200,7 @@ public final class FormedShapeProvider implements DataProvider {
                 }
             }
         }
-        final float[] faces = faces(model);
+        final float[] faces = faces(model, true);
         final double[] origin = FormedShapes.patternOrigin();
         final MeshCells.Split split = MeshCells.split(faces, origin, shaped, apart);
         // A block with no face of the model in it is still the model's when its middle lies within the model's

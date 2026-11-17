@@ -28,9 +28,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
 
 /**
- * Who may move a starship's doors, and when: its airlock's outer door and its holds' ramp and roof let in whoever may
- * come aboard, as its crew says; and an airlock never stands open inside and out at once: it cycles, its outer door opening shutting the doors
- * at its ends, and either of those opening shutting its outer door. A player kept from moving a door is told why.
+ * Who may move a starship's doors, and when: its airlock's outer door and its holds' ramp, roof and side door let in
+ * whoever may come aboard, as its crew says; and an airlock never stands open inside and out at once: it cycles, its
+ * outer door opening shutting the doors at its ends, and either of those opening shutting its outer door. A player
+ * kept from moving a door is told why.
  */
 public final class ShipDoorRules {
 
@@ -42,6 +43,8 @@ public final class ShipDoorRules {
     public static final String RAMP = "ramp";
     /** The piece of the Bay Doors hold's model that is its roof's two leaves, a way in from over it. */
     public static final String BAY_DOORS = "bay_doors";
+    /** The piece of the Side Door hold's model that is the roller door in its flank, a way in from beside it. */
+    public static final String SIDE_DOOR = "side_door";
     /* A section's pressure door works by its block left of the middle line, on the walkway's layer, at its front. */
     private static final int DOOR_X = -1;
     private static final int DOOR_Y = 1;
@@ -95,7 +98,8 @@ public final class ShipDoorRules {
             final Optional<ShipCrew> crew = ShipCrews.of(level, ship);
             // A way in from outside lets in only whoever may come aboard.
             final CrewRole needed = OUTER_DOOR.equals(door.piece()) || RAMP.equals(door.piece())
-                    || BAY_DOORS.equals(door.piece()) ? CrewRole.PASSENGER : CrewRole.NONE;
+                    || BAY_DOORS.equals(door.piece()) || SIDE_DOOR.equals(door.piece()) ? CrewRole.PASSENGER
+                    : CrewRole.NONE;
             if (crew.isPresent() && !crew.get().roleOf(player).holds(needed)) {
                 event.setCanceled(true);
                 player.displayClientMessage(GameText.component(ShipCrews.refusal(crew.get(), needed)), true);
