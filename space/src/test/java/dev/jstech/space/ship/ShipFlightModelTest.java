@@ -52,6 +52,8 @@ class ShipFlightModelTest {
     /* How high over a world's land, in blocks, it flies at most at the air's speeds; how hard it brakes coming down. */
     private static final double APPROACH_LOW = 100;
     private static final double APPROACH_BRAKES = 40;
+    /* How far it banks at its fastest turn, flying at least the air's cruise, in degrees. */
+    private static final double MOST_BANK = 35;
     /* How fast a ship on feet hovering comes down as its pilot holds DOWN, in metres a second. */
     private static final double HOVERING_DOWN = 6;
 
@@ -346,6 +348,19 @@ class ShipFlightModelTest {
         final ShipFlightModel.Tick climbing = ShipFlightModel.step(new ShipFlightModel.State(BOOSTED_SPACE, 0, 1, 0,
                 0), BOOSTING, low, SHIP, CLIMBING);
         assertEquals(BOOSTED_SPACE, climbing.state().speed(), CLOSE, "climbing away from the land it is not held back");
+    }
+
+    @Test
+    void bankFor_itBanksIntoItsTurnsTheMoreTheFasterItFliesAndNotAtAll() {
+        assertEquals(MOST_BANK, ShipFlightModel.bankFor(TURNS, CRUISE_AIR), CLOSE, "its fastest turn at the air's"
+                + " cruise leans it furthest, to its left");
+        assertEquals(-MOST_BANK, ShipFlightModel.bankFor(-TURNS, CRUISE_SPACE), CLOSE, "to its right turning right,"
+                + " no further for flying faster");
+        assertEquals(MOST_BANK / 2, ShipFlightModel.bankFor(TURNS / 2, CRUISE_AIR), CLOSE, "half as far turning half"
+                + " as fast");
+        assertEquals(MOST_BANK / 2, ShipFlightModel.bankFor(TURNS, CRUISE_AIR / 2), CLOSE, "half as far flying half"
+                + " as fast");
+        assertEquals(0, ShipFlightModel.bankFor(TURNS, 0), CLOSE, "standing still or hovering, it turns level");
     }
 
     @Test

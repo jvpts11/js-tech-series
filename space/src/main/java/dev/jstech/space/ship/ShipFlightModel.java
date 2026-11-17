@@ -71,6 +71,8 @@ public final class ShipFlightModel {
     private static final double PITCHES = 50.0;
     private static final double MOST_PITCH = 60.0;
     private static final double TURN_GATHERS = 0.25;
+    /* How far it banks into a turn at its fastest, in degrees, as a craft leans into its turns. */
+    private static final double MOST_BANK = 35.0;
     /* The fastest it sinks, in metres a second. */
     private static final double MOST_SINK = 40.0;
     /*
@@ -225,6 +227,16 @@ public final class ShipFlightModel {
      */
     public static double cruiseIn(final double thick) {
         return between(CRUISE_SPACE, CRUISE_AIR, Math.clamp(thick, 0.0, 1.0));
+    }
+
+    /**
+     * How far it banks to its left into a turn of {@code yawRate} degrees a second to its left, flying {@code speed}
+     * metres a second, in degrees, its right below nought: as far as its fastest turn leans it at the air's cruise or
+     * faster, the less the slower it turns and the slower it flies, and not at all standing still or hovering, as a
+     * craft leans into the turns it flies, never into those it makes in place.
+     */
+    public static double bankFor(final double yawRate, final double speed) {
+        return MOST_BANK * Math.clamp(yawRate / TURNS, -1.0, 1.0) * Math.clamp(speed / CRUISE_AIR, 0.0, 1.0);
     }
 
     /**

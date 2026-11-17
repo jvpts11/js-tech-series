@@ -978,6 +978,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A starship banks into its turns, as No Man's Sky's ships do: the whole ship and whoever is aboard lean up to
+  thirty-five degrees at its fastest turn flying the air's cruise or faster, less the slower it turns and the slower
+  it flies, not at all hovering, and come level again as the turn falls away; on the land it stands level.
 - A starship crash hard enough to hurt its crew bursts where the ship is seen, the game's explosion growing
   with the speed, seen and heard, breaking and hurting nothing of itself; it was only heard before.
 - A starship coming down on a world slows as its land comes near, as in No Man's Sky's planetary approach:

@@ -143,7 +143,10 @@ kit for its vehicles.
   orbital sums. The pilot sits in the cockpit's pilot seat, which is the helm, opens and closes the throttle (it stays
   where it is left), turns, and pitches the nose up and down (jump up, C down). Its turn and its pitch gather over a
   quarter of a second as the pilot holds and fall away as they let go, never jumping, up to eighty and fifty degrees a
-  second, first estimates. In the air its air engines push, and in the thin air of the
+  second, first estimates. It banks into its turns as No Man's Sky's ships do, the whole ship and whoever is aboard
+  leaning up to thirty-five degrees at its fastest turn flying the air's cruise or faster, less the slower it turns and
+  the slower it flies, not at all hovering or standing, and comes level again as the turn falls away; on the land it
+  stands level. In the air its air engines push, and in the thin air of the
   climb and in space its bells push. Its wings hold it up, more the faster it goes and less in thinner air, and flying too
   slowly it sinks. In space it flies free and faster. **Weight counts**: a heavier ship gathers speed more slowly and needs
   more of it to stay up; a ship too heavy for its engines only sinks. **Coming down on a world**, as in No Man's

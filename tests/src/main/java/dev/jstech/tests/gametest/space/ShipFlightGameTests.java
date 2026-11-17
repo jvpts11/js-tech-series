@@ -15,6 +15,7 @@ import dev.jstech.core.moving.BlockAboard;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
+import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.Orientation;
@@ -168,6 +169,11 @@ public final class ShipFlightGameTests {
     private static final double UP_HIT = 14;
     /* How fast a ship crashes in the test of its burst, in blocks a second: past what its crew stand. */
     private static final double HARD_HIT = 40;
+    /* How long a turn is held, and let go, in the test of its bank, in ticks; how far it leans at least, and how near
+     * level it comes back, in degrees. */
+    private static final int BANKING = 30;
+    private static final double LEANS = 15;
+    private static final double LEVEL_WITHIN = 3;
     /* How far a hovering ship may drift up or down, and roll on wheels at least, in blocks; its nozzles, in degrees. */
     private static final double HOVER_DRIFT = 0.05;
     private static final double ROLLS = 0.3;
@@ -394,7 +400,27 @@ public final class ShipFlightGameTests {
         }).thenSucceed();
     }
 
-    /* A crash hard enough to hurt its crew bursts where the ship is seen in the world, not where its blocks are kept. */
+    /* Turning, it banks into the turn, as a craft leans into its turns, and levels again as the turn falls away. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void bank_turningItBanksIntoTheTurnAndLevelsAsItLetsGo(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final GameTestSequence sequence = flying(helper, ship, STRAIGHT_WEST).thenExecute(() -> {
+            aloft(ship[0], HIGH);
+            final ShipFlight flight = (ShipFlight) ship[0].motion();
+            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISE, 0, CRUISE / CRUISING, 0,
+                    0)));
+        });
+        hold(helper, sequence, ship, StructureControls.ControlAxis.LEFT, BANKING).thenExecute(() -> helper.assertTrue(
+                bank(ship[0]) > LEANS, "turning left it banks left: " + bank(ship[0]) + " degrees"));
+        cruise(helper, sequence, ship, BANKING).thenExecute(() -> {
+            helper.assertTrue(Math.abs(bank(ship[0])) < LEVEL_WITHIN, "let go, it levels: " + bank(ship[0])
+                    + " degrees");
+            MovingStructures.takeAway(ship[0]);
+            keep(helper, false, STRAIGHT_WEST);
+        }).thenSucceed();
+    }
+
+    /* A crash hard enough to hurt its crew bursts where the ship is seen in the world, not where its blocks lie. */
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
     public static void impact_aHardCrashBurstsWhereTheShipIsSeen(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
@@ -916,6 +942,19 @@ public final class ShipFlightGameTests {
             count += helper.getLevel().getBlockState(at).isAir() ? 0 : 1;
         }
         return count;
+    }
+
+    /*
+     * How far {@code ship} banks to its left, in degrees, its right below nought: how far its up leans towards the
+     * left of its nose, level.
+     */
+    private static double bank(final MovingStructure ship) {
+        final StructureFrame frame = ship.frame();
+        final double[] nose = ((ShipFlight) ship.motion()).noseIn(frame);
+        // Its left, level: the world's up across its nose.
+        final double across = Math.hypot(nose[2], nose[0]);
+        final double lean = (frame.turnX(0, 1, 0) * nose[2] - frame.turnZ(0, 1, 0) * nose[0]) / across;
+        return Math.toDegrees(Math.asin(Math.clamp(lean, -1.0, 1.0)));
     }
 
     /* Where the explosions set off while it listens burst. */

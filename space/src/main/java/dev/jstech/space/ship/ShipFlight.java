@@ -137,9 +137,12 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     private static final double RUNWAY_LOOKED_AT = 200;
     /* How far ahead along the climb ORBIT's caret stands, in blocks. */
     private static final double CARET_AHEAD = 60;
-    /* How fast it turns docking, and rolls back level, in degrees a second; within what of level it is left be. */
+    /*
+     * How fast it turns docking, and rolls to its bank or back level, in degrees a second; within what of either it is
+     * left be.
+     */
     private static final double DOCK_TURNS = 20;
-    private static final double LEVELS = 20;
+    private static final double BANKS = 60;
     private static final double LEVEL_WITHIN = 0.2;
     /* Below this, its nose straight up or down, which way is level is not told, and it is left be. */
     private static final double UPRIGHT_NOSE = 0.05;
@@ -361,7 +364,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 turned = turned.turnedBy(-way[2] / across, 0, way[0] / across, Math.toRadians(next.pitch()));
             }
         }
-        turned = levelled(turned, frame);
+        turned = banked(turned, frame, this.grounded ? 0 : ShipFlightModel.bankFor(next.state().yawRate(),
+                next.state().speed()));
         final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
         final double ahead = next.state().speed() * ShipFlightModel.TICK;
         final double up = (next.state().rise() - next.state().sink()) * ShipFlightModel.TICK;
@@ -438,10 +442,10 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     }
 
     /*
-     * Its flight turned {@code turned}, rolled back towards level about its nose: only docking rolls it, and once it
-     * flies on its own it comes back upright, as a pilot rights a ship before setting it down.
+     * Its flight turned {@code turned}, rolled about its nose towards {@code bank} degrees to its left, as a craft
+     * leans into its turns: level again as its turn falls away, on the land, and after docking rolled it.
      */
-    private StructurePose levelled(final StructurePose turned, final StructureFrame frame) {
+    private StructurePose banked(final StructurePose turned, final StructureFrame frame, final double bank) {
         final StructureFrame at = new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ());
         final double[] n = nose(at);
         final double[] level = {-n[1] * n[0], 1 - n[1] * n[1], -n[1] * n[2]};
@@ -456,12 +460,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final double ly = level[1] / length;
         final double lz = level[2] / length;
         final double sin = (uy * lz - uz * ly) * n[0] + (uz * lx - ux * lz) * n[1] + (ux * ly - uy * lx) * n[2];
-        final double roll = Math.atan2(sin, ux * lx + uy * ly + uz * lz);
-        if (Math.abs(roll) < Math.toRadians(LEVEL_WITHIN)) {
+        final double off = Math.atan2(sin, ux * lx + uy * ly + uz * lz) - Math.toRadians(bank);
+        if (Math.abs(off) < Math.toRadians(LEVEL_WITHIN)) {
             return turned;
         }
-        final double by = Math.copySign(Math.min(Math.abs(roll), Math.toRadians(LEVELS) * ShipFlightModel.TICK),
-                roll);
+        final double by = Math.copySign(Math.min(Math.abs(off), Math.toRadians(BANKS) * ShipFlightModel.TICK), off);
         return turned.turnedBy(n[0], n[1], n[2], by);
     }
 
