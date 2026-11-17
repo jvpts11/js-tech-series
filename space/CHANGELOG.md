@@ -979,6 +979,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Away from the wings, the Side Door hold carries the airlock's boarding stair under its door, on its right
   flank: on the land it unfolds from its bay under the sill as the door opens, a crew member walking out of the hold
   and down it, and folds away as the door shuts or the ship lifts off.
+- The Rocket Hangar's bay door moves as the Vehicle Assembly Building's: over five seconds its lower door's
+  halves slide apart and its slot's leaves fold up, and back as it shuts, from its console or as a crawler comes
+  through. Its way is clear only once it is all the way open, and a crawler waits for it before setting off. It
+  flipped open and shut at once before.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

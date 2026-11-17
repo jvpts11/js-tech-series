@@ -14,6 +14,7 @@ import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.client.rocket.RocketPartsRenderer;
 import dev.jstech.space.hangar.HangarBay;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.hangar.HangarDoorMotion;
 import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
@@ -21,13 +22,17 @@ import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.rocket.RocketPartModels;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
@@ -35,7 +40,8 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
  * Draws a formed Rocket Hangar's crane and work platforms whole, as the approved hangar has them, the pictures its
  * control room lights, and the rocket it builds, as far as it is built: each part of its plan that has formed, its
  * blocks merged and drawn as nothing, is drawn with its own model where it stands in the bay, its cabin at rest. The
- * parts not yet formed are their kit's blocks, drawn by the world as any block is.
+ * parts not yet formed are their kit's blocks, drawn by the world as any block is. Its bay door, while it moves, is
+ * drawn going: its lower door's halves sliding apart, its slot's leaves folding away.
  */
 public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarTerminalBlockEntity> {
 
@@ -67,6 +73,10 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
         }
         HangarPieces.draw(terminal, level, poses, buffers);
         terminal.turn().ifPresent(turn -> ControlRoomPictures.draw(terminal.getBlockPos(), turn, poses, buffers));
+        if (terminal.doorMoving()) {
+            terminal.turn().ifPresent(turn -> drawDoor(terminal, level, turn, terminal.doorShare(partialTick), poses,
+                    buffers, overlay));
+        }
         final Optional<RocketDesign> plan = terminal.plan();
         final Optional<BlockPos> at = terminal.planAt();
         final List<Integer> formed = terminal.formedParts();
@@ -91,8 +101,8 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
     }
 
     /*
-     * The whole bay, where the rocket stands, and the control room, where its pictures glow, so they are drawn while
-     * any of them is in sight.
+     * The whole bay, where the rocket stands, the control room, where its pictures glow, and the bay door, drawn as it
+     * moves, so they are drawn while any of them is in sight.
      */
     @Override
     public AABB getRenderBoundingBox(final HangarTerminalBlockEntity terminal) {
@@ -105,7 +115,7 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
                     ROOM_FROM[2]), HangarStructure.point(at, turn.get(), ROOM_TO[0], ROOM_TO[1], ROOM_TO[2]));
             return self.minmax(room).minmax(new AABB(bay.get().low().getX(), bay.get().low().getY(),
                     bay.get().low().getZ(), bay.get().high().getX() + 1, bay.get().high().getY() + 1,
-                    bay.get().high().getZ() + 1));
+                    bay.get().high().getZ() + 1)).minmax(HangarStructure.doorBox(at, turn.get()));
         }
         return terminal.planAt().map(foot -> self.minmax(new AABB(foot).inflate(REACH, 0, REACH)
                 .expandTowards(0, TALLEST, 0))).orElse(self);
@@ -114,5 +124,30 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
     @Override
     public int getViewDistance() {
         return SEEN_FROM;
+    }
+
+    /*
+     * The bay door {@code open} of the way open as it moves, its blocks showing nothing while it does: each block drawn
+     * as it stands shut, squeezed into where the door's motion has it ({@link HangarDoorMotion}).
+     */
+    private static void drawDoor(final HangarTerminalBlockEntity terminal, final Level level, final Orientation turn,
+                                 final double open, final PoseStack poses, final MultiBufferSource buffers,
+                                 final int overlay) {
+        final BlockState shut = HangarBlocks.BAY_DOOR.get().defaultBlockState();
+        final BlockRenderDispatcher blocks = Minecraft.getInstance().getBlockRenderer();
+        final BlockPos from = terminal.getBlockPos();
+        for (final HangarStructure.DoorCell cell : HangarStructure.doorCells(from, turn)) {
+            final int light = LevelRenderer.getLightColor(level, cell.at());
+            for (final double[] piece : HangarDoorMotion.pieces(cell.x(), cell.y(), open)) {
+                final Vec3 a = HangarStructure.point(from, turn, piece[0], piece[1], cell.z());
+                final Vec3 b = HangarStructure.point(from, turn, piece[2], piece[3], cell.z() + 1);
+                poses.pushPose();
+                poses.translate(Math.min(a.x, b.x) - from.getX(), Math.min(a.y, b.y) - from.getY(),
+                        Math.min(a.z, b.z) - from.getZ());
+                poses.scale((float) Math.abs(b.x - a.x), (float) Math.abs(b.y - a.y), (float) Math.abs(b.z - a.z));
+                blocks.renderSingleBlock(shut, poses, buffers, light, overlay);
+                poses.popPose();
+            }
+        }
     }
 }

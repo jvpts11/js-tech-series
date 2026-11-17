@@ -8,6 +8,7 @@
 package dev.jstech.space.hangar;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.UnaryOperator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -72,6 +74,7 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
     private final ValueField<List<BlockPos>> platforms;
     private final ValueField<Integer> number;
     private final ValueField<Integer> shapedAs;
+    private final ValueField<DoorMove> doorMove;
     /* The crane, and what it holds of the blocks its rocket wants. */
     private final PlanAssembler crane;
     /* The plan being built, on the server, while its chunk is loaded; and whether it is to start. */
@@ -114,12 +117,15 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
         this.number = fields().value("Number", Codec.INT, 0).save().toClient();
         // How the building stood when its fittings took their places, by its turn; none while they have not.
         this.shapedAs = fields().value("ShapedAs", Codec.INT, UNSHAPED).save();
+        // Its bay door moving, which way and since when, for its players' games to draw it going.
+        this.doorMove = fields().nullable("DoorMove", DoorMove.CODEC).save().toClient();
         this.crane = new PlanAssembler(pos, this::setChanged);
         fields().part(PlanAssembler.KEY, this.crane).save();
         // Loaded, it starts building again once the chunks its plan stands in are loaded too, unless it already is.
         fields().whenLoaded(level -> this.pending = this.build == null && this.plan.get() != null);
         // Broken, its fittings go dark, its rocket's parts come apart and the blocks its crane held drop.
         fields().whenBroken((level, at) -> {
+            finishDoor();
             unshape(level);
             stopBuild(true);
             this.crane.spill(level, at);
@@ -137,6 +143,10 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
         }
         if (terminal.build != null && level instanceof ServerLevel server) {
             terminal.crane.tick(server);
+        }
+        final DoorMove moving = terminal.doorMove.get();
+        if (moving != null && level.getGameTime() - moving.since() >= HangarDoorMotion.TICKS) {
+            terminal.finishDoor();
         }
     }
 
@@ -369,18 +379,38 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
         return door.is(HangarBlocks.BAY_DOOR.get()) && door.getValue(HangarPieceBlock.OPEN);
     }
 
-    /** Opens its bay door, the lower door and the slot over it together, or shuts it, while its building stands. */
+    /**
+     * Opens its bay door, the lower door and the slot over it together, or shuts it, while its building stands: over
+     * a few seconds ({@link HangarDoorMotion}), standing as it stood, shut or open, until it has gone all the way, so
+     * its way is clear only once it is open. Turned back on its way, it goes back from where it stands.
+     */
     public void door(final boolean open) {
-        final Optional<Orientation> turn = turn();
-        if (this.level == null || this.level.isClientSide() || turn.isEmpty()) {
+        if (this.level == null || this.level.isClientSide() || turn().isEmpty()) {
             return;
         }
-        for (final BlockPos at : HangarStructure.door(this.worldPosition, turn.get())) {
-            final BlockState state = this.level.getBlockState(at);
-            if (state.is(HangarBlocks.BAY_DOOR.get()) && state.getValue(HangarPieceBlock.OPEN) != open) {
-                this.level.setBlock(at, state.setValue(HangarPieceBlock.OPEN, open), Block.UPDATE_ALL);
-            }
+        final DoorMove now = this.doorMove.get();
+        if ((now != null ? now.opening() : doorOpen()) == open) {
+            return;
         }
+        final long time = this.level.getGameTime();
+        final double share = now != null ? HangarDoorMotion.share(now.opening(), time - now.since()) : open ? 0 : 1;
+        this.doorMove.set(new DoorMove(open, time - Math.round((open ? share : 1 - share) * HangarDoorMotion.TICKS)));
+        setDoorBlocks(state -> state.setValue(HangarPieceBlock.MOVING, true));
+        setChanged();
+    }
+
+    /** Whether its bay door is moving, opening or shutting. */
+    public boolean doorMoving() {
+        return this.doorMove.get() != null;
+    }
+
+    /** How far open its bay door stands, from nought (shut) to one, {@code partialTick} into this tick. */
+    public double doorShare(final float partialTick) {
+        final DoorMove moving = this.doorMove.get();
+        if (moving == null || this.level == null) {
+            return doorOpen() ? 1 : 0;
+        }
+        return HangarDoorMotion.share(moving.opening(), this.level.getGameTime() + partialTick - moving.since());
     }
 
     /**
@@ -700,6 +730,35 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
         return true;
     }
 
+    /* Its bay door, moving, stands as it was going: open or shut, still once more, its way clear only open. */
+    private void finishDoor() {
+        final DoorMove moving = this.doorMove.get();
+        if (moving == null) {
+            return;
+        }
+        this.doorMove.set(null);
+        setDoorBlocks(state -> state.setValue(HangarPieceBlock.OPEN, moving.opening())
+                .setValue(HangarPieceBlock.MOVING, false));
+        setChanged();
+    }
+
+    /* Each block of its bay door standing, as {@code changed} makes it. */
+    private void setDoorBlocks(final UnaryOperator<BlockState> changed) {
+        final Optional<Orientation> turn = turn();
+        if (this.level == null || turn.isEmpty()) {
+            return;
+        }
+        for (final BlockPos at : HangarStructure.door(this.worldPosition, turn.get())) {
+            final BlockState state = this.level.getBlockState(at);
+            if (state.is(HangarBlocks.BAY_DOOR.get())) {
+                final BlockState now = changed.apply(state);
+                if (now != state) {
+                    this.level.setBlock(at, now, Block.UPDATE_ALL);
+                }
+            }
+        }
+    }
+
     /**
      * A plan let go with its rocket.
      *
@@ -708,5 +767,19 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
      * @param formed the parts of the plan formed, by their places in its stack
      */
     public record Released(RocketDesign design, BlockPos foot, List<Integer> formed) {
+    }
+
+    /**
+     * Its bay door moving.
+     *
+     * @param opening whether it is opening, or shutting
+     * @param since   the game's time it began, as far back as it would have, turned back on its way
+     */
+    private record DoorMove(boolean opening, long since) {
+
+        private static final Codec<DoorMove> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.BOOL.fieldOf("Opening").forGetter(DoorMove::opening),
+                Codec.LONG.fieldOf("Since").forGetter(DoorMove::since)
+        ).apply(instance, DoorMove::new));
     }
 }

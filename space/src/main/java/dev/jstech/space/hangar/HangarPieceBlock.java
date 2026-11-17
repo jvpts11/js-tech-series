@@ -46,6 +46,11 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
     public static final BooleanProperty EDGE = BooleanProperty.create("edge");
     /** Whether a bay door stands open, drawn back out of the way of what passes through it. */
     public static final BooleanProperty OPEN = BooleanProperty.create("open");
+    /**
+     * Whether a bay door is moving, drawn by its hangar's terminal as it goes ({@link HangarDoorMotion}), standing as it
+     * stood, open or shut, until it has gone all the way.
+     */
+    public static final BooleanProperty MOVING = BooleanProperty.create("moving");
     private static final double PIXEL = 1.0 / 16;
 
     public HangarPieceBlock(final BlockBehaviour.Properties properties, final Kind kind) {
@@ -65,7 +70,7 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
             this.edged.put(way, edge.optimize());
         }
         registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FORMED, false)
-                .setValue(EDGE, false).setValue(OPEN, false));
+                .setValue(EDGE, false).setValue(OPEN, false).setValue(MOVING, false));
     }
 
     /** What piece of the hangar it is. */
@@ -117,7 +122,7 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, FORMED, EDGE, OPEN);
+        builder.add(FACING, FORMED, EDGE, OPEN, MOVING);
     }
 
     /* A box of the piece, in sixteenths as it faces north, turned to face {@code way}. */

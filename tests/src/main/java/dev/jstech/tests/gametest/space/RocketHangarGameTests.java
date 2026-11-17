@@ -56,6 +56,9 @@ public final class RocketHangarGameTests {
     private static final int ALONG = 37;
     private static final int HIGH = 108;
     private static final int FORM_TIME = 400;
+    /* How long the bay door may take to move, in ticks, and how long it takes at least: a few seconds. */
+    private static final int DOOR_MOVES = 200;
+    private static final long A_FEW_SECONDS = 60;
     /*
      * The ticks a test may wait for its bay's light: light spreads on a thread of its own, in real time, and the test
      * server runs its ticks as fast as it can, so on a slow machine many ticks pass before the light has spread.
@@ -154,25 +157,40 @@ public final class RocketHangarGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH + "_doors", timeoutTicks = FORM_TIME)
+    @GameTest(template = ARENA, batch = BATCH + "_doors", timeoutTicks = FORM_TIME + 2 * DOOR_MOVES)
     public static void doors_openFromTheConsoleAndAsTheyAreUsed(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final Orientation turn = Orientation.NORTH;
         final BlockPos terminal = TestHangars.build(level, helper.absolutePos(TERMINAL), turn);
         final BlockPos console = place(terminal, turn, DOOR_RIGHT);
+        final long[] pressed = new long[1];
+        final FakePlayer[] crew = new FakePlayer[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed(), "the building forms"))
                 .thenExecute(() -> {
-                    final FakePlayer player = player(helper);
-                    press(helper, player, console, UPPER);
-                    helper.assertTrue(open(level, terminal, turn, LOWER_DOOR) && open(level, terminal, turn, SLOT)
-                            && hangar(level, terminal).doorOpen(), "pressed high, the console opens the bay door,"
-                            + " the lower door and the slot together: " + level.getBlockState(place(terminal, turn,
-                            LOWER_DOOR)) + ", the console " + level.getBlockState(console) + " finds its hangar: "
-                            + HangarTerminalBlockEntity.holding(level, console).isPresent());
-                    press(helper, player, console, LOWER);
-                    helper.assertTrue(!open(level, terminal, turn, LOWER_DOOR) && !open(level, terminal, turn, SLOT),
-                            "pressed low, it shuts it");
+                    crew[0] = player(helper);
+                    press(helper, crew[0], console, UPPER);
+                    pressed[0] = level.getGameTime();
+                    helper.assertTrue(hangar(level, terminal).doorMoving() && !hangar(level, terminal).doorOpen()
+                            && !open(level, terminal, turn, LOWER_DOOR), "pressed high, the console begins to open"
+                            + " the bay door, its way not clear until it is all the way open: " + level.getBlockState(
+                            place(terminal, turn, LOWER_DOOR)) + ", the console " + level.getBlockState(console)
+                            + " finds its hangar: " + HangarTerminalBlockEntity.holding(level, console).isPresent());
+                })
+                .thenWaitUntil(() -> helper.assertTrue(open(level, terminal, turn, LOWER_DOOR)
+                        && open(level, terminal, turn, SLOT) && hangar(level, terminal).doorOpen()
+                        && !hangar(level, terminal).doorMoving(), "the lower door and the slot open together"))
+                .thenExecute(() -> {
+                    helper.assertTrue(level.getGameTime() - pressed[0] >= A_FEW_SECONDS, "it opens over a few"
+                            + " seconds: " + (level.getGameTime() - pressed[0]) + " ticks");
+                    press(helper, crew[0], console, LOWER);
+                    helper.assertTrue(hangar(level, terminal).doorMoving() && open(level, terminal, turn, LOWER_DOOR),
+                            "pressed low, it begins to shut, its way clear until it is shut");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(!open(level, terminal, turn, LOWER_DOOR)
+                        && !open(level, terminal, turn, SLOT) && !hangar(level, terminal).doorMoving(), "it shuts"))
+                .thenExecute(() -> {
+                    final FakePlayer player = crew[0];
                     for (final int[] door : new int[][] {INNER_DOOR, OUTER_DOOR}) {
                         final BlockPos foot = place(terminal, turn, door);
                         press(helper, player, foot, LOWER);

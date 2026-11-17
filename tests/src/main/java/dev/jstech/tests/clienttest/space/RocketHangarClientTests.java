@@ -9,7 +9,9 @@ package dev.jstech.tests.clienttest.space;
 
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.hangar.HangarDoorMotion;
 import dev.jstech.space.hangar.HangarPieceBlock;
+import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -83,8 +85,63 @@ public final class RocketHangarClientTests {
     private static final double ENOUGH_SCREENS = 0.01;
     private static final int BOARD_WINDOW = 40;
     private static final double ENOUGH_BOARD = 0.05;
+    /*
+     * The bay door seen from outside: across, its middle; the eye up from the floor and out from the door's front, in
+     * the hangar's pattern; and up the door, where it looks. How much two pixels may differ and be the same, in each
+     * channel, and how many must differ for the door to have moved.
+     */
+    private static final double DOOR_MIDDLE = 0.5;
+    private static final double EYE_UP = 8;
+    private static final double OUT_FRONT = 45;
+    private static final double LOOK_UP = 14;
+    private static final int SAME = 6;
+    private static final int MOVED = 400;
 
     private RocketHangarClientTests() {
+    }
+
+    /*
+     * The bay door seen from outside, square on: shut, moving, and open, each drawn otherwise than the one before; half
+     * way, its lower door's halves partly slid apart and its slot's leaves partly folded.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void bayDoor_drawsItsHalvesSlidingApartAndItsLeavesFoldingAsItOpens(final ClientTestContext ctx) {
+        final BlockPos terminal = ctx.abs(TERMINAL);
+        final int[][] frames = new int[3][];
+        final Vec3[] look = new Vec3[1];
+        ctx.afterTest(() -> {
+            ctx.mc().options.hideGui = false;
+            ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), terminal, TURN));
+        });
+        ctx.thenServer(0, level -> TestHangars.build(level, terminal, TURN))
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(terminal)
+                        instanceof HangarTerminalBlockEntity hangar && hangar.formed(), ARRIVE,
+                        "the formed hangar to reach the player")
+                .thenServer(0, level -> {
+                    final int front = HangarStructure.doorCells(terminal, TURN).getFirst().z();
+                    final Vec3 eye = HangarStructure.point(terminal, TURN, DOOR_MIDDLE, EYE_UP, front - OUT_FRONT);
+                    look[0] = HangarStructure.point(terminal, TURN, DOOR_MIDDLE, LOOK_UP, front);
+                    ctx.serverPlayer().teleportTo(level, eye.x, eye.y - ctx.serverPlayer().getEyeHeight(), eye.z, 0,
+                            0);
+                })
+                .then(SETTLE, () -> {
+                    ctx.lookAt(look[0]);
+                    ctx.mc().options.hideGui = true;
+                })
+                .then(SETTLE * 2, () -> frames[0] = frame(ctx))
+                .thenScreenshot(0, "hangar-bay-door-shut")
+                .thenServer(0, level -> ((HangarTerminalBlockEntity) level.getBlockEntity(terminal)).door(true))
+                .then(HangarDoorMotion.TICKS / 2, () -> frames[1] = frame(ctx))
+                .thenScreenshot(0, "hangar-bay-door-moving")
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(terminal) instanceof HangarTerminalBlockEntity
+                        hangar && hangar.doorOpen() && !hangar.doorMoving(), ARRIVE, "the door all the way open")
+                .then(SETTLE, () -> {
+                    frames[2] = frame(ctx);
+                    ctx.assertTrue(changed(frames[0], frames[1]) > MOVED && changed(frames[1], frames[2]) > MOVED,
+                            "half way, it is drawn between shut and open: " + changed(frames[0], frames[1]) + " and "
+                                    + changed(frames[1], frames[2]) + " pixels");
+                })
+                .thenScreenshot(0, "hangar-bay-door-open");
     }
 
     @ClientTest(timeoutTicks = 1600)
@@ -290,5 +347,41 @@ public final class RocketHangarClientTests {
             }
         }
         return new int[] {(int) (sum[0] / count), (int) (sum[1] / count), (int) (sum[2] / count)};
+    }
+
+    /* How many pixels of {@code a} and {@code b} differ. */
+    private static int changed(final int[] a, final int[] b) {
+        int out = 0;
+        for (int i = 0; i < Math.min(a.length, b.length); i++) {
+            if (differ(a[i], b[i])) {
+                out++;
+            }
+        }
+        return out;
+    }
+
+    /* The whole frame, its pixels row by row. */
+    private static int[] frame(final ClientTestContext ctx) {
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        final int[] out = new int[width * height];
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    out[y * width + x] = frame.pixel(x, y);
+                }
+            }
+        }
+        return out;
+    }
+
+    /* Whether two pixels differ by more than {@link #SAME} in a channel. */
+    private static boolean differ(final int a, final int b) {
+        for (int shift = 0; shift <= 16; shift += 8) {
+            if (Math.abs((a >> shift & CHANNEL) - (b >> shift & CHANNEL)) > SAME) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -19,6 +19,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -78,10 +79,11 @@ public final class HangarStructure {
     private static final Set<Integer> BAY_LIGHTS_X = Set.of(-12, -6, 0, 6, 12);
     private static final Set<Integer> BAY_LIGHTS_Z = Set.of(-15, -9, -3, 3, 9, 15);
     /* The stepped door: the lower door, the slot over it, their frames, the lintel and the hazard band. */
-    private static final int LOWER_HALF = 12;
-    private static final int LOWER_TOP = 11;
+    /* Its bay door's lower door's half width and top, its slot's half width and top (HangarDoorMotion). */
+    static final int LOWER_HALF = 12;
+    static final int LOWER_TOP = 11;
     private static final int SLOT_HALF = 8;
-    private static final int SLOT_TOP = 105;
+    static final int SLOT_TOP = 105;
     private static final int LOWER_FRAME = 13;
     private static final int SLOT_FRAME = 9;
     private static final int LINTEL = 106;
@@ -176,11 +178,22 @@ public final class HangarStructure {
 
     /** The places of the hangar's door, the lower door's and the slot's, in a hangar standing as {@code turn} says. */
     public static List<BlockPos> door(final BlockPos terminal, final Orientation turn) {
-        final List<BlockPos> out = new ArrayList<>();
+        return doorCells(terminal, turn).stream().map(DoorCell::at).toList();
+    }
+
+    /** The box the bay door stands in, the lower door's width and the slot's height, as the hangar stands. */
+    public static AABB doorBox(final BlockPos terminal, final Orientation turn) {
+        return new AABB(point(terminal, turn, -LOWER_HALF, 0, FRONT), point(terminal, turn, LOWER_HALF + 1,
+                SLOT_TOP + 1, FRONT + 1));
+    }
+
+    /** The blocks of the bay door, each where it stands and its place in the pattern, from the lowest. */
+    public static List<DoorCell> doorCells(final BlockPos terminal, final Orientation turn) {
+        final List<DoorCell> out = new ArrayList<>();
         for (int y = 0; y <= SLOT_TOP; y++) {
             for (int x = -LOWER_HALF; x <= LOWER_HALF; x++) {
                 if (letter(x, y, FRONT) == 'D') {
-                    out.add(world(terminal, turn, x, y, FRONT));
+                    out.add(new DoorCell(world(terminal, turn, x, y, FRONT), x, y, FRONT));
                 }
             }
         }
@@ -444,6 +457,17 @@ public final class HangarStructure {
 
     private static String block(final String path) {
         return JsSpace.MODID + ":" + path;
+    }
+
+    /**
+     * A block of the bay door: where it stands, and its place in the pattern.
+     *
+     * @param at where it stands
+     * @param x  across, as the pattern draws it
+     * @param y  up
+     * @param z  along, the door's front
+     */
+    public record DoorCell(BlockPos at, int x, int y, int z) {
     }
 
     /**

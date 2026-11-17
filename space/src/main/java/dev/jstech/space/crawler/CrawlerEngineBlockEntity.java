@@ -298,7 +298,7 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
             final StructurePose at = launcher.pose();
             launcher.move(new TowardMotion(at.movedTo(at.x(), at.y() + LIFT, at.z()), LIFT_SPEED, 0));
             phase(Phase.LIFTING);
-        } else {
+        } else if (doorsOpen(server)) {
             drive(body, this.way.get(), EMPTY_SPEED);
         }
     }
@@ -311,8 +311,10 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
             stranded(server);
             return;
         }
-        // Mounted once both stand ready: not yet, it waits a tick rather than set off without the launcher.
-        if (!launcher.resting() || !MovingStructures.mount(launcher, body, Optional.empty()).ok()) {
+        // Mounted once both stand ready and the doors on its way stand open: not yet, it waits a tick rather than set
+        // off without the launcher, or into a door.
+        if (!launcher.resting() || !doorsOpen(server) || !MovingStructures.mount(launcher, body, Optional.empty())
+                .ok()) {
             return;
         }
         drive(body, this.way.get(), LOADED_SPEED);
@@ -435,14 +437,37 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
         return id == null ? null : MovingStructures.byId(server, id);
     }
 
-    /* Opens or closes the bay doors at {@code at}, those still standing. */
+    /*
+     * Opens or closes the bay doors at {@code at}, those still standing: as their hangar moves them, over a few
+     * seconds, or at once where no formed hangar holds them.
+     */
     private static void doors(final ServerLevel server, final Set<BlockPos> at, final boolean open) {
+        final Set<HangarTerminalBlockEntity> moved = new HashSet<>();
         for (final BlockPos door : at) {
             final BlockState state = server.getBlockState(door);
-            if (state.is(HangarBlocks.BAY_DOOR.get())) {
+            if (!state.is(HangarBlocks.BAY_DOOR.get())) {
+                continue;
+            }
+            final Optional<HangarTerminalBlockEntity> hangar = HangarTerminalBlockEntity.holding(server, door);
+            if (hangar.isPresent()) {
+                if (moved.add(hangar.get())) {
+                    hangar.get().door(open);
+                }
+            } else if (state.getValue(HangarPieceBlock.OPEN) != open) {
                 server.setBlock(door, state.setValue(HangarPieceBlock.OPEN, open), Block.UPDATE_ALL);
             }
         }
+    }
+
+    /* Whether the bay doors it opened on its way stand all the way open, their way clear; those gone count. */
+    private boolean doorsOpen(final ServerLevel server) {
+        for (final BlockPos door : this.doors.get()) {
+            final BlockState state = server.getBlockState(door);
+            if (state.is(HangarBlocks.BAY_DOOR.get()) && !state.getValue(HangarPieceBlock.OPEN)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Where a crawler is on its trip. */

@@ -1,122 +1,242 @@
 {
   "variants": {
-    "edge=false,facing=east,formed=false,open=false": {
+    "edge=false,facing=east,formed=false,moving=false,open=false": {
       "model": "jsspace:block/crane_hoist",
       "y": 90
     },
-    "edge=false,facing=east,formed=false,open=true": {
+    "edge=false,facing=east,formed=false,moving=false,open=true": {
       "model": "jsspace:block/crane_hoist",
       "y": 90
     },
-    "edge=false,facing=east,formed=true,open=false": {
+    "edge=false,facing=east,formed=false,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 90
+    },
+    "edge=false,facing=east,formed=false,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 90
+    },
+    "edge=false,facing=east,formed=true,moving=false,open=false": {
       "model": "jsspace:block/crane_hoist_drawn",
       "y": 90
     },
-    "edge=false,facing=east,formed=true,open=true": {
+    "edge=false,facing=east,formed=true,moving=false,open=true": {
       "model": "jsspace:block/crane_hoist_drawn",
       "y": 90
     },
-    "edge=false,facing=north,formed=false,open=false": {
+    "edge=false,facing=east,formed=true,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 90
+    },
+    "edge=false,facing=east,formed=true,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 90
+    },
+    "edge=false,facing=north,formed=false,moving=false,open=false": {
       "model": "jsspace:block/crane_hoist"
     },
-    "edge=false,facing=north,formed=false,open=true": {
+    "edge=false,facing=north,formed=false,moving=false,open=true": {
       "model": "jsspace:block/crane_hoist"
     },
-    "edge=false,facing=north,formed=true,open=false": {
-      "model": "jsspace:block/crane_hoist_drawn"
-    },
-    "edge=false,facing=north,formed=true,open=true": {
-      "model": "jsspace:block/crane_hoist_drawn"
-    },
-    "edge=false,facing=south,formed=false,open=false": {
-      "model": "jsspace:block/crane_hoist",
-      "y": 180
-    },
-    "edge=false,facing=south,formed=false,open=true": {
-      "model": "jsspace:block/crane_hoist",
-      "y": 180
-    },
-    "edge=false,facing=south,formed=true,open=false": {
-      "model": "jsspace:block/crane_hoist_drawn",
-      "y": 180
-    },
-    "edge=false,facing=south,formed=true,open=true": {
-      "model": "jsspace:block/crane_hoist_drawn",
-      "y": 180
-    },
-    "edge=false,facing=west,formed=false,open=false": {
-      "model": "jsspace:block/crane_hoist",
-      "y": 270
-    },
-    "edge=false,facing=west,formed=false,open=true": {
-      "model": "jsspace:block/crane_hoist",
-      "y": 270
-    },
-    "edge=false,facing=west,formed=true,open=false": {
-      "model": "jsspace:block/crane_hoist_drawn",
-      "y": 270
-    },
-    "edge=false,facing=west,formed=true,open=true": {
-      "model": "jsspace:block/crane_hoist_drawn",
-      "y": 270
-    },
-    "edge=true,facing=east,formed=false,open=false": {
-      "model": "jsspace:block/crane_hoist",
-      "y": 90
-    },
-    "edge=true,facing=east,formed=false,open=true": {
-      "model": "jsspace:block/crane_hoist",
-      "y": 90
-    },
-    "edge=true,facing=east,formed=true,open=false": {
-      "model": "jsspace:block/crane_hoist_drawn",
-      "y": 90
-    },
-    "edge=true,facing=east,formed=true,open=true": {
-      "model": "jsspace:block/crane_hoist_drawn",
-      "y": 90
-    },
-    "edge=true,facing=north,formed=false,open=false": {
+    "edge=false,facing=north,formed=false,moving=true,open=false": {
       "model": "jsspace:block/crane_hoist"
     },
-    "edge=true,facing=north,formed=false,open=true": {
+    "edge=false,facing=north,formed=false,moving=true,open=true": {
       "model": "jsspace:block/crane_hoist"
     },
-    "edge=true,facing=north,formed=true,open=false": {
+    "edge=false,facing=north,formed=true,moving=false,open=false": {
       "model": "jsspace:block/crane_hoist_drawn"
     },
-    "edge=true,facing=north,formed=true,open=true": {
+    "edge=false,facing=north,formed=true,moving=false,open=true": {
       "model": "jsspace:block/crane_hoist_drawn"
     },
-    "edge=true,facing=south,formed=false,open=false": {
+    "edge=false,facing=north,formed=true,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn"
+    },
+    "edge=false,facing=north,formed=true,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn"
+    },
+    "edge=false,facing=south,formed=false,moving=false,open=false": {
       "model": "jsspace:block/crane_hoist",
       "y": 180
     },
-    "edge=true,facing=south,formed=false,open=true": {
+    "edge=false,facing=south,formed=false,moving=false,open=true": {
       "model": "jsspace:block/crane_hoist",
       "y": 180
     },
-    "edge=true,facing=south,formed=true,open=false": {
+    "edge=false,facing=south,formed=false,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 180
+    },
+    "edge=false,facing=south,formed=false,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 180
+    },
+    "edge=false,facing=south,formed=true,moving=false,open=false": {
       "model": "jsspace:block/crane_hoist_drawn",
       "y": 180
     },
-    "edge=true,facing=south,formed=true,open=true": {
+    "edge=false,facing=south,formed=true,moving=false,open=true": {
       "model": "jsspace:block/crane_hoist_drawn",
       "y": 180
     },
-    "edge=true,facing=west,formed=false,open=false": {
+    "edge=false,facing=south,formed=true,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 180
+    },
+    "edge=false,facing=south,formed=true,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 180
+    },
+    "edge=false,facing=west,formed=false,moving=false,open=false": {
       "model": "jsspace:block/crane_hoist",
       "y": 270
     },
-    "edge=true,facing=west,formed=false,open=true": {
+    "edge=false,facing=west,formed=false,moving=false,open=true": {
       "model": "jsspace:block/crane_hoist",
       "y": 270
     },
-    "edge=true,facing=west,formed=true,open=false": {
+    "edge=false,facing=west,formed=false,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 270
+    },
+    "edge=false,facing=west,formed=false,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 270
+    },
+    "edge=false,facing=west,formed=true,moving=false,open=false": {
       "model": "jsspace:block/crane_hoist_drawn",
       "y": 270
     },
-    "edge=true,facing=west,formed=true,open=true": {
+    "edge=false,facing=west,formed=true,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 270
+    },
+    "edge=false,facing=west,formed=true,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 270
+    },
+    "edge=false,facing=west,formed=true,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 270
+    },
+    "edge=true,facing=east,formed=false,moving=false,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=false,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=false,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=false,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=true,moving=false,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=true,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=true,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=true,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 90
+    },
+    "edge=true,facing=north,formed=false,moving=false,open=false": {
+      "model": "jsspace:block/crane_hoist"
+    },
+    "edge=true,facing=north,formed=false,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist"
+    },
+    "edge=true,facing=north,formed=false,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist"
+    },
+    "edge=true,facing=north,formed=false,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist"
+    },
+    "edge=true,facing=north,formed=true,moving=false,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn"
+    },
+    "edge=true,facing=north,formed=true,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn"
+    },
+    "edge=true,facing=north,formed=true,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn"
+    },
+    "edge=true,facing=north,formed=true,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn"
+    },
+    "edge=true,facing=south,formed=false,moving=false,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=false,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=false,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=false,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=true,moving=false,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=true,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=true,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=true,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 180
+    },
+    "edge=true,facing=west,formed=false,moving=false,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=false,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=false,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=false,moving=true,open=true": {
+      "model": "jsspace:block/crane_hoist",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=true,moving=false,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=true,moving=false,open=true": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=true,moving=true,open=false": {
+      "model": "jsspace:block/crane_hoist_drawn",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=true,moving=true,open=true": {
       "model": "jsspace:block/crane_hoist_drawn",
       "y": 270
     }
