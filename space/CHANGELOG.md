@@ -956,6 +956,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   forgets it and leaves the ship in the dock as it is; the list scrolls past six.
 - The Starship Design undoes and redoes its changes, a plan loaded too, with Ctrl and Z and Ctrl and Y (Shift
   with Z redoes too), sixty-four changes back, as the Rocket Design does.
+- The Ramp hold's ramp is a door: its tail opens from the deck to the roof between yellow and black stripes,
+  and the ramp, shut across it, swings down over two and a half seconds when a crew member who may come aboard uses
+  it, its toe unfolding past level, till its foot rests on the land and it is walked up, a step every quarter block. In
+  the air it swings down to its full angle, nothing to climb; lifting off, a ship shuts it; open in space, the hold
+  loses its air. It was drawn always down, its opening only painted.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

@@ -22,9 +22,10 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * A block of an airlock's boarding stair let down beside a landed ship: the stair's treads within it, climbed as the
- * game climbs steps. It draws nothing, its airlock's model drawing the stair, and it is aimed through, so the land
- * under it is what a click finds; the ship sets it down and takes it up again ({@link ShipStairs}).
+ * A block of a way down let down by a landed ship, an airlock's boarding stair or a Ramp hold's ramp: its treads
+ * within it, climbed as the game climbs steps. It draws nothing, its door's model drawing the stair or the ramp, and it
+ * is aimed through, so the land under it is what a click finds; the ship sets it down and takes it up again
+ * ({@link ShipStairs}).
  */
 public final class ShipStairBlock extends Block implements EntityBlock {
 
@@ -60,7 +61,7 @@ public final class ShipStairBlock extends Block implements EntityBlock {
         VoxelShape out = Shapes.empty();
         final double[] low = new double[AXES];
         final double[] high = new double[AXES];
-        for (final double[] tread : ShipStairGeometry.treads(place.x(), place.y(), place.z())) {
+        for (final double[] tread : ShipStairs.treads(place)) {
             CellSpace.toWorld(new double[] {tread[0], tread[1], tread[2]}, place.turn(), low);
             CellSpace.toWorld(new double[] {tread[AXES], tread[AXES + 1], tread[AXES + 2]}, place.turn(), high);
             out = Shapes.joinUnoptimized(out, Shapes.box(Math.min(low[0], high[0]), Math.min(low[1], high[1]),

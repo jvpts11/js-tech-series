@@ -18,6 +18,8 @@ class DoorMotionTest {
     private static final double EPSILON = 1.0e-9;
     /* A quarter of the stair's time: one frame of the storyboard to the next. */
     private static final double FRAME = DoorMotion.STAIR / 4;
+    /* The share of a ramp's swing after which its toe unfolds. */
+    private static final double TOE_FROM = 0.6;
 
     @Test
     void advance_letsTheStairDownThroughTheStoryboardsFrames() {
@@ -80,5 +82,22 @@ class DoorMotionTest {
         assertEquals(1, door.leaf(), EPSILON);
         door.advance(DoorMotion.PRESSURE_DOOR, false, false, DoorMotion.PRESSURE_DOOR);
         assertEquals(0, door.leaf(), EPSILON);
+    }
+
+    @Test
+    void after_aSecondLeafMovesOnlyOnceTheFirstIsPastItsShare() {
+        assertEquals(0, DoorMotion.after(0.3, TOE_FROM), EPSILON, "the toe stays folded till the ramp is past level");
+        assertEquals(0, DoorMotion.after(TOE_FROM, TOE_FROM), EPSILON, "and starts there");
+        assertEquals(0.5, DoorMotion.after(0.8, TOE_FROM), EPSILON, "half unfolded half way through the rest");
+        assertEquals(1, DoorMotion.after(1, TOE_FROM), EPSILON, "out straight as the ramp lies down");
+    }
+
+    @Test
+    void advance_swingsARampDownInItsOwnTime() {
+        final DoorMotion door = DoorMotion.standing(false, false);
+        door.advance(DoorMotion.SWING / 2, true, false, DoorMotion.SWING);
+        assertEquals(0.5, door.leaf(), EPSILON);
+        door.advance(DoorMotion.SWING, true, false, DoorMotion.SWING);
+        assertEquals(1, door.leaf(), EPSILON);
     }
 }

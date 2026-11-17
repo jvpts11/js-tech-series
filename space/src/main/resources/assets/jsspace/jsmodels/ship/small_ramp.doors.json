@@ -16,6 +16,34 @@
         0
       ],
       "starts_shut": false
+    },
+    {
+      "piece": "ramp",
+      "leaf": "ramp_leaf",
+      "swing": {
+        "axis": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "degrees": 124.49018554173881
+      },
+      "toe": {
+        "bone": "ramp_toe",
+        "axis": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "degrees": 180.0,
+        "from": 0.562293322123217
+      },
+      "cell": [
+        -1,
+        1,
+        4
+      ],
+      "starts_shut": true
     }
   ]
 }

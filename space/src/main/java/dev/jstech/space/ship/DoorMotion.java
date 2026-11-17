@@ -28,6 +28,8 @@ public final class DoorMotion {
     public static final double STAIR = 2.5;
     /** How long its handrails take to rise at the end, in seconds. */
     public static final double RAILS_RISE = 0.25;
+    /** How long a leaf that swings about a hinge takes to turn open, a ramp or a hold's roof doors, in seconds. */
+    public static final double SWING = 2.5;
     /* The storyboard's frames, a quarter of STAIR apart: the bay's doors open, in degrees; how far the folded stair
      * has slid out, from nought to one; the first flight's turn, in degrees; how folded the other two still are, from
      * one to nought; and how far the leaf is open, from nought to one. */
@@ -40,6 +42,15 @@ public final class DoorMotion {
     private DoorMotion(final double leaf, final double stair) {
         this.leaf = leaf;
         this.stair = stair;
+    }
+
+    /**
+     * How far a second leaf hinged on the first has moved, from nought to one, the first open {@code share} of the
+     * way: it waits till the first is past {@code from}, and moves over the rest, as a ramp's toe unfolds once the
+     * ramp is past level.
+     */
+    public static double after(final double share, final double from) {
+        return from >= 1 ? 0 : Math.clamp((share - from) / (1 - from), 0, 1);
     }
 
     /** A door standing as it is: open or shut, and its stair, if it has one, down or not. */

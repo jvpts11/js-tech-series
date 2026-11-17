@@ -30,6 +30,7 @@ import dev.jstech.space.ship.OxygenPanelBlock;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipRampGeometry;
 import dev.jstech.space.ship.ShipStairGeometry;
 import dev.jstech.space.ship.ShipStairs;
 import dev.jstech.space.ship.SmallShipParts;
@@ -87,6 +88,12 @@ public final class ShipDoorsGameTests {
     private static final ShipDesign SHIP = new ShipDesign("JS-D1", List.of(part("orbiter_cockpit"), part("airlock"),
             part("workshop"), part("reactor_flush")), List.of(part("twin_bells"), part("blended_delta"),
             part("twin_canted_fins"), part("wheels")));
+    /* A ship with a Ramp hold at its tail, its part's number; the ramp's deck over the hull's foot, in blocks. */
+    private static final ShipDesign RAMP_SHIP = new ShipDesign("JS-D2", List.of(part("orbiter_cockpit"),
+            part("airlock"), part("reactor_flush"), part("ramp")), List.of(part("magnetic_nozzle"),
+            part("stub_wings"), part("legs")));
+    private static final int RAMP_PART = 3;
+    private static final double RAMP_DECK = 0.35;
     /* The spine's parts by their number: the airlock second, the workshop third, the reactor last. */
     private static final int AIRLOCK = 1;
     private static final int WORKSHOP = 2;
@@ -140,9 +147,9 @@ public final class ShipDoorsGameTests {
     }
 
     /*
-     * Every door of every module, its pressure doors and its airlock's outer door, in five ships that hold every module
-     * between them: a player's click moves it once and a second click back, whichever hands their game tries, and
-     * struck, its blocks dented, it still opens out of its doorway.
+     * Every door of every module, its pressure doors, its airlock's outer door and its ramp, in five ships that hold
+     * every module between them: a player's click moves it once and a second click back, whichever hands their game
+     * tries, and struck, its blocks dented, it still opens out of its doorway.
      */
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
     public static void everyDoor_ofAShipOfThreeModules(final GameTestHelper helper) {
@@ -288,6 +295,55 @@ public final class ShipDoorsGameTests {
                     GameTestPlayers.leave(crew);
                     MovingStructures.takeAway(ship[0]);
                 })
+                .thenSucceed();
+    }
+
+    /*
+     * A ship with a ramp let go on the land: its ramp opens down onto the land, every step of it there, each a step
+     * down from the one before from the deck to near the land, and they go up as it shuts; lifting off, the ship shuts
+     * it, its steps going up with it.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void ramp_comesDownOnTheLandAsItOpensAndTheShipShutsItLiftingOff(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final PlannedBuild[] plan = new PlannedBuild[1];
+        final MovingStructure[] ship = new MovingStructure[1];
+        final BlockPos[] terminal = new BlockPos[1];
+        final FormedDoors.Door[] ramp = new FormedDoors.Door[1];
+        build(helper, plan, terminal, RAMP_SHIP).thenExecute(() -> ship[0] = ((ShipyardTerminalBlockEntity) level
+                        .getBlockEntity(terminal[0])).release(null).orElseThrow())
+                .thenWaitUntil(() -> helper.assertTrue(ship[0].ready() && ship[0].motion() instanceof ShipFlight
+                        flight && flight.grounded(), "the ship let go stands on the land"))
+                .thenExecute(() -> {
+                    final ServerPlayer crew = GameTestPlayers.connected(helper, "jst-ramp-crew");
+                    final BlockPos built = plan[0].where(spot(plan[0], RAMP_PART, ShipKitBlocks.RAMP_PLATE.getId()));
+                    final BlockPos aboard = BlockPos.containing(MovingStructures.toYard(ship[0],
+                            Vec3.atCenterOf(built)));
+                    ramp[0] = named(level, aboard, ShipDoorRules.RAMP);
+                    helper.assertTrue(FormedDoors.shut(level, ramp[0]) && stairs(level, ramp[0]).isEmpty(), "its ramp"
+                            + " stands shut, nothing let down");
+                    helper.assertTrue(FormedDoors.use(level, crew, ramp[0]), "its ramp opens");
+                    final List<Double> steps = stairs(level, ramp[0]);
+                    helper.assertTrue(steps.size() == ShipRampGeometry.steps().size(), "on the land, every step of"
+                            + " its ramp is there: " + steps);
+                    final double hull = ramp[0].uses().getY() - 1;
+                    double above = hull + RAMP_DECK;
+                    for (final double step : steps) {
+                        helper.assertTrue(above - step <= STEP_UP + 1.0e-6, "each step a step down from the one"
+                                + " before, from the deck: " + steps);
+                        above = step;
+                    }
+                    helper.assertTrue(above - (hull + LAND) <= NEAR_THE_LAND, "down to near the land: " + above);
+                    helper.assertTrue(FormedDoors.use(level, crew, ramp[0]) && stairs(level, ramp[0]).isEmpty(),
+                            "shut again, its steps go up");
+                    helper.assertTrue(FormedDoors.use(level, crew, ramp[0]) && !stairs(level, ramp[0]).isEmpty(),
+                            "and down as it opens again");
+                    GameTestPlayers.leave(crew);
+                    ShipStairs.groundChanged(level, ship[0], false);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(FormedDoors.shut(level, ramp[0])
+                        && stairs(level, ramp[0]).isEmpty(), "lifting off, the ship shuts its ramp, its steps up"))
+                .thenExecute(() -> MovingStructures.takeAway(ship[0]))
                 .thenSucceed();
     }
 
@@ -512,15 +568,19 @@ public final class ShipDoorsGameTests {
         }).thenSucceed();
     }
 
-    /* Every door of the ship of {@code plan}: its sections' pressure doors and its airlock's outer door, each once. */
+    /* Every door of the ship of {@code plan}: its pressure doors, its airlock's outer door and its ramp, each once. */
     private static List<FormedDoors.Door> doorsOf(final ServerLevel level, final PlannedBuild plan) {
         final Map<BlockPos, FormedDoors.Door> out = new LinkedHashMap<>();
         for (final PlanSpot spot : plan.plan().spots()) {
             final String piece = spot.block().equals(ShipKitBlocks.PRESSURE_DOOR.getId()) ? ShipDoorRules.PRESSURE_DOOR
-                    : spot.block().equals(ShipKitBlocks.AIRLOCK_DOOR.getId()) ? ShipDoorRules.OUTER_DOOR : null;
+                    : spot.block().equals(ShipKitBlocks.AIRLOCK_DOOR.getId()) ? ShipDoorRules.OUTER_DOOR
+                    : spot.block().equals(ShipKitBlocks.RAMP_PLATE.getId()) ? ShipDoorRules.RAMP : null;
+            // A block a door's model makes its own: a ramp plate is the Side Door hold's door as well, no ramp of it.
             if (piece != null) {
-                final FormedDoors.Door door = named(level, plan.where(spot), piece);
-                out.putIfAbsent(door.uses(), door);
+                final BlockPos at = plan.where(spot);
+                for (final FormedPlace place : ((IFormedPlaced) level.getBlockEntity(at)).places()) {
+                    FormedDoors.named(level, at, place, piece).ifPresent(door -> out.putIfAbsent(door.uses(), door));
+                }
             }
         }
         return List.copyOf(out.values());
@@ -662,23 +722,27 @@ public final class ShipDoorsGameTests {
     }
 
     /*
-     * The tops of the treads of the stair beside the airlock of {@code outer}, from the highest down, as its blocks
-     * stand; none while its stair is not down.
+     * The tops of the treads of the way down of {@code outer}, the stair beside its airlock or its ramp behind the
+     * tail, from the highest down, as its blocks stand; none while it is not down.
      */
     private static List<Double> stairs(final ServerLevel level, final FormedDoors.Door outer) {
         final FormedPlace place = ((IFormedPlaced) level.getBlockEntity(outer.uses())).places().stream()
                 .filter(each -> each.model().equals(outer.model())).findFirst().orElseThrow();
-        final List<Double> tops = new ArrayList<>();
-        for (final int[] cell : ShipStairGeometry.CELLS) {
+        final List<int[]> cells = ShipDoorRules.RAMP.equals(outer.piece()) ? ShipRampGeometry.CELLS
+                : ShipStairGeometry.CELLS;
+        // Its blocks' shapes as one, so a tread standing across two blocks is one tread with one top.
+        VoxelShape all = Shapes.empty();
+        for (final int[] cell : cells) {
             final BlockPos at = FormedDoors.blockOf(outer.uses(), place, MeshCells.key(cell[0], cell[1], cell[2]));
-            if (!ShipStairs.down(level, at)) {
-                continue;
+            if (ShipStairs.down(level, at)) {
+                all = Shapes.joinUnoptimized(all, level.getBlockState(at).getCollisionShape(level, at)
+                        .move(at.getX(), at.getY(), at.getZ()), BooleanOp.OR);
             }
-            for (final AABB box : level.getBlockState(at).getCollisionShape(level, at).toAabbs()) {
-                final double top = at.getY() + box.maxY;
-                if (tops.stream().noneMatch(seen -> Math.abs(seen - top) < 1.0e-6)) {
-                    tops.add(top);
-                }
+        }
+        final List<Double> tops = new ArrayList<>();
+        for (final AABB box : all.optimize().toAabbs()) {
+            if (tops.stream().noneMatch(seen -> Math.abs(seen - box.maxY) < 1.0e-6)) {
+                tops.add(box.maxY);
             }
         }
         tops.sort((a, b) -> Double.compare(b, a));

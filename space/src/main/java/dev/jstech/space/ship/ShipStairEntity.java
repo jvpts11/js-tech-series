@@ -16,8 +16,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * What a block of a let-down boarding stair keeps: which block of its airlock's model it stands as, beside the hull,
- * and how the airlock stands, so it holds the stair's treads within it, turned with the ship.
+ * What a block of a way down let down keeps, a boarding stair's or a ramp's: which block of its door's model it stands
+ * as, beside the hull or behind the tail, and how that model stands, so it holds the treads within it, turned with the
+ * ship.
  */
 public final class ShipStairEntity extends SyncedBlockEntity {
 

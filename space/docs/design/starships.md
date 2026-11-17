@@ -54,6 +54,17 @@ A module takes a third of a small hull's room, a medium one the whole of it:
 - the holds, which are medium modules: Bay Doors, Ramp and Side Door, with racks, tie-downs, a hoist rail and a manifest
   terminal, and barrels along both walls, one over another every second row.
 
+Every door of a ship opens and shuts as it is drawn moving, and while it is not shut nothing of it stands in the way of
+whoever walks through, struck or not. The holds' big doors are ways in from outside, for whoever may come aboard: the
+Ramp hold's ramp is the tail's wall from the deck to the roof, hinged at the deck's edge, and swings down over two and a
+half seconds, its toe unfolding past level, until its foot rests on the land and it is walked up as a slope of small
+steps; in the air it swings to its full angle with nothing under it. The Side Door hold's door rolls up into the roof
+from the deck, two blocks high and three long, and its crew steps out onto the wing that joins the ship there, up two
+steps inside where the wing stands higher than the deck, a stair folded under the wing swinging down from its trailing
+edge to the land. The Bay Doors hold's roof opens as two leaves hinged at its edges, swinging up and over to lie along
+the hull's flanks, as the Space Shuttle's. A ship lifting off shuts its holds' doors, as it folds its gear; a hold open
+in space loses its air as any room open to it, its pressure door keeping the rest of the ship's.
+
 The furniture stands in the cells of the walls, leaving a corridor two blocks high from module to module on one floor.
 The Workshop's tables, furnace and barrel and the holds' barrels are blocks of the kit, the **Ship Crafting Table**,
 **Ship Smithing Table**, **Ship Furnace** and **Ship Barrel**: each works as the game's own and is drawn by its

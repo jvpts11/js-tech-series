@@ -105,8 +105,8 @@ public final class ShipDoors {
             final double seconds = moving.frame < 0 ? 0 : Math.clamp(now - moving.at, 0, LONGEST_FRAME);
             for (int k = 0; k < count; k++) {
                 final Door door = rig.doors().get(k);
-                moving.doors[k].advance(seconds, open[k], letDown[k], door.stair().isPresent()
-                        ? DoorMotion.OUTER_DOOR : DoorMotion.PRESSURE_DOOR);
+                moving.doors[k].advance(seconds, open[k], letDown[k], door.swing().isPresent() ? DoorMotion.SWING
+                        : door.stair().isPresent() ? DoorMotion.OUTER_DOOR : DoorMotion.PRESSURE_DOOR);
             }
             moving.frame = frame;
             moving.at = now;
@@ -114,7 +114,10 @@ public final class ShipDoors {
         for (int k = 0; k < count; k++) {
             final Door door = rig.doors().get(k);
             final DoorMotion motion = moving.doors[k];
-            hidden.add(open[k] ? door.shutLamp() : door.openLamp());
+            final String unlit = open[k] ? door.shutLamp() : door.openLamp();
+            if (!unlit.isEmpty()) {
+                hidden.add(unlit);
+            }
             door.stair().ifPresent(stair -> {
                 if (motion.stowed()) {
                     hidden.addAll(stair.flights());
@@ -166,30 +169,77 @@ public final class ShipDoors {
      *
      * @param piece      its piece's name, as the model's shape file has it
      * @param leaf       the bone of its leaf, drawn shut
-     * @param travel     how far its leaf slides as it opens, in blocks, in the model's own space
-     * @param shutLamp   the bone of its lamp lit while it is shut
-     * @param openLamp   the bone of its lamp lit while it is open
+     * @param travel     how far its leaf slides as it opens, in blocks, in the model's own space; none for a leaf
+     *                   that swings
+     * @param shutLamp   the bone of its lamp lit while it is shut; empty for a door with no lamps
+     * @param openLamp   the bone of its lamp lit while it is open; empty for a door with no lamps
      * @param cell       the block of the model it works by, which keeps whether it is shut
      * @param startsShut whether it stands shut as its part forms
      * @param stair      the stair its opening lets down on the land, if it has one
+     * @param swing      how its leaf turns open about its hinge, if it swings rather than slides
+     * @param toe        a second leaf hinged on the first that unfolds as it opens, if it has one
      */
     public record Door(String piece, String leaf, Vector3f travel, String shutLamp, String openLamp,
-                       List<Integer> cell, boolean startsShut, Optional<Stair> stair) {
+                       List<Integer> cell, boolean startsShut, Optional<Stair> stair, Optional<Swing> swing,
+                       Optional<Toe> toe) {
 
         public static final Codec<Door> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("piece").forGetter(Door::piece),
                 Codec.STRING.fieldOf("leaf").forGetter(Door::leaf),
-                ExtraCodecs.VECTOR3F.fieldOf("travel").forGetter(Door::travel),
-                Codec.STRING.fieldOf("shut_lamp").forGetter(Door::shutLamp),
-                Codec.STRING.fieldOf("open_lamp").forGetter(Door::openLamp),
+                ExtraCodecs.VECTOR3F.optionalFieldOf("travel", new Vector3f()).forGetter(Door::travel),
+                Codec.STRING.optionalFieldOf("shut_lamp", "").forGetter(Door::shutLamp),
+                Codec.STRING.optionalFieldOf("open_lamp", "").forGetter(Door::openLamp),
                 Codec.INT.listOf(3, 3).fieldOf("cell").forGetter(Door::cell),
                 Codec.BOOL.optionalFieldOf("starts_shut", false).forGetter(Door::startsShut),
-                Stair.CODEC.optionalFieldOf("stair").forGetter(Door::stair)
+                Stair.CODEC.optionalFieldOf("stair").forGetter(Door::stair),
+                Swing.CODEC.optionalFieldOf("swing").forGetter(Door::swing),
+                Toe.CODEC.optionalFieldOf("toe").forGetter(Door::toe)
         ).apply(instance, Door::new));
 
         public Door {
             travel = new Vector3f(travel);
             cell = List.copyOf(cell);
+        }
+    }
+
+    /**
+     * How a door's leaf swings open about its hinge, the pivot its bone has in the model.
+     *
+     * @param axis    the hinge's way in the model's own space, the leaf turning about it by the right hand's rule
+     * @param degrees how far it turns, open
+     */
+    public record Swing(Vector3f axis, float degrees) {
+
+        public static final Codec<Swing> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                ExtraCodecs.VECTOR3F.fieldOf("axis").forGetter(Swing::axis),
+                Codec.FLOAT.fieldOf("degrees").forGetter(Swing::degrees)
+        ).apply(instance, Swing::new));
+
+        public Swing {
+            axis = new Vector3f(axis).normalize();
+        }
+    }
+
+    /**
+     * A second leaf hinged on a door's leaf, folded against it shut, which unfolds once the leaf has swung a share of
+     * the way open: a ramp's toe, reaching the land as the ramp lies down.
+     *
+     * @param bone    its bone, hanging from the leaf's, turning about its own pivot
+     * @param axis    its hinge's way in the leaf's space
+     * @param degrees how far it turns, unfolding
+     * @param from    the share of the leaf's opening after which it unfolds, over the rest of it
+     */
+    public record Toe(String bone, Vector3f axis, float degrees, float from) {
+
+        public static final Codec<Toe> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.STRING.fieldOf("bone").forGetter(Toe::bone),
+                ExtraCodecs.VECTOR3F.fieldOf("axis").forGetter(Toe::axis),
+                Codec.FLOAT.fieldOf("degrees").forGetter(Toe::degrees),
+                Codec.FLOAT.fieldOf("from").forGetter(Toe::from)
+        ).apply(instance, Toe::new));
+
+        public Toe {
+            axis = new Vector3f(axis).normalize();
         }
     }
 
@@ -259,6 +309,10 @@ public final class ShipDoors {
                     pose.addMove(leaf, door.travel().x() * share, door.travel().y() * share,
                             door.travel().z() * share);
                 }
+                door.swing().ifPresent(swing -> turn(pose, door.leaf(), swing.axis(),
+                        Math.toRadians(swing.degrees() * motion.leaf())));
+                door.toe().ifPresent(toe -> turn(pose, toe.bone(), toe.axis(),
+                        Math.toRadians(toe.degrees() * DoorMotion.after(motion.leaf(), toe.from()))));
                 door.stair().ifPresent(stair -> stair(stair, motion, pose));
             }
         }
@@ -304,6 +358,14 @@ public final class ShipDoors {
             final int index = pose.index(bone);
             if (index >= 0) {
                 pose.setTurn(index, this.turn.identity().rotationZ((float) angle));
+            }
+        }
+
+        /* Turns {@code bone} by {@code angle} radians about {@code axis}, if the model has it. */
+        private void turn(final ModelPose pose, final String bone, final Vector3f axis, final double angle) {
+            final int index = pose.index(bone);
+            if (index >= 0 && angle != 0) {
+                pose.setTurn(index, this.turn.identity().rotationAxis((float) angle, axis));
             }
         }
 
