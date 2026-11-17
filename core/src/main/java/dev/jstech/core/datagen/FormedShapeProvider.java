@@ -13,9 +13,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.content.ModContent;
-import dev.jstech.core.model.BakedGeometry;
 import dev.jstech.core.model.GeometryBaker;
-import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
@@ -160,22 +158,8 @@ public final class FormedShapeProvider implements DataProvider {
         for (final FormedPiece piece : pieces(model)) {
             moving.addAll(piece.moves());
         }
-        final BakedGeometry baked = GeometryBaker.bake(data, Set.of());
-        if (moving.isEmpty()) {
-            return ModelTriangles.of(data, baked, model.definition().detail().scale());
-        }
-        // A moving bone, and every bone hanging from it, keeps no faces here.
-        final List<List<BakedGeometry.Part>> kept = new ArrayList<>(baked.bones());
-        final Set<String> left = new LinkedHashSet<>();
-        for (int i = 0; i < data.bones().size(); i++) {
-            final ModelBone bone = data.bones().get(i);
-            if (moving.contains(bone.name()) || bone.parent() != null && left.contains(bone.parent())) {
-                left.add(bone.name());
-                kept.set(i, List.of());
-            }
-        }
-        return ModelTriangles.of(data, new BakedGeometry(kept, baked.deformed()), model.definition().detail()
-                .scale());
+        return ModelTriangles.still(data, GeometryBaker.bake(data, Set.of()), moving,
+                model.definition().detail().scale());
     }
 
     /* The shapes of the blocks of the model {@code id}, formed from the pattern {@code patternId}. */

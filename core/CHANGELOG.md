@@ -524,6 +524,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A data registry's values in one part, as before: J's Core's API is at version 66.
   `new DataRegistryPayload(ResourceLocation, CompoundTag)` builds a payload holding all of them as its only part, so
   a mod that built one with two arguments goes on building it so. Experimental.
+- A model's faces still: J's Core's API is at version 67. `ModelTriangles.still(ModelData, BakedGeometry,
+  Set<String>, double)` gives a model's faces at rest but for the bones named and every bone hanging from them, as a
+  formed model's doors' leaves are left out of its blocks' shapes. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2249,6 +2252,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A formed model's door struck, its blocks dented, still lets a player through open: a struck block took its
+  shape from its model's faces with its doors' leaves in them, and from its dents, so a door drawn open could still
+  stand solid where its leaf rests or where a dent reached into its doorway, and a starship's crew could not get out
+  of a ship struck by a crash. A struck block's leaves take their shape from their door alone, shut or open, and a
+  dent, drawn as it is, never fills more of a block than it filled whole, so no doorway or corridor is shut by one.
 - A formed model's door clicked by a player opens or shuts, where it moved and at once moved back, its sound
   played and nothing seen: a player's game, finding nothing to do with the main hand, tried the other one too, and
   the server moved the door again for it. A click on a door, or on a piece that works by another block, is now taken

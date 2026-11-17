@@ -11609,6 +11609,7 @@ stable 4
 38 dev.jstech.core.multiblock.shape.MeshVoxels  static int[] boxes(float[], IntFunction<boolean[]>)
 19 dev.jstech.core.multiblock.shape.ModelTriangles  type final class
 19 dev.jstech.core.multiblock.shape.ModelTriangles  static float[] of(ModelData, BakedGeometry, double)
+67 dev.jstech.core.multiblock.shape.ModelTriangles  static float[] still(ModelData, BakedGeometry, Set<String>, double)
 10 dev.jstech.core.multipart.CoreParts  type final class
 10 dev.jstech.core.multipart.CoreParts  static final Registry<PartType<?>> REGISTRY
 10 dev.jstech.core.multipart.CoreParts  static final ResourceKey<Registry<PartType<?>>> KEY

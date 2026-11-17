@@ -246,10 +246,13 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
         for (final FormedPlace at : all) {
             final Optional<FormedShape> file = FormedShapes.get(this.level, at.model());
             if (file.isPresent()) {
-                // A block a strike reached takes its shape from its faces as the strike left them.
+                // A block a strike reached takes its shape from its faces as the strike left them, but never fills
+                // more of the block than it did whole: a dent drawn into a doorway or a corridor leaves it as open
+                // as it stood, so no one is ever shut in by one.
                 final Optional<int[]> struck = FormedDamage.boxes(this.level, at, damage());
-                out = Shapes.joinUnoptimized(out, struck.isPresent() ? FormedShape.shapeOf(struck.get(), at.turn())
-                        : file.get().shape(at), BooleanOp.OR);
+                final VoxelShape whole = file.get().shape(at);
+                out = Shapes.joinUnoptimized(out, struck.isPresent() ? Shapes.join(FormedShape.shapeOf(struck.get(),
+                        at.turn()), whole, BooleanOp.AND) : whole, BooleanOp.OR);
                 known = true;
             }
         }

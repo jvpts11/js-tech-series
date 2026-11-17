@@ -8,9 +8,14 @@
 package dev.jstech.core.multiblock.shape;
 
 import dev.jstech.core.model.BakedGeometry;
+import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelPose;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -27,6 +32,30 @@ public final class ModelTriangles {
     private static final int[][] HALVES = {{0, 1, 2}, {0, 2, 3}};
 
     private ModelTriangles() {
+    }
+
+    /**
+     * The triangles of the model {@code data} drawn as {@code geometry} at rest, {@code scale} times as big as its file
+     * says, but for the bones named {@code moving} and every bone hanging from them: a formed model's doors' leaves,
+     * whose blocks take a leaf's shape from the door alone, shut or open, never from where the leaf rests in the file.
+     *
+     * @return nine numbers to a triangle
+     */
+    public static float[] still(final ModelData data, final BakedGeometry geometry, final Set<String> moving,
+                                final double scale) {
+        if (moving.isEmpty()) {
+            return of(data, geometry, scale);
+        }
+        final List<List<BakedGeometry.Part>> kept = new ArrayList<>(geometry.bones());
+        final Set<String> left = new HashSet<>();
+        for (int i = 0; i < data.bones().size() && i < kept.size(); i++) {
+            final ModelBone bone = data.bones().get(i);
+            if (moving.contains(bone.name()) || bone.parent() != null && left.contains(bone.parent())) {
+                left.add(bone.name());
+                kept.set(i, List.of());
+            }
+        }
+        return of(data, new BakedGeometry(kept, geometry.deformed()), scale);
     }
 
     /**

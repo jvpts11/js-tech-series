@@ -10,6 +10,9 @@ package dev.jstech.tests.gametest.space;
 import dev.jstech.core.air.AirMix;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import dev.jstech.core.multiblock.damage.DamageStamps;
+import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedDoors;
@@ -55,6 +58,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -99,6 +104,13 @@ public final class ShipDoorsGameTests {
     private static final double NEAR_THE_LAND = 0.6;
     /* How far round its terminal a dock's grid is looked over, in blocks. */
     private static final int DOCK_ROUND = 24;
+    /* How wide a strike on a door's leaf is, in blocks, and the seed its dents are laid by. */
+    private static final double STRUCK = 0.8;
+    private static final long SEED = 7;
+    /* A player's room in a doorway: half as wide as they are, as tall, and how far over its sill they stand. */
+    private static final double HALF_A_PLAYER = 0.3;
+    private static final double A_PLAYER_TALL = 1.8;
+    private static final double OFF_THE_SILL = 0.01;
     /* How finely a door's blocks are searched for a point a click finds the door at, a side in so many parts. */
     private static final int SAMPLES = 32;
     private static final double HALF = 0.5;
@@ -122,6 +134,32 @@ public final class ShipDoorsGameTests {
             helper.assertTrue(FormedDoors.use(level, crew, door) && !FormedDoors.shut(level, door)
                     && Math.abs(volume(level, door) - open) < 1.0e-9, "used again, it opens, its leaf gone from it");
             GameTestPlayers.leave(crew);
+        }).thenSucceed();
+    }
+
+    /* A door struck, its blocks dented, still lets a player through open: its leaf is out of its doorway. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void pressureDoor_struckItsOpenLeafStaysOutOfItsDoorway(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final PlannedBuild[] plan = new PlannedBuild[1];
+        build(helper, plan).thenExecute(() -> {
+            final FormedDoors.Door door = door(level, plan[0], WORKSHOP, ShipKitBlocks.PRESSURE_DOOR.getId(),
+                    ShipDoorRules.PRESSURE_DOOR);
+            final AABB doorway = doorway(level, door);
+            FormedDoors.set(level, door, false);
+            helper.assertTrue(blocking(level, doorway).isEmpty(), "open, a player walks through it: "
+                    + blocking(level, doorway));
+            FormedDoors.set(level, door, true);
+            helper.assertTrue(!blocking(level, doorway).isEmpty(), "shut, it stands in their way");
+            FormedDoors.set(level, door, false);
+            for (final BlockPos at : door.leaf()) {
+                FormedDamage.strike(level, at, DamageStamps.IMPACT, Vec3.atCenterOf(at), new Vec3(0, 1, 0),
+                        STRUCK, SEED);
+            }
+            helper.assertTrue(door.leaf().stream().anyMatch(at -> level.getBlockEntity(at)
+                    instanceof FormedPartBlockEntity part && !part.damage().isEmpty()), "its leaf's blocks are struck");
+            helper.assertTrue(blocking(level, doorway).isEmpty(), "struck and open, a player still walks through"
+                    + " it: in their way " + blocking(level, doorway));
         }).thenSucceed();
     }
 
@@ -415,6 +453,77 @@ public final class ShipDoorsGameTests {
     private static PlanSpot spot(final PlannedBuild plan, final int part, final ResourceLocation block) {
         return plan.plan().spots().stream().filter(spot -> spot.part() == part && spot.block().equals(block))
                 .findFirst().orElseThrow();
+    }
+
+    /*
+     * Where a player walks through {@code door}: a player's width and height, standing on the foot of the room its
+     * leaf fills shut and leaves open, in the middle of it, as deep as they are wide. Read with the door as it stands
+     * intact, shut and then open; it is left as it stood.
+     */
+    private static AABB doorway(final ServerLevel level, final FormedDoors.Door door) {
+        final boolean was = FormedDoors.shut(level, door);
+        FormedDoors.set(level, door, true);
+        final List<VoxelShape> shut = shapes(level, door);
+        FormedDoors.set(level, door, false);
+        final List<VoxelShape> open = shapes(level, door);
+        FormedDoors.set(level, door, was);
+        AABB leaf = null;
+        for (int i = 0; i < shut.size(); i++) {
+            final VoxelShape only = Shapes.join(shut.get(i), open.get(i), BooleanOp.ONLY_FIRST);
+            if (!only.isEmpty()) {
+                leaf = leaf == null ? only.bounds() : leaf.minmax(only.bounds());
+            }
+        }
+        if (leaf == null) {
+            throw new IllegalStateException(door.piece() + " at " + door.uses() + " fills nothing shut");
+        }
+        final Vec3 middle = leaf.getCenter();
+        // Its foot: the top of the floor under it, open, a step over or under where its leaf comes down to.
+        FormedDoors.set(level, door, false);
+        final AABB foot = new AABB(middle.x - HALF_A_PLAYER, leaf.minY - STEP_UP, middle.z - HALF_A_PLAYER,
+                middle.x + HALF_A_PLAYER, leaf.minY + STEP_UP, middle.z + HALF_A_PLAYER);
+        double floor = foot.minY;
+        for (final BlockPos at : BlockPos.betweenClosed(BlockPos.containing(foot.minX, foot.minY, foot.minZ),
+                BlockPos.containing(foot.maxX, foot.maxY, foot.maxZ))) {
+            final VoxelShape under = Shapes.join(level.getBlockState(at).getCollisionShape(level, at)
+                    .move(at.getX(), at.getY(), at.getZ()), Shapes.create(foot), BooleanOp.AND);
+            if (!under.isEmpty()) {
+                floor = Math.max(floor, under.max(Direction.Axis.Y));
+            }
+        }
+        FormedDoors.set(level, door, was);
+        return new AABB(middle.x - HALF_A_PLAYER, floor + OFF_THE_SILL, middle.z - HALF_A_PLAYER,
+                middle.x + HALF_A_PLAYER, floor + OFF_THE_SILL + A_PLAYER_TALL, middle.z + HALF_A_PLAYER);
+    }
+
+    /* The shapes of {@code door}'s leaf's blocks as they stand, where they stand in the world. */
+    private static List<VoxelShape> shapes(final ServerLevel level, final FormedDoors.Door door) {
+        final List<VoxelShape> out = new ArrayList<>();
+        for (final BlockPos at : door.leaf()) {
+            out.add(level.getBlockState(at).getCollisionShape(level, at).move(at.getX(), at.getY(), at.getZ()));
+        }
+        return out;
+    }
+
+    /* The blocks that stand in {@code box}, a player's room, each where it stands. */
+    private static List<String> blocking(final ServerLevel level, final AABB box) {
+        final List<String> out = new ArrayList<>();
+        final VoxelShape room = Shapes.create(box);
+        for (final BlockPos at : BlockPos.betweenClosed(BlockPos.containing(box.minX, box.minY, box.minZ),
+                BlockPos.containing(box.maxX, box.maxY, box.maxZ))) {
+            final VoxelShape shape = level.getBlockState(at).getCollisionShape(level, at)
+                    .move(at.getX(), at.getY(), at.getZ());
+            if (Shapes.joinIsNotEmpty(shape, room, BooleanOp.AND)) {
+                final List<String> boxes = new ArrayList<>();
+                for (final AABB in : Shapes.join(shape, room, BooleanOp.AND).toAabbs()) {
+                    boxes.add(String.format("%.3f %.3f %.3f to %.3f %.3f %.3f", in.minX - at.getX(),
+                            in.minY - at.getY(), in.minZ - at.getZ(), in.maxX - at.getX(), in.maxY - at.getY(),
+                            in.maxZ - at.getZ()));
+                }
+                out.add(at.toShortString() + " " + boxes);
+            }
+        }
+        return out;
     }
 
     /* How much its leaf's blocks stand as, all their boxes' volumes added up. */

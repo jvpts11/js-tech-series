@@ -657,6 +657,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A data registry's values in one part, as before: J's Core's API is at version 66.
   `new DataRegistryPayload(ResourceLocation, CompoundTag)` builds a payload holding all of them as its only part, so
   a mod that built one with two arguments goes on building it so. Experimental.
+- (Core) A model's faces still: J's Core's API is at version 67. `ModelTriangles.still(ModelData, BakedGeometry,
+  Set<String>, double)` gives a model's faces at rest but for the bones named and every bone hanging from them, as a
+  formed model's doors' leaves are left out of its blocks' shapes. Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
@@ -4317,6 +4320,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) A formed model's door struck, its blocks dented, still lets a player through open: a struck block took its
+  shape from its model's faces with its doors' leaves in them, and from its dents, so a door drawn open could still
+  stand solid where its leaf rests or where a dent reached into its doorway, and a starship's crew could not get out
+  of a ship struck by a crash. A struck block's leaves take their shape from their door alone, shut or open, and a
+  dent, drawn as it is, never fills more of a block than it filled whole, so no doorway or corridor is shut by one.
 - (Space) A starship banks into its turns, as No Man's Sky's ships do: the whole ship and whoever is aboard lean up to
   thirty-five degrees at its fastest turn flying the air's cruise or faster, less the slower it turns and the slower
   it flies, not at all hovering, and come level again as the turn falls away; on the land it stands level.

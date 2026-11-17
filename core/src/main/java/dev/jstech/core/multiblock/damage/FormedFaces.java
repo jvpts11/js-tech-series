@@ -11,10 +11,12 @@ import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.model.GeometryBaker;
 import dev.jstech.core.model.ModelData;
+import dev.jstech.core.multiblock.shape.FormedPiece;
 import dev.jstech.core.multiblock.shape.FormedShape;
 import dev.jstech.core.multiblock.shape.MeshCells;
 import dev.jstech.core.multiblock.shape.ModelTriangles;
 import dev.jstech.core.util.ShippedModels;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -54,7 +56,13 @@ final class FormedFaces {
         }
         try {
             final ModelData data = ShippedModels.read(declared.get());
-            final float[] faces = ModelTriangles.of(data, GeometryBaker.bake(data, Set.of()),
+            // Its doors' leaves keep no faces here, as in its shape file: a struck block takes a leaf's shape from its
+            // door alone, shut or open.
+            final Set<String> moving = new HashSet<>();
+            for (final FormedPiece piece : shape.pieces()) {
+                moving.addAll(piece.moves());
+            }
+            final float[] faces = ModelTriangles.still(data, GeometryBaker.bake(data, Set.of()), moving,
                     declared.get().definition().detail().scale());
             return Optional.of(MeshCells.split(faces, shape.origin(), shape.cells().keySet(), shape.apart())
                     .pieces());
