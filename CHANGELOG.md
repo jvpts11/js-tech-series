@@ -4027,6 +4027,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the roof over two and a half seconds, used from either side by a crew member who may come aboard. Lifting off, a
   ship shuts it. Beside swept or stub wings, whose roots stand a block over the deck, the hold is built with two steps
   inside up to the wing's root; beside a blended delta or no wing, its floor runs level to the door.
+- (Space) The swept wings, the stub wings and the blended delta each carry a stair folded flat under them, one under
+  each wing: as the Side Door hold beside them opens on the land, the stair on its side swings down from the wing's
+  trailing edge to the land behind it, its treads staying level and its handrails standing once it is down, and a crew
+  member walks out of the hold onto the wing and down it. It goes up as the door shuts, and lifting off, the ship
+  shuts the door and the stair with it; in the air or in space it stays folded.
 
 ### Changed
 - (Space) A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

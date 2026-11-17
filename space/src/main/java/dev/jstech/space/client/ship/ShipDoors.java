@@ -138,6 +138,9 @@ public final class ShipDoors {
                     }
                 }
             });
+            if (motion.leaf() < 1) {
+                hidden.addAll(door.shownOpen());
+            }
         }
         instance.animate(frame, KitClock.now(), DRIVER, new Posed(rig, moving), IAnimationListener.NONE);
     }
@@ -189,12 +192,13 @@ public final class ShipDoors {
      * @param stair      the stair its opening lets down on the land, if it has one
      * @param swing      how its leaf turns open about its hinge, if it swings rather than slides
      * @param turns      the other bones that turn as it opens, each from a share of its opening: a ramp's toe, a
-     *                   pair's other leaf
+     *                   pair's other leaf, a wing stair's treads kept level
      * @param roll       how its slats roll up into its drum, if it is a roller door
+     * @param shownOpen  the bones drawn only once it is all the way open: a wing stair's handrails
      */
     public record Door(String piece, String leaf, Vector3f travel, String shutLamp, String openLamp,
                        List<Integer> cell, boolean startsShut, Optional<Stair> stair, Optional<Swing> swing,
-                       List<Turn> turns, Optional<Roll> roll) {
+                       List<Turn> turns, Optional<Roll> roll, List<String> shownOpen) {
 
         public static final Codec<Door> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("piece").forGetter(Door::piece),
@@ -207,13 +211,15 @@ public final class ShipDoors {
                 Stair.CODEC.optionalFieldOf("stair").forGetter(Door::stair),
                 Swing.CODEC.optionalFieldOf("swing").forGetter(Door::swing),
                 Turn.CODEC.listOf().optionalFieldOf("turns", List.of()).forGetter(Door::turns),
-                Roll.CODEC.optionalFieldOf("roll").forGetter(Door::roll)
+                Roll.CODEC.optionalFieldOf("roll").forGetter(Door::roll),
+                Codec.STRING.listOf().optionalFieldOf("shown_open", List.of()).forGetter(Door::shownOpen)
         ).apply(instance, Door::new));
 
         public Door {
             travel = new Vector3f(travel);
             cell = List.copyOf(cell);
             turns = List.copyOf(turns);
+            shownOpen = List.copyOf(shownOpen);
         }
     }
 

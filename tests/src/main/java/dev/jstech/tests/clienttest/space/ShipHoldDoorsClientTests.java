@@ -81,6 +81,12 @@ public final class ShipHoldDoorsClientTests {
     /* The camera beside the door, out over the wing and a little up, in blocks. */
     private static final double BESIDE = 4.5;
     private static final double BESIDE_UP = 0.8;
+    /*
+     * The camera out past the wing's tip and aft of it, low over the land, off the door's block; and where it looks,
+     * the middle of the wing's stair let down behind the wing.
+     */
+    private static final Vec3 BEHIND_THE_WING = new Vec3(5.0, -1.5, 6.5);
+    private static final Vec3 AT_THE_STAIR = new Vec3(1.0, -1.5, 3.4);
 
     private ShipHoldDoorsClientTests() {
     }
@@ -101,6 +107,12 @@ public final class ShipHoldDoorsClientTests {
     public static void sideDoor_rollsUpTheFlankIntoItsDrumAsItOpens(final ClientTestContext ctx) {
         swing(ctx, SIDE_SHIP, SIDE_PART, ShipKitBlocks.RAMP_PLATE.getId(), ShipDoorRules.SIDE_DOOR,
                 "ship-side-door", new Vec3(BESIDE, BESIDE_UP, 0), new Vec3(0, BESIDE_UP, 0));
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void wingStair_swingsDownBehindTheWingAsTheSideDoorOpens(final ClientTestContext ctx) {
+        swing(ctx, SIDE_SHIP, SIDE_PART, ShipKitBlocks.RAMP_PLATE.getId(), ShipDoorRules.SIDE_DOOR,
+                "ship-wing-stair", BEHIND_THE_WING, AT_THE_STAIR);
     }
 
     /*
@@ -175,7 +187,8 @@ public final class ShipHoldDoorsClientTests {
                 })
                 .then(SETTLE, () -> frames[0] = frame(ctx))
                 .thenScreenshot(0, name + "-shut")
-                .thenServer(0, level -> FormedDoors.set(level, moving[0], false))
+                // Used as a player uses it, so what it lets down on the land comes down too.
+                .thenServer(0, level -> ctx.assertTrue(FormedDoors.use(level, null, moving[0]), "it opens"))
                 .then(HALF_SWING, () -> frames[1] = frame(ctx))
                 .thenScreenshot(0, name + "-swinging")
                 .then(SWUNG, () -> {

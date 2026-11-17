@@ -1,0 +1,230 @@
+{
+  "doors": [
+    {
+      "piece": "wing_stair",
+      "leaf": "wing_stair_right",
+      "swing": {
+        "axis": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "degrees": -126.0
+      },
+      "turns": [
+        {
+          "bone": "wing_stair_right_tread_1_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_1_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_2_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_2_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_3_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_3_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_4_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_4_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_5_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_right_tread_5_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        }
+      ],
+      "shown_open": [
+        "wing_stair_right_rails"
+      ],
+      "cell": [
+        1,
+        1,
+        2
+      ],
+      "starts_shut": true
+    },
+    {
+      "piece": "wing_stair",
+      "leaf": "wing_stair_left",
+      "swing": {
+        "axis": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "degrees": -126.0
+      },
+      "turns": [
+        {
+          "bone": "wing_stair_left_tread_1_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_1_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_2_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_2_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_3_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_3_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_4_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_4_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_5_1",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        },
+        {
+          "bone": "wing_stair_left_tread_5_2",
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "degrees": 126.0
+        }
+      ],
+      "shown_open": [
+        "wing_stair_left_rails"
+      ],
+      "cell": [
+        -2,
+        1,
+        2
+      ],
+      "starts_shut": true
+    }
+  ]
+}

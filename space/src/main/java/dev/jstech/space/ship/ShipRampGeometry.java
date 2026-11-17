@@ -8,9 +8,7 @@
 package dev.jstech.space.ship;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Where the Ramp hold's ramp lies let down, as the approved Ramp hold draws it (space/docs/design/starships.md): from
@@ -34,10 +32,9 @@ public final class ShipRampGeometry {
     /* How far out along the ship each step reaches, and how thick it is under its top. */
     private static final double RUN = 0.25;
     private static final double THICK = 0.1;
-    private static final int AXES = 3;
     private static final List<double[]> STEPS;
     /* The steps within each block of the ramp, in the block's own space, by its place. */
-    private static final Map<List<Integer>, List<double[]>> BY_CELL = new LinkedHashMap<>();
+    private static final TreadCells BY_CELL;
 
     static {
         final double slope = Math.asin((DECK - LAND) / LONG);
@@ -52,23 +49,8 @@ public final class ShipRampGeometry {
             steps.add(new double[] {-HALF, top - THICK, z0, HALF, top, z1});
         }
         STEPS = List.copyOf(steps);
-        for (final double[] step : STEPS) {
-            for (int x = (int) Math.floor(step[0]); x <= (int) Math.floor(step[AXES] - 1.0e-9); x++) {
-                for (int y = (int) Math.floor(step[1]); y <= (int) Math.floor(step[AXES + 1] - 1.0e-9); y++) {
-                    for (int z = (int) Math.floor(step[2]); z <= (int) Math.floor(step[AXES + 2] - 1.0e-9); z++) {
-                        final double[] within = {Math.max(step[0], x) - x, Math.max(step[1], y) - y,
-                            Math.max(step[2], z) - z, Math.min(step[AXES], x + 1) - x,
-                            Math.min(step[AXES + 1], y + 1) - y, Math.min(step[AXES + 2], z + 1) - z};
-                        if (within[AXES] > within[0] && within[AXES + 1] > within[1] && within[AXES + 2] > within[2]) {
-                            BY_CELL.computeIfAbsent(List.of(x, y, z), cell -> new ArrayList<>()).add(within);
-                        }
-                    }
-                }
-            }
-        }
-        final List<int[]> cells = new ArrayList<>();
-        BY_CELL.keySet().forEach(cell -> cells.add(new int[] {cell.get(0), cell.get(1), cell.get(2)}));
-        CELLS = List.copyOf(cells);
+        BY_CELL = TreadCells.of(STEPS);
+        CELLS = BY_CELL.cells();
     }
 
     private ShipRampGeometry() {
@@ -84,6 +66,6 @@ public final class ShipRampGeometry {
      * the block's own space, from 0 to 1; none for a block the ramp does not stand in.
      */
     public static List<double[]> treads(final int x, final int y, final int z) {
-        return BY_CELL.getOrDefault(List.of(x, y, z), List.of()).stream().map(double[]::clone).toList();
+        return BY_CELL.within(x, y, z);
     }
 }
