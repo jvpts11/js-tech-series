@@ -4386,6 +4386,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A ship landing on a runway in thin air sets down on it: slowing to its hover there takes it further along
+  than in the Overworld's air, and past its float it came round again a hand's breadth over the runway. It now
+  settles on while the stretch left would still stop it rolling.
 - (Core) A formed structure no longer collides with the air under its sloping faces: cutting a face at a block's
   edge left slivers of it that filled most of the block they lay in, so the air under a ship's chamfered roof was
   solid along every section and a player bumped their head on nothing beside its walkway. Its blocks now stand as

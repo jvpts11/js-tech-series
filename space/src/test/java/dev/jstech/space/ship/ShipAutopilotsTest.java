@@ -264,6 +264,23 @@ class ShipAutopilotsTest {
     }
 
     @Test
+    void runway_settlingPastItsFloatWithRoomToStopKeepsSettling() {
+        // In thin air it slows to its hover slowly and floats further: a hand's breadth over the runway, slow, past
+        // where it would float to in the Overworld's air, the stretch left still stops it rolling.
+        final ShipFlightModel.State settling = new ShipFlightModel.State(8, 0, 0, -1.7, 81);
+        final ShipFlightModel.Held held = ShipAutopilots.runway(settling, 0, 0, 0, -0.1, 46, 0, false, AIR);
+        assertEquals(0, held.forward(), "its throttle stays shut");
+        assertEquals(0, held.up(), "it does not climb away to come round again");
+    }
+
+    @Test
+    void runway_pastItsFloatTooFastToStopOnTheStretchComesRound() {
+        final ShipFlightModel.State fast = new ShipFlightModel.State(16, 0, 0, 0, 90);
+        final ShipFlightModel.Held held = ShipAutopilots.runway(fast, 0, 0, 0, -1, 46, 0, false, AIR);
+        assertTrue(held.up() > 0, "it climbs away to come round again");
+    }
+
+    @Test
     void runway_onTheLandOffItsStretchLiftsOff() {
         final ShipFlightModel.Held held = ShipAutopilots.runway(ShipFlightModel.State.RESTING, 0, 0, 200, 0, 200, 0,
                 true, AIR);

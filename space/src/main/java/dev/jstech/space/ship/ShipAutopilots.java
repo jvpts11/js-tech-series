@@ -83,7 +83,8 @@ public final class ShipAutopilots {
     /*
      * Which flight is on its final: within a few metres of the runway's line at the touch, and a cone widening back
      * from it; its nose within a few degrees of the runway's way at the touch, more further back, and at most a wide
-     * angle; and not far over the glide. Past the touch it may float a way on before it comes round again.
+     * angle; and not far over the glide. Past the touch it may float a way on, and further while the stretch left
+     * would still stop it, before it comes round again.
      */
     private static final double CAPTURE_WIDTH = 3;
     private static final double CAPTURE_CONE = 0.4;
@@ -180,7 +181,10 @@ public final class ShipAutopilots {
         final double before = RUNWAY_TOUCH - along;
         final double off = Math.abs(Math.IEEEremainder(heading - runway, 360));
         final double glide = Math.max(0, before) * Math.tan(Math.toRadians(GLIDE));
-        final boolean onFinal = before > -FLOAT
+        // Past its float it settles on while the stretch left still stops it rolling: in thin air it slows to its
+        // hover slowly and floats further than in the Overworld's.
+        final boolean onFinal = (before > -FLOAT
+                || along + ShipFlightModel.rollsOut(state.speed()) < RUNWAY_LENGTH)
                 && Math.abs(across) <= CAPTURE_WIDTH + Math.max(0, before) * CAPTURE_CONE
                 && off < Math.min(CAPTURE_HEADING, CAPTURE_TURN + Math.max(0, before) * CAPTURE_TURN_BACK)
                 && height < glide + CAPTURE_ABOVE;

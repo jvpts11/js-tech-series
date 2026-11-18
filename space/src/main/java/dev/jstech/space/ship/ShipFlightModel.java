@@ -230,6 +230,14 @@ public final class ShipFlightModel {
     }
 
     /**
+     * How far a ship rolling on its wheels at {@code speed} metres a second, its throttle shut, goes before it stops,
+     * at the most, in metres: shedding its speed as slowly as anywhere, with no air to brake it.
+     */
+    public static double rollsOut(final double speed) {
+        return speed * speed / (2 * SLOWING_SPACE);
+    }
+
+    /**
      * How far it banks to its left into a turn of {@code yawRate} degrees a second to its left, flying {@code speed}
      * metres a second, in degrees, its right below nought: as far as its fastest turn leans it at the air's cruise or
      * faster, the less the slower it turns and the slower it flies, and not at all standing still or hovering, as a

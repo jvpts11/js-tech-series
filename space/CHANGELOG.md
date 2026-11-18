@@ -1014,6 +1014,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A ship landing on a runway in thin air sets down on it: slowing to its hover there takes it further along
+  than in the Overworld's air, and past its float it came round again a hand's breadth over the runway. It now
+  settles on while the stretch left would still stop it rolling.
 - The quarters' bunk is a bed: at night, or in a storm, a click lays the player down in it to pass the night,
   docked, landed or in flight, as long as no monster is near and no one lies in it already; by day it says it is no
   time to sleep. It only set where the player woke. In space, where no night falls, it lays them down at any time.
