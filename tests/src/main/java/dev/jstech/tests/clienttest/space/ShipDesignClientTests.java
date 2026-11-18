@@ -8,11 +8,19 @@
 package dev.jstech.tests.clienttest.space;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
 import dev.jstech.space.gui.ShipDesignLayout;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipDesigner;
+import dev.jstech.space.shipyard.ShipyardDoors;
+import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -20,10 +28,12 @@ import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -34,7 +44,8 @@ import org.lwjgl.glfw.GLFW;
  * joint it snaps to, red over the nose it does not fit, the words by the mouse in the same colour; the green nodes only
  * while a part is held, only where it snaps. With nothing held, the part under the mouse is outlined by its own
  * faces, and a click takes that part. The plans saved by name open in a list on L, as the approved mock draws it: a
- * plan's load puts it in the designer, undone with Ctrl and Z, and its delete forgets it.
+ * plan's load puts it in the designer, undone with Ctrl and Z, and its delete forgets it. A ship built whole in the
+ * closed dock has its Release button under the dock's lines, which opens the dock round it.
  */
 public final class ShipDesignClientTests {
 
@@ -279,6 +290,49 @@ public final class ShipDesignClientTests {
                         "HAULER")), ARRIVE, "the first plan's delete to forget it", level -> "the shipyard's plans: "
                         + ((ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0])).plans().stream()
                         .map(ShipDesign::name).toList());
+    }
+
+    /*
+     * The ship built whole in the closed dock: the dock's lines say so in green with the Release button under them;
+     * its click opens the dock round the ship as its flight console does, the dock's own doing standing in the
+     * button's place and the screen saying, in green, that the ship goes once it stands on its gear.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void release_aWholeShipsButtonOpensTheDockRoundIt(final ClientTestContext ctx) {
+        final BlockPos[] terminal = open(ctx, ship());
+        ctx.thenServer(SETTLE, level -> {
+            final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0]);
+            dock.design(ship());
+            dock.confirm();
+            final PlannedBuild plan = dock.build().orElseThrow();
+            for (final PlanSpot spot : plan.plan().spots()) {
+                level.setBlockAndUpdate(plan.where(spot), BuiltInRegistries.BLOCK.get(spot.block())
+                        .defaultBlockState());
+            }
+        }).thenWaitUntil(() -> screen(ctx).getMenu().whole(), ARRIVE, "the screen to know the ship is whole")
+                .thenScreenshot(SETTLE, "ship-design-release")
+                .then(0, () -> {
+                    final int[] at = frame(ctx, (ShipDesignLayout.INNER_X0 + ShipDesignLayout.INNER_X1) / 2,
+                            ShipDesignLayout.RELEASE_Y0 + ShipDesignLayout.RELEASE_H / 2);
+                    screen(ctx).mouseClicked(at[0], at[1], InputConstants.MOUSE_BUTTON_LEFT);
+                })
+                .thenWaitUntil(() -> screen(ctx).getMenu().terminal().doors() != ShipyardDoors.State.CLOSED,
+                        ARRIVE, "the dock to open round the ship")
+                .thenScreenshot(SETTLE, "ship-design-releasing")
+                .thenWaitUntilServer(level -> shipIn(level, terminal[0]) != null, ARRIVE, "the ship to be let go",
+                        level -> "still in the dock")
+                .thenServer(0, level -> MovingStructures.takeAway(shipIn(level, terminal[0])));
+    }
+
+    /* The ship the dock at {@code terminal} let go, standing in or over its bay; none before it goes. */
+    private static @Nullable MovingStructure shipIn(final ServerLevel level, final BlockPos terminal) {
+        for (final IStructureBody body : MovingStructures.near(level, ShipyardStructure.bay(terminal,
+                Orientation.NORTH).inflate(2))) {
+            if (body instanceof MovingStructure structure) {
+                return structure;
+            }
+        }
+        return null;
     }
 
     /* A click on the plans' row {@code row}, on the button from {@code x} of the frame. */

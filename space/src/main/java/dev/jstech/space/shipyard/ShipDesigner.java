@@ -10,16 +10,21 @@ package dev.jstech.space.shipyard;
 import dev.jstech.core.call.MenuCall;
 import dev.jstech.core.call.MenuCalls;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
+import dev.jstech.space.network.ShipyardSaidPayload;
 import dev.jstech.space.ship.ShipDesign;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.inventory.MenuType;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
@@ -48,6 +53,19 @@ public final class ShipDesigner {
     public static final MenuCall<ShipDesignMenu, Boolean> CONFIRM = MenuCalls.declare(id("ship_design_confirm"),
             ShipDesignMenu.class, ByteBufCodecs.BOOL, (menu, player, any) -> menu.terminal().confirm(why ->
                     player.displayClientMessage(GameText.component(why), true)));
+    /**
+     * The ship built whole in the closed dock let go, as its flight console starts it: the dock opens round it; the
+     * screen told what the dock said, that it opens or why it cannot.
+     */
+    public static final MenuCall<ShipDesignMenu, Boolean> RELEASE = MenuCalls.declare(id("ship_design_release"),
+            ShipDesignMenu.class, ByteBufCodecs.BOOL, (menu, player, any) -> {
+                final List<Text> told = new ArrayList<>();
+                final boolean going = menu.terminal().launch(player.getUUID(), told::add);
+                if (!told.isEmpty()) {
+                    PacketDistributor.sendToPlayer(player, new ShipyardSaidPayload(GameText.component(
+                            told.getLast()), going));
+                }
+            });
 
     private ShipDesigner() {
     }

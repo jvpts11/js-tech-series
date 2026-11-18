@@ -70,6 +70,8 @@ public final class ShipDesignArt {
     private static final float DARKER = 0.4F;
     /* How far toward black a push button's ground is from its colour. */
     private static final float BUTTON_DARK = 0.8F;
+    /* How tall the game's letters stand. */
+    private static final int LETTERS_H = 8;
     private static final float CHANNEL = 255.0F;
     /* The small text's size against the game's letters, as the mock's small face against its labels. */
     private static final float SMALL = 0.75F;
@@ -197,6 +199,23 @@ public final class ShipDesignArt {
         small(g, font, word, x + (w - smallWidth(font, word)) / 2, y + 2, colour);
     }
 
+    /**
+     * A wide push button from {@code x0} to before {@code x1}, {@code h} tall, as the approved Release button: its top
+     * corners cut, dark with a tint of {@code colour} and edged in it, its word in the game's letters in the middle;
+     * filled with {@code colour} under the mouse, its word dark.
+     */
+    public static void wideButton(final GuiGraphics g, final Font font, final int x0, final int y, final int x1,
+                                  final int h, final String word, final int colour, final boolean hovered) {
+        final Colours c = PALETTE.get();
+        chamfer(g, x0, y, x1, y + h, colour, BUTTON_CUT, true, false, true);
+        if (!hovered) {
+            chamfer(g, x0 + 1, y + 1, x1 - 1, y + h - 1, mix(colour, c.black(), BUTTON_DARK), BUTTON_CUT - 1, true,
+                    false, true);
+        }
+        Draw.text(g, font, word, (x0 + x1 - font.width(word)) / 2, y + (h - LETTERS_H) / 2,
+                hovered ? c.black() : colour);
+    }
+
     /** A bar of twenty segments, as full as {@code share}, from {@code x} {@code w} wide. */
     public static void bar(final GuiGraphics g, final int x, final int y, final int w, final double share,
                            final int colour) {
@@ -222,6 +241,21 @@ public final class ShipDesignArt {
         g.fill(x0, y, x1, y + CALLOUT_H, c.label());
         hline(g, x0, x1, y, colour);
         Draw.text(g, font, words, x0 + CALLOUT_PAD, y + 3, colour);
+    }
+
+    /** Words by the mouse as {@link #callout} writes them, in the small letters, for words too long for the game's. */
+    public static void smallCallout(final GuiGraphics g, final Font font, final String words, final int x0,
+                                    final int y, final int colour) {
+        final Colours c = PALETTE.get();
+        final int x1 = x0 + smallCalloutWidth(font, words);
+        g.fill(x0, y, x1, y + CALLOUT_H, c.label());
+        hline(g, x0, x1, y, colour);
+        small(g, font, words, x0 + CALLOUT_PAD, y + 4, colour);
+    }
+
+    /** How wide {@link #smallCallout} writes {@code words}. */
+    public static int smallCalloutWidth(final Font font, final String words) {
+        return smallWidth(font, words) + 2 * CALLOUT_PAD;
     }
 
     /**

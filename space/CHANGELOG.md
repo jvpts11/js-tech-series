@@ -79,6 +79,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the player's game was sent, else the declared. Experimental.
 
 ### Added
+- The Starship Design screen lets a ship built whole go: under the dock's lines, which say "Ship whole" in
+  green once it stands whole in the closed dock, a Release ship button opens the dock round it as its flight console
+  does. While the dock opens or closes, what it does stands in the button's place, and the screen says what the dock
+  answered, in green as it opens, in red with the reason when it cannot.
 - The Small Shipyard opens round a finished ship and closes round one taken back, so any small ship leaves
   and comes back: started from its flight console, the dock's crane rolls back along its rails to the back of the bay
   in three seconds, its hook drawn up, then a floor of Ship Pad Plates rises from under the pit to the ground's top in

@@ -107,6 +107,7 @@ public final class JsSpaceClient {
         ShipChaseCamera.listen();
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipDesigner.MENU.get(),
                 ShipDesignScreen::new));
+        SpacePayloads.onShipyardSaid(ShipDesignScreen::said);
         // A ship's console's screen, its crew page.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipConsole.MENU.get(),
                 ShipConsoleScreen::new));

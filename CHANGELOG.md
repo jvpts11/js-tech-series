@@ -698,6 +698,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Space) The Starship Design screen lets a ship built whole go: under the dock's lines, which say "Ship whole" in
+  green once it stands whole in the closed dock, a Release ship button opens the dock round it as its flight console
+  does. While the dock opens or closes, what it does stands in the button's place, and the screen says what the dock
+  answered, in green as it opens, in red with the reason when it cannot.
 - (Core) A little of each ore lies loose between the veins, in small knots of a handful of blocks, as the game's own
   ores lie scattered: a player digging anywhere comes on some of every kind at its heights, a vein still being where
   the ore is. Most of the series' ores were found only in veins far apart. The new balance setting `veins.loose` sets

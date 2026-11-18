@@ -23,12 +23,14 @@ public final class ShipDesignMenu extends CoreMenu {
 
     private final ShipyardTerminalBlockEntity terminal;
     private final MenuValue held;
+    private final MenuValue whole;
 
     public ShipDesignMenu(final int containerId, final Inventory inventory,
                           final ShipyardTerminalBlockEntity terminal) {
         super(ShipDesigner.MENU.get(), containerId, inventory, MenuValidity.blockEntity(terminal));
         this.terminal = terminal;
         this.held = value("held", terminal::heldForBuild);
+        this.whole = flag("whole", terminal::whole);
     }
 
     /** The menu on the player's side, for the terminal whose place the server wrote. */
@@ -44,5 +46,10 @@ public final class ShipDesignMenu extends CoreMenu {
     /** How many blocks the dock has toward the ship it builds, in its arms and its Item Ports. */
     public int held() {
         return this.held.get();
+    }
+
+    /** Whether the ship in the dock stands whole with its flight console, ready to be let go. */
+    public boolean whole() {
+        return this.whole.isSet();
     }
 }

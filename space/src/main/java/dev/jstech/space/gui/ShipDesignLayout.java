@@ -105,6 +105,9 @@ public final class ShipDesignLayout {
     public static final int SHIP_STEP = 15;
     /** The dock's blocks. */
     public static final int DOCK_Y = 187;
+    /** The Release button under the dock's lines, the panel's width, and how tall it is. */
+    public static final int RELEASE_Y0 = DOCK_Y + 47;
+    public static final int RELEASE_H = 12;
     /**
      * The keys along the bottom, from and to, and the room between two, which narrows down to the least where the
      * words are long; what the screen says, over the keys.
@@ -181,7 +184,8 @@ public final class ShipDesignLayout {
         for (int i = 0; i < SHIP_ROWS; i++) {
             layout.textBox("ship" + i, INNER_X0, shipY(i), INNER_X1 - INNER_X0, SHIP_STEP - 1);
         }
-        return layout.textBox("dock", INNER_X0, DOCK_Y + 9, INNER_X1 - INNER_X0, 3 * tall + 10);
+        layout.textBox("dock", INNER_X0, DOCK_Y + 9, INNER_X1 - INNER_X0, 3 * tall + 10);
+        return layout.textBox("release", INNER_X0, RELEASE_Y0, INNER_X1 - INNER_X0, RELEASE_H);
     }
 
     /**
@@ -248,5 +252,10 @@ public final class ShipDesignLayout {
         return x >= LEFT_X0 && x < LEFT_X1 && y >= PANEL_Y0 && y < PANEL_Y1
                 || x >= RIGHT_X0 && x < RIGHT_X1 && y >= PANEL_Y0 && y < PANEL_Y1
                 || x >= MIDDLE_X0 && x < MIDDLE_X1 && (y >= PANEL_Y0 && y < TOP_Y1 || y >= BOTTOM_Y0 && y < BOTTOM_Y1);
+    }
+
+    /** Whether {@code x, y} of the frame is on the Release button, where it stands. */
+    public static boolean onRelease(final double x, final double y) {
+        return x >= INNER_X0 && x < INNER_X1 && y >= RELEASE_Y0 && y < RELEASE_Y0 + RELEASE_H;
     }
 }

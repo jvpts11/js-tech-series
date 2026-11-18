@@ -39,8 +39,11 @@ import dev.jstech.space.ship.ShipLayout;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.SmallShipNotes;
 import dev.jstech.space.ship.SmallShipParts;
+import dev.jstech.space.network.ShipyardSaidPayload;
 import dev.jstech.space.shipyard.ShipDesignMenu;
 import dev.jstech.space.shipyard.ShipDesigner;
+import dev.jstech.space.shipyard.ShipyardDoorTexts;
+import dev.jstech.space.shipyard.ShipyardDoors;
 import dev.jstech.space.shipyard.ShipyardLayout;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import java.util.ArrayDeque;
@@ -104,6 +107,8 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     private double lastY;
     private @Nullable StringBuilder naming;
     private @Nullable Text said;
+    /* The colour it is said in, a shipyard's answer's: green as it opens, red as it refuses; the accent else. */
+    private @Nullable Integer saidColour;
     private long saidUntil;
     private float scale = 1;
     private float originX;
@@ -213,6 +218,18 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         return this.view.project(0, JOINT_Y, fronts[joint], this.width, this.height);
     }
 
+    /**
+     * What a shipyard said as this player's screen asked it to let its ship go, said over the screen's keys while it
+     * is open: green as the dock opens, red as it refuses.
+     */
+    public static void said(final ShipyardSaidPayload said) {
+        if (Minecraft.getInstance().screen instanceof ShipDesignScreen screen) {
+            final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
+            screen.say(Text.of(said.words().getString()));
+            screen.saidColour = said.going() ? c.green() : c.red();
+        }
+    }
+
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         this.target = this.held == null ? null : target(mouseX, mouseY);
@@ -286,6 +303,10 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         this.searching = button == InputConstants.MOUSE_BUTTON_LEFT && x >= ShipDesignLayout.SEARCH_X0
                 && x < ShipDesignLayout.SEARCH_X1 && y >= ShipDesignLayout.SEARCH_Y0 && y < ShipDesignLayout.SEARCH_Y1;
         if (button == InputConstants.MOUSE_BUTTON_LEFT) {
+            if (releasable() && ShipDesignLayout.onRelease(x, y)) {
+                ShipDesigner.RELEASE.send(true);
+                return true;
+            }
             if (clickTop(x, y) || clickParts(x, y) || ShipDesignLayout.onPanel(x, y)) {
                 return true;
             }
@@ -436,7 +457,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         g.pose().scale(this.scale, this.scale, 1);
         top(g);
         partsPanel(g);
-        rightPanel(g);
+        rightPanel(g, frameX(mouseX), frameY(mouseY));
         bottom(g);
         if (this.plansOpen) {
             plans(g);
@@ -1163,8 +1184,11 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         right(g, value, ShipDesignLayout.CHOSEN_X1, y, c.text());
     }
 
-    /* The right: the flight check, the room in the hull among its lines; the ship's figures; the dock. */
-    private void rightPanel(final GuiGraphics g) {
+    /*
+     * The right: the flight check, the room in the hull among its lines; the ship's figures; the dock, the mouse at
+     * {@code mouseX, mouseY} of the frame.
+     */
+    private void rightPanel(final GuiGraphics g, final double mouseX, final double mouseY) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         ShipDesignArt.panel(g, this.font, ShipDesignLayout.RIGHT_X0, ShipDesignLayout.PANEL_Y0,
                 ShipDesignLayout.RIGHT_X1, ShipDesignLayout.PANEL_Y1, up(ShipDesignTexts.FLIGHT_CHECK),
@@ -1205,9 +1229,30 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         right(g, String.valueOf(blocks), x1, dy + 9, c.text());
         Draw.text(g, this.font, GameText.resolve(ShipDesignTexts.IN_THE_PORT), x0, dy + 20, c.dim());
         right(g, String.valueOf(held), x1, dy + 20, c.text());
-        ShipDesignArt.bar(g, x0, dy + 29, x1 - x0, blocks > 0 ? held / (double) blocks : 0, c.amber());
-        Draw.text(g, this.font, GameText.resolve(ShipDesignTexts.TO_BRING.with(Math.max(0, blocks - held))), x0,
-                dy + 36, c.amber());
+        if (!this.menu.whole()) {
+            ShipDesignArt.bar(g, x0, dy + 29, x1 - x0, blocks > 0 ? held / (double) blocks : 0, c.amber());
+            Draw.text(g, this.font, GameText.resolve(ShipDesignTexts.TO_BRING.with(Math.max(0, blocks - held))),
+                    x0, dy + 36, c.amber());
+            return;
+        }
+        // The ship whole: let go from here as from its flight console, while the dock stands closed round it; while
+        // it opens or closes, what it does stands in the button's place.
+        ShipDesignArt.bar(g, x0, dy + 29, x1 - x0, 1, c.green());
+        Draw.text(g, this.font, GameText.resolve(ShipDesignTexts.SHIP_WHOLE), x0, dy + 36, c.green());
+        final ShipyardDoors.State doors = this.menu.terminal().doors();
+        if (doors == ShipyardDoors.State.CLOSED) {
+            ShipDesignArt.wideButton(g, this.font, x0, ShipDesignLayout.RELEASE_Y0, x1, ShipDesignLayout.RELEASE_H,
+                    GameText.resolve(ShipDesignTexts.RELEASE), c.accent(), ShipDesignLayout.onRelease(mouseX,
+                            mouseY));
+        } else {
+            Draw.text(g, this.font, GameText.resolve(ShipyardDoorTexts.of(doors)), x0, ShipDesignLayout.RELEASE_Y0
+                    + 2, c.amber());
+        }
+    }
+
+    /* Whether the Release button stands on the screen: the ship whole in the dock, the dock closed round it. */
+    private boolean releasable() {
+        return this.menu.whole() && this.menu.terminal().doors() == ShipyardDoors.State.CLOSED;
     }
 
     /* The ship's figure {@code row}: its name, its value at the right, its bar under them. */
@@ -1243,9 +1288,18 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         }
         if (this.said != null && Util.getMillis() < this.saidUntil) {
             final String words = GameText.resolve(this.said);
-            final int w = ShipDesignArt.calloutWidth(this.font, words);
-            ShipDesignArt.callout(g, this.font, words, (ShipDesignLayout.MIDDLE_X0 + ShipDesignLayout.MIDDLE_X1 - w)
-                    / 2, ShipDesignLayout.SAID_Y, c.accent());
+            final int colour = this.saidColour == null ? c.accent() : this.saidColour;
+            // Words too long for the middle in the game's letters, as a shipyard's answers are, go in the small ones.
+            if (ShipDesignArt.calloutWidth(this.font, words) <= ShipDesignLayout.MIDDLE_X1
+                    - ShipDesignLayout.MIDDLE_X0) {
+                final int w = ShipDesignArt.calloutWidth(this.font, words);
+                ShipDesignArt.callout(g, this.font, words, (ShipDesignLayout.MIDDLE_X0 + ShipDesignLayout.MIDDLE_X1
+                        - w) / 2, ShipDesignLayout.SAID_Y, colour);
+            } else {
+                final int w = ShipDesignArt.smallCalloutWidth(this.font, words);
+                ShipDesignArt.smallCallout(g, this.font, words, (ShipDesignLayout.MIDDLE_X0
+                        + ShipDesignLayout.MIDDLE_X1 - w) / 2, ShipDesignLayout.SAID_Y, colour);
+            }
         }
     }
 
@@ -1687,6 +1741,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     private void say(final Text text) {
         this.said = text;
+        this.saidColour = null;
         this.saidUntil = Util.getMillis() + SAID_MILLIS;
     }
 

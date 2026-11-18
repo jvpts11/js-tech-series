@@ -122,7 +122,9 @@ grows, the yard's booth and the hangar's control room get **a place for a comput
 Computer runs AeroCAD and the other programs of the building, and J's Core's **network port** in the wall, which joins
 that computer to the network; both are optional places of the structure ([J's Computers](computers.md)).
 
-A ship built whole leaves the dock when its pilot uses its flight console, and the dock opens round it first, its
+A ship built whole leaves the dock when its pilot uses its flight console, or presses Release ship on the Starship
+Design screen, under the dock's lines, which shows once the ship stands whole in the closed dock and gives way to
+what the dock does as it moves; either way the dock opens round it first, its
 crane and its floor real moving structures of J's Core's kit: the crane rolls back along its rails to the back of the
 bay, in about three seconds; then the ship's gear comes down and the floor rises three blocks to the level of the
 ground outside, in about five, to meet its gear, the cradle still holding the ship; and only then do the cradle's rams

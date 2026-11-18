@@ -273,6 +273,11 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         return true;
     }
 
+    /** Whether the ship planned in its dock stands whole with its flight console, as it must to go. */
+    public boolean whole() {
+        return whole(why -> { });
+    }
+
     /** The design on its builder's screen. */
     public ShipDesign design() {
         final ShipDesign kept = this.design.get();

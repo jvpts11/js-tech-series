@@ -44,6 +44,8 @@ public final class SpacePayloads {
     };
     private static volatile IShipPulseReceiver shipPulseReceiver = jump -> {
     };
+    private static volatile IShipyardSaidReceiver shipyardSaidReceiver = said -> {
+    };
 
     private SpacePayloads() {
     }
@@ -67,6 +69,8 @@ public final class SpacePayloads {
                             payload.on())));
             registrar.playToClient(ShipPulsePayload.TYPE, ShipPulsePayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> shipPulseReceiver.receive(payload)));
+            registrar.playToClient(ShipyardSaidPayload.TYPE, ShipyardSaidPayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> shipyardSaidReceiver.receive(payload)));
             registrar.playToServer(ShipHelmKeysPayload.TYPE, ShipHelmKeysPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> {
                         if (context.player() instanceof ServerPlayer player) {
@@ -119,6 +123,11 @@ public final class SpacePayloads {
         shipPulseReceiver = receiver;
     }
 
+    /** Gives what a player's game does with what a shipyard said to its builder's screen, from its side's entry. */
+    public static void onShipyardSaid(final IShipyardSaidReceiver receiver) {
+        shipyardSaidReceiver = receiver;
+    }
+
     /** What a player's game does with the Overworld's map number. */
     @FunctionalInterface
     public interface IMapSeedReceiver {
@@ -159,5 +168,12 @@ public final class SpacePayloads {
     public interface IShipPulseReceiver {
 
         void receive(ShipPulsePayload jump);
+    }
+
+    /** What a player's game does with what a shipyard said to its builder's screen. */
+    @FunctionalInterface
+    public interface IShipyardSaidReceiver {
+
+        void receive(ShipyardSaidPayload said);
     }
 }

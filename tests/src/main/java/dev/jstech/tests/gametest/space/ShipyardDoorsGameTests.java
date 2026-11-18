@@ -26,10 +26,13 @@ import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipSequence;
 import dev.jstech.space.ship.SmallShipParts;
+import dev.jstech.space.shipyard.ShipDesignMenu;
+import dev.jstech.space.shipyard.ShipDesigner;
 import dev.jstech.space.shipyard.ShipyardBlocks;
 import dev.jstech.space.shipyard.ShipyardDoors;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.ArrayList;
@@ -44,6 +47,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -96,6 +100,8 @@ public final class ShipyardDoorsGameTests {
     /* How far a ship standing still may seem to move, in blocks; how many structures a pilot is given at most. */
     private static final double STILL = 0.1;
     private static final int MOST_TAKEN = 1000;
+    /* Half a block: a player set on the middle of the terminal's block, to use its screen. */
+    private static final double HALF = 0.5;
     /* How long it opens, at the least, in ticks: its crane's seconds and its floor's. */
     private static final long OPENS_IN = (long) ((ShipyardDoors.CRANE_SECONDS + ShipyardDoors.FLOOR_SECONDS) * 20);
     private static final ShipDesign WHEELS = new ShipDesign("JS-02", List.of(part("orbiter_cockpit"),
@@ -340,6 +346,65 @@ public final class ShipyardDoorsGameTests {
                             .mapToInt(item -> item.getItem().getCount()).sum();
                     helper.assertTrue(dropped == cradle, "broken halfway, it drops its cradle: " + dropped + " of "
                             + cradle);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * The builder screen's Release button lets the ship built whole go as its flight console does: its menu says the
+     * ship is whole, and its call opens the dock round it, which lets the ship go on its gear.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void release_theDesignScreensButtonLetsAWholeShipGo(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        built(helper, terminal, WHEELS, new int[1])
+                .thenExecute(() -> {
+                    final ServerPlayer pilot = GameTestPlayers.connected(helper, "release-pilot");
+                    try {
+                        pilot.teleportTo(level, terminal.getX() + HALF, terminal.getY() + 1, terminal.getZ() + HALF,
+                                0, 0);
+                        ShipDesigner.open(pilot, dock(level, terminal));
+                        helper.assertTrue(pilot.containerMenu instanceof ShipDesignMenu menu && menu.whole(),
+                                "its builder's screen says the ship is whole");
+                        helper.assertTrue(ShipDesigner.RELEASE.receive(pilot, true), "its Release is taken");
+                        helper.assertTrue(dock(level, terminal).doors() != ShipyardDoors.State.CLOSED, "the dock"
+                                + " opens round the ship: " + dock(level, terminal).doors());
+                    } finally {
+                        pilot.closeContainer();
+                        GameTestPlayers.leave(pilot);
+                    }
+                })
+                .thenWaitUntil(() -> helper.assertTrue(shipIn(level, terminal) != null, "and lets the ship go"))
+                .thenExecute(() -> MovingStructures.takeAway(shipIn(level, terminal)))
+                .thenSucceed();
+    }
+
+    /* A ship sent to the dock, not yet built whole: the screen's menu says it is not, and its Release opens nothing. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void release_aShipNotYetWholeIsNotLetGo(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).formed(), "the dock forms"))
+                .thenExecute(() -> {
+                    final ShipyardTerminalBlockEntity dock = dock(level, terminal);
+                    dock.design(WHEELS);
+                    helper.assertTrue(dock.confirm(), "the ship is sent");
+                    final ServerPlayer pilot = GameTestPlayers.connected(helper, "release-early");
+                    try {
+                        pilot.teleportTo(level, terminal.getX() + HALF, terminal.getY() + 1, terminal.getZ() + HALF,
+                                0, 0);
+                        ShipDesigner.open(pilot, dock);
+                        helper.assertTrue(pilot.containerMenu instanceof ShipDesignMenu menu && !menu.whole(),
+                                "its builder's screen says the ship is not whole yet");
+                        ShipDesigner.RELEASE.receive(pilot, true);
+                        helper.assertTrue(dock.doors() == ShipyardDoors.State.CLOSED, "its Release opens nothing: "
+                                + dock.doors());
+                    } finally {
+                        pilot.closeContainer();
+                        GameTestPlayers.leave(pilot);
+                    }
                 })
                 .thenSucceed();
     }

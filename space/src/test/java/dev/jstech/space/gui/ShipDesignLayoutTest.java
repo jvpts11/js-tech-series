@@ -55,6 +55,15 @@ class ShipDesignLayoutTest {
     }
 
     @Test
+    void layout_setsTheReleaseButtonUnderTheDocksLinesInsideItsPanel() {
+        assertTrue(ShipDesignLayout.DOCK_Y + 36 + 9 < ShipDesignLayout.RELEASE_Y0);
+        assertTrue(ShipDesignLayout.RELEASE_Y0 + ShipDesignLayout.RELEASE_H < ShipDesignLayout.PANEL_Y1);
+        assertTrue(ShipDesignLayout.onRelease((ShipDesignLayout.INNER_X0 + ShipDesignLayout.INNER_X1) / 2.0,
+                ShipDesignLayout.RELEASE_Y0 + 1));
+        assertFalse(ShipDesignLayout.onRelease(ShipDesignLayout.INNER_X0 - 1, ShipDesignLayout.RELEASE_Y0 + 1));
+    }
+
+    @Test
     void layout_keepsTheToolsAndTheChosenOnesNameInTheTop() {
         assertTrue(ShipDesignLayout.toolX(ShipDesignLayout.TOOLS - 1) + ShipDesignLayout.TOOL_W
                 < ShipDesignLayout.MIDDLE_X1);
