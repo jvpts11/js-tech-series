@@ -2270,6 +2270,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   out its whole model's dents again, and every block broken or sent to the players was weighed against its shape
   anew. A ship let fall from the physics tool took up to half a second a tick as it broke; now at most about a
   seventh, half as long on average.
+- The hazard map's tabs no longer cut their names short: a tab too narrow for a hazard's whole name shows its
+  short one, the whole in its tooltip.
 - The physics tool's grip holds any moving structure, however heavy, as Garry's Mod's physics gun does: a
   ship, a full rocket, a cart alike, carried where the player looks. Its grip pulled with at most 600 kN, 240 kN as it
   comes, so a small ship sank out of it and could not be freed; its strength now sets only how hard it pushes.

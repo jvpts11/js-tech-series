@@ -13,6 +13,7 @@ import dev.jstech.core.client.hazard.HazardMapsClient;
 import dev.jstech.core.client.hazard.HazardsClient;
 import dev.jstech.core.client.hud.HudElements;
 import dev.jstech.core.gui.HudStack;
+import dev.jstech.core.hazard.HazardKind;
 import dev.jstech.core.hazard.HazardMaps;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.Lungs;
@@ -30,9 +31,13 @@ import dev.jstech.core.jstechseries.hazard.client.HeldDeviceScreen;
 import dev.jstech.tests.TestHazards;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -58,6 +63,13 @@ public final class HazardDevicesClientTests {
     /* Long enough for the map device to draw the land round the player. */
     private static final int LAND = 60;
     private static final int READ_ROUND = 4;
+    /* Land far from every test that pollutes, walked a chunk at a time, a reading a chunk. */
+    private static final BlockPos CLEAN = new BlockPos(480, 2, 480);
+    private static final int CHUNK = 16;
+    private static final int CHUNKS_WALKED = 5;
+    private static final int READ_EVERY = 30;
+    /* How much of a button's width its name may not take, the game leaving a margin each side. */
+    private static final int BUTTON_TEXT_MARGIN = 4;
 
     private HazardDevicesClientTests() {
     }
@@ -176,6 +188,49 @@ public final class HazardDevicesClientTests {
                         SeriesPollution.SOOT, 450))
                 .thenWaitUntil(() -> SmogClient.thickness() > 0.3, WAIT, "the haze of the soot")
                 .thenScreenshot(SETTLE * 2, "smog");
+    }
+
+    /*
+     * Walking land nothing has polluted with the hazard map in hand, the chunks crossed are read and none is coloured:
+     * the smog, the acid and the metals of a clean world read as normal on its map.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void map_cleanLandReadsNormalAsItIsWalked(final ClientTestContext ctx) {
+        final List<Long> crossed = new ArrayList<>();
+        ctx.afterTest(() -> ctx.server().execute(() -> ctx.give(0, ItemStack.EMPTY)));
+        ctx.thenServer(0, level -> ctx.give(0, new ItemStack(HazardDevices.HAZARD_MAP.get())))
+                .then(0, () -> ctx.selectHotbar(0));
+        for (int step = 0; step < CHUNKS_WALKED; step++) {
+            final BlockPos at = CLEAN.east(step * CHUNK);
+            ctx.thenTeleport(0, at, Direction.EAST)
+                    .then(READ_EVERY, () -> crossed.add(new ChunkPos(ctx.player().blockPosition()).toLong()));
+        }
+        ctx.thenWaitUntil(() -> HazardMapsClient.known(SeriesPollution.SMOG.id()) >= CHUNKS_WALKED, WAIT,
+                "the map's readings of the chunks crossed to reach the player's game")
+                .thenAssert(0, () -> crossed.stream().allMatch(chunk -> Stream.of(SeriesPollution.SMOG,
+                        SeriesPollution.ACID_AIR, SeriesPollution.METALS_GROUND).allMatch(kind ->
+                        HazardMapsClient.reading(kind.id(), chunk).map(reading -> kind.mapStep(reading.value()) < 0)
+                                .orElse(true))), "no chunk crossed is coloured: " + readings(crossed))
+                .then(0, () -> use(ctx))
+                .thenAwaitScreen(HazardMapScreen.class, WAIT)
+                .thenAssert(SETTLE, () -> ctx.screen(HazardMapScreen.class).children().stream()
+                        .filter(child -> child instanceof Button).map(child -> (Button) child)
+                        .allMatch(button -> ctx.mc().font.width(button.getMessage()) <= button.getWidth()
+                                - BUTTON_TEXT_MARGIN), "every tab's name fits it, whole")
+                .thenScreenshot(LAND, "clean_map");
+    }
+
+    /* What the map holds of the smog, the acid and the metals of {@code chunks}, for a failure. */
+    private static String readings(final List<Long> chunks) {
+        final StringBuilder out = new StringBuilder();
+        for (final long chunk : chunks) {
+            for (final HazardKind kind : List.of(SeriesPollution.SMOG, SeriesPollution.ACID_AIR,
+                    SeriesPollution.METALS_GROUND)) {
+                HazardMapsClient.reading(kind.id(), chunk).ifPresent(reading -> out.append(kind.id().getPath())
+                        .append('@').append(new ChunkPos(chunk)).append('=').append(reading.value()).append(' '));
+            }
+        }
+        return out.toString();
     }
 
     /* Whether the body's screen shows the component the file named {@code id}. */

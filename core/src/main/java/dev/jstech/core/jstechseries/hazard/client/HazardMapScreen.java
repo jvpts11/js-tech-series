@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -62,6 +63,8 @@ public final class HazardMapScreen extends Screen {
     private static final int LEGEND_WIDTH = 116;
     private static final int TAB_WIDTH = 74;
     private static final int MIN_TAB_WIDTH = 30;
+    /* How much of a tab's width its name may not take: the game leaves a margin each side of a button's name. */
+    private static final int TAB_TEXT_MARGIN = 4;
     private static final int TAB_HEIGHT = 20;
     private static final int TABS_Y = 26;
     private static final int DONE_WIDTH = 90;
@@ -220,7 +223,11 @@ public final class HazardMapScreen extends Screen {
                 - 4));
         for (int i = 0; i < kinds.size(); i++) {
             final HazardKind kind = kinds.get(i);
-            final Button tab = Button.builder(GameText.component(kind.name()), pressed -> show(kind))
+            // A name too long for its tab gives way to its short one, the whole name told when the tab is pointed at.
+            final Component name = GameText.component(kind.name());
+            final Component label = this.font.width(name) <= this.tabWidth - TAB_TEXT_MARGIN ? name
+                    : GameText.component(kind.shortName());
+            final Button tab = Button.builder(label, pressed -> show(kind)).tooltip(Tooltip.create(name))
                     .bounds(MARGIN + i * (this.tabWidth + 4), TABS_Y - 4, this.tabWidth, TAB_HEIGHT).build();
             tab.active = shown.map(found -> found != kind).orElse(true);
             this.addRenderableWidget(tab);
