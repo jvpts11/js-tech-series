@@ -6,11 +6,11 @@ covers: [jsc:mask_blank]
 ---
 # Writing a mask
 
-A Lithography Station exposes each layer of a wafer through a mask, and a mask is never used up: one mask serves every wafer of its chip. Every mask is written on a Mask Blank, a mask plate from the Optical Polisher with a chromium nugget laid on it in the Deposition Chamber.
+A Lithography Station exposes each layer of a wafer through a mask, and a mask is never used up: you write one mask and it serves every wafer of its chip. Every mask is written on a Mask Blank, a mask plate from the Optical Polisher with a chromium nugget laid on it in the Deposition Chamber.
 
 The Vintage station writes its masks by photo-reduction: put a blank and the chip's Layout in it, and it gives the mask, the Layout used up.
 
-From the Legacy on, the computer linked to the station writes the mask, with Midsoft Lithography.
+From the Legacy on, you write the mask from the computer linked to the station, with Midsoft Lithography.
 
 > [!DEFINE] Midsoft Lithography
 > The program of a computer linked to a Lithography Station from the Legacy on: it shows the station and writes its masks. On MC-DOS and MC-NET it takes the whole screen; on a desktop it is a window.

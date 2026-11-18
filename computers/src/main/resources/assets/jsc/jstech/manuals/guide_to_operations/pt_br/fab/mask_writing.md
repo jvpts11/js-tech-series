@@ -6,11 +6,11 @@ covers: [jsc:mask_blank]
 ---
 # Gravar uma máscara
 
-Uma Estação de Litografia expõe cada camada de um wafer por uma máscara, e uma máscara nunca se gasta: uma máscara serve a todo wafer do seu chip. Toda máscara é gravada numa Máscara Virgem, uma placa de máscara da Polidora Óptica com uma pepita de cromo depositada nela na Câmara de Deposição.
+Uma Estação de Litografia expõe cada camada de um wafer por uma máscara, e uma máscara nunca se gasta: você grava uma máscara e ela serve a todo wafer do seu chip. Toda máscara é gravada numa Máscara Virgem, uma placa de máscara da Polidora Óptica com uma pepita de cromo depositada nela na Câmara de Deposição.
 
 A estação Vintage grava as suas máscaras por fotorredução: ponha nela uma máscara virgem e o Layout do chip, e ela dá a máscara, gastando o Layout.
 
-Da Legacy em diante, quem grava a máscara é o computador ligado à estação, com o Midsoft Lithography.
+Da Legacy em diante, você grava a máscara pelo computador ligado à estação, com o Midsoft Lithography.
 
 > [!DEFINE] Midsoft Lithography
 > O programa de um computador ligado a uma Estação de Litografia da Legacy em diante: mostra a estação e grava as suas máscaras. No MC-DOS e no MC-NET ocupa a tela inteira; num desktop é uma janela.
