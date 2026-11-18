@@ -210,8 +210,8 @@ public class MiningComputerBlock extends AbstractBigBlock implements IFaceConnec
     }
 
     /**
-     * A click with an empty hand on the rig at {@code origin}: sneaking at a seated card takes it off, the rig off;
-     * anything else opens the assembly screen.
+     * A click with an empty hand on the rig at {@code origin}: at a seated card, sneaking takes it off, the rig off,
+     * and a click without sneaking tells how; anywhere else it opens the assembly screen.
      */
     static InteractionResult useAt(final Level level, final BlockPos origin, final Player player) {
         if (level.isClientSide() || !(player instanceof ServerPlayer serverPlayer)
@@ -219,10 +219,11 @@ public class MiningComputerBlock extends AbstractBigBlock implements IFaceConnec
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
         MachineOperators.note(rig, player);
-        final int riser = player.isShiftKeyDown()
-                ? aimedRiser(level, origin, player.getEyePosition(), reach(player)) : -1;
+        final int riser = aimedRiser(level, origin, player.getEyePosition(), reach(player));
         if (riser >= 0 && !rig.cardOn(riser).isEmpty()) {
-            if (!rig.switchedOff()) {
+            if (!player.isShiftKeyDown()) {
+                player.displayClientMessage(GameText.component(MiningComputerTexts.TAKE_OFF.with(riser + 1)), true);
+            } else if (!rig.switchedOff()) {
                 player.displayClientMessage(GameText.component(MiningComputerTexts.SWITCH_OFF_FIRST), true);
             } else {
                 final ItemStack card = rig.unseat(riser);

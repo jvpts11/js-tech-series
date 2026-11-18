@@ -15,7 +15,6 @@ import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.text.Text;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderType;
@@ -33,8 +32,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A look at a Mining Computer's risers (computers/docs/design/teracoin.md): with a graphics card in hand at a free
  * riser, or with an empty hand at a seated card, the riser's place is outlined, as the parts standing out of a device
- * are, and the bar over the hotbar says what a click there does. The risers stand inside the rig's blocks, where the
- * game's own aim never reaches, so the look is followed through them.
+ * are, and with a card in hand the bar over the hotbar says where it goes; how to take a seated card off is told only
+ * on a click at it. The risers stand inside the rig's blocks, where the game's own aim never reaches, so the look is
+ * followed through them.
  */
 public final class RigAim {
 
@@ -59,31 +59,30 @@ public final class RigAim {
         final Vec3 eye = player.getEyePosition(minecraft.getTimer().getGameTimeDeltaPartialTick(true));
         final Vec3 end = eye.add(player.getViewVector(1.0F).scale(player.blockInteractionRange()));
         final int riser = MiningComputerBlock.aimedRiser(minecraft.level, origin, eye, end);
-        final Text hint = riser < 0 ? null : hint(rig, riser, player.getMainHandItem());
-        if (hint == null) {
+        final ItemStack held = player.getMainHandItem();
+        if (riser < 0 || !worksOn(rig, riser, held)) {
             return;
         }
         final AABB place = MiningComputerBlock.riserPlace(origin, rig.facing(), rig.rigEra(), riser);
         final Vec3 camera = event.getCamera().getPosition();
         ButtonOutline.draw(event.getPoseStack(), event.getMultiBufferSource().getBuffer(RenderType.lines()),
                 place.move(-camera.x, -camera.y, -camera.z));
-        minecraft.gui.setOverlayMessage(GameText.component(hint), false);
+        // A card in hand is told where it goes; how to take a seated card off is told only on a click at it.
+        if (seats(rig, riser, held)) {
+            minecraft.gui.setOverlayMessage(GameText.component(MiningComputerTexts.SEAT_ON.with(
+                    GameText.of(held.getHoverName()), riser + 1)), false);
+        }
         event.setCanceled(true);
     }
 
-    /* What a click on riser {@code riser} with {@code held} would do, or nothing when it would do nothing there. */
-    @Nullable
-    private static Text hint(final MiningComputerBlockEntity rig, final int riser, final ItemStack held) {
-        if (!rig.hasRiser(riser)) {
-            return null;
-        }
-        if (HardwareRegistry.card(held) instanceof GpuSpec && rig.cardPart(riser) == null) {
-            return MiningComputerTexts.SEAT_ON.with(GameText.of(held.getHoverName()), riser + 1);
-        }
-        if (held.isEmpty() && rig.cardPart(riser) != null) {
-            return MiningComputerTexts.TAKE_OFF.with(riser + 1);
-        }
-        return null;
+    /* Whether a click on riser {@code riser} with {@code held} does something there: seats a card, or takes one off. */
+    private static boolean worksOn(final MiningComputerBlockEntity rig, final int riser, final ItemStack held) {
+        return seats(rig, riser, held) || rig.hasRiser(riser) && held.isEmpty() && rig.cardPart(riser) != null;
+    }
+
+    /* Whether {@code held} is a graphics card that a click seats on the free riser {@code riser}. */
+    private static boolean seats(final MiningComputerBlockEntity rig, final int riser, final ItemStack held) {
+        return rig.hasRiser(riser) && HardwareRegistry.card(held) instanceof GpuSpec && rig.cardPart(riser) == null;
     }
 
     /* The origin of the rig whose block the look landed on, or none for a block of something else. */

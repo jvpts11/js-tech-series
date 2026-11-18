@@ -982,6 +982,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- A mining rig's riser no longer tells how to take its card off whenever the player looks at it: the hint
+  shows when a click without sneaking finds a card seated there, which a sneaking click with an empty hand takes off.
 - Fluorspar is good for something as it is mined: the Crusher crushes its ore, in any rock, or raw
   fluorspar into 2 fluorspar dust, the dust the chain's hydrofluoric acid, liquid crystal and calcium fluoride take,
   with a fluorspar crystal one time in ten. Nothing took the ore or the raw before, so a recipe viewer showed no use

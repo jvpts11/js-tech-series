@@ -7,8 +7,10 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.block.MiningComputerBlock;
 import dev.jstech.computers.block.MiningComputerTexts;
 import dev.jstech.computers.blockentity.AsicBlockEntity;
 import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
@@ -27,19 +29,29 @@ import dev.jstech.computers.teracoin.TeracoinSettings;
 import dev.jstech.computers.teracoin.TeracoinState;
 import dev.jstech.computers.teracoin.Trc;
 import dev.jstech.computers.teracoin.WalletFiles;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.time.GameCalendar;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.random.RandomGenerator;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -63,6 +75,9 @@ public final class TeracoinGameTests {
     private static final int ONE_ITEM = 400;
     /* What a Forge A2 takes from the line each tick, and more. */
     private static final int ENERGY_A_TICK = 1_000;
+    /* A player's eye over a riser's card, how far above it, looking straight down at it, in degrees. */
+    private static final double ABOVE_THE_CARD = 1.5;
+    private static final float LOOKING_DOWN = 90;
     private static final RandomGenerator RANDOM = RandomGenerator.getDefault();
 
     private TeracoinGameTests() {
@@ -242,6 +257,40 @@ public final class TeracoinGameTests {
                 == MiningComputerTexts.RISER_TAKEN, "a riser carries one card");
         helper.assertTrue(rig.unseat(0).is(HardwareItems.GPU_VERTEX_7600_GT.get()) && rig.seatedCards() == 0,
                 "and gives it back, the rig off");
+        helper.succeed();
+    }
+
+    /*
+     * A click with an empty hand at a seated card, not sneaking, leaves the card where it is and tells how to take it
+     * off; sneaking, the rig off, the card comes off into the player's inventory.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void miningComputer_aClickAtASeatedCardTellsHowASneakTakesItOff(final GameTestHelper helper) {
+        helper.setBlock(MACHINE, ComputingModule.MINING_COMPUTER_TRANSITION.get());
+        final MiningComputerBlockEntity rig = (MiningComputerBlockEntity) helper.getBlockEntity(MACHINE);
+        rig.getHardware().setStackInSlot(MiningComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_MNG_TRANSITION.get()));
+        rig.risers().setStackInSlot(0, new ItemStack(HardwareItems.MINING_RISER_TRANSITION.get()));
+        rig.seat(0, new ItemStack(HardwareItems.GPU_VERTEX_7600_GT.get()));
+        final BlockPos origin = helper.absolutePos(MACHINE);
+        final Vec3 card = MiningComputerBlock.riserPlace(origin, rig.facing(), rig.rigEra(), 0).getCenter();
+        final List<String> told = new ArrayList<>();
+        final Player player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "riser-test")) {
+            @Override
+            public void displayClientMessage(final Component message, final boolean overHotbar) {
+                told.add(message.getString());
+            }
+        };
+        player.moveTo(card.x, card.y + ABOVE_THE_CARD - player.getEyeHeight(), card.z, 0, LOOKING_DOWN);
+        final BlockHitResult hit = new BlockHitResult(card, Direction.UP, origin, false);
+        helper.getLevel().getBlockState(origin).useWithoutItem(helper.getLevel(), player, hit);
+        helper.assertTrue(told.contains(GameText.component(MiningComputerTexts.TAKE_OFF.with(1)).getString()),
+                "a click without sneaking tells how to take the card off: " + told);
+        helper.assertTrue(rig.cardOn(0).is(HardwareItems.GPU_VERTEX_7600_GT.get()), "and leaves the card seated");
+        player.setShiftKeyDown(true);
+        helper.getLevel().getBlockState(origin).useWithoutItem(helper.getLevel(), player, hit);
+        helper.assertTrue(rig.cardOn(0).isEmpty() && player.getInventory().contains(new ItemStack(
+                HardwareItems.GPU_VERTEX_7600_GT.get())), "sneaking, the card comes off into the inventory");
         helper.succeed();
     }
 

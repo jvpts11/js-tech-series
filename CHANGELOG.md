@@ -4370,6 +4370,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   out its whole model's dents again, and every block broken or sent to the players was weighed against its shape
   anew. A ship let fall from the physics tool took up to half a second a tick as it broke; now at most about a
   seventh, half as long on average.
+- (Computers) A mining rig's riser no longer tells how to take its card off whenever the player looks at it: the hint
+  shows when a click without sneaking finds a card seated there, which a sneaking click with an empty hand takes off.
 - (Space) A small ship let go to its physics, as when the physics tool grabs it or it falls, weighs what its parts
   weigh, as it does in flight: its blocks had no weight of their own and weighed as stone, a small ship of 40 tonnes
   nearly 500 under the grip, falling and striking as hard. Each block of a starship's kit now carries its share of its
