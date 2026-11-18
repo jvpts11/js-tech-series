@@ -4362,6 +4362,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A small ship let go to its physics, as when the physics tool grabs it or it falls, weighs what its parts
+  weigh, as it does in flight: its blocks had no weight of their own and weighed as stone, a small ship of 40 tonnes
+  nearly 500 under the grip, falling and striking as hard. Each block of a starship's kit now carries its share of its
+  parts' weight, as a rocket's do.
 - (Core) The physics tool's grip holds any moving structure, however heavy, as Garry's Mod's physics gun does: a
   ship, a full rocket, a cart alike, carried where the player looks. Its grip pulled with at most 600 kN, 240 kN as it
   comes, so a small ship sank out of it and could not be freed; its strength now sets only how hard it pushes.

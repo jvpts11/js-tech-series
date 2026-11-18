@@ -21,6 +21,7 @@ import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.region.Box;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.space.api.ShipPart;
@@ -159,6 +160,13 @@ public final class ShipFlightGameTests {
     private static final double CRUISING = 40;
     /* The test ship's mass, its eleven parts' sum, in kilograms; what its delta wings hold, in newtons. */
     private static final double SHIP_KILOGRAMS = 39_600;
+    /*
+     * How near its physics' mass comes to its parts': each block carries the mean of its kind's shares across the parts
+     * it stands in; how long the test's grip holds it, in ticks; half a block.
+     */
+    private static final double PARTS_WEIGHT = 0.15;
+    private static final int GRIPPED = 40;
+    private static final double HALF = 0.5;
     private static final double DELTA_NEWTONS = 400_000;
     /* How long its pilot holds up to rise, and it hovers, and holds forward on the land, in ticks. */
     private static final int RISING = 50;
@@ -259,6 +267,29 @@ public final class ShipFlightGameTests {
                     keep(helper, false, TURNING_WEST);
                 })
                 .thenSucceed();
+    }
+
+    /*
+     * A ship let go to its physics, as the physics tool's grip lets it go, weighs what its parts weigh, as it does in
+     * flight: its blocks carry its parts' masses, not a stone's.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WITH_ITS_YARD_LOADING)
+    public static void physics_aShipWeighsWhatItsPartsWeigh(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        flying(helper, ship, STRAIGHT_WEST).thenExecute(() -> {
+            final Box box = ship[0].bounds();
+            final Vec3 middle = new Vec3((box.minX() + box.maxX()) / 2.0 + HALF, (box.minY() + box.maxY()) / 2.0 + HALF,
+                    (box.minZ() + box.maxZ()) / 2.0 + HALF);
+            MovingStructures.hold(ship[0], middle, MovingStructures.toWorld(ship[0], middle),
+                    helper.getLevel().getGameTime() + GRIPPED);
+        }).thenWaitUntil(() -> helper.assertTrue(ship[0].physics() != null && ship[0].physics().mass() > 0,
+                "its physics weighs it")).thenExecute(() -> {
+                    final double mass = ship[0].physics().mass();
+                    helper.assertTrue(Math.abs(mass - SHIP_KILOGRAMS) <= SHIP_KILOGRAMS * PARTS_WEIGHT,
+                            "it weighs " + mass + " kg, its parts " + SHIP_KILOGRAMS);
+                    MovingStructures.takeAway(ship[0]);
+                    keep(helper, false, STRAIGHT_WEST);
+                }).thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)

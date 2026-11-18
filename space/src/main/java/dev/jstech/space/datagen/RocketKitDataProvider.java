@@ -17,6 +17,10 @@ import dev.jstech.space.api.RocketKit;
 import dev.jstech.space.api.RocketKits;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.api.ShipKit;
+import dev.jstech.space.api.ShipKits;
+import dev.jstech.space.api.ShipPart;
+import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPartModels;
@@ -41,7 +45,7 @@ import net.neoforged.neoforge.common.data.DataMapProvider;
  * well as its hull, whatever a world's rules say of glass and doors; so does every block of a starship's kit, its
  * pressurised hull. Each block weighs its share of the parts it is built into: a part's mass empty spread over its
  * blocks, and a block used in several parts the mean of its shares, so a structure of them weighs what the rockets'
- * sums say.
+ * and the starships' sums say.
  */
 public final class RocketKitDataProvider extends DataMapProvider {
 
@@ -80,7 +84,7 @@ public final class RocketKitDataProvider extends DataMapProvider {
                 continue;
             }
             if (kit.stretch().isEmpty()) {
-                share(summed, kit, kit.layers(), part.mass());
+                share(summed, kit.key(), kit.layers(), part.mass());
                 continue;
             }
             final List<List<List<String>>> each = new ArrayList<>();
@@ -88,12 +92,30 @@ public final class RocketKitDataProvider extends DataMapProvider {
             kit.alone().ifPresent(layer -> each.add(List.of(layer)));
             kit.foot().ifPresent(layer -> each.add(List.of(layer)));
             for (final List<List<String>> layer : each) {
-                share(summed, kit, layer, part.mass());
+                share(summed, kit.key(), layer, part.mass());
             }
         }
-        final Map<ResourceLocation, Double> masses = new LinkedHashMap<>();
-        summed.forEach((block, sum) -> masses.put(block, sum[0] / sum[1]));
-        return masses;
+        return means(summed);
+    }
+
+    /**
+     * The mass of each block of the starships' kits, in kilograms, as the rockets' are: each part's mass over all the
+     * blocks of its pieces, a block in several parts the mean over all the places it stands in them; so a ship's body
+     * weighs what its parts weigh, as its flight reckons it.
+     */
+    public static Map<ResourceLocation, Double> shipMasses(final Map<ResourceLocation, ShipPart> parts,
+                                                           final Map<ResourceLocation, ShipKit> kits) {
+        final Map<ResourceLocation, double[]> summed = new LinkedHashMap<>();
+        for (final Map.Entry<ResourceLocation, ShipKit> entry : new TreeMap<>(kits).entrySet()) {
+            final ShipPart part = parts.get(entry.getKey());
+            if (part == null) {
+                continue;
+            }
+            final List<List<String>> layers = new ArrayList<>();
+            entry.getValue().pieces().forEach(piece -> layers.addAll(piece.layers()));
+            share(summed, entry.getValue().key(), layers, part.figures().mass());
+        }
+        return means(summed);
     }
 
     @Override
@@ -115,21 +137,30 @@ public final class RocketKitDataProvider extends DataMapProvider {
                 new BlockAboard.Seat(CREW_SEAT_HEIGHT, false)), Optional.empty(), Optional.empty(), Optional.empty()),
                 false).add(ShipKitBlocks.PILOT_SEAT, ShipPartModels.PILOT, false);
         final Builder<BlockPhysics, Block> physics = builder(BlockPhysics.PHYSICS);
-        masses(RocketParts.declared(), RocketKits.declared()).forEach((id, mass) -> physics.add(
-                BuiltInRegistries.BLOCK.wrapAsHolder(BuiltInRegistries.BLOCK.get(id)),
+        final Map<ResourceLocation, Double> masses = new LinkedHashMap<>(masses(RocketParts.declared(),
+                RocketKits.declared()));
+        masses.putAll(shipMasses(ShipParts.declared(), ShipKits.declared()));
+        masses.forEach((id, mass) -> physics.add(BuiltInRegistries.BLOCK.wrapAsHolder(BuiltInRegistries.BLOCK.get(id)),
                 new BlockPhysics(Optional.of(mass), Optional.empty(), Optional.empty(), Optional.empty(),
                         Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()),
                 false));
     }
 
-    /* Spreads {@code kilograms} over the blocks of {@code layers}, adding each block's share to its sums. */
-    private static void share(final Map<ResourceLocation, double[]> summed, final RocketKit kit,
+    /* Each block's mean share, from its summed shares and the number of places they came from. */
+    private static Map<ResourceLocation, Double> means(final Map<ResourceLocation, double[]> summed) {
+        final Map<ResourceLocation, Double> masses = new LinkedHashMap<>();
+        summed.forEach((block, sum) -> masses.put(block, sum[0] / sum[1]));
+        return masses;
+    }
+
+    /* Spreads {@code kilograms} over the blocks of {@code layers}, by {@code key}, adding each block's share. */
+    private static void share(final Map<ResourceLocation, double[]> summed, final Map<String, ResourceLocation> key,
                               final List<List<String>> layers, final double kilograms) {
         final Map<ResourceLocation, Integer> counts = new LinkedHashMap<>();
         for (final List<String> layer : layers) {
             for (final String row : layer) {
                 for (int x = 0; x < row.length(); x++) {
-                    final ResourceLocation block = kit.key().get(String.valueOf(row.charAt(x)));
+                    final ResourceLocation block = key.get(String.valueOf(row.charAt(x)));
                     if (block != null) {
                         counts.merge(block, 1, Integer::sum);
                     }
@@ -141,7 +172,7 @@ public final class RocketKitDataProvider extends DataMapProvider {
             return;
         }
         counts.forEach((block, count) -> {
-            final double[] sum = summed.computeIfAbsent(block, key -> new double[2]);
+            final double[] sum = summed.computeIfAbsent(block, any -> new double[2]);
             sum[0] += kilograms / blocks * count;
             sum[1] += count;
         });

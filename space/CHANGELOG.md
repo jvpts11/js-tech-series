@@ -1010,6 +1010,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A small ship let go to its physics, as when the physics tool grabs it or it falls, weighs what its parts
+  weigh, as it does in flight: its blocks had no weight of their own and weighed as stone, a small ship of 40 tonnes
+  nearly 500 under the grip, falling and striking as hard. Each block of a starship's kit now carries its share of its
+  parts' weight, as a rocket's do.
 - A rocket's live cabin, drawn by its flight computer on the pad and in flight, shows its panels as near as it
   is to the eye: its distance was measured from where the rocket's foot is from the computer, as though from the
   world's middle, so far from it the panels were left blank.
