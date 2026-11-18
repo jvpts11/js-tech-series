@@ -55,6 +55,15 @@ public final class MovingStructureJointGameTests {
     private static final String TALL = "tall";
     private static final String BATCH = "jscore_moving_joints";
     private static final double HOLDS = 0.03;
+    /*
+     * A drive's and a winch's travel, waited for rather than counted in ticks: a dimension whose physics took its
+     * share of a tick has a structure wait that tick, so a busy server only slows them. A hair short of a metre, and
+     * the fewest ticks a hair short of a metre takes at half a metre a second, as it can go no faster; how near two
+     * metres a reeled rope comes.
+     */
+    private static final double A_METRE = 0.95;
+    private static final int TWO_SECONDS = 38;
+    private static final double REELED_CLOSE = 0.05;
     private static final double GRAVITY = 9.81;
 
     private MovingStructureJointGameTests() {
@@ -218,17 +227,25 @@ public final class MovingStructureJointGameTests {
                 StructureJoints.Anchor.world(top.add(0, 4, 0), new Vec3(0, 1, 0)), Optional.empty());
         crate.move(PhysicsMotion.AT_REST);
         final double start = crate.worldBox().minY;
+        final long[] started = new long[1];
         // Timed from when it moves: a structure whose plot of the yard is still loading moves only once it is ready.
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(crate.ready(), "the crate is ready"))
                 .thenExecuteAfter(10, () -> helper.assertTrue(Math.abs(crate.worldBox().minY - start) < HOLDS,
                         "with no signal, the winch holds it where it hangs: " + crate.worldBox()))
-                .thenExecute(() -> level.setBlock(switchAt.above(), Blocks.REDSTONE_BLOCK.defaultBlockState(), 3))
-                .thenExecuteAfter(40, () -> {
+                .thenExecute(() -> {
+                    level.setBlock(switchAt.above(), Blocks.REDSTONE_BLOCK.defaultBlockState(), 3);
+                    started[0] = helper.getTick();
+                })
+                .thenWaitUntil(() -> {
                     final StructureJoint now = StructureJoints.byId(level, rope.id());
                     helper.assertTrue(now != null && now.kind() instanceof JointKind.Rope reeled
-                                    && Math.abs(reeled.length() - 2) < 0.15,
-                            "two seconds at a metre a second reel the rope in to two metres: " + now);
+                            && reeled.length() <= 2 + REELED_CLOSE, "the signal reels the rope in to two metres: "
+                            + now);
+                })
+                .thenExecute(() -> {
+                    helper.assertTrue(helper.getTick() - started[0] >= TWO_SECONDS - 2, "no faster than a metre a"
+                            + " second: two metres in " + (helper.getTick() - started[0]) + " ticks");
                     helper.assertTrue(crate.worldBox().minY > start + 1.7, "and lift the crate with it: "
                             + crate.worldBox());
                     MovingStructures.takeAway(crate);
@@ -314,6 +331,7 @@ public final class MovingStructureJointGameTests {
     public static void joints_aDrivenSliderLiftsItsLoadAlongItsLine(final GameTestHelper helper) {
         final MovingStructure lift = made(helper, List.of(new BlockPos(4, 3, 4)), Blocks.STONE);
         final Vec3 base = middleOf(lift);
+        final long[] started = new long[1];
         // Timed from when it moves: a structure whose plot of the yard is still loading moves only once it is ready.
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(lift.ready(), "the lift is ready"))
@@ -323,11 +341,14 @@ public final class MovingStructureJointGameTests {
                             new Vec3(0, 1, 0)), StructureJoints.Anchor.on(lift, base, new Vec3(0, 1, 0)),
                             Optional.empty());
                     lift.move(PhysicsMotion.AT_REST);
+                    started[0] = helper.getTick();
                 })
-                .thenExecuteAfter(40, () -> {
+                .thenWaitUntil(() -> helper.assertTrue(middleOf(lift).y - base.y >= A_METRE, "it rises a metre: "
+                        + (middleOf(lift).y - base.y)))
+                .thenExecute(() -> {
                     final Vec3 now = middleOf(lift);
-                    helper.assertTrue(Math.abs(now.y - base.y - 1.0) < 0.1, "two seconds at half a metre a second"
-                            + " lift it a metre: " + (now.y - base.y));
+                    helper.assertTrue(helper.getTick() - started[0] >= TWO_SECONDS, "no faster than half a metre a"
+                            + " second: a metre in " + (helper.getTick() - started[0]) + " ticks");
                     helper.assertTrue(Math.abs(now.x - base.x) < HOLDS && Math.abs(now.z - base.z) < HOLDS,
                             "along its line: " + now + " from " + base);
                     helper.assertTrue(lift.pose().angleTo(StructurePose.at(0, 0, 0)) < 0.01, "not turning: "
@@ -344,6 +365,7 @@ public final class MovingStructureJointGameTests {
         final Vec3 base = middleOf(lift);
         final JointKind.Drive drive = new JointKind.Drive(0.5, 1.0e6, Optional.empty(), Optional.of(new JointSignal(
                 JointSignal.Side.A, helper.absolutePos(new BlockPos(6, 2, 6)), BlockPhysics.SignalSide.ANY)));
+        final long[] started = new long[1];
         // Timed from when it moves: a structure whose plot of the yard is still loading moves only once it is ready.
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(lift.ready(), "the lift is ready"))
@@ -352,11 +374,13 @@ public final class MovingStructureJointGameTests {
                             Optional.of(drive)), StructureJoints.Anchor.world(base, new Vec3(0, 1, 0)),
                             StructureJoints.Anchor.on(lift, base, new Vec3(0, 1, 0)), Optional.empty());
                     lift.move(PhysicsMotion.AT_REST);
+                    started[0] = helper.getTick();
                 })
-                .thenExecuteAfter(40, () -> {
-                    final double rose = middleOf(lift).y - base.y;
-                    helper.assertTrue(Math.abs(rose - 1.0) < 0.1, "two seconds at half a metre a second lift it a"
-                            + " metre: " + rose);
+                .thenWaitUntil(() -> helper.assertTrue(middleOf(lift).y - base.y >= A_METRE, "it drives up, forward:"
+                        + " " + (middleOf(lift).y - base.y)))
+                .thenExecute(() -> {
+                    helper.assertTrue(helper.getTick() - started[0] >= TWO_SECONDS, "at half a metre a second, its"
+                            + " full speed: a metre in " + (helper.getTick() - started[0]) + " ticks");
                     MovingStructures.takeAway(lift);
                 })
                 .thenSucceed();
