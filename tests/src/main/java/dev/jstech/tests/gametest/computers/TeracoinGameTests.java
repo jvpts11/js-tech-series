@@ -25,6 +25,7 @@ import dev.jstech.computers.teracoin.AutoPrints;
 import dev.jstech.computers.teracoin.FoundBlock;
 import dev.jstech.computers.teracoin.MiningPools;
 import dev.jstech.computers.teracoin.TeracoinChain;
+import dev.jstech.computers.teracoin.TeracoinRules;
 import dev.jstech.computers.teracoin.TeracoinSettings;
 import dev.jstech.computers.teracoin.TeracoinState;
 import dev.jstech.computers.teracoin.Trc;
@@ -296,6 +297,7 @@ public final class TeracoinGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void asic_minesAloneWithItsEnergyAndPaysItsAddress(final GameTestHelper helper) {
+        startDifficulty(helper);
         helper.setBlock(MACHINE, ComputingModule.ASIC_FORGE_A2.get());
         final AsicBlockEntity asic = (AsicBlockEntity) helper.getBlockEntity(MACHINE);
         final TeracoinChain.Keys keys = TeracoinState.of(helper.getLevel().getServer()).chain()
@@ -317,6 +319,19 @@ public final class TeracoinGameTests {
                 })
                 .thenExecute(() -> helper.assertTrue(asic.found() > 0, "and counts the block it found"))
                 .thenSucceed();
+    }
+
+    /*
+     * Puts the server's one chain back at a new world's difficulty: the blocks every other test's miners found raise it
+     * for all, four times at most each ten blocks, until a lone Forge A2 can wait a long while for its first.
+     */
+    private static void startDifficulty(final GameTestHelper helper) {
+        final TeracoinState state = TeracoinState.of(helper.getLevel().getServer());
+        final TeracoinChain.Saved saved = state.chain().saved();
+        state.chain().restore(new TeracoinChain.Saved(saved.height(), TeracoinRules.START_DIFFICULTY,
+                helper.getLevel().getGameTime(), saved.halvingFrom(), saved.issued(), saved.burned(), saved.nextId(),
+                saved.balances(), saved.keys(), saved.ledger(), saved.blocks()));
+        state.setDirty();
     }
 
     /* Credits {@code units} to {@code address}, as a block found alone pays it. */
