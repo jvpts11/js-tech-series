@@ -456,7 +456,9 @@ public final class ChainMachines {
             pattern(machine);
             final ResourceLocation model = CONTENT.model("chain/" + id).file("jsmodels/chain/" + id + ".glb")
                     .formedFrom(machine.patternId()).register().id();
-            final String casing = TEXTURES + legend.get(layers.getFirst().getFirst().charAt(0));
+            // Its terminal wears the casing it is built in, as a GregTech controller; the plain one if it has none.
+            final String casing = TEXTURES + legend.values().stream().filter(ChainMachineBlocks::isCasing)
+                    .findFirst().orElse(ChainMachineBlocks.MACHINE_CASING.getId().getPath());
             final IMenuFactory<ChainMachineBlockEntity> opened = menu;
             final BlockEntry<ChainMachineTerminalBlock> terminal = CONTENT.block(machine.terminalPath(),
                             properties -> new ChainMachineTerminalBlock(properties,
@@ -465,9 +467,9 @@ public final class ChainMachines {
                     .named(english + " Terminal")
                     .properties(properties -> properties.mapColor(MapColor.METAL).strength(3.0F)
                             .sound(SoundType.METAL))
-                    .look(IBlockLook.facing(new IBlockModel.Orientable(machine.terminalPath(), casing,
-                            TEXTURES + "terminal", casing)).whileOn(ChainFormedBlock.FORMED,
-                            new IBlockModel.ParticleOnly(machine.terminalPath() + "_formed", TEXTURES + "terminal")))
+                    .look(IBlockLook.facing(new IBlockModel.Controller(machine.terminalPath(), casing,
+                            TEXTURES + "terminal")).whileOn(ChainFormedBlock.FORMED,
+                            new IBlockModel.ParticleOnly(machine.terminalPath() + "_formed", casing)))
                     .tag(BlockTags.MINEABLE_WITH_PICKAXE)
                     // Its item is drawn as the formed machine, which the recipe viewers show its recipes by too.
                     .item().itemLook(IItemLook.DRAWN_BY_ENTITY)

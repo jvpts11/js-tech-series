@@ -1,8 +1,67 @@
 {
-  "parent": "minecraft:block/orientable",
+  "parent": "minecraft:block/block",
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "cullface": "down",
+          "texture": "#casing"
+        },
+        "east": {
+          "cullface": "east",
+          "texture": "#casing"
+        },
+        "north": {
+          "cullface": "north",
+          "texture": "#casing"
+        },
+        "south": {
+          "cullface": "south",
+          "texture": "#casing"
+        },
+        "up": {
+          "cullface": "up",
+          "texture": "#casing"
+        },
+        "west": {
+          "cullface": "west",
+          "texture": "#casing"
+        }
+      },
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "faces": {
+        "north": {
+          "cullface": "north",
+          "texture": "#panel"
+        }
+      },
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ]
+    }
+  ],
+  "render_type": "minecraft:cutout",
   "textures": {
-    "front": "jsc:block/chain/machine/terminal",
-    "side": "jsc:block/chain/machine/refractory_casing",
-    "top": "jsc:block/chain/machine/refractory_casing"
+    "casing": "jsc:block/chain/machine/refractory_casing",
+    "panel": "jsc:block/chain/machine/terminal",
+    "particle": "jsc:block/chain/machine/refractory_casing"
   }
 }

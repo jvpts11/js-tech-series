@@ -671,6 +671,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Ore loose between the veins: J's Core's API is at version 72. `VeinField.knots(long, int, int, double,
   double, double)` gives the small knots of ore a chunk holds between the veins, and `VeinBalance.loose()` with
   `CoreConfigKeys.VEINS_LOOSE` how much of it the server lays. Experimental.
+- (Core) A controller in its machine's casing: J's Core's API is at version 73. `IBlockModel.Controller` draws a
+  multiblock's controller as a block of its machine: the casing on every face, and on its front a panel laid over
+  that casing, clear wherever the casing shows, so one panel serves every casing. Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -4089,6 +4092,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the Machine Terminal, a part now, and the first working block of that machine no other machine has (the Plasma
   Etcher's of an Etch Chamber), placed at the machine's terminal place it forms that machine, and broken it gives
   itself back. One Machine Terminal stood for every machine and turned back into it when broken.
+- (Computers) A chain machine's terminal, before its machine forms, is a block of the casing the machine is built
+  in, its panel set in the front of that casing: the Coke Oven's in refractory brick, the Lithography Stations' in
+  the clean room casing, a machine built of no casing in the plain Machine Casing. Its sides showed one of the
+  machine's other blocks, often an item outlet, and its front a frame of its own.
 - (Space) A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and
   seen running.
 - (Space) The Rocket Design screen counts each stage's delta-v in a vacuum, as the rocket's flight counts it, the

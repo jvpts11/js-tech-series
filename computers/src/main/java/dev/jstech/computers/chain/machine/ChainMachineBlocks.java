@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -115,6 +116,12 @@ public final class ChainMachineBlocks {
         return List.of(MACHINE_CASING, REFRACTORY_CASING, LINED_CASING, VACUUM_CASING, CLEAN_ROOM_CASING,
                 ITEM_INLET, ITEM_OUTLET, LIQUID_INLET, LIQUID_OUTLET, GAS_INLET, GAS_OUTLET, POWER_ENTRY,
                 PERIPHERAL_PORT);
+    }
+
+    /** Whether {@code id} names one of the five casings a machine is built in. */
+    public static boolean isCasing(final String id) {
+        return Stream.of(MACHINE_CASING, REFRACTORY_CASING, LINED_CASING, VACUUM_CASING, CLEAN_ROOM_CASING)
+                .anyMatch(casing -> casing.getId().getPath().equals(id));
     }
 
     /** Whether {@code id} names an entry: a block of the shape that keeps its own block while its machine stands. */

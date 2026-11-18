@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -114,6 +115,7 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
             }
             case IBlockModel.Orientable machine -> models().orientable(machine.name(), file(machine.side()),
                     file(machine.front()), file(machine.top()));
+            case IBlockModel.Controller controller -> controller(controller);
             case IBlockModel.SixFaces cube -> models().cube(cube.name(), file(cube.down()), file(cube.up()),
                     file(cube.north()), file(cube.south()), file(cube.east()), file(cube.west()))
                     .texture("particle", file(cube.particle()));
@@ -124,6 +126,23 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
     }
 
     /** A core in the middle and an arm turned toward each side the cable connects to. */
+    /*
+     * The casing as a whole cube, and the panel over its north face, the front a facing turns: drawn after the
+     * casing on the same plane, as the grass block's side lays its overlay, cut out where the panel is clear.
+     */
+    private ModelFile controller(final IBlockModel.Controller controller) {
+        final BlockModelBuilder built = models().withExistingParent(controller.name(), mcLoc("block/block"))
+                .texture("particle", file(controller.casing()))
+                .texture("casing", file(controller.casing()))
+                .texture("panel", file(controller.panel()))
+                .renderType("cutout");
+        built.element().from(0, 0, 0).to(16, 16, 16)
+                .allFaces((direction, face) -> face.texture("#casing").cullface(direction)).end();
+        built.element().from(0, 0, 0).to(16, 16, 16)
+                .face(Direction.NORTH).texture("#panel").cullface(Direction.NORTH).end().end();
+        return built;
+    }
+
     private void pipe(final Block block, final String name, final IBlockLook.Pipe pipe) {
         final ResourceLocation texture = file(pipe.texture());
         final ModelFile core = models().withExistingParent(name + "_core", file(pipe.coreParent()))

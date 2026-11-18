@@ -1,5 +1,5 @@
 {
   "textures": {
-    "particle": "jsc:block/chain/machine/terminal"
+    "particle": "jsc:block/chain/machine/machine_casing"
   }
 }

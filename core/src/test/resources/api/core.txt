@@ -3113,7 +3113,7 @@ stable 4
 10 dev.jstech.core.content.IBlockLook.Pipe  type record(String texture, String coreParent, String armParent) implements IBlockLook
 10 dev.jstech.core.content.IBlockLook.Toggle  type record(BooleanProperty property, IBlockModel on)
 32 dev.jstech.core.content.IBlockLook.Varied  type record(List<IBlockModel> models, boolean turned) implements IBlockLook
-10 dev.jstech.core.content.IBlockModel  type sealed interface permits IBlockModel.CubeAll, IBlockModel.Column, IBlockModel.BottomTop, IBlockModel.Orientable, IBlockModel.SixFaces, IBlockModel.ParticleOnly, IBlockModel.Handmade
+73 dev.jstech.core.content.IBlockModel  type sealed interface permits IBlockModel.CubeAll, IBlockModel.Column, IBlockModel.BottomTop, IBlockModel.Orientable, IBlockModel.Controller, IBlockModel.SixFaces, IBlockModel.ParticleOnly, IBlockModel.Handmade
 10 dev.jstech.core.content.IBlockModel  abstract String name()
 10 dev.jstech.core.content.IBlockModel  static IBlockModel column(String)
 10 dev.jstech.core.content.IBlockModel  static IBlockModel cubeAll(String)
@@ -3121,6 +3121,7 @@ stable 4
 10 dev.jstech.core.content.IBlockModel  static IBlockModel orientable(String, String, String, String)
 10 dev.jstech.core.content.IBlockModel.BottomTop  type record(String name, String side, String bottom, String top, String renderType) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.Column  type record(String name, String side, String end) implements IBlockModel
+73 dev.jstech.core.content.IBlockModel.Controller  type record(String name, String casing, String panel) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.CubeAll  type record(String name, String texture) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.Handmade  type record(String name) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.Orientable  type record(String name, String side, String front, String top) implements IBlockModel

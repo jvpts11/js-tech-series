@@ -538,6 +538,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Ore loose between the veins: J's Core's API is at version 72. `VeinField.knots(long, int, int, double,
   double, double)` gives the small knots of ore a chunk holds between the veins, and `VeinBalance.loose()` with
   `CoreConfigKeys.VEINS_LOOSE` how much of it the server lays. Experimental.
+- A controller in its machine's casing: J's Core's API is at version 73. `IBlockModel.Controller` draws a
+  multiblock's controller as a block of its machine: the casing on every face, and on its front a panel laid over
+  that casing, clear wherever the casing shows, so one panel serves every casing. Experimental.
 - A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from

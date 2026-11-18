@@ -22,6 +22,7 @@ public sealed interface IBlockModel
         IBlockModel.Column,
         IBlockModel.BottomTop,
         IBlockModel.Orientable,
+        IBlockModel.Controller,
         IBlockModel.SixFaces,
         IBlockModel.ParticleOnly,
         IBlockModel.Handmade {
@@ -66,6 +67,14 @@ public sealed interface IBlockModel
 
     /** A front, the same texture on the other sides, and a top: a machine that faces the way it was placed. */
     record Orientable(String name, String side, String front, String top) implements IBlockModel {
+    }
+
+    /**
+     * A multiblock's controller before its machine stands round it: its machine's casing on every face, and on its
+     * front the controller's panel laid over that casing, the panel's texture clear wherever the casing shows. One
+     * panel serves every casing, so a controller is a block of the machine it controls.
+     */
+    record Controller(String name, String casing, String panel) implements IBlockModel {
     }
 
     /** Each face its own texture, and the texture a break scatters. */
