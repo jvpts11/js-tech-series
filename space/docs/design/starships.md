@@ -81,7 +81,9 @@ standing in the cabin lets its air round it, and the helmet comes off inside. Wi
 console keeps a **small air reserve**, two hours of one crew member's oxygen as a first estimate. It tops the cabin back
 up to the sea's air as the crew breathe and the hull leaks, and an Oxygen Bottle used on the console pours into it. The
 cabin is a sealed room wherever the ship flies, in space too, and keeps its air when the ship changes dimension. A
-bunk is a respawn point only while its cabin has air.
+bunk is a respawn point only while its cabin has air. It is a bed: at night, or in a storm, a click lays the player
+down in it to pass the night, docked, landed or in flight, as long as no monster is near; by day it says it is no
+time to sleep. In space, where no night falls, it lays them down at any time.
 
 ### Building
 

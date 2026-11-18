@@ -7,10 +7,13 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import com.mojang.authlib.GameProfile;
 import dev.jstech.core.air.AirMix;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.IPlanMember;
+import dev.jstech.core.multiblock.shape.FormedPiece;
 import dev.jstech.core.multiblock.shape.FormedPlace;
+import dev.jstech.core.multiblock.shape.FormedShape;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.Room;
@@ -37,21 +40,26 @@ import dev.jstech.space.ship.SuitLockerEntity;
 import dev.jstech.space.ship.SuitLockerMenu;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.SmithingMenu;
@@ -65,6 +73,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -87,6 +96,15 @@ public final class ShipFixtureGameTests {
     private static final BlockPos HIGH_CORNER = new BlockPos(6, 4, 6);
     private static final BlockPos INSIDE = new BlockPos(4, 3, 4);
     private static final BlockPos FIXTURE = new BlockPos(3, 2, 3);
+    /* The game's midnight and noon, in ticks of its day. */
+    private static final long MIDNIGHT = 18_000;
+    private static final long NOON = 6_000;
+    /*
+     * A point of the mattress in the block under a bunk's own, and one in the bunk's own block over it, each in its
+     * block's own space.
+     */
+    private static final double[] ON_ITS_MATTRESS = {0.5, 0.6, 0.5};
+    private static final double[] OVER_IT = {0.5, 0.5, 0.5};
     private static final double ATMOSPHERE = 101.3;
     /* The suit locker's menu: its places first, then the player's main grid, then the hotbar. */
     private static final int LOCKER_PLACES = 9;
@@ -177,6 +195,84 @@ public final class ShipFixtureGameTests {
                     helper.assertTrue(!stale, "in a cabin of nitrogen it wakes no one");
                 })
                 .thenSucceed();
+    }
+
+    /*
+     * The bunk is a bed: at night a click lays its user down in it, their head at its pillow; by day it lays no one
+     * down and says why, as a bed does.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void bunk_laysItsUserDownAtNightAndByDaySaysWhyNot(final GameTestHelper helper) {
+        hut(helper);
+        helper.setBlock(FIXTURE, ShipKitBlocks.BUNK_FRAME.get());
+        SealedRooms.track(helper.getLevel(), helper.absolutePos(INSIDE));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(room(helper) != null, "the hut is a cabin"))
+                .thenExecute(() -> {
+                    final ServerLevel level = helper.getLevel();
+                    final BlockPos bunk = helper.absolutePos(FIXTURE);
+                    fill(room(helper), AirMix.NITROGEN, 0.79, AirMix.OXYGEN, 0.21);
+                    final List<Component> told = new ArrayList<>();
+                    final FakePlayer sleeper = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "sleeper")) {
+                        @Override
+                        public void displayClientMessage(final Component message, final boolean overHotbar) {
+                            told.add(message);
+                        }
+                    };
+                    sleeper.setPos(Vec3.atBottomCenterOf(helper.absolutePos(INSIDE)));
+                    final long time = level.getDayTime();
+                    final boolean atNight;
+                    final Direction lies;
+                    final boolean byDay;
+                    try {
+                        atNight = clicked(level, bunk, sleeper, MIDNIGHT)
+                                && bunk.equals(sleeper.getSleepingPos().orElse(null));
+                        lies = sleeper.getBedOrientation();
+                        sleeper.stopSleeping();
+                        byDay = clicked(level, bunk, sleeper, NOON);
+                    } finally {
+                        level.setDayTime(time);
+                        level.updateSkyBrightness();
+                        SealedRooms.untrack(level, helper.absolutePos(INSIDE));
+                    }
+                    helper.assertTrue(atNight, "at night a click lays its user down in the bunk");
+                    helper.assertTrue(lies == Direction.NORTH, "their head at its pillow, at its north end standing"
+                            + " unturned: " + lies);
+                    helper.assertTrue(!byDay && told.contains(Player.BedSleepingProblem.NOT_POSSIBLE_NOW
+                            .getMessage()), "by day it lays no one down, and says why: " + told);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * The bunk is a piece of the quarters' model: its mattress lies on the floor, in the blocks under the bunk's own,
+     * and aimed at there the bunk itself is outlined, a click on it working the bunk at its pillow's end; the bunk's
+     * own blocks, the air over it, are no piece, and formed they take no room and draw no outline of a whole block.
+     */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void bunk_isOutlinedAsTheBunkAndWorksByItsPillowsEnd(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos pos = helper.absolutePos(FIXTURE);
+        final List<FormedPlace> places = placesOf(level, SmallShipParts.id("small_quarters"),
+                ShipKitBlocks.BUNK_FRAME.get());
+        helper.assertTrue(places.size() == 2, "the quarters' bunk stands in two blocks: " + places);
+        final FormedPlace head = places.stream().min(Comparator.comparingInt(FormedPlace::z)).orElseThrow();
+        for (final FormedPlace place : places) {
+            final FormedShape shape = FormedShapes.get(level, place.model()).orElseThrow();
+            final FormedPlace under = new FormedPlace(place.model(), place.orientation(), place.x(), place.y() - 1,
+                    place.z());
+            final Optional<FormedPiece> mattress = shape.pieceAt(under, ON_ITS_MATTRESS);
+            helper.assertTrue(mattress.map(FormedPiece::name).orElse("").equals("bunk"), "aimed at its mattress in "
+                    + under + ", the bunk is the piece outlined");
+            helper.assertTrue(mattress.get().usesCell().orElse(-1) == head.cell(), "a click on it works the bunk"
+                    + " at its pillow's end, " + head);
+            helper.assertTrue(shape.pieceAt(place, OVER_IT).isEmpty(), "the air over it is no piece: " + place);
+            helper.setBlock(FIXTURE, ShipKitBlocks.BUNK_FRAME.get());
+            ((ShipFixtureBlock) ShipKitBlocks.BUNK_FRAME.get()).partFormed(level, pos, true, place);
+            helper.assertTrue(level.getBlockState(pos).getShape(level, pos).isEmpty(), "formed, its own block "
+                    + "takes no room and draws no outline: " + level.getBlockState(pos).getShape(level, pos));
+        }
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = BATCH)
@@ -332,10 +428,21 @@ public final class ShipFixtureGameTests {
                 new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
     }
 
-    /* The block of the formed model of {@code part}'s kit that {@code block} stands for there, standing north. */
+    /* The first block of the formed model of {@code part}'s kit that {@code block} stands for, standing north. */
     private static FormedPlace placeOf(final ServerLevel level, final ResourceLocation part, final Block block) {
+        final List<FormedPlace> places = placesOf(level, part, block);
+        if (places.isEmpty()) {
+            throw new IllegalStateException(block + " is not in the kit of " + part);
+        }
+        return places.getFirst();
+    }
+
+    /* Every block of the formed model of {@code part}'s kit that {@code block} stands for, standing north. */
+    private static List<FormedPlace> placesOf(final ServerLevel level, final ResourceLocation part,
+                                              final Block block) {
         final ShipKit kit = ShipKits.all(level).get(part);
         final ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+        final List<FormedPlace> out = new ArrayList<>();
         for (final ShipKit.Piece piece : kit.pieces()) {
             for (int y = 0; y < piece.layers().size(); y++) {
                 final List<String> layer = piece.layers().get(y);
@@ -343,15 +450,15 @@ public final class ShipFixtureGameTests {
                     final String row = layer.get(z);
                     for (int x = 0; x < row.length(); x++) {
                         if (id.equals(kit.key().get(String.valueOf(row.charAt(x))))) {
-                            return new FormedPlace(ShipPartModels.shape(part, kit, piece),
+                            out.add(new FormedPlace(ShipPartModels.shape(part, kit, piece),
                                     FormedShapes.ORIENTATIONS.indexOf(Orientation.NORTH), piece.x() + x,
-                                    piece.y() + y, piece.z() + z);
+                                    piece.y() + y, piece.z() + z));
                         }
                     }
                 }
             }
         }
-        throw new IllegalStateException(id + " is not in the kit of " + part);
+        return out;
     }
 
     /* A closed box of stone from LOW to HIGH_CORNER, its inside air. */
@@ -369,6 +476,19 @@ public final class ShipFixtureGameTests {
 
     private static Room room(final GameTestHelper helper) {
         return SealedRooms.roomAt(helper.getLevel(), helper.absolutePos(INSIDE)).orElse(null);
+    }
+
+    /*
+     * Whether {@code player}, clicking the bunk at {@code bunk} at {@code time} of the day, lies down in it: the sky
+     * turned to that time at once, as it turns over the next tick.
+     */
+    private static boolean clicked(final ServerLevel level, final BlockPos bunk, final Player player,
+                                   final long time) {
+        level.setDayTime(time);
+        level.updateSkyBrightness();
+        level.getBlockState(bunk).useWithoutItem(level, player, new BlockHitResult(Vec3.atCenterOf(bunk),
+                Direction.UP, bunk, false));
+        return player.isSleeping();
     }
 
     /* The room's air made of nitrogen and oxygen in those shares, at the sea's pressure. */

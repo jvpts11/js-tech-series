@@ -1010,6 +1010,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- The quarters' bunk is a bed: at night, or in a storm, a click lays the player down in it to pass the night,
+  docked, landed or in flight, as long as no monster is near and no one lies in it already; by day it says it is no
+  time to sleep. It only set where the player woke. In space, where no night falls, it lays them down at any time.
+- Aiming at the quarters' bunk outlines the bunk, not a whole block over its mattress, and a click on its
+  mattress works it.
 - A small ship let go to its physics, as when the physics tool grabs it or it falls, weighs what its parts
   weigh, as it does in flight: its blocks had no weight of their own and weighed as stone, a small ship of 40 tonnes
   nearly 500 under the grip, falling and striking as hard. Each block of a starship's kit now carries its share of its

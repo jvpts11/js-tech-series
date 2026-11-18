@@ -2276,6 +2276,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A mod's bed without the game's facing, as a ship's bunk, no longer fails the game as its sleeper gets up:
+  they stand up beside it the way the bed gives.
 - A moving structure breaking up as it strikes no longer stalls the game: each block of a struck machine worked
   out its whole model's dents again, and every block broken or sent to the players was weighed against its shape
   anew. A ship let fall from the physics tool took up to half a second a tick as it broke; now at most about a

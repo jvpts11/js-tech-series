@@ -4378,6 +4378,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) The quarters' bunk is a bed: at night, or in a storm, a click lays the player down in it to pass the night,
+  docked, landed or in flight, as long as no monster is near and no one lies in it already; by day it says it is no
+  time to sleep. It only set where the player woke. In space, where no night falls, it lays them down at any time.
+- (Space) Aiming at the quarters' bunk outlines the bunk, not a whole block over its mattress, and a click on its
+  mattress works it.
+- (Core) A mod's bed without the game's facing, as a ship's bunk, no longer fails the game as its sleeper gets up:
+  they stand up beside it the way the bed gives.
 - (Core) A moving structure breaking up as it strikes no longer stalls the game: each block of a struck machine worked
   out its whole model's dents again, and every block broken or sent to the players was weighed against its shape
   anew. A ship let fall from the physics tool took up to half a second a tick as it broke; now at most about a

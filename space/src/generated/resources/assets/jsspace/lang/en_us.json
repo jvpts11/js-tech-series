@@ -887,6 +887,7 @@
   "jsspace.ship_fixture.no_oxygen": "No oxygen in the cabin's air to fill from",
   "jsspace.ship_fixture.no_suit": "Wear a suit to fill its tanks",
   "jsspace.ship_fixture.not_whole": "The ship is not whole yet: build every part of it in the dock",
+  "jsspace.ship_fixture.occupied": "Someone sleeps in this bunk",
   "jsspace.ship_fixture.respawn_set": "You will wake in this bunk",
   "jsspace.ship_fixture.smithing": "Upgrade Gear",
   "jsspace.ship_fixture.suit_locker": "Suit Locker",

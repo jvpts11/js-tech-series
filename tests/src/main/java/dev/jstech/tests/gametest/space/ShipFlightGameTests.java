@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import com.mojang.authlib.GameProfile;
 import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.jstechseries.persistor.SpacePersistor;
@@ -82,9 +83,11 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -170,6 +173,13 @@ public final class ShipFlightGameTests {
     private static final double DELTA_NEWTONS = 400_000;
     /* How long its pilot holds up to rise, and it hovers, and holds forward on the land, in ticks. */
     private static final int RISING = 50;
+    /*
+     * The game's midnight, in ticks of its day; how near a sleeper lies to their bunk's floor's middle, a bed's height
+     * and a little; how near it they stand up, a step round it.
+     */
+    private static final long MIDNIGHT = 18_000;
+    private static final double IN_ITS_BUNK = 1;
+    private static final double BESIDE_ITS_BUNK = 2.5;
     private static final int HOVERED = 20;
     private static final int ROLLED = 10;
     /*
@@ -694,6 +704,45 @@ public final class ShipFlightGameTests {
             final ShipFlightModel.State now = ((ShipFlight) ship[0].motion()).state();
             helper.assertTrue(now.speed() < AT_REST, "with its console its reactor's deuterium is gone: its boost"
                     + " held from rest, its throttle shut, it does not boost away: " + now);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
+    /*
+     * The quarters' bunk lays its sleeper down as a bed does in flight too: at night a click on it lays them in it
+     * where it is in the world, not out in the yard, and they stand up beside it there.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WITH_ITS_YARD_LOADING)
+    public static void flight_itsBunkLaysItsSleeperDownWhereItIsInFlight(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final BlockPos[] bunk = new BlockPos[1];
+        final GameTestSequence sequence = letGo(helper, ship).thenExecute(() -> bunk[0] = aboard(helper, ship[0],
+                plan(helper).where(plan(helper).plan().spots().stream().filter(each -> each.block().equals(
+                        ShipKitBlocks.BUNK_FRAME.getId())).min(Comparator.comparingInt(each -> each.at().getZ()))
+                        .orElseThrow())));
+        hold(helper, sequence, ship, StructureControls.ControlAxis.UP, RISING).thenExecute(() -> {
+            final ServerLevel level = helper.getLevel();
+            final Vec3 there = MovingStructures.toWorld(ship[0], Vec3.atBottomCenterOf(bunk[0]));
+            final FakePlayer sleeper = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "bunk-sleeper"));
+            sleeper.setPos(there);
+            final long time = level.getDayTime();
+            try {
+                level.setDayTime(MIDNIGHT);
+                level.updateSkyBrightness();
+                level.getBlockState(bunk[0]).useWithoutItem(level, sleeper, new BlockHitResult(
+                        Vec3.atCenterOf(bunk[0]), Direction.UP, bunk[0], false));
+            } finally {
+                level.setDayTime(time);
+                level.updateSkyBrightness();
+            }
+            helper.assertTrue(!((ShipFlight) ship[0].motion()).grounded(), "it flies, off its cradle");
+            helper.assertTrue(sleeper.isSleeping() && bunk[0].equals(sleeper.getSleepingPos().orElse(null)),
+                    "at night a click on its bunk lays its user down in it");
+            helper.assertTrue(sleeper.position().distanceTo(there) < IN_ITS_BUNK, "they lie where the bunk is in"
+                    + " the world: " + sleeper.position() + " for " + there);
+            sleeper.stopSleeping();
+            helper.assertTrue(sleeper.position().distanceTo(there) < BESIDE_ITS_BUNK, "and stand up beside it "
+                    + "there: " + sleeper.position() + " for " + there);
             MovingStructures.takeAway(ship[0]);
         }).thenSucceed();
     }

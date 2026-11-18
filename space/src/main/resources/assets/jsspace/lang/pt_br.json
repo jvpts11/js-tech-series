@@ -1037,6 +1037,7 @@
   "jsspace.ship_fixture.no_oxygen": "Não há oxigênio no ar da cabine para encher",
   "jsspace.ship_fixture.respawn_set": "Você vai acordar neste beliche",
   "jsspace.ship_fixture.no_air": "Não há ar para respirar aqui: o beliche precisa de uma cabine selada",
+  "jsspace.ship_fixture.occupied": "Alguém dorme neste beliche",
   "jsspace.ship_fixture.not_whole": "A nave ainda não está inteira: construa todas as partes dela na doca",
   "key.jsspace.ship_boost": "Impulsionar a nave",
   "key.jsspace.ship_pulse": "Dar o salto de pulso",
