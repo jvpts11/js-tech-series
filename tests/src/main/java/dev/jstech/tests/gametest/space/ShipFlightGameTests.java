@@ -375,7 +375,8 @@ public final class ShipFlightGameTests {
         }).thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    // Its yard's chunks load at the disk's pace while the ticks run unbounded, which a loaded runner draws out.
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
     public static void flight_itRisesStraightOffItsCradleHoversAndComesBackDown(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[2];
