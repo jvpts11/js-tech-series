@@ -16,6 +16,7 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureBalance;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.YardLayout;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.protection.Actor;
 import dev.jstech.core.protection.ProtectedAction;
 import dev.jstech.core.protection.Protection;
@@ -711,8 +712,11 @@ final class StructureContacts {
             if (state.isAir() || state.getDestroySpeed(level, pos) < 0) {
                 continue;
             }
-            if (ContactMath.breaks(blow.getDoubleValue(), BlockPhysics.strengthOf(state),
-                    Math.max(BlockPhysics.volumeOf(level, pos, state), LEAST_VOLUME))
+            // A block merged into a formed model is as big as the block it was, as it weighs: never measured by the
+            // faces strikes left it, which would be worked out anew for every block the blows of a tick break.
+            final double volume = BlockPhysics.volumeOf(level, pos, FormedPartBlock.originalAt(level, pos, state));
+            if (ContactMath.breaks(blow.getDoubleValue(), BlockPhysics.strengthOf(state), Math.max(volume,
+                    LEAST_VOLUME))
                     && Protection.may(actor, ProtectedAction.BREAK, level, pos)) {
                 level.destroyBlock(pos.immutable(), true);
                 broken++;

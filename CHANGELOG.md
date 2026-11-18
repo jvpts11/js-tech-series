@@ -661,6 +661,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   long)` and `StructurePhysics.hold(Vector3d, Vector3d, long)` no longer take the most newtons a grip pulls with: a
   grip bears the whole weight of what it holds, however heavy, as Garry's Mod's physics gun does. A mod that passed a
   force drops that argument. Experimental.
+- (Core) A struck block's shape from where it stands: J's Core's API is at version 70.
+  `FormedDamage.boxes(Level, BlockPos, FormedPlace)` takes the place of `boxes(Level, FormedPlace, List<CellMark>)`:
+  it gathers the strikes on the block's whole model itself, once for all its blocks, until a strike is laid or
+  mended. A mod that passed the block's marks passes its position. Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -4362,6 +4366,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) A moving structure breaking up as it strikes no longer stalls the game: each block of a struck machine worked
+  out its whole model's dents again, and every block broken or sent to the players was weighed against its shape
+  anew. A ship let fall from the physics tool took up to half a second a tick as it broke; now at most about a
+  seventh, half as long on average.
 - (Space) A small ship let go to its physics, as when the physics tool grabs it or it falls, weighs what its parts
   weigh, as it does in flight: its blocks had no weight of their own and weighed as stone, a small ship of 40 tonnes
   nearly 500 under the grip, falling and striking as hard. Each block of a starship's kit now carries its share of its

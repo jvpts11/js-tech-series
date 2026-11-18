@@ -66,8 +66,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class FormedDamage {
 
-    /* Counts each change of a block's damage a player's game has been told of, so what is drawn from it is redone. */
+    /* Counts each change of a block's damage, here or as a player's game was told of it, so what is drawn is redone. */
     private static final AtomicInteger CHANGES = new AtomicInteger();
+    /* The strikes gathered of each model, by its level, its id and where it stands, as long as no damage changes. */
+    private static final Map<Gathering, List<DamageMark>> GATHERED = new HashMap<>();
     /* How many sets of marks are kept worked out, the most recently used. */
     private static final int KEPT = 256;
     private static final Map<Key, Result> DAMAGED = Collections.synchronizedMap(
@@ -106,6 +108,8 @@ public final class FormedDamage {
     private static final double DENT_PER_SPEED = 0.04;
     /* What each world was told of the blocks about to be lost, by place. */
     private static final Map<Level, Map<Long, Blame>> BLAMED = Collections.synchronizedMap(new WeakHashMap<>());
+    /* The count of damage changes {@code GATHERED} was gathered at; under its lock. */
+    private static int gatheredAt = -1;
 
     private FormedDamage() {
     }
@@ -307,8 +311,33 @@ public final class FormedDamage {
         if (shape.isEmpty()) {
             return List.of();
         }
+        // Gathered once a model until any block's damage changes: every block of it asks, and each would walk it all.
+        final int at = CHANGES.get();
+        final Gathering model = new Gathering(level, place.model(), blockOf(pos, place, MeshCells.key(0, 0, 0)));
+        synchronized (GATHERED) {
+            if (gatheredAt != at) {
+                GATHERED.clear();
+                gatheredAt = at;
+            }
+            final List<DamageMark> known = GATHERED.get(model);
+            if (known != null) {
+                return known;
+            }
+        }
+        final List<DamageMark> gathered = gather(level, pos, place, shape.get());
+        synchronized (GATHERED) {
+            if (gatheredAt == at && CHANGES.get() == at) {
+                GATHERED.put(model, gathered);
+            }
+        }
+        return gathered;
+    }
+
+    /* Every strike laid on the model the block at {@code pos} is drawn as {@code place} of, walked from its blocks. */
+    private static List<DamageMark> gather(final Level level, final BlockPos pos, final FormedPlace place,
+                                           final FormedShape shape) {
         final Set<DamageMark> found = new LinkedHashSet<>();
-        for (final long key : shape.get().cells().keySet()) {
+        for (final long key : shape.cells().keySet()) {
             if (level.getBlockEntity(blockOf(pos, place, key)) instanceof FormedPartBlockEntity part) {
                 for (final CellMark kept : part.damage()) {
                     if (kept.model().equals(place.model()) && MeshCells.key(kept.x(), kept.y(), kept.z()) == key) {
@@ -331,11 +360,12 @@ public final class FormedDamage {
     }
 
     /**
-     * The boxes of the block {@code place} as the strikes it keeps, {@code kept}, left its faces, in sixteenths as the
-     * model stands facing north; none while it keeps none, or its model does not read.
+     * The boxes of the merged block at {@code pos}, as the block {@code place}, as the strikes laid on its model left
+     * its faces, in sixteenths as the model stands facing north; none while none reached it, or its model does not
+     * read.
      */
-    public static Optional<int[]> boxes(final Level level, final FormedPlace place, final List<CellMark> kept) {
-        final Result result = result(level, place, kept);
+    public static Optional<int[]> boxes(final Level level, final BlockPos pos, final FormedPlace place) {
+        final Result result = result(level, pos, place);
         if (result == null) {
             return Optional.empty();
         }
@@ -349,10 +379,10 @@ public final class FormedDamage {
      * its own space, nine numbers to a triangle; none while it keeps none.
      */
     public static Optional<float[]> triangles(final Level level, final BlockPos pos, final FormedPlace place) {
-        if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part)) {
+        if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity)) {
             return Optional.empty();
         }
-        final Result result = result(level, place, part.damage());
+        final Result result = result(level, pos, place);
         return result == null ? Optional.empty() : Optional.ofNullable(result.faces.get(place.cell()));
     }
 
@@ -361,10 +391,10 @@ public final class FormedDamage {
      * left its faces, in its own space, six numbers to a line; none while it keeps none.
      */
     public static Optional<float[]> lines(final Level level, final BlockPos pos, final FormedPlace place) {
-        if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part)) {
+        if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity)) {
             return Optional.empty();
         }
-        final Result result = result(level, place, part.damage());
+        final Result result = result(level, pos, place);
         if (result == null) {
             return Optional.empty();
         }
@@ -373,12 +403,15 @@ public final class FormedDamage {
                 : Optional.of(result.lines.computeIfAbsent(place.cell(), cell -> MeshOutline.lines(faces)));
     }
 
-    /** How many times a player's game has been told of a block's damage changing: what is drawn from it is redone. */
+    /**
+     * How many times a block's damage has changed, on the server or as a player's game was told of it: what is worked
+     * out and drawn from it is redone.
+     */
     public static int changes() {
         return CHANGES.get();
     }
 
-    /** Tells that a block's damage changed on a player's game. */
+    /** Tells that a block's damage changed, on the server or on a player's game. */
     @ApiStatus.Internal
     public static void changed() {
         CHANGES.incrementAndGet();
@@ -514,14 +547,14 @@ public final class FormedDamage {
         return new Vec3(pos.getX() + world[0], pos.getY() + world[1], pos.getZ() + world[2]);
     }
 
-    /* The strikes {@code kept} by a block laid on the block {@code place}, worked out; none for none. */
-    private static @Nullable Result result(final Level level, final FormedPlace place, final List<CellMark> kept) {
-        final List<DamageMark> marks = new ArrayList<>();
-        for (final CellMark mark : kept) {
-            if (mark.on(place)) {
-                marks.add(mark.mark());
-            }
-        }
+    /*
+     * The strikes laid on the model the block at {@code pos} is drawn as {@code place} of, worked out; none for none.
+     * Worked out from all the model's strikes, as its picture is, so every block of it reads one worked-out model and a
+     * strike is worked out once however many blocks it reached, not once a block: a strike that reaches no face of a
+     * block leaves its faces as they stand.
+     */
+    private static @Nullable Result result(final Level level, final BlockPos pos, final FormedPlace place) {
+        final List<DamageMark> marks = marks(level, pos, place);
         if (marks.isEmpty()) {
             return null;
         }
@@ -533,7 +566,7 @@ public final class FormedDamage {
         if (rest.isEmpty()) {
             return null;
         }
-        final Key key = new Key(place.model(), shape.get(), ordered(marks));
+        final Key key = new Key(place.model(), shape.get(), marks);
         final Result known = DAMAGED.get(key);
         if (known != null) {
             return known;
@@ -666,6 +699,10 @@ public final class FormedDamage {
     }
 
     /* A model, its shape file and a set of marks laid on it, in order. */
+    /* A formed model as it stands in a level: its level, its id, and where its cell at the model's origin lies. */
+    private record Gathering(Level level, ResourceLocation model, BlockPos origin) {
+    }
+
     private record Key(ResourceLocation model, FormedShape shape, List<DamageMark> marks) {
 
         Key {

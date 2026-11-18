@@ -134,7 +134,10 @@ public final class ClientUpdates {
                     // Setting the new state sends it, and the block entity's update with it.
                     level.setBlock(pos, wanted, Block.UPDATE_CLIENTS);
                 } else {
-                    level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                    // The block and its block entity's update sent, as the game's own block update sends them; not
+                    // through it, whose comparing the block's collision shape with itself only works out shapes for
+                    // nothing, a damaged model's anew for every block a strike reached.
+                    level.getChunkSource().blockChanged(pos);
                 }
             }
         }

@@ -187,6 +187,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
         final List<CellMark> more = new ArrayList<>(damage());
         more.add(mark);
         this.damage.set(List.copyOf(more));
+        FormedDamage.changed();
         setChanged();
     }
 
@@ -198,6 +199,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
             return false;
         }
         this.damage.set(left);
+        FormedDamage.changed();
         setChanged();
         return true;
     }
@@ -210,6 +212,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
             return false;
         }
         this.damage.set(left);
+        FormedDamage.changed();
         setChanged();
         return true;
     }
@@ -249,7 +252,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
                 // A block a strike reached takes its shape from its faces as the strike left them, but never fills
                 // more of the block than it did whole: a dent drawn into a doorway or a corridor leaves it as open
                 // as it stood, so no one is ever shut in by one.
-                final Optional<int[]> struck = FormedDamage.boxes(this.level, at, damage());
+                final Optional<int[]> struck = FormedDamage.boxes(this.level, this.worldPosition, at);
                 final VoxelShape whole = file.get().shape(at);
                 out = Shapes.joinUnoptimized(out, struck.isPresent() ? Shapes.join(FormedShape.shapeOf(struck.get(),
                         at.turn()), whole, BooleanOp.AND) : whole, BooleanOp.OR);
@@ -282,21 +285,23 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
     @Override
     public void onLoad() {
         super.onLoad();
-        if (this.level != null && this.level.isClientSide() && !damage().isEmpty()) {
-            this.damageSeen = damage();
+        if (this.level != null && !damage().isEmpty()) {
+            if (this.level.isClientSide()) {
+                this.damageSeen = damage();
+            }
             FormedDamage.changed();
         }
         askRooms();
     }
 
     /*
-     * On a player's game, a block keeping damage that goes has what is drawn from it redone; on the server, taken away,
-     * not unloaded, it no longer asks for its pieces' rooms.
+     * A block keeping damage that goes has what is worked out and drawn from it redone; on the server, taken away, not
+     * unloaded, it no longer asks for its pieces' rooms.
      */
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (this.level != null && this.level.isClientSide() && !damage().isEmpty()) {
+        if (this.level != null && !damage().isEmpty()) {
             FormedDamage.changed();
         }
         if (this.level instanceof ServerLevel server && server.isLoaded(this.worldPosition)

@@ -11310,7 +11310,7 @@ stable 4
 24 dev.jstech.core.multiblock.damage.FormedDamage  static List<Strike> strikes(Level, BlockPos, FormedPlace)
 24 dev.jstech.core.multiblock.damage.FormedDamage  static Optional<float[]> lines(Level, BlockPos, FormedPlace)
 24 dev.jstech.core.multiblock.damage.FormedDamage  static Optional<float[]> triangles(Level, BlockPos, FormedPlace)
-24 dev.jstech.core.multiblock.damage.FormedDamage  static Optional<int[]> boxes(Level, FormedPlace, List<CellMark>)
+70 dev.jstech.core.multiblock.damage.FormedDamage  static Optional<int[]> boxes(Level, BlockPos, FormedPlace)
 25 dev.jstech.core.multiblock.damage.FormedDamage  static boolean mend(Level, BlockPos)
 24 dev.jstech.core.multiblock.damage.FormedDamage  static int changes()
 24 dev.jstech.core.multiblock.damage.FormedDamage  static int erase(Level, BlockPos)
