@@ -79,7 +79,7 @@
       "mass": 48.49624060150376
     },
     "jsspace:coolant_pump": {
-      "mass": 416.66666666666663
+      "mass": 454.54545454545456
     },
     "jsspace:cooling_louvres": {
       "mass": 57.95206971677559
@@ -91,7 +91,7 @@
       "mass": 79.22585227272728
     },
     "jsspace:deck_plate": {
-      "mass": 155.1377234393396
+      "mass": 169.56715831871227
     },
     "jsspace:descent_engine": {
       "mass": 63.63636363636363
@@ -127,7 +127,7 @@
       "mass": 227.08333333333334
     },
     "jsspace:fusion_core": {
-      "mass": 416.66666666666663
+      "mass": 454.54545454545456
     },
     "jsspace:gear_bay_door": {
       "mass": 250.0
@@ -142,10 +142,10 @@
       "mass": 167.46031746031744
     },
     "jsspace:hull_frame": {
-      "mass": 127.40608157274825
+      "mass": 130.86928503595172
     },
     "jsspace:hull_plating": {
-      "mass": 127.90501029931832
+      "mass": 129.7231921175001
     },
     "jsspace:instrument_wall": {
       "mass": 60.65359477124183
@@ -187,7 +187,7 @@
       "mass": 171.33774522676737
     },
     "jsspace:magnetic_coil": {
-      "mass": 416.66666666666663
+      "mass": 454.54545454545456
     },
     "jsspace:nose_sensor": {
       "mass": 163.54129102055538
@@ -223,7 +223,7 @@
       "mass": 84.61538461538461
     },
     "jsspace:radiator_panel": {
-      "mass": 422.2222222222222
+      "mass": 460.6060606060607
     },
     "jsspace:ramp_hinge": {
       "mass": 120.37037037037037
@@ -232,7 +232,7 @@
       "mass": 117.3789173789174
     },
     "jsspace:reactor_shield": {
-      "mass": 416.66666666666663
+      "mass": 454.54545454545456
     },
     "jsspace:rendezvous_radar": {
       "mass": 84.61538461538461
@@ -283,7 +283,7 @@
       "mass": 64.61789844142785
     },
     "jsspace:thermal_plating": {
-      "mass": 151.47687720444614
+      "mass": 154.04493061995714
     },
     "jsspace:thrust_chamber": {
       "mass": 229.16666666666666

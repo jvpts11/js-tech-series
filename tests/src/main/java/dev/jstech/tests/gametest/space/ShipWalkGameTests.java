@@ -15,7 +15,6 @@ import dev.jstech.core.multiblock.shape.FormedDoors;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import dev.jstech.space.api.ShipPart;
-import dev.jstech.space.api.ShipPartKind;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.crew.ShipDoorRules;
 import dev.jstech.space.ship.ShipDesign;
@@ -51,10 +50,8 @@ import org.slf4j.Logger;
  * section behind the cockpit, the places a player stands on the floor reach, a step at a time and stepping up no higher
  * than a player does walking, into the cockpit's doorway, its floor flush with the threshold and its pilot's seat in
  * reach, up its aisles either side of the seat with the console before them (but the Cab's, too low a cabin to stand
- * in), and along every row of every section, on one level.
- * A reactor's room is one a crew looks into rather than walks through, its fusion drum standing in its middle: the
- * sections behind it are walked from their own middle. Five ships between them hold every cockpit and every part of the
- * spine.
+ * in), and along every row of every section, on one level, a reactor's room by the aisle beside its drum. Five ships
+ * between them hold every cockpit and every part of the spine.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -231,24 +228,15 @@ public final class ShipWalkGameTests {
         /* What keeps a player from walking the ship; nothing when they walk it. */
         List<String> wrong() {
             final List<String> out = new ArrayList<>();
-            // The walk starts in the middle of the section behind the cockpit, and of each behind a reactor.
-            final List<Integer> seeds = new ArrayList<>();
-            seeds.add(1);
-            for (int k = 1; k + 1 < this.design.spine().size(); k++) {
-                if (reactor(k)) {
-                    seeds.add(k + 1);
-                }
-            }
+            // The walk starts in the middle of the section behind the cockpit.
+            final int i0 = column(0);
+            final int j0 = row(middle(1));
             Double ground = null;
-            for (final int seed : seeds) {
-                final int i = column(0);
-                final int j = row(middle(seed));
-                if (Double.isNaN(this.floors[i][j])) {
-                    out.add(name(seed) + " has no room to stand in its middle: " + blockers(0, middle(seed)));
-                    continue;
-                }
-                ground = ground == null ? this.floors[i][j] : ground;
-                reach(i, j);
+            if (Double.isNaN(this.floors[i0][j0])) {
+                out.add(name(1) + " has no room to stand in its middle: " + blockers(0, middle(1)));
+            } else {
+                ground = this.floors[i0][j0];
+                reach(i0, j0);
             }
             if (!inCockpit()) {
                 out.add(name(0) + " is not walked into its doorway, its pilot's seat in reach: "
@@ -263,9 +251,6 @@ public final class ShipWalkGameTests {
                 }
             }
             for (int k = 1; k < this.design.spine().size(); k++) {
-                if (reactor(k)) {
-                    continue;
-                }
                 for (double r = this.fronts[k]; r < this.fronts[k + 1] - 1.0e-6; r += 1) {
                     if (!rowReached(r, r + 1)) {
                         out.add(name(k) + " is not walked to between " + (r - this.fronts[k]) + " and "
@@ -441,10 +426,6 @@ public final class ShipWalkGameTests {
                 out.append('\n');
             }
             return out.toString();
-        }
-
-        private boolean reactor(final int k) {
-            return this.parts.get(this.design.spine().get(k)).kind() == ShipPartKind.REACTOR;
         }
 
         private String name(final int k) {

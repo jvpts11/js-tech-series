@@ -75,7 +75,8 @@ The Workshop's tables, furnace and barrel and the holds' barrels are blocks of t
 module's model, so a ship never carries a block of the game standing in for its fittings.
 
 The airlock has an Oxygen Panel that fills a worn suit's tanks from the cabin's air and a Suit Locker with nine places
-for a crew's suits and bottles. The reactor room has its fusion drum.
+for a crew's suits and bottles. The reactor room has its fusion drum against its right wall, an aisle beside it from
+door to door, its left shield a lead-grey cabinet against the left wall.
 
 ### The cabin and its air
 

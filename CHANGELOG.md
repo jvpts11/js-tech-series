@@ -4386,6 +4386,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A ship's reactor room is walked through: its fusion drum stands against the right wall, an aisle beside it
+  from door to door, and its left shield, an invisible wall before, is a lead-grey cabinet against the left wall. The
+  drum stood in the middle of the room and a player stopped at its door.
 - (Space) A ship's cockpit is walked into: each ends in a straight block behind its flight deck, a free row to come
   in by, and the Orbiter's and the Greenhouse's raised decks keep to the middle under the seat, an aisle either side
   of it up to where the console stands before a player; the Orbiter's side consoles, which stood in those aisles,

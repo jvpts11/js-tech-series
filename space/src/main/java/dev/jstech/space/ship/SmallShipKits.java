@@ -26,8 +26,8 @@ import net.minecraft.world.level.block.Block;
  * section begins. The cockpits taper to their noses with the console in front of the seat and the overhead panel above
  * it, an aisle either side of the seat, and end in a straight block to come in by; the airlock opens its door on the
  * left with the suit locker and the oxygen panel across; the docking module
- * carries its collar on top; the holds lay their tie-down decks, racks and doors; the reactors keep their core in the
- * middle within its shield; the tail engines close the spine; the nacelles sit on the stub wings, the side intakes
+ * carries its collar on top; the holds lay their tie-down decks, racks and doors; the reactors keep their core against
+ * the right wall, an aisle beside it; the tail engines close the spine; the nacelles sit on the stub wings, the side intakes
  * beside the cockpit's joint, the fins on the tail, the thrusters at the cockpit's back and the tail's shoulders, the
  * gear under it all.
  */
@@ -103,8 +103,10 @@ public final class SmallShipKits {
         final Map<String, ResourceLocation> reactor = with(hull, entry("E", ShipKitBlocks.FUSION_CORE),
                 entry("Z", ShipKitBlocks.MAGNETIC_COIL), entry("S", ShipKitBlocks.REACTOR_SHIELD),
                 entry("Q", ShipKitBlocks.COOLANT_PUMP), entry("R", ShipKitBlocks.RADIATOR_PANEL));
-        section("reactor_flush", reactor, List.of("TDDT", "TQQT"), List.of("SEES", "SZZS"), List.of("FRRF", "HRRH"));
-        section("reactor_fins", reactor, List.of("TDDT", "TQQT"), List.of("SEES", "SZZS"), List.of("RRRR", "RRRR"));
+        // The reactors keep their drum against the right wall, the hull its shield there, and an aisle on the left from
+        // door to door; the left shield is a cabinet against the left wall.
+        section("reactor_flush", reactor, List.of("TDDT", "TDQT"), List.of("S EE", "S ZZ"), List.of("FRRF", "HRRH"));
+        section("reactor_fins", reactor, List.of("TDDT", "TDQT"), List.of("S EE", "S ZZ"), List.of("RRRR", "RRRR"));
         final Map<String, ResourceLocation> tail = keys(entry("T", ShipKitBlocks.THERMAL_PLATING),
                 entry("M", ShipKitBlocks.ENGINE_MOUNT), entry("F", ShipKitBlocks.PROPELLANT_FEED),
                 entry("U", ShipKitBlocks.FUEL_TANK), entry("V", ShipKitBlocks.VALVE_PACK),
