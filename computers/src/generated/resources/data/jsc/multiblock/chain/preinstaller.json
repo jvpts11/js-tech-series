@@ -52,5 +52,5 @@
     "c": "energy_input",
     "d": "item_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:preinstaller_terminal"
 }

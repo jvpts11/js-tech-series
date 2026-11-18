@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:optical_polisher_polishing_lap"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:optical_polisher_terminal"
+  }
+}

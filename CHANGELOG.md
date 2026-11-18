@@ -4084,6 +4084,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   while it stands open; used again it swings shut, and the rocket shuts it as it lifts off. It was only drawn before.
 
 ### Changed
+- (Computers) Every machine of the chain has a terminal of its own, the Plasma Etcher Terminal of the Plasma Etcher,
+  the Crusher Terminal of the Crusher, in the chain's tab and drawn as its formed machine: made at a crafting table of
+  the Machine Terminal, a part now, and the first working block of that machine no other machine has (the Plasma
+  Etcher's of an Etch Chamber), placed at the machine's terminal place it forms that machine, and broken it gives
+  itself back. One Machine Terminal stood for every machine and turned back into it when broken.
 - (Space) A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and
   seen running.
 - (Space) The Rocket Design screen counts each stage's delta-v in a vacuum, as the rocket's flight counts it, the

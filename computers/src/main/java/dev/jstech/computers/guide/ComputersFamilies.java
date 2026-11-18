@@ -39,6 +39,7 @@ import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
+import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.hardware.AnchorCardSpec;
 import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
@@ -78,6 +79,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.ItemLike;
@@ -110,8 +112,10 @@ final class ComputersFamilies {
         family("raid_arrays", hardwareOf(StorageCardSpec.class));
         family("case_front", itemsOf(BayDriveItem.class));
         family("upses", blocksOf(UpsBlock.class));
-        family("building_chain_machines",
-                () -> ChainMachineBlocks.shared().stream().map(block -> (ItemLike) block.get()).toList());
+        family("building_chain_machines", () -> Stream.concat(
+                ChainMachineBlocks.shared().stream().map(block -> (ItemLike) block.get()),
+                ChainMachines.all().stream().map(machine -> (ItemLike) ChainMachines.terminalOf(machine).get()))
+                .toList());
         family("electronics_workbench", blocksOf(WorkbenchBlock.class));
         family("chain_parts", () -> ChainParts.ERAS.stream()
                 .flatMap(era -> ComputingContent.shelf(Shelf.CHAIN, era).items().stream())

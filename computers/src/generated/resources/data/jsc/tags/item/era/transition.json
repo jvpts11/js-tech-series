@@ -199,6 +199,8 @@
     "jsc:lithography_arf_laser",
     "jsc:assembly_transition_placement_head",
     "jsc:assembly_transition_reflow_oven",
+    "jsc:lithography_arf_terminal",
+    "jsc:assembly_transition_terminal",
     "jsc:dvd_rom",
     "jsc:dvd_rw"
   ]

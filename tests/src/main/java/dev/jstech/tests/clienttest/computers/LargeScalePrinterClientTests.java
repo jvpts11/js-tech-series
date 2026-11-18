@@ -87,8 +87,8 @@ public final class LargeScalePrinterClientTests {
         ctx.afterTest(() -> ComputersServerConfig.FILE.set(ComputersServerConfig.PRINT_ENCHANTED_BOOKS, true));
         ctx.thenServer(0, level -> ctx.serverPlayer().getInventory().clearContent())
                 .thenBuild(0, world -> build(world::setBlock, machine))
-                .thenServer(SETTLE * 5, level -> ctx.assertTrue(ChainMachines.formAt(level, ctx.abs(terminal),
-                        Direction.NORTH), "the Large Scale Printer forms"))
+                .thenWaitUntilServer(level -> printer(ctx, level, terminal).formed(), SETTLE * 30,
+                        "the Large Scale Printer to form", level -> "it stands unformed")
                 .thenServer(SETTLE, level -> {
                     final LargeScalePrinterBlockEntity printer = printer(ctx, level, terminal);
                     printer.getInventory().insertItem(0, new ItemStack(Items.PAPER, 64), false);
@@ -136,9 +136,9 @@ public final class LargeScalePrinterClientTests {
                     world.placeMonitor(MONITOR, Direction.EAST);
                     world.setBlock(PRINTER, ComputingModule.PRINTER.get());
                 })
-                .thenServer(SETTLE * 5, level -> {
-                    ctx.assertTrue(ChainMachines.formAt(level, ctx.abs(terminal), Direction.NORTH),
-                            "the Large Scale Printer forms");
+                .thenWaitUntilServer(level -> printer(ctx, level, terminal).formed(), SETTLE * 30,
+                        "the Large Scale Printer to form", level -> "it stands unformed")
+                .thenServer(SETTLE, level -> {
                     printer(ctx, level, terminal).getInventory().insertItem(0, new ItemStack(Items.PAPER, 64), false);
                     ((PrinterBlockEntity) level.getBlockEntity(ctx.abs(PRINTER))).paper()
                             .setStackInSlot(0, new ItemStack(Items.PAPER, 16));
@@ -174,7 +174,7 @@ public final class LargeScalePrinterClientTests {
                 final String row = layers.get(y).get(z);
                 for (int x = 0; x < row.length(); x++) {
                     final char letter = row.charAt(x);
-                    final Block block = letter == '#' ? ChainMachineBlocks.TERMINAL.get()
+                    final Block block = letter == '#' ? ChainMachines.terminalOf(machine).get()
                             : ChainMachineBlocks.byId(machine.legend().get(letter)).get();
                     final BlockState state = block.defaultBlockState();
                     world.place(CORNER.offset(x, y, z), state.hasProperty(HorizontalDirectionalBlock.FACING)

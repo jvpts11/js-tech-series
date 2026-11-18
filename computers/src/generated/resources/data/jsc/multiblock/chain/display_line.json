@@ -62,5 +62,5 @@
     "d": "energy_input",
     "g": "fluid_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:display_line_terminal"
 }

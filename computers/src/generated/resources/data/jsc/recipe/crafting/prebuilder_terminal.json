@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:prebuilder_case_lift"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:prebuilder_terminal"
+  }
+}

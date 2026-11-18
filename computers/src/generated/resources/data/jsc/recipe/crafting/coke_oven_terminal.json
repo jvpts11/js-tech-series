@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:coke_oven_oven_chamber"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:coke_oven_terminal"
+  }
+}

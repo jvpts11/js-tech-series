@@ -62,5 +62,5 @@
     "e": "item_output",
     "g": "fluid_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:lithography_vintage_terminal"
 }

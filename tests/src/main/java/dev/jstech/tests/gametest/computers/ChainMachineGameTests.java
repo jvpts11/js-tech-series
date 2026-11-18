@@ -15,6 +15,7 @@ import static dev.jstech.tests.testkit.computers.ChainMachineSite.holds;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.machine;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.machineAt;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.place;
+import static dev.jstech.tests.testkit.computers.ChainMachineSite.stands;
 
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainFormedBlock;
@@ -39,10 +40,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.IItemHandler;
 
 /**
- * The chain's machines (computers/docs/design/survival.md): each built of its blocks round the Machine Terminal, which
- * becomes the machine's own terminal once the shape stands whole; formed, its entries draw nothing and its plain
+ * The chain's machines (computers/docs/design/survival.md): each built of its blocks round its own terminal, which
+ * forms it once the shape stands whole and alone forms nothing; formed, its entries draw nothing and its plain
  * blocks merge into its model; it works its recipes, taking through its inlets and giving through its outlets, drawing
- * its energy through its power entry (the Coke Oven none); broken, its terminal gives back the Machine Terminal; a
+ * its energy through its power entry (the Coke Oven none); broken, its terminal gives itself back; a
  * Legacy Lithography Station waits for its computer, and the ArF one works two eras' recipes at each era's draw; and an
  * Electronics Assembly Line works its era's bench recipes.
  */
@@ -60,8 +61,7 @@ public final class ChainMachineGameTests {
     public static void every_machineFormsFromItsBlocks(final GameTestHelper helper) {
         for (final ChainMachine machine : ChainMachines.all()) {
             final BlockPos terminal = build(helper, machine);
-            helper.assertTrue(ChainMachines.formAt(helper.getLevel(), helper.absolutePos(terminal), Direction.NORTH),
-                    machine.id() + " forms round the Machine Terminal");
+            helper.assertTrue(stands(helper, machine, terminal), machine.id() + " stands round its own terminal");
             helper.assertTrue(helper.getBlockState(terminal).getBlock() instanceof ChainMachineTerminalBlock own
                     && own.machine().equals(machine.id()), machine.id() + "'s terminal is its own");
             clear(helper);
@@ -69,13 +69,15 @@ public final class ChainMachineGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = ARENA)
+    @GameTest(template = ARENA, timeoutTicks = 100)
     public static void terminal_formsNothingAlone(final GameTestHelper helper) {
-        helper.setBlock(CORNER, ChainMachineBlocks.TERMINAL.get().defaultBlockState());
-        helper.assertTrue(!ChainMachines.formAt(helper.getLevel(), helper.absolutePos(CORNER), Direction.NORTH),
-                "no machine stands round it");
-        helper.assertBlockPresent(ChainMachineBlocks.TERMINAL.get(), CORNER);
-        helper.succeed();
+        final ChainMachine grinder = machine("grinder");
+        helper.setBlock(CORNER, ChainMachines.terminalOf(grinder).get().defaultBlockState());
+        helper.assertTrue(!stands(helper, grinder, CORNER), "no machine stands round it");
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(!machineAt(helper, CORNER).formed(), "alone, the Grinder Terminal forms nothing");
+            helper.succeed();
+        });
     }
 
     @GameTest(template = ARENA, timeoutTicks = 100)
@@ -202,11 +204,12 @@ public final class ChainMachineGameTests {
     }
 
     @GameTest(template = ARENA, timeoutTicks = 100)
-    public static void terminal_breaksIntoTheMachineTerminal(final GameTestHelper helper) {
-        final BlockPos terminal = formed(helper, machine("grinder"));
+    public static void terminal_breaksIntoItsOwnTerminal(final GameTestHelper helper) {
+        final ChainMachine grinder = machine("grinder");
+        final BlockPos terminal = formed(helper, grinder);
         helper.runAfterDelay(20, () -> {
             helper.getLevel().destroyBlock(helper.absolutePos(terminal), true);
-            helper.assertItemEntityPresent(ChainMachineBlocks.TERMINAL.get().asItem(), terminal, 2.0);
+            helper.assertItemEntityPresent(ChainMachines.terminalOf(grinder).get().asItem(), terminal, 2.0);
             helper.succeed();
         });
     }

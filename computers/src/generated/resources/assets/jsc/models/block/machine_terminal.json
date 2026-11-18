@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/orientable",
-  "textures": {
-    "front": "jsc:block/chain/machine/terminal",
-    "side": "jsc:block/chain/machine/machine_casing",
-    "top": "jsc:block/chain/machine/machine_casing"
-  }
-}

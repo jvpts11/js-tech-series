@@ -67,5 +67,5 @@
     "e": "item_output",
     "h": "fluid_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:lithography_advanced_terminal"
 }

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:assembly_standard_reflow_oven"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:assembly_standard_terminal"
+  }
+}

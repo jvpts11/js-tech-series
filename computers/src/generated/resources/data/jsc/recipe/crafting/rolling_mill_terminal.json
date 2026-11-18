@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:rolling_mill_roller_table"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:rolling_mill_terminal"
+  }
+}

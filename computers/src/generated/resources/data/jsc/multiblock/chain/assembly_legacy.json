@@ -52,5 +52,5 @@
     "c": "item_input",
     "e": "energy_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:assembly_legacy_terminal"
 }

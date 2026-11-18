@@ -323,6 +323,8 @@
     "jsc:lithography_euv_source",
     "jsc:assembly_advanced_placement_head",
     "jsc:assembly_advanced_reflow_oven",
+    "jsc:lithography_advanced_terminal",
+    "jsc:assembly_advanced_terminal",
     "jsc:bd_rom",
     "jsc:bd_re",
     "jsc:usb_flash_drive_64g"

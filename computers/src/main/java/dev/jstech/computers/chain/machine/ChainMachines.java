@@ -8,16 +8,17 @@
 package dev.jstech.computers.chain.machine;
 
 import static dev.jstech.computers.registry.ComputingContent.CONTENT;
+import static dev.jstech.computers.registry.ComputingContent.shelf;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
 import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.menu.LargeScalePrinterMenu;
 import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
+import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.Device.IMenuFactory;
-import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.IItemLook;
@@ -33,7 +34,6 @@ import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.PortKind;
-import dev.jstech.core.multiblock.ShapeMatch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,12 +43,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -302,20 +298,20 @@ public final class ChainMachines {
     }
 
     /**
-     * Makes the Machine Terminal at {@code pos} the terminal of the machine whose shape stands whole round it, facing
-     * {@code facing}; whether one did.
+     * The block of {@code machine}'s own that its terminal is made of, with the Machine Terminal: the first of its
+     * blocks no other machine is built of, as a Plasma Etcher's etch chamber.
+     *
+     * @throws IllegalStateException for a machine built only of blocks other machines have too
      */
-    public static boolean formAt(final ServerLevel level, final BlockPos pos, final Direction facing) {
-        for (final Declared declared : DECLARED.values()) {
-            final Optional<MultiblockPattern> pattern = MultiblockPatterns.get(declared.machine().patternId());
-            if (pattern.isPresent() && pattern.get().check(MultiblockPatterns.provider(level), pos.asLong())
-                    instanceof ShapeMatch.Formed) {
-                level.setBlock(pos, declared.terminal().get().defaultBlockState()
-                        .setValue(HorizontalDirectionalBlock.FACING, facing), Block.UPDATE_ALL);
-                return true;
+    public static String keyBlock(final ChainMachine machine) {
+        for (final String block : machine.legend().values()) {
+            final long builtOf = DECLARED.values().stream()
+                    .filter(other -> other.machine().legend().containsValue(block)).count();
+            if (builtOf == 1) {
+                return block;
             }
         }
-        return false;
+        throw new IllegalStateException(machine.id() + " has no block of its own to make its terminal of");
     }
 
     private static Builder machine(final String id) {
@@ -472,9 +468,10 @@ public final class ChainMachines {
                     .look(IBlockLook.facing(new IBlockModel.Orientable(machine.terminalPath(), casing,
                             TEXTURES + "terminal", casing)).whileOn(ChainFormedBlock.FORMED,
                             new IBlockModel.ParticleOnly(machine.terminalPath() + "_formed", TEXTURES + "terminal")))
-                    .drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
-                    // Its item, in no tab, is the formed machine the recipe viewers show its kinds of recipe by.
-                    .item(MachinePictureItem::new).itemLook(IItemLook.DRAWN_BY_ENTITY)
+                    .tag(BlockTags.MINEABLE_WITH_PICKAXE)
+                    // Its item is drawn as the formed machine, which the recipe viewers show its recipes by too.
+                    .item().itemLook(IItemLook.DRAWN_BY_ENTITY)
+                    .tab(shelf(Shelf.CHAIN, era == null ? HardwareEra.VINTAGE : era))
                     .register();
             final IEntityMaker maker = entity;
             final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChainMachineBlockEntity>> type =
@@ -510,10 +507,7 @@ public final class ChainMachines {
             return List.copyOf(stations);
         }
 
-        /*
-         * Its pattern: each letter its block, each entry the port it makes, and at the terminal's place the Machine
-         * Terminal a player puts there, which becomes the machine's own terminal once the shape stands round it.
-         */
+        /* Its pattern: each letter its block, each entry the port it makes, its own terminal at its place. */
         private static void pattern(final ChainMachine machine) {
             final MultiblockPattern.Builder drawn = MultiblockPattern.builder(machine.id());
             for (final List<String> layer : machine.layers()) {
@@ -526,7 +520,7 @@ public final class ChainMachines {
                     drawn.port(letter, port);
                 }
             });
-            drawn.terminal(ChainMachineBlocks.TERMINAL.getId().toString());
+            drawn.terminal(JsComputers.MODID + ":" + machine.terminalPath());
             MultiblockPatterns.declare(machine.patternId(), drawn.build());
         }
     }

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:display_line_fill_chamber"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:display_line_terminal"
+  }
+}

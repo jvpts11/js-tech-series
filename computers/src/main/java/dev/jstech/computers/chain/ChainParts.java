@@ -46,6 +46,13 @@ public final class ChainParts {
             part("controller_chip_" + era.path(), era).named("Controller Chip (" + englishName(era) + ")").register());
     public static final ItemEntry<Item> MASK_PLATE = part("mask_plate", HardwareEra.VINTAGE).named("Mask Plate")
             .register();
+    /*
+     * The Machine Terminal: the part every machine's own terminal is made of, with a block of that machine. It looks
+     * as a terminal on a Machine Casing does, the Crusher's unformed.
+     */
+    public static final ItemEntry<Item> MACHINE_TERMINAL = part("machine_terminal", HardwareEra.VINTAGE)
+            .look(IItemLook.parent(JsComputers.MODID + ":block/crusher_terminal")).named("Machine Terminal")
+            .register();
     public static final List<ItemEntry<Item>> MEMORY_MASKS = perEra(era ->
             part("mask_memory_" + era.path(), era).named("Memory Mask (" + englishName(era) + ")").register());
     public static final List<ItemEntry<Item>> CONTROLLER_MASKS = perEra(era ->

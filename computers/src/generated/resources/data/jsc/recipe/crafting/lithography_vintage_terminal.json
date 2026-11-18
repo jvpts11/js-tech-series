@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:lithography_mercury_lamp"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:lithography_vintage_terminal"
+  }
+}

@@ -22,7 +22,10 @@ import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 
 import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.chain.ChainParts;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
+import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesAlloys;
@@ -30,7 +33,11 @@ import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.material.Forms;
+import net.minecraft.advancements.critereon.InventoryChangeTrigger;
+import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
@@ -56,6 +63,23 @@ final class MachineBlockRecipes {
         chipFactory(output);
         assemblyLines(output);
         largeScalePrinter(output);
+        terminals(output);
+    }
+
+    /*
+     * Every machine's own terminal, at a crafting table: the Machine Terminal and the first block of that machine no
+     * other machine is built of, so the terminal says which machine it forms.
+     */
+    private static void terminals(final RecipeOutput output) {
+        for (final ChainMachine machine : ChainMachines.all()) {
+            final Item terminal = ChainMachines.terminalOf(machine).get().asItem();
+            ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, terminal)
+                    .requires(ChainParts.MACHINE_TERMINAL.get()).requires(block(ChainMachines.keyBlock(machine)))
+                    .unlockedBy("has_it", InventoryChangeTrigger.TriggerInstance.hasItems(
+                            ChainParts.MACHINE_TERMINAL.get()))
+                    .save(output, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "crafting/"
+                            + machine.terminalPath()));
+        }
     }
 
     /* The Vintage bench at the Crafting Table, and each next bench at the bench of the era before. */
@@ -100,7 +124,7 @@ final class MachineBlockRecipes {
         grid(output, block("gas_outlet"), 1, rows("I", "L"), 'I', Items.IRON_INGOT, 'L', block("liquid_outlet"));
         grid(output, block("power_entry"), 1, rows(" C ", "CIC", " C "), 'C', Items.COPPER_INGOT,
                 'I', Items.IRON_INGOT);
-        made(output, HardwareEra.VINTAGE, ChainMachineBlocks.TERMINAL.get(), Items.IRON_INGOT, 2,
+        made(output, HardwareEra.VINTAGE, ChainParts.MACHINE_TERMINAL.get(), Items.IRON_INGOT, 2,
                 Items.COPPER_INGOT, 2, Items.REDSTONE, 2, Items.GLASS, 1);
         made(output, HardwareEra.VINTAGE, block("peripheral_port"), Items.IRON_INGOT, 2,
                 item("peripheral_cable"), 1, board(HardwareEra.VINTAGE), 1, controller(HardwareEra.VINTAGE), 1);

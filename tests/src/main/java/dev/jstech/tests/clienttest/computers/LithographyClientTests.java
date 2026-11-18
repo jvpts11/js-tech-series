@@ -175,15 +175,13 @@ public final class LithographyClientTests {
                 .then(SETTLE, () -> ctx.mc().setScreen(null));
     }
 
-    /* The station {@code machine} laid and formed, its peripheral port's cable laid east of it. */
+    /* The station {@code machine} laid round its own terminal and formed, its peripheral port cabled to the east. */
     private static ClientTestContext station(final ClientTestContext ctx, final ChainMachine machine) {
         return ctx.thenBuild(0, world -> lay(world, machine))
-                .thenServer(SETTLE, level -> {
-                    TestCables.lay(level, ctx.abs(port(machine).east()),
-                            ComputingModule.VINTAGE_PERIPHERAL_CABLE.get());
-                    ctx.assertTrue(ChainMachines.formAt(level, ctx.abs(place(machine, '#')), Direction.NORTH),
-                            machine.id() + " forms");
-                });
+                .thenServer(SETTLE, level -> TestCables.lay(level, ctx.abs(port(machine).east()),
+                        ComputingModule.VINTAGE_PERIPHERAL_CABLE.get()))
+                .thenWaitUntilServer(level -> station(ctx, level, machine).formed(), SCREEN_WAIT,
+                        machine.id() + " to form", level -> "it stands unformed");
     }
 
     /* A Mask Blank put in the station's first input slot. */
@@ -204,7 +202,7 @@ public final class LithographyClientTests {
                 final String row = layers.get(y).get(z);
                 for (int x = 0; x < row.length(); x++) {
                     final char letter = row.charAt(x);
-                    final Block block = letter == '#' ? ChainMachineBlocks.TERMINAL.get()
+                    final Block block = letter == '#' ? ChainMachines.terminalOf(machine).get()
                             : ChainMachineBlocks.byId(machine.legend().get(letter)).get();
                     final BlockState state = block.defaultBlockState();
                     world.setBlock(CORNER.offset(x, y, z), state.hasProperty(HorizontalDirectionalBlock.FACING)

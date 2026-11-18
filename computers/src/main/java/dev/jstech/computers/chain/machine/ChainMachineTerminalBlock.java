@@ -8,17 +8,11 @@
 package dev.jstech.computers.chain.machine;
 
 import dev.jstech.core.content.Device;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * A chain machine's own terminal: the Machine Terminal as it became when its machine's shape stood whole round it.
- * It runs that machine, and is still the Machine Terminal in a player's hand: broken, it gives one back, and a player
- * picking it picks one.
+ * A chain machine's own terminal, the Plasma Etcher Terminal of the Plasma Etcher: made of the Machine Terminal and a
+ * block of that machine's own, placed at the terminal's place of the machine's shape, it forms the machine once the
+ * shape stands whole round it, and runs it. Broken, it gives itself back.
  */
 public final class ChainMachineTerminalBlock extends ChainFormedBlock {
 
@@ -32,21 +26,5 @@ public final class ChainMachineTerminalBlock extends ChainFormedBlock {
     /** The id of the machine it runs. */
     public String machine() {
         return machine;
-    }
-
-    @Override
-    public ItemStack getCloneItemStack(final LevelReader level, final BlockPos pos, final BlockState state) {
-        return new ItemStack(ChainMachineBlocks.TERMINAL.get());
-    }
-
-    /*
-     * Its own item only shows the formed machine in the recipe viewers: the Machine Terminal it was placed as comes
-     * back.
-     */
-    @Override
-    protected void spawnAfterBreak(final BlockState state, final ServerLevel level, final BlockPos pos,
-                                   final ItemStack tool, final boolean dropExperience) {
-        super.spawnAfterBreak(state, level, pos, tool, dropExperience);
-        Block.popResource(level, pos, new ItemStack(ChainMachineBlocks.TERMINAL.get()));
     }
 }

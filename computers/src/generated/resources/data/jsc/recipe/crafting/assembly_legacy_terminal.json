@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:assembly_legacy_placement_head"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:assembly_legacy_terminal"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:lithography_euv_source"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:lithography_advanced_terminal"
+  }
+}

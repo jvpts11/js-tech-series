@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:ion_implanter_end_station"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:ion_implanter_terminal"
+  }
+}

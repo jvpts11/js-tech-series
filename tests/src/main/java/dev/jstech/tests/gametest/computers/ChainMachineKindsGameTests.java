@@ -75,17 +75,21 @@ public final class ChainMachineKindsGameTests {
         helper.succeed();
     }
 
-    /* A machine's picture is only shown: used on the land it puts nothing there, the machine built only by its shape. */
+    /*
+     * A machine's terminal, drawn as its formed machine, is what a player places to build the machine round: used on
+     * the land, it stands there.
+     */
     @GameTest(template = ARENA)
-    public static void picture_placesNothing(final GameTestHelper helper) {
-        final ServerPlayer player = GameTestPlayers.connected(helper, "jst-picture");
+    public static void terminal_placesItself(final GameTestHelper helper) {
+        final ServerPlayer player = GameTestPlayers.connected(helper, "jst-terminal");
         final BlockPos ground = helper.absolutePos(new BlockPos(1, 1, 1));
-        final ItemStack picture = new ItemStack(ChainMachines.terminalOf(ChainMachines.all().iterator().next()).get());
-        player.setItemInHand(InteractionHand.MAIN_HAND, picture);
-        final InteractionResult used = picture.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
+        final ChainMachineTerminalBlock own = ChainMachines.terminalOf(ChainMachines.all().iterator().next()).get();
+        final ItemStack terminal = new ItemStack(own);
+        player.setItemInHand(InteractionHand.MAIN_HAND, terminal);
+        final InteractionResult used = terminal.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(ground), Direction.UP, ground, false)));
-        helper.assertTrue(!used.consumesAction() && helper.getLevel().isEmptyBlock(ground.above()), "used on the "
-                + "land, it puts nothing there: " + used + ", " + helper.getLevel().getBlockState(ground.above()));
+        helper.assertTrue(used.consumesAction() && helper.getLevel().getBlockState(ground.above()).is(own), "used on"
+                + " the land, it stands there: " + used + ", " + helper.getLevel().getBlockState(ground.above()));
         GameTestPlayers.leave(player);
         helper.succeed();
     }

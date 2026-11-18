@@ -205,6 +205,8 @@
     "jsc:large_scale_printer_print_unit",
     "jsc:large_scale_printer_inking_unit",
     "jsc:large_scale_printer_perfect_binder",
+    "jsc:lithography_legacy_terminal",
+    "jsc:assembly_legacy_terminal",
     "jsc:cd_rom",
     "jsc:cd_rw"
   ]

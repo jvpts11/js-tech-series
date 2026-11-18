@@ -35,5 +35,5 @@
     "b": "energy_input",
     "d": "item_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:wire_drawer_terminal"
 }

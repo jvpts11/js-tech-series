@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:grinder_drum"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:grinder_terminal"
+  }
+}

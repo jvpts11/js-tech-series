@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:wafer_saw_wire_web"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:wafer_saw_terminal"
+  }
+}

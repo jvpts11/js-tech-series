@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:deposition_chamber_sputter_chamber"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:deposition_chamber_terminal"
+  }
+}

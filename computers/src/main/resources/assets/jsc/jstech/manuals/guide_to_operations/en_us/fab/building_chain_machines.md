@@ -8,14 +8,14 @@ covers_family: jsc:building_chain_machines
 
 What a bench makes by hand, one part at a time, the chain's machines make in numbers: they crush and smelt the ore, roll and draw the metal, run the chemistry, grow the silicon, make the chips and press the boards and screens. Each machine is a multiblock you build block by block in the shape that is its own.
 
-A machine is built of four kinds of block. Its casing, one of five by the work it stands: the Machine Casing for the mechanical machines, the Refractory Casing for heat, the Lined Casing for what corrodes, the Vacuum Casing for vacuum and gases, and the Clean Room Casing for the Lithography Stations. Its working blocks, which make it what it is: a Crusher's rolls, a Wafer Saw's wire web. Its entries, where things go in and come out. And the Machine Terminal, which runs it.
+A machine is built of four kinds of block. Its casing, one of five by the work it stands: the Machine Casing for the mechanical machines, the Refractory Casing for heat, the Lined Casing for what corrodes, the Vacuum Casing for vacuum and gases, and the Clean Room Casing for the Lithography Stations. Its working blocks, which make it what it is: a Crusher's rolls, a Wafer Saw's wire web. Its entries, where things go in and come out. And its own terminal, which runs it: the Plasma Etcher Terminal for the Plasma Etcher, the Crusher Terminal for the Crusher.
 
 > [!DEFINE] Machine Terminal
-> The control cabinet you place at a machine's terminal place: once the machine's whole shape stands round it, it becomes that machine's own terminal and runs it.
+> The control cabinet every machine's terminal is made of. At a crafting table, the Machine Terminal and one working block of a machine make that machine's own terminal: the Machine Terminal and an Etch Chamber make the Plasma Etcher Terminal.
 
 You tell the entries apart by their connector and their band: green takes in, orange gives out, yellow is energy, and the cyan Peripheral Port links a Lithography Station to its computer. The Item Inlet and Item Outlet take and give items, the Liquid Inlet and Liquid Outlet liquids, the Gas Inlet and Gas Outlet gases, and the Power Entry takes energy.
 
-Build every block at its place, with the Machine Terminal at the terminal's, facing the way you want the machine's front. A [Structure Projector](jscore:structure_projector) shows you the shape before you build it. The terminal looks for a shape standing whole round it as you place it, as a block beside it changes and as you use it, and tells you when none stands.
+Build every block at its place, with the machine's own terminal at the terminal's, facing the way you want the machine's front. A [Structure Projector](jscore:structure_projector) shows you the shape before you build it. The terminal looks for its machine's shape standing whole round it a moment after you place it and whenever a block of the shape changes, and its window says the machine is not formed while none stands.
 
 Formed, the machine is drawn as one: its casing and its working blocks merge into its model, its entries draw nothing of their own, and its beacon turns while it works. It shows what it is working on, with the colours of what goes in and what comes out.
 
@@ -25,13 +25,13 @@ Every machine but the Coke Oven draws its energy at low voltage through its Powe
 
 ## If something goes wrong
 
-> [!PROBLEM] The terminal says no machine stands round it.
+> [!PROBLEM] The machine's window says it is not formed.
 > A block is missing, out of its place, or another stands where the shape wants its own: hold the shape against a Structure Projector's, from the machine's front.
 
 > [!PROBLEM] The machine stands formed but does nothing.
 > No energy reaches its Power Entry, what is in its inlets makes nothing it knows, or its outlets are full.
 
 > [!PROBLEM] Breaking one block took the machine apart.
-> Every block of the shape holds it together: put the block back and the terminal forms it again. Breaking the terminal gives you back the Machine Terminal.
+> Every block of the shape holds it together: put the block back and the terminal forms it again. Breaking the terminal gives it back to you, still that machine's terminal.
 
 > [!SEE] jsc:ore_and_metal_machines, jsc:lithography_stations

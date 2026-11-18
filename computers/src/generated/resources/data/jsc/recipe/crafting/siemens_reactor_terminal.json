@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:siemens_reactor_base_plate"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:siemens_reactor_terminal"
+  }
+}

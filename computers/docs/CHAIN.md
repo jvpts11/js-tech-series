@@ -73,13 +73,14 @@ the shape of any of them before you build it.
 - **What a machine is built of.** Its casing, one of five by the work it stands (the Machine Casing for the mechanical
   machines, the Refractory Casing for heat, the Lined Casing for what corrodes, the Vacuum Casing for vacuum and gases
   and the Clean Room Casing for the Lithography Stations), its working blocks, which make it what it is, its entries
-  and the Machine Terminal. The entries are told apart by their connector and their band: green takes in, orange gives
-  out, yellow is energy, cyan is the Peripheral Port.
-- **How it forms.** Place the Machine Terminal at the terminal's place, facing the way the machine's front should. It
-  looks for the shape standing whole round it as it is placed, as a block beside it changes, and as you use it, and
-  becomes that machine's own terminal. Formed, the machine is drawn as one, its entries drawing nothing of their own,
-  and it shows what it works on in the colours of what goes in and comes out. Breaking any block takes it apart until
-  the block is back; breaking the terminal gives back the Machine Terminal.
+  and its own terminal (the Plasma Etcher Terminal, the Crusher Terminal), made at a crafting table of the Machine
+  Terminal and one working block of that machine. The entries are told apart by their connector and their band: green
+  takes in, orange gives out, yellow is energy, cyan is the Peripheral Port.
+- **How it forms.** Place the machine's own terminal at the terminal's place, facing the way the machine's front
+  should. It looks for its machine's shape standing whole round it a moment after it is placed and whenever a block of
+  the shape changes. Formed, the machine is drawn as one, its entries drawing nothing of their own, and it shows what
+  it works on in the colours of what goes in and comes out. Breaking any block takes it apart until the block is back;
+  breaking the terminal gives it back, still that machine's terminal.
 - **What reaches it.** Things go in through its inlets and come out through its outlets: items, liquids and gases each
   by their own. A hopper, a pipe, the network's buses or a Crafting Interface works it as any machine.
 - **Energy.** Every machine but the Coke Oven draws J's Energy at low voltage through its Power Entry, only while it

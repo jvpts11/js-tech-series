@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:board_etcher_etchant_sump"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:board_etcher_terminal"
+  }
+}

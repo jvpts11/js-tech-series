@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:laminator_hot_platen"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:laminator_terminal"
+  }
+}

@@ -73,5 +73,5 @@
     "h": "gas_input",
     "i": "fluid_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:lithography_legacy_terminal"
 }

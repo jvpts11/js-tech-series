@@ -105,12 +105,15 @@ with its valve.
 
 **The terminal and the peripheral port** are electronic, so they are bench recipes: made by hand at the
 Vintage bench until the Vintage Electronics Assembly Line exists, which then makes them by itself (the machines
-of the first two steps, and the line itself, need a terminal before it). One terminal for every machine, in the
-neutral steel:
+of the first two steps, and the line itself, need a terminal before it). The Machine Terminal is a part, in the
+neutral steel; each machine has a terminal of its own, made at a crafting table of the Machine
+Terminal and the first working block of that machine no other machine is built of (the Plasma Etcher Terminal of the
+Machine Terminal and an Etch Chamber), placed at its machine's terminal place, and given back as itself when broken:
 
 | Block | Recipe |
 | --- | --- |
-| Terminal | 2 iron ingots, 2 copper ingots, 2 redstone and 1 glass |
+| Machine Terminal (a part) | 2 iron ingots, 2 copper ingots, 2 redstone and 1 glass |
+| A machine's terminal | the Machine Terminal and one working block of that machine, at a crafting table |
 | Peripheral Port (only the Lithography Station uses it, from the Legacy) | 2 iron ingots, 1 Vintage peripheral cable, 1 Vintage etched board and 1 Vintage controller chip |
 
 **The Vintage machines come in three steps**, each made only of what the steps before it make:

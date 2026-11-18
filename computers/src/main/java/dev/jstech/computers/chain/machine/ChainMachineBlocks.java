@@ -57,13 +57,6 @@ public final class ChainMachineBlocks {
             .named("Vacuum Casing").register());
     public static final BlockEntry<Block> CLEAN_ROOM_CASING = put(plain("clean_room_casing", HardwareEra.VINTAGE)
             .named("Clean Room Casing").register());
-    public static final BlockEntry<ChainTerminalBlock> TERMINAL = put(CONTENT.block("machine_terminal",
-                    ChainTerminalBlock::new)
-            .named("Machine Terminal")
-            .properties(properties -> properties.mapColor(MapColor.METAL).strength(3.0F).sound(SoundType.METAL))
-            .look(IBlockLook.facing(new IBlockModel.Orientable("machine_terminal", TEXTURES + "machine_casing",
-                    TEXTURES + "terminal", TEXTURES + "machine_casing")))
-            .tag(BlockTags.MINEABLE_WITH_PICKAXE).item().tab(shelf(Shelf.CHAIN, HardwareEra.VINTAGE)).register());
     public static final BlockEntry<ChainFormedBlock> ITEM_INLET = put(entry("item_inlet").named("Item Inlet")
             .register());
     public static final BlockEntry<ChainFormedBlock> ITEM_OUTLET = put(entry("item_outlet").named("Item Outlet")
@@ -117,9 +110,9 @@ public final class ChainMachineBlocks {
         return Collections.unmodifiableMap(BY_ID);
     }
 
-    /** The blocks every machine shares: the five casings, the Machine Terminal and the entries. */
+    /** The blocks every machine shares: the five casings and the entries; each machine's terminal is its own. */
     public static List<BlockEntry<? extends Block>> shared() {
-        return List.of(MACHINE_CASING, REFRACTORY_CASING, LINED_CASING, VACUUM_CASING, CLEAN_ROOM_CASING, TERMINAL,
+        return List.of(MACHINE_CASING, REFRACTORY_CASING, LINED_CASING, VACUUM_CASING, CLEAN_ROOM_CASING,
                 ITEM_INLET, ITEM_OUTLET, LIQUID_INLET, LIQUID_OUTLET, GAS_INLET, GAS_OUTLET, POWER_ENTRY,
                 PERIPHERAL_PORT);
     }

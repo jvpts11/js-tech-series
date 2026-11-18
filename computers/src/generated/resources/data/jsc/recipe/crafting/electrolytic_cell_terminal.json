@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:electrolytic_cell_cell_stack"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:electrolytic_cell_terminal"
+  }
+}

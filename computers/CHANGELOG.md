@@ -885,6 +885,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 
 ### Changed
+- Every machine of the chain has a terminal of its own, the Plasma Etcher Terminal of the Plasma Etcher,
+  the Crusher Terminal of the Crusher, in the chain's tab and drawn as its formed machine: made at a crafting table of
+  the Machine Terminal, a part now, and the first working block of that machine no other machine has (the Plasma
+  Etcher's of an Etch Chamber), placed at the machine's terminal place it forms that machine, and broken it gives
+  itself back. One Machine Terminal stood for every machine and turned back into it when broken.
 - `mkfs` on Linux is `mkfs.ext4`, beside a `mkfs` for each other file system, and formats a partition,
   `mkfs.ext4 /dev/sdb1`, refusing the one the system runs from.
 - Removable media in real bytes: a floppy disk holds 1.44 MB, a CD 700 MB, a DVD 4.7 GB, a Blu-ray 25 GB

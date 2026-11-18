@@ -47,5 +47,5 @@
     "c": "item_output",
     "d": "energy_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:ion_implanter_terminal"
 }

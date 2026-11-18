@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:induction_furnace_coil"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:induction_furnace_terminal"
+  }
+}

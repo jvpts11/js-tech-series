@@ -11,6 +11,8 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.core.multiblock.MultiblockPatterns;
+import dev.jstech.core.multiblock.ShapeMatch;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * A chain machine stood up in a test's arena (computers/docs/design/survival.md): its blocks laid as its shape has
- * them, its front to the north and its front west corner at {@link #CORNER}, and the Machine Terminal made its own.
+ * them, its front to the north and its front west corner at {@link #CORNER}, round its own terminal.
  */
 public final class ChainMachineSite {
 
@@ -41,15 +43,23 @@ public final class ChainMachineSite {
         return ChainMachines.byId(id).orElseThrow();
     }
 
-    /** Builds {@code machine} and makes its Machine Terminal its own; its terminal's place. */
+    /**
+     * Builds {@code machine} round its own terminal, its shape standing whole, which the terminal forms a few ticks on;
+     * its terminal's place.
+     */
     public static BlockPos formed(final GameTestHelper helper, final ChainMachine machine) {
         final BlockPos terminal = build(helper, machine);
-        helper.assertTrue(ChainMachines.formAt(helper.getLevel(), helper.absolutePos(terminal), Direction.NORTH),
-                machine.id() + " forms");
+        helper.assertTrue(stands(helper, machine, terminal), machine.id() + " stands whole");
         return terminal;
     }
 
-    /** Lays {@code machine}'s blocks at {@link #CORNER} facing north, the Machine Terminal at its place; that place. */
+    /** Whether {@code machine}'s shape stands whole round its terminal at {@code terminal}, as the terminal checks. */
+    public static boolean stands(final GameTestHelper helper, final ChainMachine machine, final BlockPos terminal) {
+        return MultiblockPatterns.get(machine.patternId()).map(pattern -> pattern.check(MultiblockPatterns.provider(
+                helper.getLevel()), helper.absolutePos(terminal).asLong()) instanceof ShapeMatch.Formed).orElse(false);
+    }
+
+    /** Lays {@code machine}'s blocks at {@link #CORNER} facing north, its own terminal at its place; that place. */
     public static BlockPos build(final GameTestHelper helper, final ChainMachine machine) {
         BlockPos terminal = CORNER;
         final List<List<String>> layers = machine.layers();
@@ -61,7 +71,7 @@ public final class ChainMachineSite {
                     final char letter = row.charAt(x);
                     if (letter == '#') {
                         terminal = at;
-                        helper.setBlock(at, ChainMachineBlocks.TERMINAL.get().defaultBlockState()
+                        helper.setBlock(at, ChainMachines.terminalOf(machine).get().defaultBlockState()
                                 .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
                     } else {
                         final Block block = ChainMachineBlocks.byId(machine.legend().get(letter)).get();

@@ -49,5 +49,5 @@
     "d": "gas_input",
     "f": "fluid_input"
   },
-  "terminal": "jsc:machine_terminal"
+  "terminal": "jsc:plasma_etcher_terminal"
 }

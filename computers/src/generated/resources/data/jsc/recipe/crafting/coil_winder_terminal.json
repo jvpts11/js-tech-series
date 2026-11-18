@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsc:machine_terminal"
+    },
+    {
+      "item": "jsc:coil_winder_supply_spool"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:coil_winder_terminal"
+  }
+}

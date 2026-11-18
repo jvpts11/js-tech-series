@@ -215,6 +215,7 @@
     "jsc:standard_electronics_workbench",
     "jsc:assembly_standard_placement_head",
     "jsc:assembly_standard_reflow_oven",
+    "jsc:assembly_standard_terminal",
     "jsc:usb_flash_drive_8g",
     "jsc:usb_flash_drive_16g",
     "jsc:usb_flash_drive"
