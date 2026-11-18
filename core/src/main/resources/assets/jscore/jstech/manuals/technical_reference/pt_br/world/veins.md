@@ -9,6 +9,8 @@ icon: minecraft:raw_iron
 
 Os minérios não ficam espalhados pela rocha: ficam em veios. Um veio é um corpo de minério denso no meio e que vai rareando até sumir na borda, então um lugar não tem nada e o seguinte tem centenas de blocos de minério.
 
+Entre os veios um pouco de cada minério fica solto, em pequenos nós de um punhado de blocos, como os minérios do próprio jogo ficam espalhados: cavar em qualquer lugar encontra um pouco de cada tipo nas suas alturas, o bastante para começar, nunca o bastante para viver disso.
+
 > [!DEFINE] Zona
 > Um quadrado do mundo de três chunks de lado. Uma zona tem no máximo um veio, e a maioria não tem nenhum.
 
@@ -41,7 +43,7 @@ Table: Os veios da série
 ## O que pode dar errado
 
 > [!PROBLEM] Nenhum minério em lugar nenhum, por chunks a fio.
-> A maioria das zonas não tem veio. Siga alguns chunks, ou procure mais fundo ou mais alto: cada tipo fica entre as suas alturas.
+> A maioria das zonas não tem veio, e entre elas só ficam pequenos nós. Siga alguns chunks, ou procure mais fundo ou mais alto: cada tipo fica entre as suas alturas. Um servidor escolhe quanto minério fica solto em `jstech-balance.toml` (`veins.loose`, 0 para nenhum).
 
 > [!PROBLEM] O ferro do jogo sumiu de onde costumava ficar.
 > Enquanto os minérios ficam em veios, o ferro, o cobre e o ouro espalhados do jogo não são postos. Um servidor desliga os veios em `jstech-balance.toml` (`veins.enabled`); só os chunks feitos depois mudam.

@@ -21,6 +21,10 @@ class VeinFieldTest {
 
     private static final long SEED = 1_234_567L;
     private static final int ZONES = 200;
+    private static final int CHUNKS = 2000;
+    private static final double KNOTS = 16;
+    private static final double KNOT_RADIUS = 2;
+    private static final double KNOT_THICKNESS = 1.5;
 
     @Test
     void in_isTheSameForTheSameSeedOnAnyThread() {
@@ -116,6 +120,47 @@ class VeinFieldTest {
         for (final VeinField.Vein vein : all) {
             assertTrue(field.reaching(SEED, vein.x(), vein.z(), vein.x(), vein.z()).contains(vein),
                     "a vein reaches its own middle");
+        }
+    }
+
+    @Test
+    void knots_areTheSameForTheSameSeedAndChunk() {
+        final VeinField field = field(0.3, 0.2);
+        assertEquals(field.knots(SEED, 5, -3, KNOTS, KNOT_RADIUS, KNOT_THICKNESS),
+                field.knots(SEED, 5, -3, KNOTS, KNOT_RADIUS, KNOT_THICKNESS));
+    }
+
+    @Test
+    void knots_lieByTheKindsFrequenciesAChunk() {
+        final VeinField field = field(0.3, 0.1);
+        final int[] counts = new int[2];
+        for (int x = 0; x < CHUNKS; x++) {
+            for (final VeinField.Vein knot : field.knots(SEED, x, x * 3, KNOTS, KNOT_RADIUS, KNOT_THICKNESS)) {
+                counts[knot.kind()]++;
+            }
+        }
+        assertEquals(0.3 * KNOTS, counts[0] / (double) CHUNKS, 0.15);
+        assertEquals(0.1 * KNOTS, counts[1] / (double) CHUNKS, 0.1);
+    }
+
+    @Test
+    void knots_lieInTheirChunkAtTheirKindsHeightsSmall() {
+        final VeinField field = field(1.0);
+        for (int x = -10; x < 10; x++) {
+            for (final VeinField.Vein knot : field.knots(SEED, x, 4, KNOTS, KNOT_RADIUS, KNOT_THICKNESS)) {
+                assertTrue(Math.floorDiv(knot.x(), 16) == x && Math.floorDiv(knot.z(), 16) == 4, "in its chunk");
+                assertTrue(knot.y() >= -32 && knot.y() <= 48, "height " + knot.y());
+                assertEquals(KNOT_RADIUS, knot.radius(), 1e-9);
+                assertEquals(KNOT_THICKNESS, knot.thickness(), 1e-9);
+            }
+        }
+    }
+
+    @Test
+    void knots_noneOfAKindFoundNowhere() {
+        final VeinField field = field(0.0);
+        for (int x = 0; x < ZONES; x++) {
+            assertTrue(field.knots(SEED, x, 0, KNOTS, KNOT_RADIUS, KNOT_THICKNESS).isEmpty());
         }
     }
 

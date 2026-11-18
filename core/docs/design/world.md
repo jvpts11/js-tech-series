@@ -64,13 +64,17 @@ the edges, so a player finds nothing, or hundreds. The vein system is a kit any 
 - **An ore generates only when an installed mod declares it uses it.**
 - With veins on, vanilla's iron, copper and gold only generate in veins: their scattered placement is removed by
   NeoForge's biome modifiers, as data.
+- **A little of each kind lies loose between the veins**, in small knots of a handful of blocks, as vanilla's ores lie
+  scattered: as many of a kind a chunk as it is common, at its heights and in its rocks, so a player digging anywhere
+  comes on some of every kind; a vein is still where the ore is.
 - **Prospecting** asks the kit for the direction and strength of nearby veins, never their coordinates, and for a vein's
   composition and size; the tools that ask are a mod's (J's Industrial's prospecting pick and scanner).
 - **A field manual of the veins** for players, in the Technical Reference, written in Markdown ([Manuals](manuals.md)):
   how veins lie, how to follow and find them, and the series' veins in a table.
 
 **Settings**, in the Core's files: turn the vein system off (ores then generate as in vanilla, scattered, with rarity by
-height); each deposit type's rarity, spread and density; per material, do not generate its ore; and **try brute-force
+height); each deposit type's rarity, spread and density; how much ore lies loose between the veins (0 none); per
+material, do not generate its ore; and **try brute-force
 oregen**, which moves other mods' ores into veins by their common tags, works with mods that generate ores as data and
 can fail with mods that generate them their own way, hence the "try".
 

@@ -464,6 +464,14 @@ public final class CoreConfigKeys {
             .comment("How many times as dense each kind of vein is, by its id; its middle is at most wholly ore.")
             .named("How dense veins are");
 
+    /** How much ore lies loose between the veins, as many times as the series lays. */
+    public static final ConfigKey<Double> VEINS_LOOSE = ConfigKey.number(VEINS + ".loose", 1.0)
+            .range(0.0, MAX_VEIN_FACTOR)
+            .activeWhen(VEINS_ENABLED)
+            .comment("How much ore lies loose between the veins in small knots, as the game's own ores lie "
+                    + "scattered, so some of each turns up anywhere: 1 as the series lays it, 2 twice as much, 0 none.")
+            .named("Loose ore between veins");
+
     /** The materials whose ore is never laid, by their ids. */
     public static final ConfigKey<List<String>> VEINS_WITHOUT_ORE = ConfigKey.of(VEINS + ".without_ore",
             Codec.STRING.listOf(), List.of())
@@ -741,6 +749,7 @@ public final class CoreConfigKeys {
             .key(VEINS_RARITY, VeinBalance::setRarity)
             .key(VEINS_SPREAD, VeinBalance::setSpread)
             .key(VEINS_DENSITY, VeinBalance::setDensity)
+            .key(VEINS_LOOSE, VeinBalance::setLoose)
             .key(VEINS_WITHOUT_ORE, VeinBalance::setWithoutOre)
             .key(VEINS_MOVE_OTHERS, VeinBalance::setMoveOthers)
             .key(WORLD_EVENTS_ENABLED, WorldEventBalance::setEnabled)

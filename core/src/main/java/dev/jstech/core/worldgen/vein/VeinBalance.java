@@ -27,6 +27,7 @@ public final class VeinBalance {
     private static volatile Map<ResourceLocation, Double> spread = Map.of();
     private static volatile Map<ResourceLocation, Double> density = Map.of();
     private static volatile Set<ResourceLocation> withoutOre = Set.of();
+    private static volatile double loose = 1;
 
     private VeinBalance() {
     }
@@ -74,6 +75,15 @@ public final class VeinBalance {
 
     public static void setDensity(final Map<String, Double> byId) {
         density = parse(byId);
+    }
+
+    /** How many times as much ore lies loose between the veins as the series lays; 0 none. */
+    public static double loose() {
+        return loose;
+    }
+
+    public static void setLoose(final double value) {
+        loose = Math.max(0, value);
     }
 
     /** Whether {@code material}'s ore is never laid. */

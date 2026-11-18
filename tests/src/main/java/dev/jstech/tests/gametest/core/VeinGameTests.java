@@ -22,6 +22,7 @@ import dev.jstech.core.worldgen.vein.ScatteredOres;
 import dev.jstech.core.worldgen.vein.VeinBalance;
 import dev.jstech.core.worldgen.vein.VeinField;
 import dev.jstech.core.worldgen.vein.VeinPainter;
+import dev.jstech.core.worldgen.vein.Veins;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.testkit.LandSurvey;
@@ -32,6 +33,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.placement.OrePlacements;
 import net.minecraft.gametest.framework.GameTest;
@@ -40,13 +42,18 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifier;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -65,6 +72,9 @@ public final class VeinGameTests {
     private static final int SIDE1 = SIDE + 1;
     private static final int MIDDLE = 4;
     private static final int ZONES_SEARCHED = 64;
+    /* How many chunks along the land a chunk no vein reaches is looked for in, and a chunk's side. */
+    private static final int CHUNKS_SEARCHED = 256;
+    private static final int CHUNK = 16;
     private static final ResourceLocation MOVED_ORE = TestWorldGen.LAND_ORE.id();
 
     private VeinGameTests() {
@@ -264,6 +274,41 @@ public final class VeinGameTests {
                             && prospect.direction().x < -0.9).findFirst();
             helper.assertTrue(towards.isPresent() && towards.get().strength() > 0 && towards.get().strength() < 1,
                     "thirty blocks east of it, an instrument finds it to the west, and how strongly it shows");
+        } finally {
+            RuntimeDimensions.remove(server, copy);
+        }
+        helper.succeed();
+    }
+
+    /*
+     * A little of the land's ores lies loose between its veins, as the game's own ores lie scattered: a chunk no vein
+     * reaches holds a few small knots of ore all the same.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void testLand_laysLooseKnotsOfOreBetweenItsVeins(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final ResourceKey<Level> copy = ResourceKey.create(Registries.DIMENSION,
+                ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "loose_" + UUID.randomUUID().toString()
+                        .substring(0, 8)));
+        final ServerLevel land = RuntimeDimensions.getOrCreate(server, copy, TestWorldGen.TEST_LAND.id());
+        try {
+            final VeinField field = Veins.field(Deposits.all());
+            ChunkPos lone = null;
+            for (int x = 0; x < CHUNKS_SEARCHED && lone == null; x++) {
+                if (field.reaching(land.getSeed(), x * CHUNK, 0, x * CHUNK + CHUNK - 1, CHUNK - 1).isEmpty()) {
+                    lone = new ChunkPos(x, 0);
+                }
+            }
+            helper.assertTrue(lone != null, "the land has a chunk no vein reaches");
+            final LevelChunk chunk = land.getChunk(lone.x, lone.z);
+            int ores = 0;
+            for (final BlockPos at : BlockPos.betweenClosed(lone.getMinBlockX(), land.getMinBuildHeight(),
+                    lone.getMinBlockZ(), lone.getMaxBlockX(), land.getMaxBuildHeight() - 1, lone.getMaxBlockZ())) {
+                final BlockState there = chunk.getBlockState(at);
+                ores += there.is(Tags.Blocks.ORES) && (there.is(BlockTags.IRON_ORES)
+                        || "jscore".equals(BuiltInRegistries.BLOCK.getKey(there.getBlock()).getNamespace())) ? 1 : 0;
+            }
+            helper.assertTrue(ores > 0, "the chunk " + lone + " holds loose ore between the veins: " + ores);
         } finally {
             RuntimeDimensions.remove(server, copy);
         }

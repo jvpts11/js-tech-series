@@ -69,7 +69,7 @@ public final class CoreConfigKeysGameTests {
                         "tools.most_copied", "rooms.decompression_pull", "rooms.fire_in_pure_oxygen",
                         "rooms.fire_needs_oxygen", "rooms.mobs_breathe", "rooms.plants_need_air",
                         "rooms.blocks_burst", "rooms.largest_room", "veins.enabled", "veins.rarity", "veins.spread",
-                        "veins.density",
+                        "veins.density", "veins.loose",
                         "veins.without_ore", "veins.try_moving_other_ores", "world_events.enabled",
                         "world_events.frequency", "world_events.disabled", "world_events.harmless"),
                 CoreConfigKeys.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the settings declared");

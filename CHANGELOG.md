@@ -668,6 +668,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A rock's own top and bottom: J's Core's API is at version 71. `HostRock.top()`, `bottom()` and `hasEnds()`,
   and `HostRock.Builder.ends(ResourceLocation, ResourceLocation)` for a rock whose ends are drawn otherwise than its
   sides, as sandstone's are: its ores wear its top and bottom on theirs. Experimental.
+- (Core) Ore loose between the veins: J's Core's API is at version 72. `VeinField.knots(long, int, int, double,
+  double, double)` gives the small knots of ore a chunk holds between the veins, and `VeinBalance.loose()` with
+  `CoreConfigKeys.VEINS_LOOSE` how much of it the server lays. Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -695,6 +698,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Core) A little of each ore lies loose between the veins, in small knots of a handful of blocks, as the game's own
+  ores lie scattered: a player digging anywhere comes on some of every kind at its heights, a vein still being where
+  the ore is. Most of the series' ores were found only in veins far apart. The new balance setting `veins.loose` sets
+  how much, 0 for none.
 - (Computers) Crushed zirconium ore refines to hafnium in the Induction Furnace, four to one dust, the use its ore
   is mined for: it was crushed and then used by nothing.
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

@@ -2762,6 +2762,7 @@ stable 4
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> WORLD_EVENTS_ENABLED
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Double> MOVING_PHYSICS_MILLIS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Double> TOOLS_HARDNESS_MARGIN
+72 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Double> VEINS_LOOSE
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> CALENDAR_DAYS_PER_SEASON
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> DIAGNOSTICS_STALL_MILLIS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> ELEMENTS_LONGEST_NAME
@@ -13175,10 +13176,12 @@ stable 4
 10 dev.jstech.core.worldgen.vein.VeinBalance  static boolean moveOthers()
 10 dev.jstech.core.worldgen.vein.VeinBalance  static boolean withoutOre(ResourceLocation)
 10 dev.jstech.core.worldgen.vein.VeinBalance  static double density(ResourceLocation)
+72 dev.jstech.core.worldgen.vein.VeinBalance  static double loose()
 10 dev.jstech.core.worldgen.vein.VeinBalance  static double rarity(ResourceLocation)
 10 dev.jstech.core.worldgen.vein.VeinBalance  static double spread(ResourceLocation)
 10 dev.jstech.core.worldgen.vein.VeinBalance  static void setDensity(Map<String, Double>)
 10 dev.jstech.core.worldgen.vein.VeinBalance  static void setEnabled(boolean)
+72 dev.jstech.core.worldgen.vein.VeinBalance  static void setLoose(double)
 10 dev.jstech.core.worldgen.vein.VeinBalance  static void setMoveOthers(boolean)
 10 dev.jstech.core.worldgen.vein.VeinBalance  static void setRarity(Map<String, Double>)
 10 dev.jstech.core.worldgen.vein.VeinBalance  static void setSpread(Map<String, Double>)
@@ -13187,6 +13190,7 @@ stable 4
 10 dev.jstech.core.worldgen.vein.VeinFeature  boolean place(FeaturePlaceContext<NoneFeatureConfiguration>)
 10 dev.jstech.core.worldgen.vein.VeinFeature  new()
 10 dev.jstech.core.worldgen.vein.VeinField  type final class
+72 dev.jstech.core.worldgen.vein.VeinField  List<Vein> knots(long, int, int, double, double, double)
 10 dev.jstech.core.worldgen.vein.VeinField  List<Vein> near(long, int, int, int)
 10 dev.jstech.core.worldgen.vein.VeinField  List<Vein> reaching(long, int, int, int, int)
 10 dev.jstech.core.worldgen.vein.VeinField  Vein in(long, int, int)

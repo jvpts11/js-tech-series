@@ -88,6 +88,10 @@ data pack can add kinds of its own there:
   "biomes": "minecraft:is_overworld", "rocks": ["jscore:stone", "jscore:deepslate", "jscore:granite"] }
 ```
 
+- **A little of each kind lies loose** (*added 2026-11-18*). Between the veins each chunk holds small knots of ore, a
+  handful of blocks each, as the game's own ores lie scattered: as many of a kind as it is common, sixteen times its
+  frequency a chunk on average, at its heights and in its rocks (`VeinField.knots`). A player digging anywhere comes on
+  some of every kind; a vein is still where the ore is. The `loose` setting scales them, 0 lays none.
 - **A vein crosses rocks.** Each block of it becomes the ore of one of its materials in the rock it was: a vein through
   stone and deepslate lays iron ore in the stone and deepslate iron ore in the deepslate.
 - **A vein is zoned** (*added 2026-10-24*). A material may lie only in the upper half of the vein, as the enriched
@@ -139,6 +143,7 @@ In `jstech-balance.toml`, section `veins`:
 | `rarity` | How many times as often each kind is found, by its id: `"jscore:iron" = 0.5`. 0 lays none. | none named |
 | `spread` | How many times as large each kind is, never wider than its zone. | none named |
 | `density` | How many times as dense each kind is, at most all ore at its middle. | none named |
+| `loose` | How much ore lies loose between the veins, in small knots: 2 twice as much, 0 none. | 1 |
 | `without_ore` | The materials whose ore is never laid: `["jscore:tin"]`. Their veins keep their other ores. | none |
 | `try_moving_other_ores` | Move other mods' scattered ores of the common ores tag (`c:ores`) into veins of their own. | off |
 

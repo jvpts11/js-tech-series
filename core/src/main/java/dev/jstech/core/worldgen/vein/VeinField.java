@@ -32,6 +32,9 @@ public final class VeinField {
     private static final long MIX_X = -7_046_029_254_386_353_131L;
     private static final long MIX_Z = -4_417_276_706_812_531_889L;
     private static final long SALT = 5_573_394_017_221_771_109L;
+    /* The loose knots' own salt, apart from the veins', and a chunk's side. */
+    private static final long KNOT_SALT = 2_862_933_555_777_941_757L;
+    private static final int CHUNK = 16;
     private static final double LEAST_SIZE = 0.75;
     private static final double SIZE_SPREAD = 0.5;
 
@@ -104,6 +107,32 @@ public final class VeinField {
                         && vein.z() + vein.radius() >= z0 && vein.z() - vein.radius() <= z1) {
                     out.add(vein);
                 }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * The knots of ore that lie loose in the chunk {@code chunkX, chunkZ} between the veins, as the game's own ores lie
+     * scattered: of each kind, {@code knots} times its frequency a chunk on average, each a little lens {@code radius}
+     * blocks across and {@code thickness} up and down, anywhere in the chunk at a height of its kind's own. Worked out
+     * from the world's seed alone, the same every time.
+     */
+    public List<Vein> knots(final long seed, final int chunkX, final int chunkZ, final double knots,
+                            final double radius, final double thickness) {
+        final List<Vein> out = new ArrayList<>();
+        final SplittableRandom random = new SplittableRandom(seed ^ this.salt ^ KNOT_SALT ^ chunkX * MIX_X
+                ^ chunkZ * MIX_Z);
+        for (int i = 0; i < this.kinds.size(); i++) {
+            final Kind kind = this.kinds.get(i);
+            final double expected = kind.frequency() * knots;
+            final int whole = (int) expected;
+            final int count = whole + (random.nextDouble() < expected - whole ? 1 : 0);
+            for (int k = 0; k < count; k++) {
+                final int x = chunkX * CHUNK + random.nextInt(CHUNK);
+                final int z = chunkZ * CHUNK + random.nextInt(CHUNK);
+                final int y = kind.minY() + random.nextInt(Math.max(1, kind.maxY() - kind.minY() + 1));
+                out.add(new Vein(i, x, y, z, radius, thickness, random.nextLong()));
             }
         }
         return out;

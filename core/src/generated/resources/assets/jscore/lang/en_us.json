@@ -1556,6 +1556,8 @@
   "jscore.configuration.veins.density.tooltip": "How many times as dense each kind of vein is, by its id; its middle is at most wholly ore.",
   "jscore.configuration.veins.enabled": "Ores lie in veins",
   "jscore.configuration.veins.enabled.tooltip": "Whether ores lie in veins about three chunks wide, dense at the middle and thinning outwards, instead of scattered; the game's scattered iron, copper and gold are taken away while they do. Only chunks made from then on change.",
+  "jscore.configuration.veins.loose": "Loose ore between veins",
+  "jscore.configuration.veins.loose.tooltip": "How much ore lies loose between the veins in small knots, as the game's own ores lie scattered, so some of each turns up anywhere: 1 as the series lays it, 2 twice as much, 0 none.",
   "jscore.configuration.veins.rarity": "How often veins are found",
   "jscore.configuration.veins.rarity.tooltip": "How many times as often each kind of vein is found, by its id, as in \"jscore:iron\" = 0.5; 0 lays none of it. A kind not named keeps its own.",
   "jscore.configuration.veins.spread": "How large veins are",

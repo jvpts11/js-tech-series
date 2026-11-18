@@ -9,6 +9,8 @@ icon: minecraft:raw_iron
 
 Ores do not lie scattered through the rock: they lie in veins. A vein is a body of ore dense at its middle and thinning to nothing at its edge, so one place holds nothing and the next holds hundreds of blocks of ore.
 
+Between the veins a little of each ore lies loose, in small knots of a handful of blocks, as the game's own ores lie scattered: digging anywhere turns up some of every kind at its heights, enough to start with, never enough to live on.
+
 > [!DEFINE] Zone
 > A square of the world three chunks a side. A zone holds one vein at most, and most hold none.
 
@@ -41,7 +43,7 @@ Table: The veins of the series
 ## What can go wrong
 
 > [!PROBLEM] No ore anywhere, for chunks on end.
-> Most zones hold no vein. Go on a few chunks, or look deeper or higher: each kind lies between its heights.
+> Most zones hold no vein, and between them only small knots lie. Go on a few chunks, or look deeper or higher: each kind lies between its heights. A server sets how much ore lies loose in `jstech-balance.toml` (`veins.loose`, 0 for none).
 
 > [!PROBLEM] The game's iron is gone from where it used to lie.
 > While ores lie in veins, the game's scattered iron, copper and gold are not laid. A server turns veins off in `jstech-balance.toml` (`veins.enabled`); only chunks made afterwards change.
