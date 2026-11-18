@@ -33,10 +33,14 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
@@ -136,6 +140,50 @@ public final class ComputersRecipesGameTests {
             helper.assertTrue(full.output().getStackInSlot(0).isEmpty() && full.partUnderWay().isEmpty(),
                     "a computer with parts inside makes nothing");
         });
+    }
+
+    /*
+     * A qRusset sold in several colours is made in its first and dyed into the others at a crafting table: the G3's
+     * Bondi Blue with each flavour's dye, the Advanced qRusset's blue with each colour's. One with parts inside is not
+     * dyed, so no recipe eats a computer's parts.
+     */
+    @GameTest(template = ARENA)
+    public static void qrusset_isDyedIntoEachOfItsColoursEmpty(final GameTestHelper helper) {
+        final List<Item> flavourDyes = List.of(Items.BLUE_DYE, Items.RED_DYE, Items.LIME_DYE, Items.PURPLE_DYE,
+                Items.ORANGE_DYE);
+        final List<Item> colourDyes = List.of(Items.GREEN_DYE, Items.PINK_DYE, Items.LIGHT_GRAY_DYE,
+                Items.YELLOW_DYE, Items.ORANGE_DYE, Items.PURPLE_DYE);
+        final List<String> missing = new ArrayList<>();
+        final Item bondi = ComputingModule.QRUSSET_G3.getFirst().get().asItem();
+        for (int i = 1; i < ComputingModule.QRUSSET_G3.size(); i++) {
+            dyed(helper, new ItemStack(bondi), flavourDyes.get(i - 1), ComputingModule.QRUSSET_G3.get(i).get()
+                    .asItem(), missing);
+        }
+        final Item blue = ComputingModule.QRUSSET_COLOURS.getFirst().get().asItem();
+        for (int i = 1; i < ComputingModule.QRUSSET_COLOURS.size(); i++) {
+            dyed(helper, new ItemStack(blue), colourDyes.get(i - 1), ComputingModule.QRUSSET_COLOURS.get(i).get()
+                    .asItem(), missing);
+        }
+        helper.assertTrue(missing.isEmpty(), "each colour is its first dyed: none for " + missing);
+        final ItemStack built = new ItemStack(bondi);
+        built.set(ComputingComponents.ASSEMBLED_HARDWARE.get(), ItemContainerContents.fromItems(
+                List.of(new ItemStack(ChainParts.FERRITE.get()))));
+        helper.assertTrue(helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, CraftingInput.of(2, 1,
+                List.of(built, new ItemStack(Items.BLUE_DYE))), helper.getLevel()).isEmpty(), "one with parts"
+                + " inside is not dyed");
+        helper.succeed();
+    }
+
+    /* Notes in {@code missing} when {@code base} and {@code dye} at a crafting table make no {@code into}. */
+    private static void dyed(final GameTestHelper helper, final ItemStack base, final Item dye, final Item into,
+                             final List<String> missing) {
+        final CraftingInput input = CraftingInput.of(2, 1, List.of(base, new ItemStack(dye)));
+        final boolean makes = helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input,
+                helper.getLevel()).map(recipe -> recipe.value().assemble(input, helper.getLevel().registryAccess())
+                .is(into)).orElse(false);
+        if (!makes) {
+            missing.add(BuiltInRegistries.ITEM.getKey(into).getPath());
+        }
     }
 
     /* What {@code recipe} takes, the same text for two recipes that take the same things in any order. */

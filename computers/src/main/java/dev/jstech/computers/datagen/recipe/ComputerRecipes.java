@@ -28,13 +28,20 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelSheet;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
+import dev.jstech.computers.hardware.QuinceMachines;
 import dev.jstech.computers.registry.EmptyComputerIngredient;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
+import net.minecraft.advancements.critereon.InventoryChangeTrigger;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -151,7 +158,7 @@ final class ComputerRecipes {
 
     /*
      * Quince's desk machines by the cases' rule, with the real machine's materials and, in an all-in-one, the era's
-     * screen. A machine sold in several colours is made in its first.
+     * screen. A machine sold in several colours is made in its first, and its first, empty, dyed into the others.
      */
     private static void quinceMachines(final RecipeOutput output) {
         final Item wire = copperWire();
@@ -174,6 +181,27 @@ final class ComputerRecipes {
         made(output, HardwareEra.ADVANCED, item("qrusset_colour_blue"), aluminiumPlate(), 4,
                 ChainParts.SELF_LIT_PANEL.get(), 1, Items.GLASS_PANE, 1, board(HardwareEra.ADVANCED), 1, wire, 2,
                 polycarbonate(), 1);
+        // Its other colours are its first dyed at a crafting table, empty, so no dye eats a computer's parts.
+        final List<Item> flavourDyes = List.of(Items.BLUE_DYE, Items.RED_DYE, Items.LIME_DYE, Items.PURPLE_DYE,
+                Items.ORANGE_DYE);
+        for (int i = 1; i < QuinceMachines.G3_FLAVOURS.size(); i++) {
+            dyed(output, item("qrusset_g3_bondi"), flavourDyes.get(i - 1),
+                    item("qrusset_g3_" + QuinceMachines.G3_FLAVOURS.get(i)));
+        }
+        final List<Item> colourDyes = List.of(Items.GREEN_DYE, Items.PINK_DYE, Items.LIGHT_GRAY_DYE,
+                Items.YELLOW_DYE, Items.ORANGE_DYE, Items.PURPLE_DYE);
+        for (int i = 1; i < QuinceMachines.COLOURS.size(); i++) {
+            dyed(output, item("qrusset_colour_blue"), colourDyes.get(i - 1),
+                    item("qrusset_colour_" + QuinceMachines.COLOURS.get(i)));
+        }
+    }
+
+    /* {@code into} at a crafting table: {@code computer}, empty, and {@code dye}. */
+    private static void dyed(final RecipeOutput output, final Item computer, final Item dye, final Item into) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, into).requires(empty(computer)).requires(dye)
+                .unlockedBy("has_it", InventoryChangeTrigger.TriggerInstance.hasItems(computer))
+                .save(output, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "crafting/"
+                        + BuiltInRegistries.ITEM.getKey(into).getPath()));
     }
 
     /*

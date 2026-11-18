@@ -609,6 +609,11 @@ screen:
 | Russet Studio | Advanced | 6 aluminium plates, 1 Advanced etched board, 2 copper wires and 1 polycarbonate sheet |
 | qRusset (coloured) | Advanced | 4 aluminium plates, 1 self-lit panel, 1 glass pane, 1 Advanced etched board, 2 copper wires and 1 polycarbonate sheet |
 
+A machine sold in several colours is made in its first, and its other colours are its first dyed at a crafting
+table, empty, so no dye eats a computer's parts: the qRusset G3's Bondi Blue with a blue dye makes the Blueberry,
+red the Strawberry, lime the Lime, purple the Grape and orange the Tangerine; the coloured qRusset's blue with a
+green, pink, light grey, yellow, orange or purple dye makes its green, pink, silver, yellow, orange or purple.
+
 #### The server room
 
 A **server chassis** is 2 steel plates for every U, an aluminium front, the desk cases' front, and the

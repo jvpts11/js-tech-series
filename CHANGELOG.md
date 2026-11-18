@@ -702,6 +702,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   green once it stands whole in the closed dock, a Release ship button opens the dock round it as its flight console
   does. While the dock opens or closes, what it does stands in the button's place, and the screen says what the dock
   answered, in green as it opens, in red with the reason when it cannot.
+- (Computers) The qRusset G3's flavours and the coloured qRusset's colours have their recipes: the first of each,
+  empty, dyed at a crafting table with the dye of the colour, the Bondi Blue into the Blueberry, Strawberry, Lime,
+  Grape and Tangerine, the blue into the green, pink, silver, yellow, orange and purple. A computer with parts inside
+  is not dyed, so no dye eats its parts.
 - (Core) A little of each ore lies loose between the veins, in small knots of a handful of blocks, as the game's own
   ores lie scattered: a player digging anywhere comes on some of every kind at its heights, a vein still being where
   the ore is. Most of the series' ores were found only in veins far apart. The new balance setting `veins.loose` sets

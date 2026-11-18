@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "jsc:empty_computer",
+      "item": "jsc:qrusset_g3_bondi"
+    },
+    {
+      "item": "minecraft:purple_dye"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:qrusset_g3_grape"
+  }
+}

@@ -116,6 +116,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- The qRusset G3's flavours and the coloured qRusset's colours have their recipes: the first of each,
+  empty, dyed at a crafting table with the dye of the colour, the Bondi Blue into the Blueberry, Strawberry, Lime,
+  Grape and Tangerine, the blue into the green, pink, silver, yellow, orange and purple. A computer with parts inside
+  is not dyed, so no dye eats its parts.
 - Crushed zirconium ore refines to hafnium in the Induction Furnace, four to one dust, the use its ore
   is mined for: it was crushed and then used by nothing.
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
