@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -55,7 +56,7 @@ public final class MaterialArt implements IRuntimeFiles {
     private static final Logger LOG = CoreLogs.CONTENT.logger();
     private static final int SIZE = FormArt.SIZE;
     /** The way the art is drawn, raised whenever it changes, so what was kept on disk is drawn again. */
-    private static final int DRAWING = 1;
+    private static final int DRAWING = 2;
 
     private MaterialArt() {
     }
@@ -78,7 +79,8 @@ public final class MaterialArt implements IRuntimeFiles {
         for (final RegisteredThing thing : MaterialUses.registered()) {
             final Material material = thing.thing().material();
             out.append(thing.id()).append(' ').append(material.colour()).append(' ').append(material.oreLook())
-                    .append(' ').append(thing.rock() == null ? "" : thing.rock().texture()).append('\n');
+                    .append(' ').append(thing.rock() == null ? "" : thing.rock().texture() + " "
+                            + thing.rock().top() + " " + thing.rock().bottom()).append('\n');
         }
         return out.toString();
     }
@@ -93,10 +95,23 @@ public final class MaterialArt implements IRuntimeFiles {
             final String path = thing.id().getPath();
             final String assets = "assets/" + namespace + "/";
             if (thing.isBlock()) {
+                final HostRock rock = thing.rock();
                 out.put(assets + "blockstates/" + path + ".json", json(blockState(thing.id())));
-                out.put(assets + "models/block/" + path + ".json", json(cubeAll(thing.id())));
                 out.put(assets + "models/item/" + path + ".json", json(parent(namespace + ":block/" + path)));
-                out.put(assets + "textures/block/" + path + ".png", () -> png(blockTexture(thing, read)));
+                if (rock != null && rock.hasEnds()) {
+                    // An ore in a rock with ends of its own, sandstone's, wears them as the rock does.
+                    out.put(assets + "models/block/" + path + ".json", json(cubeBottomTop(thing.id())));
+                    out.put(assets + "textures/block/" + path + ".png",
+                            () -> png(blockTexture(thing, rock.texture(), read)));
+                    out.put(assets + "textures/block/" + path + "_top.png",
+                            () -> png(blockTexture(thing, rock.top(), read)));
+                    out.put(assets + "textures/block/" + path + "_bottom.png",
+                            () -> png(blockTexture(thing, rock.bottom(), read)));
+                } else {
+                    out.put(assets + "models/block/" + path + ".json", json(cubeAll(thing.id())));
+                    out.put(assets + "textures/block/" + path + ".png", () -> png(blockTexture(thing,
+                            rock == null ? null : rock.texture(), read)));
+                }
             } else {
                 out.put(assets + "models/item/" + path + ".json", json(itemModel(thing)));
                 out.put(assets + "textures/item/" + path + ".png", () -> png(itemTexture(thing, read)));
@@ -161,11 +176,12 @@ public final class MaterialArt implements IRuntimeFiles {
         return FormArt.drawn(name, colour);
     }
 
-    private static int[] blockTexture(final RegisteredThing thing,
+    /* The texture of {@code thing}'s block, an ore's face drawn on {@code face}, its rock's face there. */
+    private static int[] blockTexture(final RegisteredThing thing, final @Nullable ResourceLocation face,
                                       final Map<ResourceLocation, Optional<GameTexture>> read) {
         final Material material = thing.thing().material();
         final HostRock rock = thing.rock();
-        if (rock == null) {
+        if (rock == null || face == null) {
             return itemTexture(thing, read);
         }
         final OreLook look = material.oreLook();
@@ -174,22 +190,22 @@ public final class MaterialArt implements IRuntimeFiles {
                 "textures/" + look.pattern().texture(deepslate) + ".png"), read);
         final GameTexture gameRock = picture(ResourceLocation.withDefaultNamespace(
                 "textures/" + look.pattern().rock(deepslate) + ".png"), read);
-        final GameTexture host = host(rock, gameRock, read);
+        final GameTexture host = host(rock, face, gameRock, read);
         final int[] specks = FormArt.specks(ore.texels(), ore.width(), gameRock.texels(), gameRock.width());
         return FormArt.ore(host.texels(), host.width(), specks, look.speckColour(material.colour()), look.sheen(),
                 look.second(), look.lowHue(), look.highHue());
     }
 
     /*
-     * The texture an ore in {@code rock} is drawn on: the rock's own as declared, or, for a rock of another mod found
-     * by its tags whose texture is elsewhere, the one its block's own files draw it with. Where neither can be read
-     * whole, a full block's face of it at least, the game's own rock of the ore's pattern, {@code gameRock}, rather
-     * than no ore drawn at all.
+     * The texture an ore's face in {@code rock} is drawn on: the rock's own face as declared, {@code face}, or, for a
+     * rock of another mod found by its tags whose texture is elsewhere, the one its block's own files draw it with.
+     * Where neither can be read whole, a full block's face of it at least, the game's own rock of the ore's pattern,
+     * {@code gameRock}, rather than no ore drawn at all.
      */
-    private static GameTexture host(final HostRock rock, final GameTexture gameRock,
+    private static GameTexture host(final HostRock rock, final ResourceLocation face, final GameTexture gameRock,
                                     final Map<ResourceLocation, Optional<GameTexture>> read) {
         final List<ResourceLocation> tried = new ArrayList<>();
-        tried.add(rock.texture());
+        tried.add(face);
         if (rock.found()) {
             BlockTextures.of(rock.rock()).ifPresent(tried::add);
         }
@@ -233,6 +249,18 @@ public final class MaterialArt implements IRuntimeFiles {
         final JsonObject textures = new JsonObject();
         textures.addProperty("all", id.getNamespace() + ":block/" + id.getPath());
         final JsonObject model = parent("minecraft:block/cube_all");
+        model.add("textures", textures);
+        return model;
+    }
+
+    /* A block with sides of its own texture and a top and a bottom of their own, {@code <path>_top} and so on. */
+    private static JsonObject cubeBottomTop(final ResourceLocation id) {
+        final String block = id.getNamespace() + ":block/" + id.getPath();
+        final JsonObject textures = new JsonObject();
+        textures.addProperty("side", block);
+        textures.addProperty("top", block + "_top");
+        textures.addProperty("bottom", block + "_bottom");
+        final JsonObject model = parent("minecraft:block/cube_bottom_top");
         model.add("textures", textures);
         return model;
     }

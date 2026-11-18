@@ -55,12 +55,16 @@ public final class HostRocks {
     public static final HostRock ANDESITE = rock("andesite", () -> Blocks.ANDESITE, ANDESITE_ORE).declare();
     public static final HostRock TUFF = rock("tuff", () -> Blocks.TUFF, TUFF_ORE).declare();
     public static final HostRock CALCITE = rock("calcite", () -> Blocks.CALCITE, CALCITE_ORE).declare();
-    public static final HostRock SANDSTONE = rock("sandstone", () -> Blocks.SANDSTONE, SANDSTONE_ORE).declare();
+    public static final HostRock SANDSTONE = rock("sandstone", () -> Blocks.SANDSTONE, SANDSTONE_ORE)
+            .ends(ResourceLocation.withDefaultNamespace("block/sandstone_top"),
+                    ResourceLocation.withDefaultNamespace("block/sandstone_bottom")).declare();
     /* The game's own Nether ores are nether_gold_ore and nether_quartz_ore. */
     public static final HostRock NETHERRACK = rock("netherrack", () -> Blocks.NETHERRACK, NETHERRACK_ORE)
             .orePrefix("nether_").declare();
     public static final HostRock BASALT = rock("basalt", () -> Blocks.BASALT, BASALT_ORE)
-            .texture(ResourceLocation.withDefaultNamespace("block/basalt_side")).declare();
+            .texture(ResourceLocation.withDefaultNamespace("block/basalt_side"))
+            .ends(ResourceLocation.withDefaultNamespace("block/basalt_top"),
+                    ResourceLocation.withDefaultNamespace("block/basalt_top")).declare();
     public static final HostRock BLACKSTONE = rock("blackstone", () -> Blocks.BLACKSTONE, BLACKSTONE_ORE).declare();
     public static final HostRock END_STONE = rock("end_stone", () -> Blocks.END_STONE, END_STONE_ORE)
             .orePrefix("end_").declare();

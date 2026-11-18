@@ -665,6 +665,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `FormedDamage.boxes(Level, BlockPos, FormedPlace)` takes the place of `boxes(Level, FormedPlace, List<CellMark>)`:
   it gathers the strikes on the block's whole model itself, once for all its blocks, until a strike is laid or
   mended. A mod that passed the block's marks passes its position. Experimental.
+- (Core) A rock's own top and bottom: J's Core's API is at version 71. `HostRock.top()`, `bottom()` and `hasEnds()`,
+  and `HostRock.Builder.ends(ResourceLocation, ResourceLocation)` for a rock whose ends are drawn otherwise than its
+  sides, as sandstone's are: its ores wear its top and bottom on theirs. Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -4374,6 +4377,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   shows when a click without sneaking finds a card seated there, which a sneaking click with an empty hand takes off.
 - (Core) The hazard map's tabs no longer cut their names short: a tab too narrow for a hazard's whole name shows its
   short one, the whole in its tooltip.
+- (Core) Ores in sandstone and in basalt wear the rock's own top and bottom, not its side on every face, so they sit
+  in the rock as the blocks round them do.
 - (Space) A small ship let go to its physics, as when the physics tool grabs it or it falls, weighs what its parts
   weigh, as it does in flight: its blocks had no weight of their own and weighed as stone, a small ship of 40 tonnes
   nearly 500 under the grip, falling and striking as hard. Each block of a starship's kit now carries its share of its

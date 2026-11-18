@@ -8678,13 +8678,17 @@ stable 4
 10 dev.jstech.core.material.FoundRocks.Realm  OVERWORLD
 10 dev.jstech.core.material.HostRock  type final class
 10 dev.jstech.core.material.HostRock  Block rock()
+71 dev.jstech.core.material.HostRock  ResourceLocation bottom()
 10 dev.jstech.core.material.HostRock  ResourceLocation id()
 10 dev.jstech.core.material.HostRock  ResourceLocation oreId(Material)
 10 dev.jstech.core.material.HostRock  ResourceLocation texture()
+71 dev.jstech.core.material.HostRock  ResourceLocation top()
 10 dev.jstech.core.material.HostRock  String toString()
 10 dev.jstech.core.material.HostRock  Text oreName(Text)
 10 dev.jstech.core.material.HostRock  boolean found()
+71 dev.jstech.core.material.HostRock  boolean hasEnds()
 10 dev.jstech.core.material.HostRock.Builder  type static final class
+71 dev.jstech.core.material.HostRock.Builder  Builder ends(ResourceLocation, ResourceLocation)
 10 dev.jstech.core.material.HostRock.Builder  Builder orePrefix(String)
 10 dev.jstech.core.material.HostRock.Builder  Builder texture(ResourceLocation)
 10 dev.jstech.core.material.HostRock.Builder  HostRock declare()

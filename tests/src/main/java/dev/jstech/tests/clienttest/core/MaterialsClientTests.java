@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -36,12 +37,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.FastColor;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * The things of the materials the installed mods use, on a player's game: every one drawn in its material's colour
@@ -104,6 +107,39 @@ public final class MaterialsClientTests {
                 .thenTeleport(SETTLE, VIEW, Direction.NORTH)
                 .thenScreenshot(SETTLE * 2, "tin-in-stone-deepslate-granite-iron-in-tuff-the-games-own-a-block"
                         + "-a-radioactive-mineral-and-molten-tin");
+    }
+
+    /*
+     * An ore in sandstone wears sandstone's own top and bottom as the rock does, not its side on every face: its
+     * model's top and bottom are textures of their own, drawn on the game's sandstone top and bottom off the specks.
+     */
+    @ClientTest(timeoutTicks = 100)
+    public static void ores_inSandstoneWearItsTopAndBottom(final ClientTestContext ctx) {
+        ctx.then(0, () -> {
+            final RegisteredThing ore = MaterialUses.registered().stream()
+                    .filter(thing -> thing.rock() == HostRocks.SANDSTONE).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("no ore in sandstone"));
+            final BlockState state = BuiltInRegistries.BLOCK.get(ore.id()).defaultBlockState();
+            final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
+            for (final Direction end : List.of(Direction.UP, Direction.DOWN)) {
+                final String face = end == Direction.UP ? "top" : "bottom";
+                final List<BakedQuad> quads = model.getQuads(state, end, RandomSource.create(0));
+                ctx.assertTrue(!quads.isEmpty(), "the ore's model has a " + face);
+                final ResourceLocation sprite = quads.getFirst().getSprite().contents().name();
+                ctx.assertTrue(sprite.getPath().equals("block/" + ore.id().getPath() + "_" + face),
+                        "its " + face + " is a texture of its own: " + sprite);
+                final int[] drawn = texels(ctx, ResourceLocation.fromNamespaceAndPath(sprite.getNamespace(),
+                        "textures/" + sprite.getPath() + ".png"));
+                final int[] rock = texels(ctx, ResourceLocation.withDefaultNamespace("textures/block/sandstone_"
+                        + face + ".png"));
+                int same = 0;
+                for (int i = 0; i < drawn.length; i++) {
+                    same += drawn[i] == rock[i] ? 1 : 0;
+                }
+                ctx.assertTrue(same > MOST_TEXELS / 2, "drawn on sandstone's " + face + ": " + same
+                        + " texels its own");
+            }
+        });
     }
 
     @ClientTest(timeoutTicks = 100)

@@ -26,6 +26,8 @@ public final class HostRock {
     private final ResourceLocation id;
     private final Supplier<? extends Block> rock;
     private final ResourceLocation texture;
+    private final ResourceLocation top;
+    private final ResourceLocation bottom;
     /** What an ore in it is called; none for a rock of another mod found by its tags, named after its own name. */
     private final @Nullable TextKey oreName;
     private final String orePrefix;
@@ -35,6 +37,8 @@ public final class HostRock {
         this.id = builder.id;
         this.rock = builder.rock;
         this.texture = builder.texture;
+        this.top = builder.top == null ? builder.texture : builder.top;
+        this.bottom = builder.bottom == null ? builder.texture : builder.bottom;
         this.oreName = builder.oreName;
         this.orePrefix = builder.orePrefix;
         this.found = builder.found;
@@ -49,9 +53,24 @@ public final class HostRock {
         return this.rock.get();
     }
 
-    /** The rock's texture, which its ores are drawn on: {@code minecraft:block/granite}. */
+    /** The rock's texture, which its ores are drawn on: {@code minecraft:block/granite}; its sides, with ends. */
     public ResourceLocation texture() {
         return this.texture;
+    }
+
+    /** The rock's top, which its ores' tops are drawn on: {@code minecraft:block/sandstone_top}; its texture else. */
+    public ResourceLocation top() {
+        return this.top;
+    }
+
+    /** The rock's bottom, which its ores' bottoms are drawn on; its texture where it has none of its own. */
+    public ResourceLocation bottom() {
+        return this.bottom;
+    }
+
+    /** Whether its top or its bottom is drawn otherwise than its sides, as sandstone's and basalt's are. */
+    public boolean hasEnds() {
+        return !this.top.equals(this.texture) || !this.bottom.equals(this.texture);
     }
 
     /**
@@ -108,6 +127,8 @@ public final class HostRock {
         private final Supplier<? extends Block> rock;
         private final @Nullable TextKey oreName;
         private ResourceLocation texture;
+        private @Nullable ResourceLocation top;
+        private @Nullable ResourceLocation bottom;
         private String orePrefix;
         private boolean found;
 
@@ -132,6 +153,16 @@ public final class HostRock {
         /** The texture its ores are drawn on, when it is not {@code <namespace>:block/<path>}. */
         public Builder texture(final ResourceLocation drawnOn) {
             this.texture = Objects.requireNonNull(drawnOn, "drawnOn");
+            return this;
+        }
+
+        /**
+         * Its top and bottom, when they are drawn otherwise than its sides, as sandstone's are: its ores wear them on
+         * their own top and bottom, the mineral laid over each.
+         */
+        public Builder ends(final ResourceLocation drawnOnTop, final ResourceLocation drawnOnBottom) {
+            this.top = Objects.requireNonNull(drawnOnTop, "drawnOnTop");
+            this.bottom = Objects.requireNonNull(drawnOnBottom, "drawnOnBottom");
             return this;
         }
 

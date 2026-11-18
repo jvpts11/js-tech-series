@@ -532,6 +532,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `FormedDamage.boxes(Level, BlockPos, FormedPlace)` takes the place of `boxes(Level, FormedPlace, List<CellMark>)`:
   it gathers the strikes on the block's whole model itself, once for all its blocks, until a strike is laid or
   mended. A mod that passed the block's marks passes its position. Experimental.
+- A rock's own top and bottom: J's Core's API is at version 71. `HostRock.top()`, `bottom()` and `hasEnds()`,
+  and `HostRock.Builder.ends(ResourceLocation, ResourceLocation)` for a rock whose ends are drawn otherwise than its
+  sides, as sandstone's are: its ores wear its top and bottom on theirs. Experimental.
 - A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -2272,6 +2275,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   seventh, half as long on average.
 - The hazard map's tabs no longer cut their names short: a tab too narrow for a hazard's whole name shows its
   short one, the whole in its tooltip.
+- Ores in sandstone and in basalt wear the rock's own top and bottom, not its side on every face, so they sit
+  in the rock as the blocks round them do.
 - The physics tool's grip holds any moving structure, however heavy, as Garry's Mod's physics gun does: a
   ship, a full rocket, a cart alike, carried where the player looks. Its grip pulled with at most 600 kN, 240 kN as it
   comes, so a small ship sank out of it and could not be freed; its strength now sets only how hard it pushes.
