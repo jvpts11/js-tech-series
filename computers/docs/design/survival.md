@@ -371,8 +371,15 @@ the station's mask slot and is never used up. Its blank is a mask plate from the
 nugget laid on it in the Deposition Chamber. The Vintage station writes it by photo-reduction from a **Layout**, the
 chip's drawing cut in PVC film at the Vintage bench, as real layouts were cut in film and photographed down: the
 blank and the Layout give the mask, and the Layout is used up ([Recipes](recipes.md)). From the Legacy on, the
-linked computer is to write the mask, through a lithography program with a mask picker, which is still to build.
-Tape-Out counts the first mask written, whichever way ([Advancements](advancements.md)).
+linked computer writes the mask with **Midsoft Lithography**, a text screen on MC-DOS and MC-NET (`litho`) and a
+window on the desktops: the station shown down the left (what it is doing, its wafer and layer, its liquids and gases,
+what the computer holds for it, its mask slot), the masks it writes on the right, a list a kind of chip (processors and
+graphics by microarchitecture, memory and controller chips, portables, hashing, light). Write puts the mask picked on
+the Mask Blank in the station, in one layer's time, half on a computer two eras newer, holding the station's memory on
+the computer; the mask then stands where the blank was. A station exposing a wafer writes none, and a station offers
+only the masks of its eras whose computers' era this computer is at least. JEI shows a Mask Writing page a mask, and
+the blank's and the masks' tooltips say how each is made. Tape-Out counts the first mask written, whichever way
+([Advancements](advancements.md)).
 
 **Lasers and LEDs.** The Crystal Puller also grows the boules of light: gallium arsenide (Legacy) from 2 gallium and 2
 arsenic; aluminium gallium indium phosphide (Transition) from 1 aluminium, 1 gallium, 1 indium and 1 phosphorus;
@@ -571,6 +578,4 @@ eras = ["legacy", "transition", "standard", "advanced"]
 
 ## To build
 
-- The lithography program on the computer linked to a Legacy or later Lithography Station, with the mask picker that
-  writes the station's mask.
 - The coil whine of a machine under load, with the sound pass.

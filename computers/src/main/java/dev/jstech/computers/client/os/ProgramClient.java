@@ -147,6 +147,7 @@ public final class ProgramClient {
         register(rl("messenger"), (host, mon, os) -> new MessengerApp(host, mon));
         register(rl("crypto_wallet"), (host, mon, os) -> new CryptoWalletApp(host));
         register(rl("mining_panel"), (host, mon, os) -> new MiningPanelApp(host));
+        register(rl("lithography"), (host, mon, os) -> new LithographyApp(host));
         register(rl("knot"), (host, mon, os) -> new KnotApp(host, mon));
         register(rl("backup_console"), (host, mon, os) -> new BackupConsoleApp(host, mon));
         register(rl("easy_disc_creator"), (host, mon, os) -> new EasyDiscCreatorApp(host));

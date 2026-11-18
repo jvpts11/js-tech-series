@@ -28,6 +28,8 @@ import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
+import mezz.jei.api.registration.IRecipeCatalystRegistration;
+import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
@@ -37,6 +39,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -116,9 +119,26 @@ public final class JscJeiPlugin implements IModPlugin {
         }
     }
 
-    /* Where each system and program is sold and found, on its installer: the Programmer, the abandoned buildings. */
+    /* How a mask is written by the computer of a Lithography Station, from the Legacy on. */
+    @Override
+    public void registerCategories(final IRecipeCategoryRegistration registration) {
+        registration.addRecipeCategories(new MaskWritingCategory(registration.getJeiHelpers().getGuiHelper()));
+    }
+
+    @Override
+    public void registerRecipeCatalysts(final IRecipeCatalystRegistration registration) {
+        for (final ItemLike station : MaskWritingCategory.stations()) {
+            registration.addRecipeCatalyst(station, MaskWritingCategory.TYPE);
+        }
+    }
+
+    /*
+     * Where each system and program is sold and found, on its installer: the Programmer, the abandoned buildings; and
+     * the masks the stations' computers write.
+     */
     @Override
     public void registerRecipes(final IRecipeRegistration registration) {
+        registration.addRecipes(MaskWritingCategory.TYPE, MaskWritingCategory.pages());
         for (final ProgramSpec program : OsRegistry.programs()) {
             final ItemStack installer = InstallerStacks.forProgram(program.id());
             if (!installer.isEmpty()) {
@@ -183,6 +203,20 @@ public final class JscJeiPlugin implements IModPlugin {
         runtime.getRecipesGui().show(runtime.getJeiHelpers().getFocusFactory()
                 .createFocus(RecipeIngredientRole.OUTPUT, VanillaTypes.ITEM_STACK, result));
         return true;
+    }
+
+    /** Opens the viewer's recipe screen on the Mask Writing page of {@code mask}; false without the viewer or one. */
+    public static boolean showMaskWriting(final ItemStack mask) {
+        if (runtime == null) {
+            return false;
+        }
+        final List<MaskWritingCategory.Page> pages = MaskWritingCategory.pages().stream()
+                .filter(page -> mask.is(page.offer().mask())).toList();
+        if (!pages.isEmpty()) {
+            runtime.getRecipesGui().showRecipes(runtime.getRecipeManager().getRecipeCategory(MaskWritingCategory.TYPE),
+                    pages, List.of());
+        }
+        return !pages.isEmpty();
     }
 
     /**

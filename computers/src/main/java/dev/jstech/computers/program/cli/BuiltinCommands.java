@@ -114,6 +114,7 @@ public final class BuiltinCommands {
                 new NetworkCommands.Ssh(),
                 // Blockwright's Teracoin miner, once its package is installed.
                 new MinerCommand(),
+                new LithoCommand(),
                 new ShellCommands.Exit(),
                 new SoftwareCommands.Pckmgr("pckmgr", Set.of(Platform.FRAMES)),
                 new SoftwareCommands.ProgramsList(),

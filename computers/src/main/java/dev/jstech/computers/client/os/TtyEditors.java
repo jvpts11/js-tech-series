@@ -42,6 +42,8 @@ public final class TtyEditors {
         register("interac", InteracTuiKeys::new);
         // The Vintage systems' diagnostics take it for the same reason: buttons and a list worked with the keys.
         register("msd", MsdKeys::new);
+        // Midsoft Lithography takes it to show its station and the masks it writes, worked with the keys.
+        register("litho", LithoKeys::new);
         // MC-DOS's DEFRAG takes it to draw its map of clusters in colour while it repairs a disk.
         register("defrag", DefragKeys::new);
         // MC-DOS's menu shell and System V's PACE, which take the glass to draw screens of their own.

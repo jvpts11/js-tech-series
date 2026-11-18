@@ -21,6 +21,7 @@ import dev.jstech.computers.operation.payload.desktop.HelpPayloads;
 import dev.jstech.computers.operation.payload.desktop.WorkstationInfoPayloads;
 import dev.jstech.computers.operation.payload.files.ArchivePayloads;
 import dev.jstech.computers.operation.payload.files.FileEditPayloads;
+import dev.jstech.computers.operation.payload.lithography.LithographyPayloads;
 import dev.jstech.computers.operation.payload.sheet.SheetPayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundryCoverPayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundryPagePayloads;
@@ -100,6 +101,7 @@ public final class ComputingPayloads {
         BackupPayloads.register(registrar);
         WalletPayloads.register(registrar);
         MiningPanelPayloads.register(registrar);
+        LithographyPayloads.register(registrar);
         AsicAddressPayload.register(registrar);
         MediaPayloads.register(registrar);
         SoundfoundryPayloads.register(registrar);

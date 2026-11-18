@@ -21,6 +21,7 @@ import dev.jstech.computers.chain.ChainMaterials;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.computers.chain.machine.MaskTooltip;
 import dev.jstech.computers.chain.machine.WaferTooltip;
 import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.audio.VinylUploads;
@@ -207,6 +208,7 @@ public class JsComputers {
         // A part's tooltip, whichever mod's item it is, on both sides: a server's own checks read it too.
         NeoForge.EVENT_BUS.addListener(PartTooltips::onTooltip);
         NeoForge.EVENT_BUS.addListener(WaferTooltip::onTooltip);
+        NeoForge.EVENT_BUS.addListener(MaskTooltip::onTooltip);
     }
 
     /**

@@ -797,6 +797,13 @@ public final class OsBootstrap {
                     .described("Carries this gateway's long-distance lines: extends the network over a place with no"
                             + " Mainframe, or federates it with a network that has one, and says what each may do.")
                     .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.NOUVELL).withRam(4),
+            // Lithography: the program of a computer linked to a Lithography Station from the Legacy on, which writes
+            // its masks; a Vintage computer runs a Legacy station, so it comes from MC-DOS on.
+            ProgramSpec.of(rl("lithography"), "litho", false, ALL_PLATFORMS, 2, ProgramKind.HYBRID, 0, HostScope.ANY)
+                    .named("Midsoft Lithography")
+                    .described("Shows the Lithography Stations linked to this computer and writes the mask each"
+                            + " exposes through, on the Mask Blank in its slot.")
+                    .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
             // Minesweeper: a small game available on any desktop (rank 0 = Frames 95 and newer).
             ProgramSpec.of(rl("minesweeper"), "mines", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
                     .named("Minesweeper").described("Minesweeper.")

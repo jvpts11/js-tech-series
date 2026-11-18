@@ -116,6 +116,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- Midsoft Lithography, the program of a computer cabled to a Lithography Station from the Legacy on,
+  writes the station's masks: put a Mask Blank in the station, pick the mask, and Write puts it on the blank in one
+  layer's time, half on a computer two eras newer, the mask then standing where the blank was. On MC-DOS and MC-NET it
+  takes the whole screen (`litho`), the arrows and Tab picking the mask and W writing it; on the desktops it is a window
+  with a tab a kind of chip and Write Mask. Both show the station: what it does, the wafer and layer it exposes, its
+  liquids and gases, the memory its computer holds for it and what is in its mask slot. A station exposing a wafer
+  writes no mask, and offers only the masks its computer's era makes chips for. JEI shows a Mask Writing page for each
+  mask, and the Mask Blank and every mask say in their tooltips how they are made. The Guide to Operations and the
+  Frames Resource Kit have its pages. The masks of the Legacy and later eras could not be made.
 - The qRusset G3's flavours and the coloured qRusset's colours have their recipes: the first of each,
   empty, dyed at a crafting table with the dye of the colour, the Bondi Blue into the Blueberry, Strawberry, Lime,
   Grape and Tangerine, the blue into the green, pink, silver, yellow, orange and purple. A computer with parts inside

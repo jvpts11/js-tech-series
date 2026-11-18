@@ -26,7 +26,8 @@ public record ConsoleInitPayload(BlockPos hostPos, List<String> history,
                                  List<String> devices) implements CustomPacketPayload {
 
     public static final int MAX_HISTORY = 128;
-    public static final int MAX_COMMANDS = 128;
+    /* Far over what one shell has: its commands grow with the programs a mod adds, and those past it go unhinted. */
+    public static final int MAX_COMMANDS = 256;
     /** One device name per drive the shell can see ({@code sda}, ...), for completing {@code /dev/} arguments. */
     public static final int MAX_DEVICES = 27;
 

@@ -45,6 +45,14 @@ public final class LithoLink {
         this.machine = machine;
     }
 
+    /**
+     * What {@code computer} holds now for the station at {@code station}, exposing a layer or writing a mask, in
+     * megabytes; 0 while it holds nothing for it.
+     */
+    public static int heldMb(final AbstractComputerBlockEntity computer, final BlockPos station, final long now) {
+        return computer.hostedMb(PROCESS, station.asLong(), now);
+    }
+
     /** What the computer holds while it exposes a recipe of {@code era}, in megabytes; 0 for an era that needs none. */
     public static int memoryMb(final Era era) {
         return MEMORY_MB.getOrDefault(era, 0);
@@ -79,8 +87,8 @@ public final class LithoLink {
     }
 
     /* The computer its peripheral port is linked to, if any. */
-    private static Optional<AbstractComputerBlockEntity> computer(final ServerLevel level,
-                                                                  final ChainMachineBlockEntity station) {
+    static Optional<AbstractComputerBlockEntity> computer(final ServerLevel level,
+                                                          final ChainMachineBlockEntity station) {
         final Optional<ShapeMatch.Formed> formed = station.formed() ? station.structure().structure()
                 : Optional.empty();
         if (formed.isEmpty()) {
@@ -100,7 +108,7 @@ public final class LithoLink {
     }
 
     /* The era before {@code era}: whose computers make its chips. */
-    private static Era before(final Era era) {
+    static Era before(final Era era) {
         final int at = HardwareEra.SERIES.indexOf(era);
         return at > 0 ? HardwareEra.SERIES.get(at - 1) : era;
     }

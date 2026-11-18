@@ -177,6 +177,30 @@
               "components": {
                 "jsc:media_payload": {
                   "SaveVersion": 1,
+                  "Value": "jsc:lithography"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
                   "Value": "jsc:minesweeper"
                 }
               },

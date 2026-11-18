@@ -698,6 +698,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Computers) Midsoft Lithography, the program of a computer cabled to a Lithography Station from the Legacy on,
+  writes the station's masks: put a Mask Blank in the station, pick the mask, and Write puts it on the blank in one
+  layer's time, half on a computer two eras newer, the mask then standing where the blank was. On MC-DOS and MC-NET it
+  takes the whole screen (`litho`), the arrows and Tab picking the mask and W writing it; on the desktops it is a window
+  with a tab a kind of chip and Write Mask. Both show the station: what it does, the wafer and layer it exposes, its
+  liquids and gases, the memory its computer holds for it and what is in its mask slot. A station exposing a wafer
+  writes no mask, and offers only the masks its computer's era makes chips for. JEI shows a Mask Writing page for each
+  mask, and the Mask Blank and every mask say in their tooltips how they are made. The Guide to Operations and the
+  Frames Resource Kit have its pages. The masks of the Legacy and later eras could not be made.
 - (Space) The Starship Design screen lets a ship built whole go: under the dock's lines, which say "Ship whole" in
   green once it stands whole in the closed dock, a Release ship button opens the dock round it as its flight console
   does. While the dock opens or closes, what it does stands in the button's place, and the screen says what the dock

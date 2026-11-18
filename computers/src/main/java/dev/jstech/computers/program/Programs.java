@@ -135,6 +135,13 @@ public final class Programs {
     public static final ResourceLocation MINING_PANEL =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mining_panel");
 
+    /**
+     * Lithography: Midsoft's program on the computer linked to a Lithography Station from the Legacy on, which shows
+     * the station and writes its masks; a text screen on MC-DOS, a window on the desktops.
+     */
+    public static final ResourceLocation LITHOGRAPHY =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "lithography");
+
     /** The miner: Blockwright's program that spends a computer's hashrate on Teracoin, at the prompt. */
     public static final ResourceLocation MINER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "miner");
