@@ -695,6 +695,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Computers) Crushed zirconium ore refines to hafnium in the Induction Furnace, four to one dust, the use its ore
+  is mined for: it was crushed and then used by nothing.
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
   armour drawn with a model of the Core's as on an armour stand or a locker's rack, each of its bones of that slot
   where a wearer at rest has that part, what it carries shown as when worn.

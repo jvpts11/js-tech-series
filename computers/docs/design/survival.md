@@ -264,10 +264,11 @@ lithography draws 10 kW, as the real one is the hungriest machine of a fab.
   (from zirconium), arsenic 15% (from copper and gold), ruthenium 5% (from nickel), sulfur 50% (from zinc and lead). A
   crushed ore, or a byproduct's dust, gives one ingot: in the vanilla furnace for the metals it melts (iron, copper,
   gold, tin, lead, zinc, silver, nickel, cobalt, manganese, gallium, indium), in the Induction Furnace for the
-  refractory ones (tantalum, chromium, tungsten, molybdenum, zirconium, hafnium, ruthenium). Crushed aluminium ore
-  never melts: it becomes alumina and then aluminium (below); crushed lithium ore neither, it becomes lithium
-  hydroxide. Arsenic stays a dust, as the real one turns to vapour before it melts, and so does germanium, a crystal.
-  Crushed mercury ore, roasted in the Induction Furnace, gives 100 mB of mercury.
+  refractory ones (tantalum, chromium, tungsten, molybdenum, hafnium, ruthenium). Crushed aluminium ore never melts:
+  it becomes alumina and then aluminium (below); crushed lithium ore neither, it becomes lithium hydroxide. Crushed
+  zirconium ore, worked only for its hafnium, refines in the Induction Furnace, 4 into 1 hafnium dust. Arsenic stays
+  a dust, as the real one turns to vapour before it melts, and so does germanium, a crystal. Crushed mercury ore,
+  roasted in the Induction Furnace, gives 100 mB of mercury.
 - **Forms:** the Rolling Mill turns 1 ingot into 1 plate, 1 plate into 2 sheets and 1 sheet into 4 foils, of any metal
   or alloy; the ones the chain only uses as foil (nickel, silver, permalloy, indium tin oxide) go from 1 ingot
   straight into 8 foils. The Wire Drawer turns 1 ingot into 2 rods and 1 rod into 2 wires, and 1 gold or aluminium

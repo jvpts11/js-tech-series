@@ -80,6 +80,8 @@ final class MaterialRecipes {
             SeriesAlloys.PERMALLOY, SeriesAlloys.INDIUM_TIN_OXIDE);
     /* The chance a crushed fluorspar gives a crystal of it besides its dust. */
     private static final float FLUORSPAR_CRYSTAL = 0.10F;
+    /* How many crushed zirconium ores the Induction Furnace refines into one hafnium dust. */
+    private static final int ZIRCONIUM_FOR_HAFNIUM = 4;
     private static final int FURNACE_TICKS = 200;
     private static final float FURNACE_XP = 0.7F;
     private static final int TICKS = 20;
@@ -160,6 +162,11 @@ final class MaterialRecipes {
         mercury.builder().input(of(Element.MERCURY, Forms.CRUSHED), 1).fluidOutput(liquid(Elements.of(
                 Element.MERCURY)), 100);
         mercury.save(output);
+        // Crushed zirconium ore is worked only for its hafnium, separated from it as from zircon.
+        final ChainRecipeItems.Saved hafnium = recipe(furnace, "hafnium_from_zirconium_crushed");
+        hafnium.builder().input(of(Element.ZIRCONIUM, Forms.CRUSHED), ZIRCONIUM_FOR_HAFNIUM)
+                .output(dust(Element.HAFNIUM), 1);
+        hafnium.save(output);
     }
 
     /*

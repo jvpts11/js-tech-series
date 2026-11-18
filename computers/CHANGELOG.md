@@ -116,6 +116,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- Crushed zirconium ore refines to hafnium in the Induction Furnace, four to one dust, the use its ore
+  is mined for: it was crushed and then used by nothing.
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
   everywhere, its machines, its tables and its progress. Whatever a rule of the series says era by era, an era that
   says nothing takes the nearest earlier era's, as the Exa and the Singularity take the Advanced's.
