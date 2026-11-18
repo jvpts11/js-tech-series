@@ -122,10 +122,14 @@ public final class MeshVoxels {
                         if (full[at]) {
                             continue;
                         }
-                        // A face pressed flat onto the block's side is a line or a point: its sixteenths are those
-                        // of its box, which is that flat.
-                        full[at] = pressed == null || overlaps(corner, ((x + 0.5) * cell), ((y + 0.5) * cell),
-                                ((z + 0.5) * cell), half);
+                        // A face pressed into a line or a point, as one pressed flat onto the block's side is, or a
+                        // sliver of one that cutting a face at a block's edge leaves, fills the sixteenths its edges
+                        // pass through: the box round a sliver lying across the block is mostly air.
+                        final double cx = (x + 0.5) * cell;
+                        final double cy = (y + 0.5) * cell;
+                        final double cz = (z + 0.5) * cell;
+                        full[at] = pressed == null ? alongEdges(corner, cx, cy, cz, half)
+                                : overlaps(corner, cx, cy, cz, half);
                     }
                 }
             }
@@ -194,6 +198,49 @@ public final class MeshVoxels {
                                  final int x1, final int y, final int z0, final int z1) {
         for (int z = z0; z < z1; z++) {
             if (!row(full, taken, grid, x0, x1, y, z)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*
+     * Whether an edge of the triangle {@code corner}, one pressed into a line or a point, meets the cube of half-side
+     * {@code half} round ({@code cx}, {@code cy}, {@code cz}).
+     */
+    private static boolean alongEdges(final double[][] corner, final double cx, final double cy, final double cz,
+                                      final double half) {
+        final double[] middle = {cx, cy, cz};
+        for (int c = 0; c < 3; c++) {
+            if (meets(corner[c], corner[(c + 1) % 3], middle, half)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+     * Whether the segment from {@code a} to {@code b} meets the cube of half-side {@code half} round {@code middle}:
+     * the part of the segment within each pair of the cube's sides, taken together, is not empty.
+     */
+    private static boolean meets(final double[] a, final double[] b, final double[] middle, final double half) {
+        double enter = 0;
+        double leave = 1;
+        for (int axis = 0; axis < AXES; axis++) {
+            final double low = middle[axis] - half;
+            final double high = middle[axis] + half;
+            final double along = b[axis] - a[axis];
+            if (along == 0) {
+                if (a[axis] < low || a[axis] > high) {
+                    return false;
+                }
+                continue;
+            }
+            final double first = (low - a[axis]) / along;
+            final double second = (high - a[axis]) / along;
+            enter = Math.max(enter, Math.min(first, second));
+            leave = Math.min(leave, Math.max(first, second));
+            if (enter > leave) {
                 return false;
             }
         }

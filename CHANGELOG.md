@@ -4378,6 +4378,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) A formed structure no longer collides with the air under its sloping faces: cutting a face at a block's
+  edge left slivers of it that filled most of the block they lay in, so the air under a ship's chamfered roof was
+  solid along every section and a player bumped their head on nothing beside its walkway. Its blocks now stand as
+  their model is drawn, the ships' sections and J's Computers' formed chain machines among them.
 - (Space) The quarters' bunk is a bed: at night, or in a storm, a click lays the player down in it to pass the night,
   docked, landed or in flight, as long as no monster is near and no one lies in it already; by day it says it is no
   time to sleep. It only set where the player woke. In space, where no night falls, it lays them down at any time.

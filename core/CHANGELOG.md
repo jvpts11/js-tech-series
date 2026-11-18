@@ -2276,6 +2276,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A formed structure no longer collides with the air under its sloping faces: cutting a face at a block's
+  edge left slivers of it that filled most of the block they lay in, so the air under a ship's chamfered roof was
+  solid along every section and a player bumped their head on nothing beside its walkway. Its blocks now stand as
+  their model is drawn, the ships' sections and J's Computers' formed chain machines among them.
 - A mod's bed without the game's facing, as a ship's bunk, no longer fails the game as its sleeper gets up:
   they stand up beside it the way the bed gives.
 - A moving structure breaking up as it strikes no longer stalls the game: each block of a struck machine worked

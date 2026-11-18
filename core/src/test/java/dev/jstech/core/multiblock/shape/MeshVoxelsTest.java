@@ -65,6 +65,21 @@ class MeshVoxelsTest {
         assertFalse(full[14][8][8], "nothing within");
     }
 
+    /*
+     * A sliver of a face, as cutting a hull's chamfer at a block's edge leaves, two of its corners a float's rounding
+     * apart, is pressed into a line across the block: it fills the sixteenths along that line, not the whole box
+     * round it, which made the air under every hull's chamfered roof solid.
+     */
+    @Test
+    void boxes_ofASliverAreTheSixteenthsAlongItOnly() {
+        final float[] sliver = {0, 1, 1, 0.9F, 0.1F, 0, 0.000_001F, 1, 1};
+        final boolean[][][] full = grid(MeshVoxels.boxes(sliver));
+
+        assertTrue(full[0][15][15], "along it, where it starts");
+        assertFalse(full[2][8][8], "the air under it, in the box round it");
+        assertFalse(full[8][8][8], "the middle of the box round it");
+    }
+
     @Test
     void boxes_ofMoreThanTheMostAreWorkedOutInEighths() {
         final float[] ball = ball(0.45, 24);
