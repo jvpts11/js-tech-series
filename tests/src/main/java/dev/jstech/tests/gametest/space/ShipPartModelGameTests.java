@@ -74,9 +74,9 @@ public final class ShipPartModelGameTests {
                 List.of(part("twin_bells"), part("side_intakes"), part("blended_delta"), part("twin_canted_fins"),
                         part("blisters"), part("wheels")), SmallShipFinishes.id("enamel"));
         helper.assertTrue(orbiter.size() == 12, "the Orbiter: twelve models: " + orbiter.size());
-        helper.assertTrue(orbiter.get(2).z() == 8 && orbiter.get(4).z() == 15
+        helper.assertTrue(orbiter.get(2).z() == 9 && orbiter.get(4).z() == 16
                         && orbiter.get(4).model().getPath().equals("ship/enamel/small_twin_bells"),
-                "its hold at 8 blocks from the nose, its tail engine at the spine's end, in enamel: " + orbiter);
+                "its hold at 9 blocks from the nose, its tail engine at the spine's end, in enamel: " + orbiter);
         helper.succeed();
     }
 

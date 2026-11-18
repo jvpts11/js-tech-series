@@ -44,6 +44,11 @@ final class StructureSeating {
     private static final double ZIPLINE_REACH = 6.0;
     /* How far short of the point of a seat aimed at its line of sight is followed, in blocks. */
     private static final double SHORT_OF_IT = 0.05;
+    /*
+     * How far from its block's middle a seat's sitter may sit, in blocks: on the seat its model draws, which may stand
+     * beyond the block it works by, as a cab's seat does.
+     */
+    private static final double SEAT_FROM_ITS_BLOCK = 2;
 
     private StructureSeating() {
     }
@@ -197,7 +202,7 @@ final class StructureSeating {
                     frame.worldY(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5),
                     frame.worldZ(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
         }
-        for (final Entity near : level.getEntities((Entity) null, new AABB(at, at).inflate(1),
+        for (final Entity near : level.getEntities((Entity) null, new AABB(at, at).inflate(SEAT_FROM_ITS_BLOCK),
                 any -> any instanceof StructureSeatEntity)) {
             if (near instanceof StructureSeatEntity seat && seat.seat().equals(pos) && !seat.getPassengers()
                     .isEmpty()) {

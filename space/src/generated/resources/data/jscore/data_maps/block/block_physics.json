@@ -46,10 +46,10 @@
       "mass": 97.73811836311839
     },
     "jsspace:canopy_frame": {
-      "mass": 203.88506178779735
+      "mass": 166.16949574320464
     },
     "jsspace:canopy_glass": {
-      "mass": 205.47034224845777
+      "mass": 168.15237998831677
     },
     "jsspace:capsule_hatch": {
       "mass": 132.63949454425645
@@ -61,7 +61,7 @@
       "mass": 156.65154950869237
     },
     "jsspace:carbon_edge": {
-      "mass": 138.12292548556283
+      "mass": 129.88461370802074
     },
     "jsspace:cargo_rack": {
       "mass": 45.45454545454545
@@ -91,7 +91,7 @@
       "mass": 79.22585227272728
     },
     "jsspace:deck_plate": {
-      "mass": 170.62972627614104
+      "mass": 155.1377234393396
     },
     "jsspace:descent_engine": {
       "mass": 63.63636363636363
@@ -121,7 +121,7 @@
       "mass": 132.63949454425645
     },
     "jsspace:flight_console": {
-      "mass": 206.4248356041669
+      "mass": 167.5070595107796
     },
     "jsspace:fuel_tank": {
       "mass": 227.08333333333334
@@ -145,7 +145,7 @@
       "mass": 127.40608157274825
     },
     "jsspace:hull_plating": {
-      "mass": 120.91641337964869
+      "mass": 127.90501029931832
     },
     "jsspace:instrument_wall": {
       "mass": 60.65359477124183
@@ -181,16 +181,16 @@
       "mass": 75.0
     },
     "jsspace:light_panel": {
-      "mass": 84.43214193214195
+      "mass": 103.6032767579814
     },
     "jsspace:livery_plating": {
-      "mass": 205.42159516323647
+      "mass": 171.33774522676737
     },
     "jsspace:magnetic_coil": {
       "mass": 416.66666666666663
     },
     "jsspace:nose_sensor": {
-      "mass": 203.25427468284613
+      "mass": 163.54129102055538
     },
     "jsspace:nozzle_extension": {
       "mass": 80.1994301994302
@@ -202,7 +202,7 @@
       "mass": 98.61263736263736
     },
     "jsspace:overhead_panel": {
-      "mass": 206.4248356041669
+      "mass": 167.5070595107796
     },
     "jsspace:oxygen_panel": {
       "mass": 125.0
@@ -211,7 +211,7 @@
       "mass": 156.65154950869237
     },
     "jsspace:pilot_seat": {
-      "mass": 206.4248356041669
+      "mass": 167.5070595107796
     },
     "jsspace:pressure_door": {
       "mass": 89.54058357467449
@@ -283,7 +283,7 @@
       "mass": 64.61789844142785
     },
     "jsspace:thermal_plating": {
-      "mass": 159.45178527560887
+      "mass": 151.47687720444614
     },
     "jsspace:thrust_chamber": {
       "mass": 229.16666666666666

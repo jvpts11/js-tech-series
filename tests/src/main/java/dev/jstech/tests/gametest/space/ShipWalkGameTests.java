@@ -50,7 +50,8 @@ import org.slf4j.Logger;
  * A player walks a small ship from its cockpit to its tail, through every part a crew goes into: from the middle of the
  * section behind the cockpit, the places a player stands on the floor reach, a step at a time and stepping up no higher
  * than a player does walking, into the cockpit's doorway, its floor flush with the threshold and its pilot's seat in
- * reach (the flight deck behind is the seat's and the consoles'), and along every row of every section, on one level.
+ * reach, up its aisles either side of the seat with the console before them (but the Cab's, too low a cabin to stand
+ * in), and along every row of every section, on one level.
  * A reactor's room is one a crew looks into rather than walks through, its fusion drum standing in its middle: the
  * sections behind it are walked from their own middle. Five ships between them hold every cockpit and every part of the
  * spine.
@@ -82,6 +83,13 @@ public final class ShipWalkGameTests {
     private static final double LEVEL = 1.0 / 16 + 1.0e-6;
     /* How far into the walkway's middle a floor is held to the first's level. */
     private static final double MIDDLE = 0.5;
+    /*
+     * A cockpit's aisles' middles, either side of its seat, across from the ship's middle line; how far across from it
+     * a player stands clear of the seat, its half-width and their own; half a block.
+     */
+    private static final double AISLE = 1.5;
+    private static final double BESIDE_THE_SEAT = 0.78;
+    private static final double HALF_A_BLOCK = 0.5;
     /* The section of the spine whose pressure door is shut: the workshop, behind the airlock. */
     private static final int SHUT_SECTION = 2;
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -246,6 +254,14 @@ public final class ShipWalkGameTests {
                 out.add(name(0) + " is not walked into its doorway, its pilot's seat in reach: "
                         + blockers(0, this.fronts[1]));
             }
+            // The Cab's cabin is too low to stand in beside its seat: its pilot climbs into its seat from behind it.
+            final boolean aisles = !this.design.spine().getFirst().equals(part("cab_cockpit"));
+            for (final double side : new double[] {-1, 1}) {
+                if (aisles && !upTheAisle(side)) {
+                    out.add(name(0) + " is not walked up its " + (side < 0 ? "left" : "right") + " aisle beside its"
+                            + " seat: " + blockers(side * AISLE, seatRow() + HALF_A_BLOCK));
+                }
+            }
             for (int k = 1; k < this.design.spine().size(); k++) {
                 if (reactor(k)) {
                     continue;
@@ -304,6 +320,32 @@ public final class ShipWalkGameTests {
                 }
             }
             return false;
+        }
+
+        /*
+         * Whether a player walks up the cockpit's aisle on the side {@code side} across, beside the pilot's seat and
+         * clear of it, as far as the middle of the seat's row, where the console stands in reach before them.
+         */
+        private boolean upTheAisle(final double side) {
+            final double seat = seatRow();
+            for (int i = 0; i < this.across; i++) {
+                if (side * x(i) < BESIDE_THE_SEAT) {
+                    continue;
+                }
+                for (int j = row(seat); j <= row(seat + HALF_A_BLOCK) && j < this.along; j++) {
+                    if (this.reached[i][j]) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /* Where along the ship the pilot's seat's row begins. */
+        private double seatRow() {
+            return this.plan.plan().spots().stream().filter(spot -> spot.part() == 0
+                    && spot.block().equals(ShipKitBlocks.PILOT_SEAT.getId())).flatMap(spot -> spot.place()
+                    .stream()).mapToInt(FormedPlace::z).min().orElseThrow();
         }
 
         /* Whether a player walks to some place between {@code from} and {@code to} along the ship. */

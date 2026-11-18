@@ -22,9 +22,12 @@ import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.team.Ownership;
+import dev.jstech.core.text.GameText;
+import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.api.SpaceWorlds;
@@ -35,10 +38,12 @@ import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipGround;
 import dev.jstech.space.ship.ShipImpacts;
+import dev.jstech.space.ship.ShipLayout;
 import dev.jstech.space.ship.ShipReadings;
 import dev.jstech.space.ship.ShipSequence;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.SmallShipParts;
+import dev.jstech.space.shipyard.ShipyardLayout;
 import dev.jstech.space.shipyard.ShipyardPlans;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
@@ -180,6 +185,8 @@ public final class ShipFlightGameTests {
     private static final long MIDNIGHT = 18_000;
     private static final double IN_ITS_BUNK = 1;
     private static final double BESIDE_ITS_BUNK = 2.5;
+    /* How near the ship's middle line its pilot sits, in blocks across. */
+    private static final double ON_THE_LINE = 0.05;
     private static final int HOVERED = 20;
     private static final int ROLLED = 10;
     /*
@@ -709,6 +716,39 @@ public final class ShipFlightGameTests {
     }
 
     /*
+     * Its pilot sits where its model draws its seat, on its middle line before the console, not on the middle of the
+     * seat's block beside it: their view looks down the ship over the middle of the console.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WITH_ITS_YARD_LOADING)
+    public static void flight_itsPilotSitsOnItsMiddleLineBeforeTheConsole(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        letGo(helper, ship).thenExecute(() -> {
+            final BlockPos seat = aboard(helper, ship[0], plan(helper).where(spot(helper,
+                    ShipKitBlocks.PILOT_SEAT.getId())));
+            final List<Vec3> console = plan(helper).plan().spots().stream().filter(each -> each.block().equals(
+                    ShipKitBlocks.FLIGHT_CONSOLE.getId())).map(each -> Vec3.atCenterOf(aboard(helper, ship[0],
+                    plan(helper).where(each)))).toList();
+            helper.assertTrue(console.size() == 2, "its console stands in two blocks across it: " + console);
+            final Vec3 middle = console.get(0).add(console.get(1)).scale(HALF);
+            final Vec3 across = console.get(1).subtract(console.get(0)).normalize();
+            final ServerPlayer pilot = GameTestPlayers.connected(helper, "pilot");
+            try {
+                helper.assertTrue(MovingStructures.sit(pilot, seat), "the pilot sits in its seat");
+                final Vec3 sits = MovingStructures.toYard(ship[0], pilot.getVehicle().position());
+                final double off = sits.subtract(middle).dot(across);
+                helper.assertTrue(Math.abs(off) < ON_THE_LINE, "they sit on its middle line before the console, "
+                        + off + " blocks off it: at " + sits + " on the seat " + seat + ", the console's middle "
+                        + middle + ", the seat standing as " + (helper.getLevel().getBlockEntity(seat)
+                        instanceof IFormedPlaced placed ? placed.places() : "no model"));
+            } finally {
+                pilot.stopRiding();
+                GameTestPlayers.leave(pilot);
+            }
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
+    /*
      * The quarters' bunk lays its sleeper down as a bed does in flight too: at night a click on it lays them in it
      * where it is in the world, not out in the yard, and they stand up beside it there.
      */
@@ -805,15 +845,24 @@ public final class ShipFlightGameTests {
                     final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
                             .getBlockEntity(terminal);
                     dock.design(design);
-                    helper.assertTrue(dock.confirm(), "the ship is sent");
+                    final ShipLayout.Laid laid = ShipyardLayout.laid(ShipParts.all(level), ShipKits.all(level),
+                            design);
+                    helper.assertTrue(dock.confirm(), "the ship is sent: kept down by " + design.problems(
+                            ShipParts.all(level)) + ", its parts clashing at " + laid.clashes() + ", out of the bay at "
+                            + laid.cells().keySet().stream().filter(cell -> !ShipyardStructure.holds(cell.x(),
+                            cell.y(), cell.z())).toList());
                     final PlannedBuild plan = dock.build().orElseThrow();
                     for (final PlanSpot spot : plan.plan().spots()) {
                         level.setBlockAndUpdate(plan.where(spot), BuiltInRegistries.BLOCK.get(spot.block())
                                 .defaultBlockState());
                     }
-                    ship[0] = dock.release(null).orElseThrow();
+                    final List<String> told = new ArrayList<>();
+                    ship[0] = dock.release(null, why -> told.add(GameText.component(why).getString())).orElse(null);
+                    helper.assertTrue(ship[0] != null, "the ship is let go: " + told + ", " + plan.formedParts()
+                            .size() + " of its " + plan.plan().parts() + " parts formed");
                 })
-                .thenWaitUntil(() -> helper.assertTrue(ship[0].ready(), "its blocks come into the structure"));
+                .thenWaitUntil(() -> helper.assertTrue(ship[0] != null && ship[0].ready(), "its blocks come into"
+                        + " the structure"));
     }
 
     /*

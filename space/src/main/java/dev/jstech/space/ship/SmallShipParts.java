@@ -73,6 +73,8 @@ public final class SmallShipParts {
     private static final int SMALL = 1;
     /* A small module's length along the spine. */
     private static final int MODULE_LENGTH = 2;
+    /* A cockpit's length: its nose, its flight deck, and a straight block behind them to come in by. */
+    private static final int COCKPIT = 6;
     /* The room a medium module takes in the hull: all of a small ship's. */
     private static final int MEDIUM = 3;
     private static final double KILO = 1_000;
@@ -92,12 +94,12 @@ public final class SmallShipParts {
         final ResourceLocation ironside = SmallShipMakers.IRONSIDE_YARDS;
         final ResourceLocation kosmozavod = SmallShipMakers.KOSMOZAVOD_ID;
         // Each part's figures: tonnes, kilonewtons pushed and lifted, megawatts made (or taken), seats and beds.
-        spine("small_orbiter_cockpit", ORBITER_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false, meridian,
-                figures(9.0, 0, 0, -2.0, 1, 0));
-        spine("small_cab_cockpit", CAB_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false, ironside,
+        spine("small_orbiter_cockpit", ORBITER_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, COCKPIT, 0, false,
+                meridian, figures(9.0, 0, 0, -2.0, 1, 0));
+        spine("small_cab_cockpit", CAB_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, COCKPIT, 0, false, ironside,
                 figures(8.0, 0, 0, -1.6, 1, 0));
-        spine("small_greenhouse_cockpit", GREENHOUSE_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false,
-                kosmozavod, figures(10.0, 0, 0, -2.4, 1, 0));
+        spine("small_greenhouse_cockpit", GREENHOUSE_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, COCKPIT, 0,
+                false, kosmozavod, figures(10.0, 0, 0, -2.4, 1, 0));
         spine("small_airlock", AIRLOCK, ShipPartKind.HULL, ShipPlace.SPINE, 3, 0, true, meridian,
                 figures(4.0, 0, 0, -0.4, 0, 0));
         spine("small_docking", DOCKING, ShipPartKind.HULL, ShipPlace.SPINE, 3, 0, true, kosmozavod,

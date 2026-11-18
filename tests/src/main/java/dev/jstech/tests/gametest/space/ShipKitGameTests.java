@@ -137,7 +137,7 @@ public final class ShipKitGameTests {
             final ShipLayout.Laid laid = ShipLayout.lay(spine, hung);
             helper.assertTrue(laid.clashes().isEmpty(), ship.getKey() + " has no two parts in one place: "
                     + laid.clashes());
-            helper.assertTrue(laid.length() == (ship.getKey().equals("SURVEYOR") ? 14 : 15), ship.getKey()
+            helper.assertTrue(laid.length() == (ship.getKey().equals("SURVEYOR") ? 15 : 16), ship.getKey()
                     + "'s spine is as long as its sections: " + laid.length());
             final Set<Integer> laidParts = new HashSet<>();
             laid.cells().values().forEach(spot -> laidParts.add(spot.part()));

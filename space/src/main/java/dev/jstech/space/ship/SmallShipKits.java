@@ -24,7 +24,8 @@ import net.minecraft.world.level.block.Block;
  * between, the sides' plating with an access panel every third block, frames and plating on the top's corners with the
  * ship's lines and a light along its middle, and the walkway in the middle row, a pressure door in its bulkhead where a
  * section begins. The cockpits taper to their noses with the console in front of the seat and the overhead panel above
- * it; the airlock opens its door on the left with the suit locker and the oxygen panel across; the docking module
+ * it, an aisle either side of the seat, and end in a straight block to come in by; the airlock opens its door on the
+ * left with the suit locker and the oxygen panel across; the docking module
  * carries its collar on top; the holds lay their tie-down decks, racks and doors; the reactors keep their core in the
  * middle within its shield; the tail engines close the spine; the nacelles sit on the stub wings, the side intakes
  * beside the cockpit's joint, the fins on the tail, the thrusters at the cockpit's back and the tail's shoulders, the
@@ -48,15 +49,17 @@ public final class SmallShipKits {
                 entry("E", ShipKitBlocks.CARBON_EDGE), entry("K", ShipKitBlocks.CANOPY_FRAME),
                 entry("W", ShipKitBlocks.CANOPY_GLASS), entry("O", ShipKitBlocks.FLIGHT_CONSOLE),
                 entry("S", ShipKitBlocks.PILOT_SEAT), entry("U", ShipKitBlocks.OVERHEAD_PANEL));
-        section("orbiter_cockpit", cockpit, List.of("    ", " TT ", "TDDT", "TDDT", "TDDT"),
-                List.of(" NN ", " EE ", "KWWK", "LOOL", "LS L"),
-                List.of("    ", "    ", "    ", "KWWK", "KUUK"));
-        section("cab_cockpit", cockpit, List.of(" TT ", "TDDT", "TDDT", "TDDT", "TDDT"),
-                List.of(" NN ", "EEEE", "L  L", "LOOL", "LS L"),
-                List.of("    ", "KWWK", "KWWK", "KWWK", "KUUK"));
-        section("greenhouse_cockpit", cockpit, List.of(" WW ", "TWWT", "TDDT", "TDDT", "TDDT"),
-                List.of(" WW ", "KWWK", "KWWK", "LOOL", "LS L"),
-                List.of("    ", "    ", "KWWK", "KWWK", "KUUK"));
+        // Each cockpit ends in a straight block behind its flight deck, a free row to come in by, its aisles either
+        // side of the seat running up to the console.
+        section("orbiter_cockpit", cockpit, List.of("    ", " TT ", "TDDT", "TDDT", "TDDT", "TDDT"),
+                List.of(" NN ", " EE ", "KWWK", "LOOL", "LS L", "L  L"),
+                List.of("    ", "    ", "    ", "KWWK", "KUUK", "HIIH"));
+        section("cab_cockpit", cockpit, List.of(" TT ", "TDDT", "TDDT", "TDDT", "TDDT", "TDDT"),
+                List.of(" NN ", "EEEE", "L  L", "LOOL", "LS L", "L  L"),
+                List.of("    ", "KWWK", "KWWK", "KWWK", "KUUK", "HIIH"));
+        section("greenhouse_cockpit", cockpit, List.of(" WW ", "TWWT", "TDDT", "TDDT", "TDDT", "TDDT"),
+                List.of(" WW ", "KWWK", "KWWK", "LOOL", "LS L", "L  L"),
+                List.of("    ", "    ", "KWWK", "KWWK", "KUUK", "HIIH"));
         final Map<String, ResourceLocation> airlock = with(hull, entry("Q", ShipKitBlocks.AIRLOCK_CYCLER),
                 entry("O", ShipKitBlocks.AIRLOCK_DOOR), entry("K", ShipKitBlocks.SUIT_LOCKER),
                 entry("X", ShipKitBlocks.OXYGEN_PANEL), entry("N", ShipKitBlocks.DOCKING_COLLAR),
@@ -147,9 +150,11 @@ public final class SmallShipKits {
         final Map<String, ResourceLocation> gear = keys(entry("G", ShipKitBlocks.GEAR_BAY_DOOR),
                 entry("S", ShipKitBlocks.LANDING_STRUT), entry("W", ShipKitBlocks.WHEEL),
                 entry("F", ShipKitBlocks.LANDING_FOOT));
-        hung("wheels", gear, piece(ShipKit.Anchor.COCKPIT_JOINT, -1, -2, -3, false, List.of("WW"), List.of("GS")),
+        // The nose gear stands under the flight deck, four blocks ahead of the cockpit's joint: a block further back,
+        // it would stand where the dock's front cradle clamps rise.
+        hung("wheels", gear, piece(ShipKit.Anchor.COCKPIT_JOINT, -1, -2, -4, false, List.of("WW"), List.of("GS")),
                 piece(ShipKit.Anchor.WING_ROOT, -2, -2, 2, true, List.of("W"), List.of("S")));
-        hung("legs", gear, piece(ShipKit.Anchor.COCKPIT_JOINT, -1, -2, -3, false, List.of("FF"), List.of("SS")),
+        hung("legs", gear, piece(ShipKit.Anchor.COCKPIT_JOINT, -1, -2, -4, false, List.of("FF"), List.of("SS")),
                 piece(ShipKit.Anchor.SPINE_END, -2, -2, -2, true, List.of("F"), List.of("S")));
     }
 

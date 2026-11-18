@@ -2276,6 +2276,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A player sits on the seat a formed model draws, the piece "seat" that works by the block sat on, not on the
+  middle of that block: a cockpit's pilot sat half a block off the ship's middle line, looking at its console from
+  its side, and a Cab's pilot a block and a half behind the seat.
 - A formed structure no longer collides with the air under its sloping faces: cutting a face at a block's
   edge left slivers of it that filled most of the block they lay in, so the air under a ship's chamfered roof was
   solid along every section and a player bumped their head on nothing beside its walkway. Its blocks now stand as

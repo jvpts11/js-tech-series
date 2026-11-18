@@ -7,6 +7,13 @@
  */
 package dev.jstech.core.moving;
 
+import dev.jstech.core.multiblock.shape.CellSpace;
+import dev.jstech.core.multiblock.shape.FormedPiece;
+import dev.jstech.core.multiblock.shape.FormedPlace;
+import dev.jstech.core.multiblock.shape.FormedShape;
+import dev.jstech.core.multiblock.shape.FormedShapes;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
+import dev.jstech.core.multiblock.shape.MeshCells;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
@@ -58,8 +65,16 @@ public final class StructureSeatEntity extends Entity {
     /* The way a sitter lying on it has their head, in the yard, as a level way's number; or none, sat upright. */
     private static final EntityDataAccessor<Integer> DATA_HEAD =
             SynchedEntityData.defineId(StructureSeatEntity.class, EntityDataSerializers.INT);
+    /* Where across and along from its seat block's corner its sitter sits: the middle of the seat its model draws. */
+    private static final EntityDataAccessor<Float> DATA_SITS_X =
+            SynchedEntityData.defineId(StructureSeatEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_SITS_Z =
+            SynchedEntityData.defineId(StructureSeatEntity.class, EntityDataSerializers.FLOAT);
     private static final int UPRIGHT = -1;
     private static final double HALF = 0.5;
+    /* The piece of a formed model a sitter sits on the middle of, the one that works by their seat's block. */
+    private static final String SEAT_PIECE = "seat";
+    private static final int AXES = 3;
     /* Got up from a seat with nowhere to stand round it, its sitter stands on the seat block, a hair above it. */
     private static final double ABOVE = 0.01;
     /* On a player's game, where the server told the player they stand getting up, kept till they are off the seat. */
@@ -80,6 +95,9 @@ public final class StructureSeatEntity extends Entity {
         made.entityData.set(DATA_SEAT, seat.immutable());
         made.entityData.set(DATA_HEIGHT, (float) kind.height());
         made.entityData.set(DATA_HELM, kind.helm());
+        final double[] sits = sitsAt(level, seat);
+        made.entityData.set(DATA_SITS_X, (float) sits[0]);
+        made.entityData.set(DATA_SITS_Z, (float) sits[1]);
         if (kind.lying()) {
             made.lie(level);
         }
@@ -241,6 +259,8 @@ public final class StructureSeatEntity extends Entity {
         builder.define(DATA_HEIGHT, (float) HALF);
         builder.define(DATA_HELM, false);
         builder.define(DATA_HEAD, UPRIGHT);
+        builder.define(DATA_SITS_X, (float) HALF);
+        builder.define(DATA_SITS_Z, (float) HALF);
     }
 
     /*
@@ -395,7 +415,9 @@ public final class StructureSeatEntity extends Entity {
     /* On a seat standing in the world: set on its block, where it stays. */
     private void stand() {
         final BlockPos at = seat();
-        setPos(at.getX() + HALF, at.getY() + entityData.get(DATA_HEIGHT), at.getZ() + HALF);
+        // In doubles: a float holds a place far out, as in a yard tens of millions of blocks out, to two blocks only.
+        setPos(at.getX() + (double) entityData.get(DATA_SITS_X), at.getY() + (double) entityData.get(DATA_HEIGHT),
+                at.getZ() + (double) entityData.get(DATA_SITS_Z));
         xo = getX();
         yo = getY();
         zo = getZ();
@@ -406,9 +428,10 @@ public final class StructureSeatEntity extends Entity {
 
     private void follow(final IStructureBody body, final boolean first) {
         final BlockPos at = seat();
-        final double x = at.getX() + HALF;
-        final double y = at.getY() + entityData.get(DATA_HEIGHT);
-        final double z = at.getZ() + HALF;
+        // In doubles: a float holds a place far out, as in a yard tens of millions of blocks out, to two blocks only.
+        final double x = at.getX() + (double) entityData.get(DATA_SITS_X);
+        final double y = at.getY() + (double) entityData.get(DATA_HEIGHT);
+        final double z = at.getZ() + (double) entityData.get(DATA_SITS_Z);
         final StructureFrame now = body.frame();
         final StructureFrame before = first ? now : body.previousFrame();
         setPos(now.worldX(x, y, z), now.worldY(x, y, z), now.worldZ(x, y, z));
@@ -432,5 +455,50 @@ public final class StructureSeatEntity extends Entity {
                 }
             }
         }
+    }
+
+    /*
+     * Where across and along the seat block at {@code pos} its sitter sits, measured from the block's corner, a block
+     * a block: on the middle of the seat its formed model draws for it, the piece called "seat" that works by this
+     * block, as a cockpit's seat drawn on the ship's middle line between two blocks, even reaching beyond the block;
+     * the block's middle where its model draws none.
+     */
+    private static double[] sitsAt(final Level level, final BlockPos pos) {
+        if (!(level.getBlockEntity(pos) instanceof IFormedPlaced placed)) {
+            return new double[] {HALF, HALF};
+        }
+        for (final FormedPlace place : placed.places()) {
+            final FormedShape shape = FormedShapes.get(level, place.model()).orElse(null);
+            if (shape == null) {
+                continue;
+            }
+            for (final FormedPiece piece : shape.pieces()) {
+                if (piece.name().equals(SEAT_PIECE) && piece.usesCell().isPresent()
+                        && piece.usesCell().getAsLong() == place.cell()) {
+                    final double[] middle = middleOf(piece);
+                    final double[] local = {middle[0] - shape.origin()[0] - MeshCells.x(place.cell()), HALF,
+                        middle[2] - shape.origin()[2] - MeshCells.z(place.cell())};
+                    final double[] turned = new double[AXES];
+                    CellSpace.toWorld(local, place.turn(), turned);
+                    return new double[] {turned[0], turned[2]};
+                }
+            }
+        }
+        return new double[] {HALF, HALF};
+    }
+
+    /* The middle of the box round the solids of {@code piece}, in its model's space. */
+    private static double[] middleOf(final FormedPiece piece) {
+        final double[] low = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
+        final double[] high = {-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
+        for (final float[] solid : piece.solids()) {
+            for (int k = 0; k + AXES <= solid.length; k += AXES) {
+                for (int axis = 0; axis < AXES; axis++) {
+                    low[axis] = Math.min(low[axis], solid[k + axis]);
+                    high[axis] = Math.max(high[axis], solid[k + axis]);
+                }
+            }
+        }
+        return new double[] {(low[0] + high[0]) / 2, (low[1] + high[1]) / 2, (low[2] + high[2]) / 2};
     }
 }

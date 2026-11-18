@@ -4386,6 +4386,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A ship's cockpit is walked into: each ends in a straight block behind its flight deck, a free row to come
+  in by, and the Orbiter's and the Greenhouse's raised decks keep to the middle under the seat, an aisle either side
+  of it up to where the console stands before a player; the Orbiter's side consoles, which stood in those aisles,
+  are gone. The pilot's seat blocked the way in and a player stopped in the doorway. The Cab's low cabin is still
+  climbed into from behind its seat. A cockpit is a block longer, the parts hung at its back with it; its nose gear
+  stays under the flight deck.
+- (Core) A player sits on the seat a formed model draws, the piece "seat" that works by the block sat on, not on the
+  middle of that block: a cockpit's pilot sat half a block off the ship's middle line, looking at its console from
+  its side, and a Cab's pilot a block and a half behind the seat.
 - (Space) A ship landing on a runway in thin air sets down on it: slowing to its hover there takes it further along
   than in the Overworld's air, and past its float it came round again a hand's breadth over the runway. It now
   settles on while the stretch left would still stop it rolling.
