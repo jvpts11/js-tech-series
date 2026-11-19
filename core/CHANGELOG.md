@@ -2289,6 +2289,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A model's glass is drawn after everything solid behind it: through a docked ship's canopy its cockpit shows, its walls, seats and consoles, no longer the ground beyond the ship, which showed where the glass had been drawn before the cockpit's parts behind it.
 - A player sits on the seat a formed model draws, the piece "seat" that works by the block sat on, not on the
   middle of that block: a cockpit's pilot sat half a block off the ship's middle line, looking at its console from
   its side, and a Cab's pilot a block and a half behind the seat.

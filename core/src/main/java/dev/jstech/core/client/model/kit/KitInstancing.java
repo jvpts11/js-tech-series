@@ -124,6 +124,7 @@ public final class KitInstancing {
 
     /** Lets every model's shape on the graphics card go, as the models are read again. On the render thread. */
     static void forget() {
+        KitGlassPass.forget();
         MESHES.values().forEach(KitMesh::close);
         MESHES.clear();
         GLOWS.clear();
@@ -139,9 +140,12 @@ public final class KitInstancing {
     private static void onStage(final RenderLevelStageEvent event) {
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
             collecting = Instancing.on();
+            KitGlassPass.hold();
         } else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
             collecting = false;
             draw();
+            // The glass after every solid face, those drawn together just now among them.
+            KitGlassPass.draw();
         }
     }
 

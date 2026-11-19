@@ -26,8 +26,10 @@ import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.StandingWatch;
 import dev.jstech.tests.testkit.space.TestShipyards;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -38,6 +40,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -115,13 +118,19 @@ public final class ShipFlightClientTests {
             }
         };
         NeoForge.EVENT_BUS.addListener(helm);
+        // The engines' loops heard on each tick of the turn.
+        final Set<String> engines = new HashSet<>();
+        final Consumer<ClientTickEvent.Post> heardInTurn = event -> SoundDirector.playing().stream()
+                .filter(id -> id.contains("engine")).forEach(engines::add);
         ctx.afterTest(() -> {
             NeoForge.EVENT_BUS.unregister(helm);
+            NeoForge.EVENT_BUS.unregister(heardInTurn);
             if (standing[0] != null) {
                 standing[0].stop();
             }
             ctx.mc().options.keyUp.setDown(false);
             ctx.mc().options.keyLeft.setDown(false);
+            ctx.mc().options.keyRight.setDown(false);
             ctx.server().execute(() -> {
                 ctx.serverPlayer().stopRiding();
                 if (ship[0] != null) {
@@ -167,7 +176,27 @@ public final class ShipFlightClientTests {
                 .thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity, ARRIVE,
                         "the player to sit at the helm on their game")
                 .thenWaitUntil(() -> drawn(ship[0]), ARRIVE, "the ship to be drawn on the player's game")
+                // Hovering, slow, held left: its engines' loop goes on through the turn, never asked anew.
                 .then(SETTLE, () -> {
+                    engines.clear();
+                    ctx.mc().options.keyLeft.setDown(true);
+                    NeoForge.EVENT_BUS.addListener(heardInTurn);
+                })
+                // And back as far, so its nose points where the flight below begins.
+                .then(TURNING * 2, () -> {
+                    ctx.mc().options.keyLeft.setDown(false);
+                    ctx.mc().options.keyRight.setDown(true);
+                })
+                .then(TURNING * 2, () -> {
+                    ctx.mc().options.keyRight.setDown(false);
+                    NeoForge.EVENT_BUS.unregister(heardInTurn);
+                    ctx.assertTrue(engines.size() == 1 && engines.iterator().next().contains("|around|"),
+                            "turning slowly as it hovers, its engines are one loop, heard all round: " + engines);
+                })
+                .thenWaitUntilServer(level -> settled(ship[0], last), ARRIVE, "let go, the hovering ship stops "
+                        + "turning", level -> ship[0].pose().toString())
+                .then(SETTLE, () -> {
+                    engines.clear();
                     from[0] = ctx.server().submit(() -> where(ship[0])).join();
                     ctx.mc().options.keyUp.setDown(true);
                 })
@@ -187,12 +216,17 @@ public final class ShipFlightClientTests {
                 .then(0, () -> {
                     ctx.mc().options.keyUp.setDown(false);
                     ctx.mc().options.keyLeft.setDown(true);
+                    NeoForge.EVENT_BUS.addListener(heardInTurn);
                 })
                 .then(TURNING, () -> {
                     final float step = Mth.wrapDegrees(ctx.player().getYRot() - ctx.player().yRotO);
                     ctx.mc().options.keyLeft.setDown(false);
+                    NeoForge.EVENT_BUS.unregister(heardInTurn);
                     ctx.assertTrue(Math.abs(step) > TURN_STEP, "turning, the pilot's view turns between its last "
                             + "tick and this one, drawn smoothly: " + step + " degrees");
+                    // Its engines' loop goes on through the turn: one asked anew would start again from its start.
+                    ctx.assertTrue(engines.size() == 1 && engines.iterator().next().contains("|around|"),
+                            "through the turn its engines are one loop, heard all round: " + engines);
                 })
                 // Let go, its turn eases away and it rolls level before anyone stands up in it.
                 .thenWaitUntilServer(level -> settled(ship[0], last), ARRIVE, "let go, the ship stops turning and"

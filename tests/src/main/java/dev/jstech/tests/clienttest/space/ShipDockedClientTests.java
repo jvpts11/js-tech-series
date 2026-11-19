@@ -31,7 +31,8 @@ import org.slf4j.Logger;
 /**
  * A ship built whole in its dock, on a player's game, seen by a player standing in it, looking at its nose, the dock's
  * terminal behind: the ship is drawn round the player, its deck and hull filling the view, not left out because its
- * walls hide the terminal's own chunk from the game's culling.
+ * walls hide the terminal's own chunk from the game's culling. And seen from above its back: through its canopy the
+ * cockpit shows, not the ground beyond the ship, its glass drawn after everything solid behind it.
  */
 public final class ShipDockedClientTests {
 
@@ -58,6 +59,20 @@ public final class ShipDockedClientTests {
     private static final int FLAT = 20;
     private static final int CHANNEL = 0xFF;
     private static final double DRAWN = 0.5;
+    /*
+     * Where the canopy is seen from, from the flight console, and where it is looked at; where its glass stands in the
+     * frame, as shares of its width and height; how light the cockpit's walls seen through the glass are at least in
+     * every channel; and how much of the glass they fill at least (they fill about a third; the dark ground beyond the
+     * ship, seen when the cockpit was not drawn behind the glass, left a sixteenth that light).
+     */
+    private static final Vec3 CANOPY_FROM = new Vec3(0.5, 1.8, -2.2);
+    private static final Vec3 CANOPY_AT = new Vec3(0.5, 1.4, 0.5);
+    private static final double GLASS_LEFT = 0.44;
+    private static final double GLASS_RIGHT = 0.66;
+    private static final double GLASS_TOP = 0.39;
+    private static final double GLASS_BOTTOM = 0.52;
+    private static final int WALLS = 80;
+    private static final double CABIN = 0.2;
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final ShipDesign SHIP = new ShipDesign("JS-09", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
@@ -120,6 +135,79 @@ public final class ShipDockedClientTests {
                             + "round the player: " + share + " of the lower view is its light grey deck and hull");
                 })
                 .thenScreenshot(0, "ship-docked-cockpit");
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void canopy_showsTheCabinBehindItsGlassNotTheGroundBeyond(final ClientTestContext ctx) {
+        final ServerLevel[] built = new ServerLevel[1];
+        final BlockPos[] terminal = new BlockPos[1];
+        final BlockPos[] console = new BlockPos[1];
+        ctx.afterTest(() -> {
+            ctx.mc().options.hideGui = false;
+            ctx.server().execute(() -> {
+                if (built[0] != null) {
+                    clear(ctx, built[0]);
+                    built[0].players().forEach(player -> player.setGameMode(GameType.CREATIVE));
+                }
+            });
+        });
+        ctx.thenServer(0, level -> {
+            built[0] = level;
+            clear(ctx, level);
+            terminal[0] = TestShipyards.build(level, ctx.abs(CORNER));
+            ctx.serverPlayer().setGameMode(GameType.CREATIVE);
+            ctx.serverPlayer().getAbilities().flying = true;
+            ctx.serverPlayer().onUpdateAbilities();
+        }).thenWaitUntilServer(level -> level.getBlockEntity(terminal[0]) instanceof ShipyardTerminalBlockEntity dock
+                && dock.formed(), ARRIVE, "the dock to form", level -> "not formed")
+                .thenServer(0, level -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal[0]);
+                    dock.design(SHIP);
+                    ctx.assertTrue(dock.confirm(), "the ship is sent to the dock");
+                    final PlannedBuild plan = dock.build().orElseThrow();
+                    for (final PlanSpot spot : plan.plan().spots()) {
+                        final BlockPos at = plan.where(spot);
+                        level.setBlockAndUpdate(at, BuiltInRegistries.BLOCK.get(spot.block()).defaultBlockState());
+                        if (spot.block().equals(BuiltInRegistries.BLOCK.getKey(ShipKitBlocks.FLIGHT_CONSOLE.get()))
+                                && (console[0] == null || at.getX() > console[0].getX())) {
+                            console[0] = at;
+                        }
+                    }
+                })
+                .thenWaitUntil(() -> ctx.mc().level.getBlockState(console[0]).is(ShipKitBlocks.FLIGHT_CONSOLE.get()),
+                        ARRIVE, "the ship's blocks on the player's game")
+                .then(SETTLE, () -> ctx.mc().options.hideGui = true)
+                // Above the ship's back, looking down through its canopy into the cockpit.
+                .thenServer(0, level -> ctx.serverPlayer().teleportTo(level, console[0].getX() + CANOPY_FROM.x,
+                        console[0].getY() + CANOPY_FROM.y, console[0].getZ() + CANOPY_FROM.z, 0F, 0F))
+                .then(SETTLE, () -> ctx.lookAt(Vec3.atLowerCornerOf(console[0]).add(CANOPY_AT)))
+                .then(SETTLE, () -> {
+                    final int width = ctx.mc().getWindow().getGuiScaledWidth();
+                    final int height = ctx.mc().getWindow().getGuiScaledHeight();
+                    final double share = cabin(frame(ctx), width, height);
+                    LOGGER.info("[CT] docked canopy: the cockpit's walls fill {} of the glass", share);
+                    ctx.assertTrue(share > CABIN, "through its canopy the cockpit is seen, its walls, seats and "
+                            + "consoles, not the ground beyond the ship: its walls fill " + share + " of the glass");
+                })
+                .thenScreenshot(0, "ship-docked-canopy");
+    }
+
+    /*
+     * The share of the canopy's glass, in the middle of a frame {@code width} by {@code height}, that is the cockpit's
+     * light walls seen through it; the ground beyond the ship, seen where they should stand, is dark.
+     */
+    private static double cabin(final int[] frame, final int width, final int height) {
+        int light = 0;
+        int seen = 0;
+        for (int y = (int) (height * GLASS_TOP); y < (int) (height * GLASS_BOTTOM); y++) {
+            for (int x = (int) (width * GLASS_LEFT); x < (int) (width * GLASS_RIGHT); x++) {
+                final int argb = frame[y * width + x];
+                light += Math.min(argb >> 16 & CHANNEL, Math.min(argb >> 8 & CHANNEL, argb & CHANNEL)) > WALLS ? 1 : 0;
+                seen++;
+            }
+        }
+        return light / (double) seen;
     }
 
     /*

@@ -166,8 +166,8 @@ public final class KitRenderer {
                 final int lit = part.glow() ? LightTexture.FULL_BRIGHT : light;
                 final ResourceLocation location = model.texture(part.texture());
                 final TextureFrames frames = KitTextures.of(location).frames();
-                emit(buffers.getBuffer(own(model, location, part.seeThrough())), poses.last(), part.vertices(),
-                        part.vertices().length, lit, overlay, frames, tick);
+                emit(into(buffers, own(model, location, part.seeThrough()), glass(model, part.seeThrough())),
+                        poses.last(), part.vertices(), part.vertices().length, lit, overlay, frames, tick);
                 if (through != null) {
                     emit(through, poses.last(), part.vertices(), part.vertices().length, lit, overlay, frames,
                             tick);
@@ -229,7 +229,8 @@ public final class KitRenderer {
                 final ResourceLocation location = location(model, part.texture(), painted);
                 final RenderType into = type == null ? own(model, location, part.seeThrough()) : type.apply(location);
                 if (into != null) {
-                    emit(buffers.getBuffer(into), poses.last(), part.vertices(), part.vertices().length,
+                    emit(into(buffers, into, type == null && glass(model, part.seeThrough())), poses.last(),
+                            part.vertices(), part.vertices().length,
                             part.glow() ? LightTexture.FULL_BRIGHT : light, overlay,
                             KitTextures.of(location).frames(), tick, colour);
                 }
@@ -260,7 +261,8 @@ public final class KitRenderer {
                 // A mesh that only morphs stays in its bone's space; one a skin bends is in the model's.
                 poses.mulPose(matrices[deformed.bone()]);
             }
-            emit(buffers.getBuffer(into), poses.last(), laid.data(), laid.size(),
+            emit(into(buffers, into, type == null && glass(model, deformed.mesh().seeThrough())), poses.last(),
+                    laid.data(), laid.size(),
                     deformed.glow() ? LightTexture.FULL_BRIGHT : light, overlay, KitTextures.of(location).frames(),
                     tick);
             poses.popPose();
@@ -281,6 +283,19 @@ public final class KitRenderer {
         final ModelDefinition definition = model.definition();
         return definition.translucent() || seeThrough ? KitRenderTypes.translucent(location, definition.cracks())
                 : KitRenderTypes.cutout(location, definition.cracks());
+    }
+
+    /*
+     * Where faces drawn {@code type} go: a model's own see-through faces ({@code glass}) held back to be drawn after
+     * every solid face of the world (KitGlassPass), anything else at once.
+     */
+    private static VertexConsumer into(final MultiBufferSource buffers, final RenderType type, final boolean glass) {
+        return glass ? KitGlassPass.buffer(buffers, type) : buffers.getBuffer(type);
+    }
+
+    /* Whether faces of {@code model} marked so are see-through, drawn their own way. */
+    private static boolean glass(final KitModel model, final boolean seeThrough) {
+        return model.definition().translucent() || seeThrough;
     }
 
     /* The way a texture's glowing texture is drawn over it, at full light; none for one that has none. */
