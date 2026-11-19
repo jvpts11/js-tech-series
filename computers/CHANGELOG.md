@@ -1006,6 +1006,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- Every fan turns real blades: a case fan's, a cooler's and a radiator's, and the fans of the ASIC
+  Forges, the Prosa i3 MK3's head and the Russet towers, are seven wide plates pitched about their own line, as a PC
+  fan's. They were flat strips lying in the fan's face.
 - A mining rig's riser no longer tells how to take its card off whenever the player looks at it: the hint
   shows when a click without sneaking finds a card seated there, which a sneaking click with an empty hand takes off.
 - Fluorspar is good for something as it is mined: the Crusher crushes its ore, in any rock, or raw

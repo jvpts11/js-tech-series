@@ -4418,6 +4418,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   so a player stands beside the seat under the cabin's roof, and the slab hidden where the cabin sits on the chin, which
   a player struck their head on 0.75 over the deck, is gone. The pipes overhead start behind the deck; the copper one
   turns down the cockpit's back. Its outside is unchanged.
+- (Computers) Every fan turns real blades: a case fan's, a cooler's and a radiator's, and the fans of the ASIC
+  Forges, the Prosa i3 MK3's head and the Russet towers, are seven wide plates pitched about their own line, as a PC
+  fan's. They were flat strips lying in the fan's face.
 - (Space) A ship's reactor room is walked through: its fusion drum stands against the right wall, an aisle beside it
   from door to door, and its left shield, an invisible wall before, is a lead-grey cabinet against the left wall. The
   drum stood in the middle of the room and a player stopped at its door.
