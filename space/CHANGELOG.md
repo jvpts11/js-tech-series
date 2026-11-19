@@ -992,6 +992,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A capsule's side hatch is a door: used, it swings out a hundred degrees about its hinge along the cone's
   face, as Apollo's did, the cone open behind it and its frame kept round the opening, letting the cabin's air out
   while it stands open; used again it swings shut, and the rocket shuts it as it lifts off. It was only drawn before.
+- The lunar lander's forward hatch is a door: used, it swings into the cabin a hundred degrees about its edge
+  away from the handle, as the Apollo lunar module's did (the cabin's pressure held it shut), standing beside the
+  seat, the cabin's front wall open behind it and its frame a ring round the opening; used again it swings shut, and
+  the lander shuts it as it lifts off. Its cabin is drawn hollow now, each wall lined inside. It was only drawn before.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

@@ -32,6 +32,7 @@ import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -129,10 +130,27 @@ public final class RocketLaunchGameTests {
      */
     @GameTest(template = TALL, batch = BATCH, timeoutTicks = 400)
     public static void hatch_opensUsedAndShutsAsTheRocketLiftsOff(final GameTestHelper helper) {
-        final ServerLevel level = helper.getLevel();
-        final RocketStack stack = RocketStack.of(new RocketStack.Part(SkeletonRocketParts.id("sea_level_engine_3"), 1),
+        hatchWorks(helper, RocketStack.of(new RocketStack.Part(SkeletonRocketParts.id("sea_level_engine_3"), 1),
                 new RocketStack.Part(SkeletonRocketParts.id("tank_3"), 1),
-                new RocketStack.Part(SkeletonRocketParts.id("capsule_3"), 1));
+                new RocketStack.Part(SkeletonRocketParts.id("capsule_3"), 1)));
+    }
+
+    /*
+     * The lunar lander's forward hatch is a door the same way: shut as the lander is built, swinging into its cabin
+     * used and shut used again; left open, it shuts as the lander lifts off.
+     */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 400)
+    public static void landerHatch_opensUsedAndShutsAsTheLanderLiftsOff(final GameTestHelper helper) {
+        hatchWorks(helper, RocketStack.of(new RocketStack.Part(SkeletonRocketParts.id("lunar_lander_descent"), 1),
+                new RocketStack.Part(SkeletonRocketParts.id("lunar_lander_ascent"), 1)));
+    }
+
+    /*
+     * Builds {@code stack} whole and works its hatch: shut as built, open used, its leaf out of its block, shut used
+     * again; opened once more, it is shut aboard once the rocket has lifted off.
+     */
+    private static void hatchWorks(final GameTestHelper helper, final RocketStack stack) {
+        final ServerLevel level = helper.getLevel();
         final BlockPos foot = helper.absolutePos(FOOT);
         final PlannedBuild build = new PlannedBuild(RocketPlans.of(level, stack), foot);
         build.start(level, helper.absolutePos(OWNER), () -> { });
@@ -144,7 +162,7 @@ public final class RocketLaunchGameTests {
         final BlockPos at = where(build, RocketKitBlocks.CAPSULE_HATCH.getId());
         final FormedDoors.Door hatch = ((IFormedPlaced) level.getBlockEntity(at)).places().stream()
                 .flatMap(place -> FormedDoors.named(level, at, place, RocketLaunch.HATCH).stream()).findFirst()
-                .orElseThrow(() -> new IllegalStateException("the capsule's hatch is no door"));
+                .orElseThrow(() -> new IllegalStateException("the hatch is no door"));
         helper.assertTrue(FormedDoors.shut(level, hatch), "built, its hatch stands shut");
         final double shut = leafVolume(level, hatch);
         helper.assertTrue(FormedDoors.use(level, null, hatch) && !FormedDoors.shut(level, hatch)
@@ -155,7 +173,8 @@ public final class RocketLaunchGameTests {
         FormedDoors.use(level, null, hatch);
         final BlockPos computer = where(build, RocketKitBlocks.FLIGHT_COMPUTER.getId());
         final FlightComputerBlockEntity rocket = (FlightComputerBlockEntity) level.getBlockEntity(computer);
-        rocket.carry(new RocketDesign("HATCH", stack), foot.subtract(computer), List.of(0, 1, 2));
+        rocket.carry(new RocketDesign("HATCH", stack), foot.subtract(computer),
+                IntStream.range(0, stack.sections().size()).boxed().toList());
         final Optional<MovingStructure> released = RocketLaunch.release(level, computer, null);
         helper.assertTrue(released.isPresent(), "released, the rocket becomes one moving structure");
         final MovingStructure body = released.get();

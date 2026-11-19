@@ -24,6 +24,7 @@ import dev.jstech.tests.TestRockets;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
+import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -62,7 +63,7 @@ public final class RocketPartsClientTests {
     private static final int SETTLE = 10;
     private static final int CHANNEL = 0xFF;
     /*
-     * The capsule's hatch seen from out beside it, how far out and how far up; how long it takes to swing half way
+     * A hatch seen from out beside it, how far out and how far up; how long it takes to swing half way
      * and all the way, in ticks; how much two pixels may differ and be the same, and how many must differ to move.
      */
     private static final double HATCH_OUT = 3.5;
@@ -128,8 +129,25 @@ public final class RocketPartsClientTests {
      */
     @ClientTest(timeoutTicks = 900)
     public static void capsuleHatch_swingsOutAboutItsHingeAsItOpens(final ClientTestContext ctx) {
-        final RocketStack stack = RocketStack.of(part("sea_level_engine_3", 1), part("tank_3", 1),
-                part("capsule_3", 1));
+        hatchSwings(ctx, RocketStack.of(part("sea_level_engine_3", 1), part("tank_3", 1), part("capsule_3", 1)),
+                "capsule-hatch");
+    }
+
+    /*
+     * A lunar lander built whole, its flight computer drawing it, seen from out in front of its forward hatch: shut,
+     * swinging into its cabin, and open, each drawn otherwise than the one before.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void landerHatch_swingsInAboutItsHingeAsItOpens(final ClientTestContext ctx) {
+        hatchSwings(ctx, RocketStack.of(part("lunar_lander_descent", 1), part("lunar_lander_ascent", 1)),
+                "lander-hatch");
+    }
+
+    /*
+     * Builds {@code stack} whole, its flight computer drawing it, and watches its hatch from out beside it: shut,
+     * swinging and open, each drawn otherwise than the one before, a shot of each named after {@code shots}.
+     */
+    private static void hatchSwings(final ClientTestContext ctx, final RocketStack stack, final String shots) {
         final PlannedBuild[] build = new PlannedBuild[1];
         final BlockPos[] hatch = new BlockPos[1];
         final int[][] frames = new int[3][];
@@ -153,9 +171,9 @@ public final class RocketPartsClientTests {
             build[0].stop(false);
             final BlockPos computer = where(build[0], RocketKitBlocks.FLIGHT_COMPUTER.getId());
             ((FlightComputerBlockEntity) level.getBlockEntity(computer)).carry(new RocketDesign("HATCH", stack),
-                    foot.subtract(computer), List.of(0, 1, 2));
+                    foot.subtract(computer), IntStream.range(0, stack.sections().size()).boxed().toList());
             hatch[0] = where(build[0], RocketKitBlocks.CAPSULE_HATCH.getId());
-            // Out from the hatch, away from the capsule's axis, a little up, looking back at it.
+            // Out from the hatch, away from the rocket's axis, a little up, looking back at it.
             final Vec3 middle = Vec3.atCenterOf(hatch[0]);
             final Vec3 out = middle.subtract(foot.getX() + HALF, middle.y, foot.getZ() + HALF).normalize();
             final Vec3 eye = middle.add(out.scale(HATCH_OUT)).add(0, HATCH_UP, 0);
@@ -167,7 +185,7 @@ public final class RocketPartsClientTests {
                 })
                 // Long enough for the dust of its blocks set down to settle, so only the hatch moves after.
                 .then(DUST_SETTLES, () -> frames[0] = frame(ctx))
-                .thenScreenshot(0, "capsule-hatch-shut")
+                .thenScreenshot(0, shots + "-shut")
                 .thenServer(0, level -> ((IFormedPlaced) level.getBlockEntity(hatch[0])).places().stream()
                         .flatMap(place -> FormedDoors.named(level, hatch[0], place, RocketLaunch.HATCH).stream())
                         .findFirst().ifPresent(door -> FormedDoors.use(level, null, door)))
@@ -176,14 +194,14 @@ public final class RocketPartsClientTests {
                     ctx.assertTrue(!FormedDoors.shut(ctx.mc().level, hatch[0], RocketLaunch.HATCH, true),
                             "the player's game holds the hatch open");
                 })
-                .thenScreenshot(0, "capsule-hatch-swinging")
+                .thenScreenshot(0, shots + "-swinging")
                 .then(SWUNG, () -> {
                     frames[2] = frame(ctx);
                     ctx.assertTrue(changed(frames[0], frames[1]) > MOVED && changed(frames[1], frames[2]) > MOVED,
                             "half way, its hatch is drawn between shut and open: " + changed(frames[0], frames[1])
                                     + " and " + changed(frames[1], frames[2]) + " pixels");
                 })
-                .thenScreenshot(0, "capsule-hatch-open");
+                .thenScreenshot(0, shots + "-open");
     }
 
     /*

@@ -4085,6 +4085,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) A capsule's side hatch is a door: used, it swings out a hundred degrees about its hinge along the cone's
   face, as Apollo's did, the cone open behind it and its frame kept round the opening, letting the cabin's air out
   while it stands open; used again it swings shut, and the rocket shuts it as it lifts off. It was only drawn before.
+- (Space) The lunar lander's forward hatch is a door: used, it swings into the cabin a hundred degrees about its edge
+  away from the handle, as the Apollo lunar module's did (the cabin's pressure held it shut), standing beside the
+  seat, the cabin's front wall open behind it and its frame a ring round the opening; used again it swings shut, and
+  the lander shuts it as it lifts off. Its cabin is drawn hollow now, each wall lined inside. It was only drawn before.
 
 ### Changed
 - (Computers) Every machine of the chain has a terminal of its own, the Plasma Etcher Terminal of the Plasma Etcher,
