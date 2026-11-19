@@ -27,6 +27,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -76,25 +77,36 @@ public final class StageImpactGameTests {
         });
     }
 
-    /** Wreckage with no ground near to come down on falls loose where the stage struck: none of it is lost. */
+    /**
+     * Wreckage with no ground near to come down on falls loose where the stage struck: none of it is lost. The strike
+     * waits for the chunk's creatures and things to be loaded, as the game reads them in after its blocks: until
+     * then what falls there is kept but cannot be found.
+     */
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
     public static void fall_withNoGroundNearDropsItsWreckageLoose(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final Vec3 high = Vec3.atBottomCenterOf(helper.absolutePos(MIDDLE.above(100)));
-        SpaceServerConfig.FILE.set(SpaceServerConfig.FALLING_STAGES_DO_DAMAGE, false);
-        try {
-            final StageImpacts.Impact impact = StageImpacts.strike(level, high, DRY, LEFTOVER, SPEED, MADE, 8L);
-            final int salvaged = impact.salvage().stream().mapToInt(ItemStack::getCount).sum();
-            final List<ItemEntity> loose = level.getEntitiesOfClass(ItemEntity.class, new AABB(high, high)
-                    .inflate(LOOK));
-            final int dropped = loose.stream().mapToInt(item -> item.getItem().getCount()).sum();
-            loose.forEach(ItemEntity::discard);
-            helper.assertTrue(salvaged > 0, "the stage leaves salvage: " + impact.salvage());
-            helper.assertTrue(dropped == salvaged, "all of it falls loose, " + dropped + " of " + salvaged);
-        } finally {
-            SpaceServerConfig.FILE.set(SpaceServerConfig.FALLING_STAGES_DO_DAMAGE, true);
-        }
-        helper.succeed();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.areEntitiesLoaded(ChunkPos.asLong(
+                        BlockPos.containing(high))), "the chunk's things are loaded"))
+                .thenExecute(() -> {
+                    SpaceServerConfig.FILE.set(SpaceServerConfig.FALLING_STAGES_DO_DAMAGE, false);
+                    try {
+                        final StageImpacts.Impact impact = StageImpacts.strike(level, high, DRY, LEFTOVER, SPEED, MADE,
+                                8L);
+                        final int salvaged = impact.salvage().stream().mapToInt(ItemStack::getCount).sum();
+                        final List<ItemEntity> loose = level.getEntitiesOfClass(ItemEntity.class,
+                                new AABB(high, high).inflate(LOOK));
+                        final int dropped = loose.stream().mapToInt(item -> item.getItem().getCount()).sum();
+                        loose.forEach(ItemEntity::discard);
+                        helper.assertTrue(salvaged > 0, "the stage leaves salvage: " + impact.salvage());
+                        helper.assertTrue(dropped == salvaged, "all of it falls loose, " + dropped + " of "
+                                + salvaged);
+                    } finally {
+                        SpaceServerConfig.FILE.set(SpaceServerConfig.FALLING_STAGES_DO_DAMAGE, true);
+                    }
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
