@@ -5231,6 +5231,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
 - (Computers) Mainframe Console: a program installed at its prompt shows its bar to the end and says it is in, as at a
   Command Prompt, rather than stopping at "Setting up".
+- (Space) The Moon has no air to fade its land: coming down onto it, its ground no longer turns black from a couple of
+  hundred blocks up, nor shows as a dome of loaded land ringed in black, the fog the black of its sky closing it in;
+  from its ground up, as on the way up past the build limit, the far map goes on from the loaded land to the
+  horizon, and nothing fades the land short of it.
 
 ## [0.5.3a] - 2026-11-04
 

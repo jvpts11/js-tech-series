@@ -14,6 +14,7 @@ import dev.jstech.core.sky.Skies;
 import dev.jstech.core.sky.SkySpec;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.universe.ClimbView;
+import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SphereMap;
@@ -40,7 +41,9 @@ import org.joml.Matrix4f;
  * drawing none of them ({@link GroundCovers}).
  *
  * <p>Each world's air is its own ({@link Air}): the Overworld's is the blue the approved views draw, a world with a sky
- * of its own takes its haze's colours, and a world with no haze, as the Moon, has no air to see at all.
+ * of its own takes its haze's colours, and a world with no haze, as the Moon, has no air to see at all: no fog hides
+ * where its loaded land ends, so its far map goes on from the loaded land to the horizon from the ground up, not from
+ * the build limit only.
  */
 final class ClimbRenderer {
 
@@ -121,18 +124,20 @@ final class ClimbRenderer {
         final Camera camera = event.getCamera();
         final SolarBody body = level != null ? bodyHere(level) : null;
         final Vec3 eye = camera.getPosition();
-        if (level == null || body == null || eye.y <= level.getMaxBuildHeight()) {
+        if (level == null || eye.y < level.getMaxBuildHeight() - 1) {
+            FarGround.forgetLoaded();
+        }
+        final Air air = level == null ? null : Air.of(Skies.of(level));
+        // Under a world's air its fog hides where the loaded land ends; a world with no air has none, so from its
+        // ground up the far map goes on from the loaded land to the horizon, and nothing fades the land into the dark.
+        if (level == null || body == null || eye.y <= level.getMaxBuildHeight() && air.hazed()) {
             frame = null;
-            if (level == null || eye.y < level.getMaxBuildHeight() - 1) {
-                FarGround.forgetLoaded();
-            }
             return;
         }
         final float partial = (float) event.getPartialTick();
         final double width = Math.max(1, level.getWorldBorder().getSize());
         final ClimbView.Climb climb = ClimbView.at(body, SphereMap.longitude(eye.x, width),
                 SphereMap.latitude(eye.z, width), eye.y, level.getMaxBuildHeight(), FarGround.sea(level), width);
-        final Air air = Air.of(Skies.of(level));
         final float light = level.getSkyDarken(partial);
         final float rising = (float) Math.min(1, climb.share() * 2);
         final float[] haze = new float[3];
@@ -185,19 +190,22 @@ final class ClimbRenderer {
                     : deep[i] * (2 - zenith * 2);
         }
         SphereDrawing.begin();
-        ClimbSky.draw(climb.up(), dip, drawn.haze(), overhead, (float) climb.skyCover(), view, projection);
-        if (climb.stars() > 0) {
-            SkyLayers.stars(Skies.of(level, SystemSpaces.TEMPLATE.id()), view, projection, 0, 0,
-                    MIDNIGHT * (float) climb.stars());
-        }
         final float sun = (float) climb.sun();
         // The same veil over the real ground and over the painted sphere it melts into.
         final Air air = drawn.air();
         final float[] veil = {air.veil()[0] * drawn.light(), air.veil()[1] * drawn.light(),
             air.veil()[2] * drawn.light()};
-        SystemSpaceRenderer.drawScene(new Vec3(climb.space()[0], climb.space()[1], climb.space()[2]), time,
-                drawn.body(), (float) climb.sphere(), new SphereDrawing.Veil((float) climb.veil()
-                        * air.veilStrength(), veil), sun, sun, view, projection);
+        // Under the build limit, where a world with no air draws its far map too, its own sky stays as it is.
+        if (climb.share() > 0) {
+            ClimbSky.draw(climb.up(), dip, drawn.haze(), overhead, (float) climb.skyCover(), view, projection);
+            if (climb.stars() > 0) {
+                SkyLayers.stars(Skies.of(level, SystemSpaces.TEMPLATE.id()), view, projection, 0, 0,
+                        MIDNIGHT * (float) climb.stars());
+            }
+            SystemSpaceRenderer.drawScene(new Vec3(climb.space()[0], climb.space()[1], climb.space()[2]), time,
+                    drawn.body(), (float) climb.sphere(), new SphereDrawing.Veil((float) climb.veil()
+                            * air.veilStrength(), veil), sun, sun, view, projection);
+        }
         if (FarGround.has(level) && climb.ground() > 0) {
             final double[] sunward = SystemLayout.sunward(drawn.body());
             FarGround.draw(level, drawn.eye(), climb, new FarGround.Look(drawn.partialTick(), drawn.light(),
@@ -261,7 +269,7 @@ final class ClimbRenderer {
             if (sky.skyColour().isEmpty() && sky.fogColour().isEmpty() && sky.haze().isEmpty()) {
                 return new Air(HAZE_HIGH, VEIL, VEIL_STRENGTH, NAVY, true);
             }
-            if (sky.haze().isEmpty()) {
+            if (FarMaps.airless(sky)) {
                 return new Air(BLACK, BLACK, 0F, BLACK, false);
             }
             final int haze = sky.haze().get().colour();

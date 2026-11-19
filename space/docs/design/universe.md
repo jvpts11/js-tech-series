@@ -47,7 +47,8 @@ into its region. These sizes and distances are first estimates.
 
 A player or a rocket that climbs 700 blocks over a world's build limit passes into the space of its system, with no
 loading screen. On the way up the loaded land goes on to the horizon in a far map of the real ground, and the world
-bends into its sphere. Coming down from a spot of the low orbit brings the player to the place of the world under it.
+bends into its sphere. A world with no air, as the Moon, has that far map from its ground up: no fog hides where its
+loaded land ends. Coming down from a spot of the low orbit brings the player to the place of the world under it.
 Any other passage between the dimensions of the system, the Overworld, its space, the Moon and Mars, by rocket, by
 ship or by a command, shows no screen either: the last picture stays until the ground where one arrives is in view.
 

@@ -72,6 +72,11 @@ public final class PassageClientTests {
     private static final double APART = 25;
     private static final int CHANNEL = 0xFF;
     private static final int CHANNELS = 3;
+    /*
+     * The hour each world is looked at in: noon where the player arrives, whatever hour the tests before left it at,
+     * so its ground is seen in its own colours; put back after.
+     */
+    private static final long NOON = 6_000L;
 
     private PassageClientTests() {
     }
@@ -81,16 +86,23 @@ public final class PassageClientTests {
         final Frames toTheMoon = new Frames();
         final Frames toMars = new Frames();
         final int still = TravelScreens.stillPassages();
+        final long[] hours = new long[2];
         ctx.afterTest(() -> {
             toTheMoon.stop();
             toMars.stop();
             ctx.server().execute(() -> {
+                moon(ctx).setDayTime(hours[0]);
+                mars(ctx).setDayTime(hours[1]);
                 final BlockPos home = ctx.origin().above(2);
                 ctx.serverPlayer().teleportTo(ctx.server().overworld(), home.getX() + 0.5, home.getY(),
                         home.getZ() + 0.5, 0F, 0F);
             });
         });
         ctx.thenServer(0, level -> {
+                    hours[0] = moon(ctx).getDayTime();
+                    hours[1] = mars(ctx).getDayTime();
+                    moon(ctx).setDayTime(NOON);
+                    mars(ctx).setDayTime(NOON);
                     final BlockPos start = ctx.abs(START);
                     ctx.serverPlayer().teleportTo(ctx.server().overworld(), start.getX() + 0.5, start.getY(),
                             start.getZ() + 0.5, NORTH, LOOKING_DOWN);

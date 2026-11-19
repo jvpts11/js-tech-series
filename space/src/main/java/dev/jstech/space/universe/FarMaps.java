@@ -7,6 +7,8 @@
  */
 package dev.jstech.space.universe;
 
+import dev.jstech.core.sky.Skies;
+import dev.jstech.core.sky.SkySpec;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.network.FarMapPayload;
 import java.util.ArrayList;
@@ -42,8 +44,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * The far map of the ground round a player on the way up from a world to its space: the ground out to the horizon as
  * the world's own generator makes it, each pixel's biome and the height of its ground, worked out away from the
  * server's thread from the generator's noise alone, so no land is generated for it, in the rings {@link FarRings}
- * lays out. A player nearing the build limit is sent every ring round where they are, and a ring again once they have
- * gone a quarter of its width from its middle.
+ * lays out. A player nearing the build limit, or anywhere over a world with no air ({@link #airless}), is sent every
+ * ring round where they are, and a ring again once they have gone a quarter of its width from its middle.
  */
 public final class FarMaps {
 
@@ -186,10 +188,22 @@ public final class FarMaps {
         return bottom;
     }
 
-    /* A player nearing the build limit of a world drawn in its system's space is sent each ring round them if due. */
+    /**
+     * Whether a world under {@code sky} has no air to see, as the Moon: a sky of its own with no haze. With no fog to
+     * hide where its loaded land ends, its far map goes on from that land to the horizon from its ground up.
+     */
+    public static boolean airless(final SkySpec sky) {
+        return sky.haze().isEmpty() && (sky.skyColour().isPresent() || sky.fogColour().isPresent());
+    }
+
+    /*
+     * A player nearing the build limit of a world drawn in its system's space, or anywhere over one with no air, is sent
+     * each ring round them if due.
+     */
     private static void look(final ServerPlayer player) {
         final ServerLevel level = player.serverLevel();
-        if (player.getY() < level.getMaxBuildHeight() - AHEAD || !drawnInSpace(level)) {
+        if (!drawnInSpace(level)
+                || player.getY() < level.getMaxBuildHeight() - AHEAD && !airless(Skies.of(level))) {
             return;
         }
         final Sent[] sent = SENT.computeIfAbsent(player.getUUID(), unused -> new Sent[RING_BLOCKS.size()]);

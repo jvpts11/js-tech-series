@@ -1186,6 +1186,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   before, it held that stage for good, and no other stage could land on it.
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
   a little, as their cover was drawn anew, and the world turned a tick at a time.
+- The Moon has no air to fade its land: coming down onto it, its ground no longer turns black from a couple of
+  hundred blocks up, nor shows as a dome of loaded land ringed in black, the fog the black of its sky closing it in;
+  from its ground up, as on the way up past the build limit, the far map goes on from the loaded land to the
+  horizon, and nothing fades the land short of it.
 
 ## [0.5.3a] - 2026-11-04
 
