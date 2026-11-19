@@ -167,6 +167,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   drawn, its frames, its desk and the gaps between them.
 
 ### Changed
+- The Computational Research Centre's entries wear the series' ports, on its rear panel and as loose
+  blocks: the Power Entry a medium-voltage J's Energy bushing, the Link Socket the research link's opening, the coolant
+  pair tagged COLD and HOT, the Heat Port its fins, their lamps lit by day and by night.
 - The Forge Hammer, the Draw Plate and the Mortar are drawn in three dimensions in the hand and on the
   ground: the hammer and the plate held as the game's axe is, the hammer's head up, the mortar with its pestle in
   front of the hand as the game's clock is.

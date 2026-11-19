@@ -38,6 +38,8 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
     /* A varied block is turned by quarters, four of them. */
     private static final int QUARTERS = 4;
     private static final int QUARTER = 90;
+    /* The light a lamp drawn at full light is drawn at, of the block and of the sky. */
+    private static final int FULL_LIGHT = 15;
 
     public ContentBlockStateProvider(final PackOutput output, final ModContent content,
                                      final ExistingFileHelper existingFiles) {
@@ -106,6 +108,7 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
     private ModelFile model(final IBlockModel model) {
         return switch (model) {
             case IBlockModel.CubeAll cube -> models().cubeAll(cube.name(), file(cube.texture()));
+            case IBlockModel.CubeAllLit cube -> cubeAllLit(cube);
             case IBlockModel.Column column -> models().cubeColumn(column.name(), file(column.side()),
                     file(column.end()));
             case IBlockModel.BottomTop box -> {
@@ -115,6 +118,7 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
             }
             case IBlockModel.Orientable machine -> models().orientable(machine.name(), file(machine.side()),
                     file(machine.front()), file(machine.top()));
+            case IBlockModel.OrientableLit machine -> orientableLit(machine);
             case IBlockModel.Controller controller -> controller(controller);
             case IBlockModel.SixFaces cube -> models().cube(cube.name(), file(cube.down()), file(cube.up()),
                     file(cube.north()), file(cube.south()), file(cube.east()), file(cube.west()))
@@ -140,6 +144,43 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
                 .allFaces((direction, face) -> face.texture("#casing").cullface(direction)).end();
         built.element().from(0, 0, 0).to(16, 16, 16)
                 .face(Direction.NORTH).texture("#panel").cullface(Direction.NORTH).end().end();
+        return built;
+    }
+
+    /*
+     * The texture as a whole cube, and the lit texture over it on the same planes, drawn after it as the controller's
+     * panel is, cut out where it is clear and at full light, so the lamps shine in the dark.
+     */
+    private ModelFile cubeAllLit(final IBlockModel.CubeAllLit cube) {
+        final BlockModelBuilder built = models().withExistingParent(cube.name(), mcLoc("block/block"))
+                .texture("particle", file(cube.texture()))
+                .texture("all", file(cube.texture()))
+                .texture("lit", file(cube.lit()))
+                .renderType("cutout");
+        built.element().from(0, 0, 0).to(16, 16, 16)
+                .allFaces((direction, face) -> face.texture("#all").cullface(direction)).end();
+        built.element().from(0, 0, 0).to(16, 16, 16).emissivity(FULL_LIGHT, FULL_LIGHT)
+                .allFaces((direction, face) -> face.texture("#lit").cullface(direction)).end();
+        return built;
+    }
+
+    /*
+     * An orientable cube (its front north, the way a facing turns it), and the lit texture over its front on the same
+     * plane, cut out where it is clear and at full light.
+     */
+    private ModelFile orientableLit(final IBlockModel.OrientableLit machine) {
+        final BlockModelBuilder built = models().withExistingParent(machine.name(), mcLoc("block/block"))
+                .texture("particle", file(machine.front()))
+                .texture("side", file(machine.side()))
+                .texture("front", file(machine.front()))
+                .texture("top", file(machine.top()))
+                .texture("lit", file(machine.frontLit()))
+                .renderType("cutout");
+        built.element().from(0, 0, 0).to(16, 16, 16).allFaces((direction, face) -> face.texture(
+                direction == Direction.NORTH ? "#front" : direction.getAxis() == Direction.Axis.Y ? "#top" : "#side")
+                .cullface(direction)).end();
+        built.element().from(0, 0, 0).to(16, 16, 16).emissivity(FULL_LIGHT, FULL_LIGHT)
+                .face(Direction.NORTH).texture("#lit").cullface(Direction.NORTH).end().end();
         return built;
     }
 

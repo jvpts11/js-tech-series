@@ -885,6 +885,20 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 
 ### Changed
+- The chain's machines wear the series' ports: every entry, on a formed machine and as a loose block, a
+  steel recess in the machine's own wall with an opening the shape of what it carries (an item hatch, a liquid's mouth,
+  a gas's perforated cap, the gold ring of FE, a J's Energy bushing, the peripheral socket) and lamps green in and red
+  out, lit by day and by night. A loose entry is the Machine Casing with its port on every face. Some machines were
+  reshaped round their ports, none moved: a vaporizer row and a product cabinet on the Air Separation Unit, a raised
+  chamber on the Plasma Etcher, a reflux condenser on the Chemical Reactor, the Induction Furnace's casting table
+  raised. They wore green and orange frames round pictures that told an inlet from an outlet only by colour.
+- One port per product: a machine's repeated ports are each bound to their own and tagged with it in the
+  pipe-marking colours, so the pipe on one carries that alone. The Air Separation Unit's four gas outlets give
+  krypton, argon, nitrogen and oxygen; the Electrolytic Cell's two hydrogen and the anode's chlorine or oxygen; the
+  Siemens Reactor's two gas inlets take hydrogen chloride and hydrogen, the Plasma Etcher's chlorine and argon, the
+  Display Line's two liquid inlets liquid crystal and mercury, the ArF Lithography Station's ultrapure water and
+  photoresist. The Chemical Reactor's inlets are A and B: while it works a recipe, A takes its first liquid or gas and
+  B its second, and idle each takes anything. Every port of a kind took any of it.
 - Every machine of the chain has a terminal of its own, the Plasma Etcher Terminal of the Plasma Etcher,
   the Crusher Terminal of the Crusher, in the chain's tab and drawn as its formed machine: made at a crafting table of
   the Machine Terminal, a part now, and the first working block of that machine no other machine has (the Plasma

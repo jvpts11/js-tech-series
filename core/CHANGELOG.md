@@ -544,6 +544,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A shove alike whatever it weighs: J's Core's API is at version 74. `MovingStructures.shove(MovingStructure,
   Vec3, Vec3)` and `StructurePhysics.shove(Vector3d, Vector3d)` give a moving structure a blow that changes its speed
   by the same metres a second however heavy it is, as `push` gives one of so many newton seconds. Experimental.
+- One port per product, and lamps that light: J's Core's API is at version 75. `PortProducts` binds a
+  multiblock's repeated ports, in the order its pattern is read, each to its own products, and
+  `MachineBlockEntity.portProducts(BlockPos)` tells a port's: the machine's fluid and matter ports then let those
+  alone in and out, through `ProductFluidHandler` and `ProductMatterHandler`. `IBlockModel.CubeAllLit` and
+  `IBlockModel.OrientableLit` lay a texture of lamps over a block, on every face or on its front, drawn at full light;
+  a mod that switches over every kind of `IBlockModel` covers the two. Experimental.
 - A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from

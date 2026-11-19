@@ -218,13 +218,21 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
 | | Optical Polisher | 2x2x2 | quartz into mask plates, glass and calcium fluoride into lenses, polycarbonate into blank discs; draws glass fibre, and optical fibre from germanium-doped glass |
 | Displays | Display Line | 3x3x2 | tube screens with their phosphor, flat screens with indium tin oxide, LED panels |
 
-- **Entries** tell what they are by their connector and their band: green takes in, orange gives out, yellow is energy,
-  and the peripheral socket is cyan. The Coke Oven needs no energy. The Chemical Reactor has two liquid and two gas
-  inlets, the Air Separation Unit four gas outlets, each carrying any gas, the Siemens Reactor two gas inlets, the
-  Crystal Puller one (the nitrogen of gallium nitride), the Plasma Etcher a fluid and two gas inlets, the Board Etcher
-  one for its ferric chloride, the Display Line two fluid inlets (liquid crystal and mercury), and the Lithography
-  Station a gas inlet for its laser (Legacy, Transition, Standard) and a liquid inlet for its immersion (Transition,
-  Standard).
+- **Entries** wear the series' ports (the Core's port kit): a steel recess in the machine's own wall, its opening the
+  shape of what it carries (an item hatch, a liquid's half-full mouth, a gas's perforated cap, the gold ring of FE, a
+  J's Energy bushing in its voltage class's colour, the peripheral socket), its lamps green where it takes in and red
+  where it gives out, lit by day and by night. Before its machine forms, an entry is the Machine Casing with its port on
+  every face. The Coke Oven needs no energy.
+- **One port per product:** where a machine has several ports of one kind, each is bound to its own product and tagged
+  with it, so the pipe on it carries that alone. The Air Separation Unit's four gas outlets give krypton (KR), argon
+  (AR), nitrogen (N2) and oxygen (O2); the Electrolytic Cell's two give hydrogen (H2) and the anode's gas (OX: the
+  chlorine or the oxygen of whichever it splits); the Siemens Reactor's two gas inlets take hydrogen chloride (HCL) and
+  hydrogen (H2); the Plasma Etcher's chlorine (CL2) and argon (AR); the Display Line's two liquid inlets liquid
+  crystal (LC) and mercury (HG); the ArF Lithography Station's ultrapure water (H2O) and photoresist (RES). The
+  Chemical Reactor's two liquid and two gas inlets are bound by role, A and B: while it works a recipe, A takes the
+  recipe's first liquid or gas and B its second; idle, each takes anything, so a recipe that takes others can start.
+  The Crystal Puller has one gas inlet (the nitrogen of gallium nitride), the Board Etcher one for its ferric chloride,
+  and the Lithography Station a gas inlet for its laser (Legacy, Transition, Standard).
 - **Every machine shows what it is processing:** it draws the recipe at work with its material, its colour, its part
   and its form, and gives off its particles in the colour of what comes out. A machine of a single recipe (the Coke
   Oven, the Air Separation Unit, the Siemens Reactor) always shows the same.

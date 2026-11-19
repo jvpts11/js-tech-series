@@ -34,14 +34,19 @@ import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.multiblock.PortProducts;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
@@ -92,6 +97,7 @@ public final class ChainMachines {
                 .shape("abc,dbe", "fb#,fbg")
                 .legend("a=item_outlet,b=electrolytic_cell_cell_stack,c=lined_casing,d=power_entry,e=liquid_inlet,"
                         + "f=gas_outlet,g=item_inlet")
+                .products('f', "jscore:hydrogen", "jscore:chlorine|jscore:oxygen")
                 .declareRecipes();
         machine("rolling_mill").named("Rolling Mill").step(4, 1_500).slots(1, 1, 0, 0, 0, 0)
                 .shape("aba,cde", "#fg,aea")
@@ -111,17 +117,20 @@ public final class ChainMachines {
                 .shape("abc,dce", "cb#,cff", "ghi,cjj")
                 .legend("a=item_outlet,b=chemical_reactor_vessel,c=lined_casing,d=liquid_outlet,e=power_entry,"
                         + "f=liquid_inlet,g=gas_outlet,h=chemical_reactor_agitator,i=item_inlet,j=gas_inlet")
+                .roles('f').roles('j')
                 .declareRecipes();
         machine("air_separation_unit").named("Air Separation Unit").step(10, 3_000).slots(0, 0, 0, 0, 0, 4)
                 .shape("abc,ccc,dcc,dcc", "cc#,cee,fcg,fgg", "ccc,ccc,fcc,fcg")
                 .legend("a=power_entry,b=air_separation_unit_compressor,c=vacuum_casing,"
                         + "d=air_separation_unit_vaporizer,e=air_separation_unit_adsorber,f=gas_outlet,"
                         + "g=air_separation_unit_column")
+                .products('f', "jscore:krypton", "jscore:argon", "jscore:nitrogen", "jscore:oxygen")
                 .works(AirSeparationBlockEntity::new).declareRecipes();
         machine("siemens_reactor").named("Siemens Reactor").step(60, 5_000).slots(1, 1, 0, 0, 2, 0)
                 .shape("ab,cd", "e#,fb", "eb,fg")
                 .legend("a=siemens_reactor_base_plate,b=refractory_casing,c=item_outlet,d=power_entry,"
                         + "e=siemens_reactor_bell,f=gas_inlet,g=item_inlet")
+                .products('f', "jscore:hydrogen_chloride", "jscore:hydrogen")
                 .declareRecipes();
         machine("crystal_puller").named("Crystal Puller").step(120, 6_000).slots(4, 1, 0, 0, 1, 0)
                 .shape("ab,cd", "c#,eb", "fb,bg")
@@ -137,6 +146,7 @@ public final class ChainMachines {
                 .shape("ab,cd", "e#,fd")
                 .legend("a=item_inlet,b=power_entry,c=item_outlet,d=gas_inlet,e=plasma_etcher_etch_chamber,"
                         + "f=liquid_inlet")
+                .products('d', "jscore:chlorine", "jscore:argon")
                 .works(WaferMachineBlockEntity::new).declareRecipes();
         machine("ion_implanter").named("Ion Implanter").step(10, 4_000).slots(2, 1, 0, 0, 0, 0)
                 .shape("abb,cbd", "ef#,bbb")
@@ -181,6 +191,7 @@ public final class ChainMachines {
                 .shape("abc,bdb", "ef#,ggb", "bhb,bbb")
                 .legend("a=item_outlet,b=vacuum_casing,c=item_inlet,d=power_entry,e=display_line_fill_chamber,"
                         + "f=display_line_test_stand,g=liquid_inlet,h=display_line_gantry")
+                .products('g', "jscore:liquid_crystal", "jscore:mercury")
                 .declareRecipes();
         machine("lithography_vintage").named("Vintage Lithography Station").era(HardwareEra.VINTAGE)
                 .step(20, 2_000).slots(2, 1, 1, 0, 0, 0)
@@ -203,6 +214,7 @@ public final class ChainMachines {
                 .legend("a=clean_room_casing,b=lithography_wafer_stage,c=item_inlet,d=power_entry,e=liquid_inlet,"
                         + "f=item_outlet,g=lithography_arf_laser,h=lithography_fluoride_optics,i=gas_inlet,"
                         + "j=peripheral_port")
+                .products('e', "jscore:ultrapure_water", "jscore:photoresist")
                 .works(WaferMachineBlockEntity::new).declareRecipes();
         machine("lithography_advanced").named("Advanced Lithography Station").era(HardwareEra.ADVANCED)
                 .step(20, 10_000).slots(3, 1, 1, 0, 0, 0).linked()
@@ -292,6 +304,22 @@ public final class ChainMachines {
         return DECLARED.get(machine.id()).worked();
     }
 
+    /**
+     * The products {@code machine}'s repeated ports are bound to, a port each, as its tags name them (the Air
+     * Separation Unit's N2, O2, AR and KR): a bound port takes in or gives out its own alone.
+     */
+    public static PortProducts products(final ChainMachine machine) {
+        return DECLARED.get(machine.id()).products();
+    }
+
+    /**
+     * The letters of {@code machine}'s shape whose ports are bound by role, A then B as the shape is read, to the
+     * inputs of the recipe it works (the Chemical Reactor's).
+     */
+    public static Set<Character> roles(final ChainMachine machine) {
+        return DECLARED.get(machine.id()).roles();
+    }
+
     /** Every machine's terminal block entity type, for the renderers and the capabilities. */
     public static List<DeferredHolder<BlockEntityType<?>, BlockEntityType<ChainMachineBlockEntity>>> types() {
         return DECLARED.values().stream().map(Declared::type).toList();
@@ -344,12 +372,13 @@ public final class ChainMachines {
     }
 
     /*
-     * A machine as declared: its record, its terminal, its terminal's type, its formed model and the kinds of recipe it
-     * works.
+     * A machine as declared: its record, its terminal, its terminal's type, its formed model, the kinds of recipe it
+     * works, the products its repeated ports are bound to and the letters of its ports bound by role (see
+     * ChainMachines.products and ChainMachines.roles).
      */
     private record Declared(ChainMachine machine, BlockEntry<ChainMachineTerminalBlock> terminal,
                             DeferredHolder<BlockEntityType<?>, BlockEntityType<ChainMachineBlockEntity>> type,
-                            ResourceLocation model, List<Worked> worked) {
+                            ResourceLocation model, List<Worked> worked, PortProducts products, Set<Character> roles) {
     }
 
     /* Declares one machine, a step at a time as its line in the table reads. */
@@ -367,9 +396,34 @@ public final class ChainMachines {
         private boolean linked;
         private IEntityMaker entity = ChainMachineBlockEntity::new;
         private IMenuFactory<ChainMachineBlockEntity> menu = MachineMenu::new;
+        private PortProducts products = PortProducts.NONE;
+        private final Set<Character> roles = new LinkedHashSet<>();
 
         Builder(final String id) {
             this.id = id;
+        }
+
+        /*
+         * Its ports of {@code letter} bound, in the order the shape is read (layers from the bottom, rows from the front,
+         * each row from its first character), one each to the product {@code ids} name: a liquid's or a material's id,
+         * or a few joined by '|' for a port that gives whichever of them its recipe makes.
+         */
+        Builder products(final char letter, final String... ids) {
+            final List<Set<ResourceLocation>> ports = new ArrayList<>();
+            for (final String each : ids) {
+                ports.add(Arrays.stream(each.split("\\|")).map(ResourceLocation::parse).collect(Collectors.toSet()));
+            }
+            this.products = this.products.withPorts(letter, ports);
+            return this;
+        }
+
+        /*
+         * Its ports of {@code letter} bound by role, in the order the shape is read: while it works a recipe, the first
+         * takes the recipe's first input of the port's state, the second its second; idle, each takes anything.
+         */
+        Builder roles(final char letter) {
+            this.roles.add(letter);
+            return this;
         }
 
         /* A machine that does work of its own rather than recipes: its terminal's block entity. */
@@ -479,7 +533,8 @@ public final class ChainMachines {
             final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChainMachineBlockEntity>> type =
                     CONTENT.blockEntity(machine.terminalPath(), (pos, state) -> maker.make(machine, pos, state),
                             terminal);
-            DECLARED.put(id, new Declared(machine, terminal, type, model, worked.apply(machine, terminal)));
+            DECLARED.put(id, new Declared(machine, terminal, type, model, worked.apply(machine, terminal), products,
+                    Set.copyOf(roles)));
         }
 
         /*

@@ -1,6 +1,91 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/block",
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "cullface": "down",
+          "texture": "#all"
+        },
+        "east": {
+          "cullface": "east",
+          "texture": "#all"
+        },
+        "north": {
+          "cullface": "north",
+          "texture": "#all"
+        },
+        "south": {
+          "cullface": "south",
+          "texture": "#all"
+        },
+        "up": {
+          "cullface": "up",
+          "texture": "#all"
+        },
+        "west": {
+          "cullface": "west",
+          "texture": "#all"
+        }
+      },
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "cullface": "down",
+          "texture": "#lit"
+        },
+        "east": {
+          "cullface": "east",
+          "texture": "#lit"
+        },
+        "north": {
+          "cullface": "north",
+          "texture": "#lit"
+        },
+        "south": {
+          "cullface": "south",
+          "texture": "#lit"
+        },
+        "up": {
+          "cullface": "up",
+          "texture": "#lit"
+        },
+        "west": {
+          "cullface": "west",
+          "texture": "#lit"
+        }
+      },
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "to": [
+        16,
+        16,
+        16
+      ]
+    }
+  ],
+  "render_type": "minecraft:cutout",
   "textures": {
-    "all": "jsc:block/chain/machine/gas_outlet"
+    "all": "jsc:block/chain/machine/gas_outlet",
+    "lit": "jsc:block/chain/machine/gas_outlet_lit",
+    "particle": "jsc:block/chain/machine/gas_outlet"
   }
 }

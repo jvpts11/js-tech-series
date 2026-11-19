@@ -677,6 +677,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A shove alike whatever it weighs: J's Core's API is at version 74. `MovingStructures.shove(MovingStructure,
   Vec3, Vec3)` and `StructurePhysics.shove(Vector3d, Vector3d)` give a moving structure a blow that changes its speed
   by the same metres a second however heavy it is, as `push` gives one of so many newton seconds. Experimental.
+- (Core) One port per product, and lamps that light: J's Core's API is at version 75. `PortProducts` binds a
+  multiblock's repeated ports, in the order its pattern is read, each to its own products, and
+  `MachineBlockEntity.portProducts(BlockPos)` tells a port's: the machine's fluid and matter ports then let those
+  alone in and out, through `ProductFluidHandler` and `ProductMatterHandler`. `IBlockModel.CubeAllLit` and
+  `IBlockModel.OrientableLit` lay a texture of lamps over a block, on every face or on its front, drawn at full light;
+  a mod that switches over every kind of `IBlockModel` covers the two. Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -4094,6 +4100,23 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the lander shuts it as it lifts off. Its cabin is drawn hollow now, each wall lined inside. It was only drawn before.
 
 ### Changed
+- (Computers) The chain's machines wear the series' ports: every entry, on a formed machine and as a loose block, a
+  steel recess in the machine's own wall with an opening the shape of what it carries (an item hatch, a liquid's mouth,
+  a gas's perforated cap, the gold ring of FE, a J's Energy bushing, the peripheral socket) and lamps green in and red
+  out, lit by day and by night. A loose entry is the Machine Casing with its port on every face. Some machines were
+  reshaped round their ports, none moved: a vaporizer row and a product cabinet on the Air Separation Unit, a raised
+  chamber on the Plasma Etcher, a reflux condenser on the Chemical Reactor, the Induction Furnace's casting table
+  raised. They wore green and orange frames round pictures that told an inlet from an outlet only by colour.
+- (Computers) One port per product: a machine's repeated ports are each bound to their own and tagged with it in the
+  pipe-marking colours, so the pipe on one carries that alone. The Air Separation Unit's four gas outlets give
+  krypton, argon, nitrogen and oxygen; the Electrolytic Cell's two hydrogen and the anode's chlorine or oxygen; the
+  Siemens Reactor's two gas inlets take hydrogen chloride and hydrogen, the Plasma Etcher's chlorine and argon, the
+  Display Line's two liquid inlets liquid crystal and mercury, the ArF Lithography Station's ultrapure water and
+  photoresist. The Chemical Reactor's inlets are A and B: while it works a recipe, A takes its first liquid or gas and
+  B its second, and idle each takes anything. Every port of a kind took any of it.
+- (Industrial) The Computational Research Centre's entries wear the series' ports, on its rear panel and as loose
+  blocks: the Power Entry a medium-voltage J's Energy bushing, the Link Socket the research link's opening, the coolant
+  pair tagged COLD and HOT, the Heat Port its fins, their lamps lit by day and by night.
 - (Computers) Every machine of the chain has a terminal of its own, the Plasma Etcher Terminal of the Plasma Etcher,
   the Crusher Terminal of the Crusher, in the chain's tab and drawn as its formed machine: made at a crafting table of
   the Machine Terminal, a part now, and the first working block of that machine no other machine has (the Plasma

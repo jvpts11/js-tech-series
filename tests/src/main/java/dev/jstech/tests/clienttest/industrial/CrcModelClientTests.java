@@ -47,10 +47,13 @@ public final class CrcModelClientTests {
      * one, S a heat sink, L a liquid cooler. */
     private static final String PLACES = "RSRSRSRSR" + "LILILILIL" + "SRSSRSSRS";
     private static final int WAIT = 200;
-    /* How dark the cable gland's black body is on the screen, and how bright the bare sheet of a cell, at most and at
+    /* How dark the lip of a port's recess is on the screen, and how bright the bare sheet of a cell, at most and at
      * least, of the three channels' sum. */
     private static final int DARK = 200;
     private static final int BRIGHT = 330;
+    /* How high in its block the top lip of a bottom row port's recess lies: the port stands a texel above the block's
+     * middle there, so the cell holds its recess whole, and its lip four and a half texels above that. */
+    private static final double LIP_HEIGHT = 27.0 / 32.0;
 
     private CrcModelClientTests() {
     }
@@ -67,12 +70,12 @@ public final class CrcModelClientTests {
                         && formedOnClient(ctx, rear(ctx, TERMINAL, 2, 1)), WAIT,
                         "its entries to be drawn by the formed model")
                 .then(0, () -> ctx.mc().options.hideGui = true)
-                .then(0, () -> ctx.lookAt(connection(ctx, 0, 0)))
+                .then(0, () -> ctx.lookAt(lip(ctx, 0)))
                 .then(3, () -> seen[0] = brightness(ctx.pixel(centreX(ctx), centreY(ctx))))
-                .then(0, () -> ctx.lookAt(connection(ctx, 2, 0)))
+                .then(0, () -> ctx.lookAt(lip(ctx, 2)))
                 .then(3, () -> seen[1] = brightness(ctx.pixel(centreX(ctx), centreY(ctx))))
                 .thenAssert(0, () -> seen[0] <= DARK && seen[1] >= BRIGHT, "the power entry, standing in the west"
-                        + " cell, is drawn there, the gland's black at its middle, and the east cell bare: "
+                        + " cell, is drawn there, its port's dark lip over its middle, and the east cell bare: "
                         + seen[0] + " against " + seen[1])
                 .thenServer(0, level -> cable(ctx, level))
                 .then(0, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(TERMINAL.offset(0, 0, 9)))))
@@ -192,6 +195,12 @@ public final class CrcModelClientTests {
     private static Vec3 connection(final ClientTestContext ctx, final int column, final int row) {
         final BlockPos place = rear(ctx, TERMINAL, column, row);
         return new Vec3(place.getX() + 0.5, place.getY() + 0.5, place.getZ() + 1.0);
+    }
+
+    /* The top lip of the recess of a port standing in the bottom row's place of {@code column}, on its block's face. */
+    private static Vec3 lip(final ClientTestContext ctx, final int column) {
+        final BlockPos place = rear(ctx, TERMINAL, column, 0);
+        return new Vec3(place.getX() + 0.5, place.getY() + LIP_HEIGHT, place.getZ() + 1.0);
     }
 
     private static boolean formedOnClient(final ClientTestContext ctx, final BlockPos at) {

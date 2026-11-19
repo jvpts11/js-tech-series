@@ -239,8 +239,12 @@ public final class ChainMachineBlocks {
         return entry(id, Device.of(() -> ENTRY_BE.get()).ports(ports));
     }
 
+    /*
+     * An entry: the Machine Casing with the series' port over it on every face, its lamps lit by day and by night
+     * (<id>_lit), as a formed machine's are; drawing nothing while its machine stands.
+     */
     private static BlockBuilder<ChainFormedBlock> entry(final String id, final Device<ChainEntryBlockEntity> device) {
-        final IBlockModel whole = new IBlockModel.CubeAll(id, TEXTURES + id);
+        final IBlockModel whole = new IBlockModel.CubeAllLit(id, TEXTURES + id, TEXTURES + id + "_lit");
         final IBlockModel formed = new IBlockModel.ParticleOnly(id + "_formed", TEXTURES + id);
         return CONTENT.block(id, properties -> new ChainFormedBlock(properties, device))
                 .properties(properties -> properties.mapColor(MapColor.METAL).strength(3.0F).sound(SoundType.METAL))

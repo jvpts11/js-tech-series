@@ -39,11 +39,13 @@ import dev.jstech.core.inventory.FaceFluidHandler;
 import dev.jstech.core.inventory.FaceItemHandler;
 import dev.jstech.core.inventory.FaceMode;
 import dev.jstech.core.inventory.ItemFilter;
+import dev.jstech.core.inventory.ProductFluidHandler;
 import dev.jstech.core.look.IDescribed;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.FaceMatterHandler;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterTank;
+import dev.jstech.core.matter.ProductMatterHandler;
 import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.heat.IHeatPort;
 import dev.jstech.core.moving.BlockMove;
@@ -52,6 +54,7 @@ import dev.jstech.core.multiblock.IRedstonePortHost;
 import dev.jstech.core.multiblock.IStructureTerminal;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.multiblock.PortProducts;
 import dev.jstech.core.multiblock.hands.StructureHands;
 import dev.jstech.core.physics.Physics;
 import dev.jstech.core.physics.PhysicsMath;
@@ -79,6 +82,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -91,6 +95,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.wrapper.EmptyItemHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -367,8 +372,13 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
                                              final @Nullable Direction side) {
         final int group = portGroup(part);
         final IFluidHandler tanks = group < 0 ? null : kind.input() ? fluidsIn(group) : fluidsOut(group);
-        return tanks == null ? null : new FaceFluidHandler(tanks, kind.input() ? FaceMode.IN : FaceMode.OUT,
+        if (tanks == null) {
+            return null;
+        }
+        final IFluidHandler face = new FaceFluidHandler(tanks, kind.input() ? FaceMode.IN : FaceMode.OUT,
                 ItemFilter.EVERYTHING);
+        final Set<ResourceLocation> products = portProducts(part);
+        return products.isEmpty() ? face : new ProductFluidHandler(face, products);
     }
 
     /** The energy, as FE, an energy port of its structure takes in or gives out. */
@@ -397,8 +407,22 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
                                                final @Nullable Direction side) {
         final IMatterHandler whole = portGroup(part) < 0 || kind.state().isEmpty() ? null
                 : matterHandler(kind.state().get());
-        return whole == null ? null : new FaceMatterHandler(whole, kind.input() ? FaceMode.IN : FaceMode.OUT,
+        if (whole == null) {
+            return null;
+        }
+        final IMatterHandler face = new FaceMatterHandler(whole, kind.input() ? FaceMode.IN : FaceMode.OUT,
                 ItemFilter.EVERYTHING);
+        final Set<ResourceLocation> products = portProducts(part);
+        return products.isEmpty() ? face : new ProductMatterHandler(face, products);
+    }
+
+    /**
+     * The products the port of its structure at {@code part} is bound to (see {@link PortProducts}): the port lets
+     * those alone in or out. None, as here, for a port that takes and gives anything of its kind.
+     */
+    @ApiStatus.Experimental
+    public Set<ResourceLocation> portProducts(final BlockPos part) {
+        return Set.of();
     }
 
     /** Its casing's heat, through a heat port of its structure, for a machine that makes heat. */

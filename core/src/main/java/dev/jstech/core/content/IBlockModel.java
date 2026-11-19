@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.content;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,9 +20,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface IBlockModel
         permits IBlockModel.CubeAll,
+        IBlockModel.CubeAllLit,
         IBlockModel.Column,
         IBlockModel.BottomTop,
         IBlockModel.Orientable,
+        IBlockModel.OrientableLit,
         IBlockModel.Controller,
         IBlockModel.SixFaces,
         IBlockModel.ParticleOnly,
@@ -53,6 +56,14 @@ public sealed interface IBlockModel
     record CubeAll(String name, String texture) implements IBlockModel {
     }
 
+    /**
+     * The same texture on all six faces, and over it {@code lit}, clear but for what gives light of its own (a port's
+     * lamps), drawn at full light by day and by night, as the kit's lamps on a formed machine are.
+     */
+    @ApiStatus.Experimental
+    record CubeAllLit(String name, String texture, String lit) implements IBlockModel {
+    }
+
     /** Sides around and ends on top and bottom, as a pillar. */
     record Column(String name, String side, String end) implements IBlockModel {
     }
@@ -67,6 +78,15 @@ public sealed interface IBlockModel
 
     /** A front, the same texture on the other sides, and a top: a machine that faces the way it was placed. */
     record Orientable(String name, String side, String front, String top) implements IBlockModel {
+    }
+
+    /**
+     * The same, and over its front {@code frontLit}, clear but for what gives light of its own (a port's lamps), drawn
+     * at full light by day and by night.
+     */
+    @ApiStatus.Experimental
+    record OrientableLit(String name, String side, String front, String top, String frontLit)
+            implements IBlockModel {
     }
 
     /**

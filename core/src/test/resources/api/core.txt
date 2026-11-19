@@ -3113,7 +3113,7 @@ stable 4
 10 dev.jstech.core.content.IBlockLook.Pipe  type record(String texture, String coreParent, String armParent) implements IBlockLook
 10 dev.jstech.core.content.IBlockLook.Toggle  type record(BooleanProperty property, IBlockModel on)
 32 dev.jstech.core.content.IBlockLook.Varied  type record(List<IBlockModel> models, boolean turned) implements IBlockLook
-73 dev.jstech.core.content.IBlockModel  type sealed interface permits IBlockModel.CubeAll, IBlockModel.Column, IBlockModel.BottomTop, IBlockModel.Orientable, IBlockModel.Controller, IBlockModel.SixFaces, IBlockModel.ParticleOnly, IBlockModel.Handmade
+75 dev.jstech.core.content.IBlockModel  type sealed interface permits IBlockModel.CubeAll, IBlockModel.CubeAllLit, IBlockModel.Column, IBlockModel.BottomTop, IBlockModel.Orientable, IBlockModel.OrientableLit, IBlockModel.Controller, IBlockModel.SixFaces, IBlockModel.ParticleOnly, IBlockModel.Handmade
 10 dev.jstech.core.content.IBlockModel  abstract String name()
 10 dev.jstech.core.content.IBlockModel  static IBlockModel column(String)
 10 dev.jstech.core.content.IBlockModel  static IBlockModel cubeAll(String)
@@ -3123,8 +3123,10 @@ stable 4
 10 dev.jstech.core.content.IBlockModel.Column  type record(String name, String side, String end) implements IBlockModel
 73 dev.jstech.core.content.IBlockModel.Controller  type record(String name, String casing, String panel) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.CubeAll  type record(String name, String texture) implements IBlockModel
+75 dev.jstech.core.content.IBlockModel.CubeAllLit  type record(String name, String texture, String lit) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.Handmade  type record(String name) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.Orientable  type record(String name, String side, String front, String top) implements IBlockModel
+75 dev.jstech.core.content.IBlockModel.OrientableLit  type record(String name, String side, String front, String top, String frontLit) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.ParticleOnly  type record(String name, String particle) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.SixFaces  type record(String name, String down, String up, String north, String south, String east, String west, String particle) implements IBlockModel
 10 dev.jstech.core.content.IItemLook  type sealed interface permits IItemLook.Standard, IItemLook.Parent
@@ -6593,6 +6595,15 @@ stable 4
 10 dev.jstech.core.inventory.NamedSubject  String itemId()
 10 dev.jstech.core.inventory.NamedSubject  boolean hasTag(String)
 10 dev.jstech.core.inventory.NamedSubject  boolean sameAs(IFilterSubject)
+75 dev.jstech.core.inventory.ProductFluidHandler  type final class implements IFluidHandler
+75 dev.jstech.core.inventory.ProductFluidHandler  FluidStack drain(FluidStack, FluidAction)
+75 dev.jstech.core.inventory.ProductFluidHandler  FluidStack drain(int, FluidAction)
+75 dev.jstech.core.inventory.ProductFluidHandler  FluidStack getFluidInTank(int)
+75 dev.jstech.core.inventory.ProductFluidHandler  boolean isFluidValid(int, FluidStack)
+75 dev.jstech.core.inventory.ProductFluidHandler  int fill(FluidStack, FluidAction)
+75 dev.jstech.core.inventory.ProductFluidHandler  int getTankCapacity(int)
+75 dev.jstech.core.inventory.ProductFluidHandler  int getTanks()
+75 dev.jstech.core.inventory.ProductFluidHandler  new(IFluidHandler, Set<ResourceLocation>)
 10 dev.jstech.core.inventory.StackSubject  type record(ItemStack stack) implements IFilterSubject
 10 dev.jstech.core.inventory.StackSubject  String itemId()
 10 dev.jstech.core.inventory.StackSubject  boolean equals(Object)
@@ -7574,6 +7585,7 @@ stable 4
 12 dev.jstech.core.machine.MachineBlockEntity  Optional<RedstoneMode> redstoneMode()
 12 dev.jstech.core.machine.MachineBlockEntity  Optional<StructureHands> hands()
 10 dev.jstech.core.machine.MachineBlockEntity  Ownership ownership()
+75 dev.jstech.core.machine.MachineBlockEntity  Set<ResourceLocation> portProducts(BlockPos)
 51 dev.jstech.core.machine.MachineBlockEntity  Text note()
 10 dev.jstech.core.machine.MachineBlockEntity  UpgradeEffect upgrades()
 10 dev.jstech.core.machine.MachineBlockEntity  boolean asleep()
@@ -9130,6 +9142,16 @@ stable 4
 12 dev.jstech.core.matter.PressureBursts.Held  BURST
 12 dev.jstech.core.matter.PressureBursts.Held  HELD
 12 dev.jstech.core.matter.PressureBursts.Held  RELIEVED
+75 dev.jstech.core.matter.ProductMatterHandler  type final class implements IMatterHandler
+75 dev.jstech.core.matter.ProductMatterHandler  MatterState state()
+75 dev.jstech.core.matter.ProductMatterHandler  Optional<MatterStack> extractAny(long, boolean)
+75 dev.jstech.core.matter.ProductMatterHandler  Optional<MatterStack> stack(int)
+75 dev.jstech.core.matter.ProductMatterHandler  double pressureNow(int)
+75 dev.jstech.core.matter.ProductMatterHandler  int tanks()
+75 dev.jstech.core.matter.ProductMatterHandler  long capacity(int)
+75 dev.jstech.core.matter.ProductMatterHandler  long extract(Material, long, boolean)
+75 dev.jstech.core.matter.ProductMatterHandler  long insert(MatterStack, boolean)
+75 dev.jstech.core.matter.ProductMatterHandler  new(IMatterHandler, Set<ResourceLocation>)
 10 dev.jstech.core.mechanical.BeltPath  type record(double fromAx, double fromAy, double toAx, double toAy, double fromBx, double fromBy, double toBx, double toBy)
 10 dev.jstech.core.mechanical.BeltPath  double runLength()
 10 dev.jstech.core.mechanical.BeltPath  static Optional<BeltPath> open(double, double, double, double, double, double)
@@ -11179,6 +11201,13 @@ stable 4
 10 dev.jstech.core.multiblock.PortKind.Resource  HEAT
 10 dev.jstech.core.multiblock.PortKind.Resource  ITEMS
 10 dev.jstech.core.multiblock.PortKind.Resource  MATTER
+75 dev.jstech.core.multiblock.PortProducts  type record(Map<Character, List<Set<ResourceLocation>>> byLetter)
+75 dev.jstech.core.multiblock.PortProducts  Map<Long, Set<ResourceLocation>> places(MultiblockPattern, ShapeMatch.Formed)
+75 dev.jstech.core.multiblock.PortProducts  PortProducts with(char, List<ResourceLocation>)
+75 dev.jstech.core.multiblock.PortProducts  PortProducts withPorts(char, List<Set<ResourceLocation>>)
+75 dev.jstech.core.multiblock.PortProducts  boolean isEmpty()
+75 dev.jstech.core.multiblock.PortProducts  static List<Long> inReadingOrder(MultiblockPattern, ShapeMatch.Formed, char)
+75 dev.jstech.core.multiblock.PortProducts  static final PortProducts NONE
 10 dev.jstech.core.multiblock.Projectables  type final class
 10 dev.jstech.core.multiblock.Projectables  static Map<ResourceLocation, IStructureShape> all()
 10 dev.jstech.core.multiblock.Projectables  static Optional<IStructureShape> get(ResourceLocation)

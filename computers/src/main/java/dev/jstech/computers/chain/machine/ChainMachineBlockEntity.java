@@ -20,12 +20,20 @@ import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.machine.ProcessingInput;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
+import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.PatternById;
+import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.multiblock.PortProducts;
 import dev.jstech.core.multiblock.ShapeMatch;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -56,6 +64,17 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     private final LithoLink link;
     /* Whether its shape stood at the last check, so its forming is told the advancements once. */
     private boolean stood;
+    /*
+     * Its bound ports (ChainMachines.products and ChainMachines.roles), worked out for the structure they stand in:
+     * each port bound to products and its products; each port bound by role, its role (0 for A) and whether it takes
+     * liquid; and the liquids and the gases the recipe it works takes, in the recipe's order, which its role ports
+     * take while it works.
+     */
+    private @Nullable ShapeMatch.Formed boundFor;
+    private Map<Long, Set<ResourceLocation>> bound = Map.of();
+    private Map<Long, RolePort> roles = Map.of();
+    private List<ResourceLocation> roleLiquids = List.of();
+    private List<ResourceLocation> roleGases = List.of();
 
     /* Its store holds this many seconds of its draw, and takes twice a tick's draw at once. */
     private static final long STORE_SECONDS = 4;
@@ -99,6 +118,34 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     /** The liquids and gases what it works on now takes, by the liquid's or the material's id. */
     public List<ResourceLocation> flows() {
         return flows.get();
+    }
+
+    /**
+     * The products the port at {@code part} lets through, as its tag names them: a port bound to products
+     * (ChainMachines.products) its own always; a port bound by role (ChainMachines.roles) the recipe's input of its
+     * role while it works one, anything while it is idle, so a recipe that takes others can start.
+     */
+    @Override
+    public Set<ResourceLocation> portProducts(final BlockPos part) {
+        final MachineStructure structure = structure();
+        final Optional<ShapeMatch.Formed> formed = structure == null ? Optional.empty() : structure.structure();
+        if (formed.isEmpty()) {
+            return Set.of();
+        }
+        if (formed.get() != boundFor) {
+            bind(formed.get());
+        }
+        final long at = part.asLong();
+        final Set<ResourceLocation> fixed = bound.get(at);
+        if (fixed != null) {
+            return fixed;
+        }
+        final RolePort role = roles.get(at);
+        if (role == null || !running()) {
+            return Set.of();
+        }
+        final List<ResourceLocation> inputs = role.liquid() ? roleLiquids : roleGases;
+        return role.role() < inputs.size() ? Set.of(inputs.get(role.role())) : Set.of();
     }
 
     /* Every machine but the Coke Oven, unless the server lets the computers and the machines run free. */
@@ -165,7 +212,10 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     protected Optional<Processing> run(final Level level, final ProcessingInput input, final Processing work,
                                        @Nullable final Era era) {
         final Optional<Processing> linked = link.allows(level, this, work, era);
-        linked.ifPresent(allowed -> shows(input, allowed));
+        linked.ifPresent(allowed -> {
+            shows(input, allowed);
+            takesByRole(allowed);
+        });
         return linked;
     }
 
@@ -215,6 +265,55 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
         }
     }
 
+    /* Works out where its bound ports stand in {@code formed}, the structure it stands in now. */
+    private void bind(final ShapeMatch.Formed formed) {
+        boundFor = formed;
+        final Optional<MultiblockPattern> pattern = MultiblockPatterns.get(machine.patternId());
+        if (pattern.isEmpty()) {
+            bound = Map.of();
+            roles = Map.of();
+            return;
+        }
+        bound = ChainMachines.products(machine).places(pattern.get(), formed);
+        final Map<Long, RolePort> byRole = new HashMap<>();
+        for (final char letter : ChainMachines.roles(machine)) {
+            final boolean liquid = ChainMachineBlocks.PORTS.get(machine.legend().get(letter)) == PortKind.FLUID_INPUT;
+            final List<Long> places = PortProducts.inReadingOrder(pattern.get(), formed, letter);
+            for (int k = 0; k < places.size(); k++) {
+                byRole.put(places.get(k), new RolePort(k, liquid));
+            }
+        }
+        roles = Map.copyOf(byRole);
+    }
+
+    /* Keeps the liquids and the gases {@code work} takes, in its recipe's order, for its ports bound by role. */
+    private void takesByRole(final Processing work) {
+        if (ChainMachines.roles(machine).isEmpty()) {
+            return;
+        }
+        final List<ResourceLocation> liquids = new ArrayList<>();
+        for (final Take take : work.fluidTakes()) {
+            final FieldFluidTank tank = inputTank(take.index());
+            if (!tank.getFluid().isEmpty()) {
+                liquids.add(BuiltInRegistries.FLUID.getKey(tank.getFluid().getFluid()));
+            }
+        }
+        final List<Optional<MatterStack>> held = new ArrayList<>();
+        for (final MatterTank tank : matter().inputs(MatterState.GAS)) {
+            for (int i = 0; i < tank.tanks(); i++) {
+                held.add(tank.stack(i));
+            }
+        }
+        final List<ResourceLocation> gases = new ArrayList<>();
+        for (final Take take : work.matterTakes()) {
+            if (take.index() < held.size()) {
+                held.get(take.index()).ifPresent(stack -> gases.add(stack.material().id()));
+            }
+        }
+        roleLiquids = List.copyOf(liquids);
+        roleGases = List.copyOf(gases);
+    }
+
     private void unflag(final Level level) {
         for (final long at : flagged.get()) {
             final BlockPos pos = BlockPos.of(at);
@@ -224,5 +323,9 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
             }
         }
         flagged.set(List.of());
+    }
+
+    /* A port bound by role: its role, 0 for A, and whether it takes liquid rather than gas. */
+    private record RolePort(int role, boolean liquid) {
     }
 }

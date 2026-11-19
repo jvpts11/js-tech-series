@@ -104,6 +104,11 @@ and the lamps of its registers blinking while it works.
 | Coolant Inlet and Coolant Outlet | at most one pair, always together | cold water in and hot water out, for the Liquid Coolers |
 | Heat Port | at most one | the heat pipe to the Central Cooling Plant, for the Heat Pipe Coolers ([Machines](machines.md)) |
 
+Each entry wears the series' port (the Core's port kit) on its front, in the rear panel of the formed CRC as on the
+loose block: the Power Entry a J's Energy bushing in medium voltage's colour, the Link Socket the research link's
+opening, the coolant pair a liquid's mouth each, tagged COLD and HOT in the pipe-marking colours, the Heat Port its
+fins; their lamps green where they take in and red where they give out, lit by day and by night.
+
 Its screen has **three sections of 3 by 3, 27 places**, one for each gate, filled with the processors of each tier and
 what cools them:
 

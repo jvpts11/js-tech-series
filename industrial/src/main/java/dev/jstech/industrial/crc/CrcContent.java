@@ -167,9 +167,18 @@ public final class CrcContent {
                 .item().tab(IndustrialModule.RESEARCH);
     }
 
-    /* An entry of its rear: a block of the structure through which something comes in or goes out. */
+    /*
+     * An entry of its rear: a block of the structure through which something comes in or goes out, the series' port
+     * on its front, its lamps lit by day and by night (<path>_lit), as the formed structure's are.
+     */
     private static BlockBuilder<CrcBlock> entryBlock(final String path) {
-        return facing(path, Device.of(() -> CrcContent.ENTRY_BE.get()));
+        return CRC.built(IndustrialModule.CONTENT.block(path, properties -> new CrcBlock(properties,
+                        Device.of(() -> CrcContent.ENTRY_BE.get()))))
+                .properties(properties -> properties.mapColor(MapColor.SAND))
+                .look(IBlockLook.facing(new IBlockModel.OrientableLit(path, CASING_TEXTURE, "block/crc/" + path,
+                        CASING_TEXTURE, "block/crc/" + path + "_lit")).whileOn(CrcBlock.FORMED,
+                        new IBlockModel.ParticleOnly(path + "_formed", CASING_TEXTURE)))
+                .item().tab(IndustrialModule.RESEARCH);
     }
 
     /* The item of a part that goes in its places. */
