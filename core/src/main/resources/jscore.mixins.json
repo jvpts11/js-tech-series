@@ -10,6 +10,7 @@
     "BorderDelegateMixin",
     "ChunkMapMixin",
     "ChunkStatusTasksMixin",
+    "ChunkTaskQueueMixin",
     "ChunkUnloadMixin",
     "CollisionGetterMixin",
     "CraftingMenuMixin",

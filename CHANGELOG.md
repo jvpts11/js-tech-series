@@ -5235,6 +5235,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   hundred blocks up, nor shows as a dome of loaded land ringed in black, the fog the black of its sky closing it in;
   from its ground up, as on the way up past the build limit, the far map goes on from the loaded land to the
   horizon, and nothing fades the land short of it.
+- (Core) Land left behind by anything moving fast into new land is let go again, and the server no longer slows for
+  good behind it: the game serves the chunks' waiting tasks nearest first and a chunk no longer wanted last of all, so
+  while something kept moving into new land (a ship crossing space or a flat world, both made fast), the tasks of the
+  land it left never ran, each holding the land round it; the chunks waiting to unload grew by thousands a minute and
+  every tick went through them all. One turn in four of the queue now goes to the land let go while any waits, the
+  rest to the land wanted as before, so neither waits on the other for good.
 
 ## [0.5.3a] - 2026-11-04
 
