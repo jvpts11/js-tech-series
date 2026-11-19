@@ -49,8 +49,8 @@ import org.slf4j.Logger;
  * A player walks a small ship from its cockpit to its tail, through every part a crew goes into: from the middle of the
  * section behind the cockpit, the places a player stands on the floor reach, a step at a time and stepping up no higher
  * than a player does walking, into the cockpit's doorway, its floor flush with the threshold and its pilot's seat in
- * reach, up its aisles either side of the seat with the console before them (but the Cab's, too low a cabin to stand
- * in), and along every row of every section, on one level, a reactor's room by the aisle beside its drum. Five ships
+ * reach, up its aisles either side of the seat with the console before them, and along every row of every section, on
+ * one level, a reactor's room by the aisle beside its drum. Five ships
  * between them hold every cockpit and every part of the spine.
  */
 @GameTestHolder(JsTests.MODID)
@@ -242,10 +242,8 @@ public final class ShipWalkGameTests {
                 out.add(name(0) + " is not walked into its doorway, its pilot's seat in reach: "
                         + blockers(0, this.fronts[1]));
             }
-            // The Cab's cabin is too low to stand in beside its seat: its pilot climbs into its seat from behind it.
-            final boolean aisles = !this.design.spine().getFirst().equals(part("cab_cockpit"));
             for (final double side : new double[] {-1, 1}) {
-                if (aisles && !upTheAisle(side)) {
+                if (!upTheAisle(side)) {
                     out.add(name(0) + " is not walked up its " + (side < 0 ? "left" : "right") + " aisle beside its"
                             + " seat: " + blockers(side * AISLE, seatRow() + HALF_A_BLOCK));
                 }

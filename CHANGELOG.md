@@ -4414,6 +4414,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) The Cab cockpit is walked into: its flight deck stands lower, its pilot's seat on a plinth as high as before,
+  so a player stands beside the seat under the cabin's roof, and the slab hidden where the cabin sits on the chin, which
+  a player struck their head on 0.75 over the deck, is gone. The pipes overhead start behind the deck; the copper one
+  turns down the cockpit's back. Its outside is unchanged.
 - (Space) A ship's reactor room is walked through: its fusion drum stands against the right wall, an aisle beside it
   from door to door, and its left shield, an invisible wall before, is a lead-grey cabinet against the left wall. The
   drum stood in the middle of the room and a player stopped at its door.

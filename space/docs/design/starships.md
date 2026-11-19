@@ -38,8 +38,9 @@ grating floors; **Kosmozavod** has turquoise panels over beige quilted padding o
 is richly detailed, and the cockpits are alive: displays follow the ship, needles move, lamps light by state, the side
 stick leans with the pilot's hand and the throttle slides forward. Each cockpit ends in a straight block behind its
 flight deck, a free row to come in by; the pilot sits on the ship's middle line before the console, where the seat is
-drawn; the Orbiter's and the Greenhouse's cabins leave an aisle either side of the seat, the console before it,
-and the Cab's low cabin is climbed into from behind its seat.
+drawn; every cabin leaves an aisle either side of the seat, the console before it. The Cab's flight deck stands
+lower than its seat, which rises on a plinth, so a player stands under its low cabin's roof and the pilot sees out
+over the console as before; its outside is unchanged.
 
 **Finishes.** The paint is chosen apart from the parts, for the whole ship: the **Orbiter** (white blankets over black
 heat tiles with a red band), **Bare Metal** (patched plates with a crimson band and hazard stripes) and **Enamel**
