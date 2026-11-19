@@ -271,6 +271,19 @@ public final class MovingStructures {
     }
 
     /**
+     * Shoves {@code structure} at the world's place {@code at} with a blow that changes its speed by {@code change}, in
+     * metres a second, whatever it weighs: a cart and a full ship alike, as the physics tool shoves. One at rest or
+     * moved by a rule is let go to its physics first; one held by another shoves what holds it.
+     */
+    public static void shove(final MovingStructure structure, final Vec3 change, final Vec3 at) {
+        final MovingStructure root = StructureMounts.rootOf(structure);
+        if (!(root.motion() instanceof PhysicsMotion)) {
+            root.move(PhysicsMotion.AT_REST);
+        }
+        root.physicsMade().shove(new Vector3d(change.x, change.y, change.z), new Vector3d(at.x, at.y, at.z));
+    }
+
+    /**
      * Freezes {@code structure} where it stands, in the air too, its physics stopped, or, {@code frozen} false, lets
      * it go to its physics again; one held by another freezes or frees what holds it.
      */

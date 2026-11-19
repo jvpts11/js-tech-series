@@ -98,8 +98,8 @@ public final class StructurePhysics {
     /* What its last tick's work cost, in nanoseconds. */
     private long lastCost;
     private IStructureMotion.Step worked;
-    /* Pushes given from outside since its last tick, each a push in newton seconds and the world's place it is at. */
-    private final List<Vector3d[]> pushes = new ArrayList<>();
+    /* Pushes given from outside since its last tick, each a blow and the world's place it is at. */
+    private final List<Blow> pushes = new ArrayList<>();
     /* What holds it from outside, the physics tool's grip or a mod's, or null for nothing. */
     private @Nullable Hold hold;
 
@@ -242,7 +242,17 @@ public final class StructurePhysics {
      * its spin change at once, as at a blow, and it wakes.
      */
     public void push(final Vector3d impulse, final Vector3d at) {
-        pushes.add(new Vector3d[] {new Vector3d(impulse), new Vector3d(at)});
+        pushes.add(new Blow(new Vector3d(impulse), new Vector3d(at), false));
+        wake();
+    }
+
+    /**
+     * Pushes it at the world's place {@code at}, as it next steps, with a blow that changes its speed by
+     * {@code change}, in metres a second, whatever it weighs: its own mass times that, as the physics tool shoves
+     * anything alike. It wakes.
+     */
+    public void shove(final Vector3d change, final Vector3d at) {
+        pushes.add(new Blow(new Vector3d(change), new Vector3d(at), true));
         wake();
     }
 
@@ -483,8 +493,9 @@ public final class StructurePhysics {
         }
         follow(frame);
         if (mass > 0) {
-            for (final Vector3d[] given : pushes) {
-                body.push(given[0], given[1], mass, inertia);
+            for (final Blow given : pushes) {
+                body.push(given.perKilogram() ? new Vector3d(given.amount()).mul(mass) : given.amount(), given.at(),
+                        mass, inertia);
             }
             pushes.clear();
         }
@@ -1043,5 +1054,12 @@ public final class StructurePhysics {
      * last tick it holds.
      */
     private record Hold(Vector3d point, Vector3d target, long until) {
+    }
+
+    /*
+     * A blow from outside: in newton seconds, or, {@code perKilogram}, in metres a second the change of speed it gives
+     * whatever the structure weighs; and the world's place it lands at.
+     */
+    private record Blow(Vector3d amount, Vector3d at, boolean perKilogram) {
     }
 }

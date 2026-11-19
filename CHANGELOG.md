@@ -674,6 +674,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A controller in its machine's casing: J's Core's API is at version 73. `IBlockModel.Controller` draws a
   multiblock's controller as a block of its machine: the casing on every face, and on its front a panel laid over
   that casing, clear wherever the casing shows, so one panel serves every casing. Experimental.
+- (Core) A shove alike whatever it weighs: J's Core's API is at version 74. `MovingStructures.shove(MovingStructure,
+  Vec3, Vec3)` and `StructurePhysics.shove(Vector3d, Vector3d)` give a moving structure a blow that changes its speed
+  by the same metres a second however heavy it is, as `push` gives one of so many newton seconds. Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -4454,6 +4457,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The physics tool's grip holds any moving structure, however heavy, as Garry's Mod's physics gun does: a
   ship, a full rocket, a cart alike, carried where the player looks. Its grip pulled with at most 600 kN, 240 kN as it
   comes, so a small ship sank out of it and could not be freed; its strength now sets only how hard it pushes.
+- (Core) The physics tool's push sets any moving structure going alike, a cart and a full ship at the same speed, up to
+  10 m/s at its whole strength. It gave every structure the same blow, so a ship barely moved where a cart flew off.
 - (Computers) Fluorspar is good for something as it is mined: the Crusher crushes its ore, in any rock, or raw
   fluorspar into 2 fluorspar dust, the dust the chain's hydrofluoric acid, liquid crystal and calcium fluoride take,
   with a fluorspar crystal one time in ten. Nothing took the ore or the raw before, so a recipe viewer showed no use

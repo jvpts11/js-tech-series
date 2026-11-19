@@ -27,8 +27,11 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class PhysicsToolItem extends Item {
 
-    /* How hard it pushes at its whole strength, in newton seconds; its grip holds anything, however heavy. */
-    private static final double MOST_PUSH = 150_000;
+    /*
+     * How fast it sets what it pushes going at its whole strength, in metres a second, whatever that weighs: as its grip
+     * holds anything however heavy, its push shoves a cart and a full ship alike.
+     */
+    private static final double MOST_PUSH = 10;
     /* How long a hold lasts once it is not renewed, and the time between two pushes, in ticks. */
     private static final int HOLD_TICKS = 3;
     private static final int PUSH_EVERY = 8;
@@ -58,7 +61,7 @@ public final class PhysicsToolItem extends Item {
         }
         if (!level.isClientSide() && aim.body() instanceof MovingStructure structure) {
             if (mode.equals(PhysicsTool.PUSH_MODE)) {
-                MovingStructures.push(structure, player.getLookAngle().scale(MOST_PUSH * share(stack)), aim.at());
+                MovingStructures.shove(structure, player.getLookAngle().scale(MOST_PUSH * share(stack)), aim.at());
                 player.getCooldowns().addCooldown(this, PUSH_EVERY);
             } else {
                 final boolean freeze = !MovingStructures.frozen(structure);

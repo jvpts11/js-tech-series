@@ -10059,6 +10059,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructures  static void move(MovingStructure, IStructureMotion)
 10 dev.jstech.core.moving.MovingStructures  static void noteChange(ServerLevel, BlockPos, BlockState, BlockState)
 10 dev.jstech.core.moving.MovingStructures  static void push(MovingStructure, Vec3, Vec3)
+74 dev.jstech.core.moving.MovingStructures  static void shove(MovingStructure, Vec3, Vec3)
 10 dev.jstech.core.moving.MovingStructures  static void takeAway(MovingStructure)
 10 dev.jstech.core.moving.PathMotion  type record(List<StructurePose> points, int at, double speed, double turnRate, boolean loop) implements IStructureMotion
 10 dev.jstech.core.moving.PathMotion  ResourceLocation type()
@@ -10772,6 +10773,7 @@ stable 4
 10 dev.jstech.core.moving.physics.StructurePhysics  void pieceChanged(MovingStructure, ServerLevel, BlockPos, BlockState, BlockState)
 10 dev.jstech.core.moving.physics.StructurePhysics  void prepareBody()
 10 dev.jstech.core.moving.physics.StructurePhysics  void push(Vector3d, Vector3d)
+74 dev.jstech.core.moving.physics.StructurePhysics  void shove(Vector3d, Vector3d)
 10 dev.jstech.core.moving.physics.StructurePhysics  void wake()
 10 dev.jstech.core.multiblock.BlockMatch  type record(List<String> blocks, List<String> tags) implements IBlockMatcher
 10 dev.jstech.core.multiblock.BlockMatch  boolean matches(String)

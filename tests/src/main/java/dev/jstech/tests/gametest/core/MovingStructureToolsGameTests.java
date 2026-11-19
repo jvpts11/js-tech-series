@@ -110,6 +110,9 @@ public final class MovingStructureToolsGameTests {
     private static final int WEATHER = 12_000;
     /* A weight of tens of tonnes, in kilograms. */
     private static final double HEAVY = 20_000;
+    /* The change of speed a shove gives, in metres a second, and how near alike two shoved go, as a share. */
+    private static final double SHOVE = 3;
+    private static final double ALIKE = 0.25;
     private static final int DOWN = SpaceSlots.face(Direction.DOWN.get3DDataValue());
 
     private MovingStructureToolsGameTests() {
@@ -274,6 +277,33 @@ public final class MovingStructureToolsGameTests {
                     helper.assertTrue(heard.equals(List.of("docked", "undocked")), "each once, in turn: " + heard);
                     MovingStructures.takeAway(visitor);
                     MovingStructures.takeAway(host);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A shove, as the physics tool's push gives, changes a structure's speed by the same whatever it weighs: a block
+     * and eighteen of them set going east alike.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 120)
+    public static void shove_setsALightAndAHeavyStructureGoingAlike(final GameTestHelper helper) {
+        final MovingStructure light = made(helper, List.of(new BlockPos(1, 2, 1)), Blocks.OAK_PLANKS);
+        final List<BlockPos> places = new ArrayList<>();
+        for (final BlockPos place : BlockPos.betweenClosed(new BlockPos(3, 2, 4), new BlockPos(5, 3, 6))) {
+            places.add(place.immutable());
+        }
+        final MovingStructure heavy = made(helper, places, Blocks.OAK_PLANKS);
+        MovingStructures.shove(light, new Vec3(SHOVE, 0, 0), light.worldBox().getCenter());
+        MovingStructures.shove(heavy, new Vec3(SHOVE, 0, 0), heavy.worldBox().getCenter());
+        helper.startSequence()
+                .thenExecuteAfter(2, () -> {
+                    final double a = light.velocity()[0];
+                    final double b = heavy.velocity()[0];
+                    helper.assertTrue(a > 0 && b > 0, "both go east: " + a + " and " + b);
+                    helper.assertTrue(Math.abs(a - b) <= ALIKE * Math.max(a, b), "alike, eighteen times as heavy as"
+                            + " it is: " + a + " and " + b + " blocks a tick");
+                    MovingStructures.takeAway(light);
+                    MovingStructures.takeAway(heavy);
                 })
                 .thenSucceed();
     }

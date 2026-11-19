@@ -142,7 +142,8 @@ harvest, ploughs, placers. A combine harvester drives and harvests at once.
   setting turns its recipe off). In the spirit of Garry's Mod's physics gun: a gun with glowing claws whose blue beam
   bends from its emitter to the point it holds, the held structure glowing; on the HUD, its three modes and its
   strength, changed with the mouse wheel. Like Garry's Mod's, its grip holds any moving structure, however heavy, with no
-  limit: a ship or a full rocket as easily as a cart; the strength sets how hard it pushes. Its model is made in the art pass,
+  limit: a ship or a full rocket as easily as a cart. Its push, alike, sets anything going at the same speed whatever it
+  weighs, up to 10 m/s at its whole strength; the strength sets how fast. Its model is made in the art pass,
   from the approved direction.
 - **Every force can be turned off in the game's physics**, one by one, by a setting: gravity, drag, lift, thrust,
   buoyancy, levitation, magnetism, and the wind.
