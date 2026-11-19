@@ -7524,6 +7524,34 @@ stable 4
 10 dev.jstech.core.machine.DataMachines  static void register()
 10 dev.jstech.core.machine.FaceModes  type final class
 10 dev.jstech.core.machine.FaceModes  static List<FaceMode> round()
+76 dev.jstech.core.machine.FacePicture  type record(int frames, int millis, Optional<String> plate, List<Port> ports, Meter meter, Box lcd, Toggle toggle, List<Glass> glasses, List<Word> words)
+76 dev.jstech.core.machine.FacePicture  int rows()
+76 dev.jstech.core.machine.FacePicture  static Optional<FacePicture> read(Class<?>, String)
+76 dev.jstech.core.machine.FacePicture  static final Codec<FacePicture> CODEC
+76 dev.jstech.core.machine.FacePicture  static final int COLUMNS
+76 dev.jstech.core.machine.FacePicture.Box  type record(int x, int y, int w, int h)
+76 dev.jstech.core.machine.FacePicture.Box  static final Codec<Box> CODEC
+76 dev.jstech.core.machine.FacePicture.Glass  type record(int x, int y, int w, int h, int tank, Optional<Label> label)
+76 dev.jstech.core.machine.FacePicture.Glass  boolean slim()
+76 dev.jstech.core.machine.FacePicture.Glass  static final Codec<Glass> CODEC
+76 dev.jstech.core.machine.FacePicture.Glass  static final int SLIM
+76 dev.jstech.core.machine.FacePicture.Label  type record(int x, int y, String colour)
+76 dev.jstech.core.machine.FacePicture.Label  int argb()
+76 dev.jstech.core.machine.FacePicture.Label  static final Codec<Label> CODEC
+76 dev.jstech.core.machine.FacePicture.Meter  type record(int x, int y, int w, int h, Optional<Place> label)
+76 dev.jstech.core.machine.FacePicture.Meter  static final Codec<Meter> CODEC
+76 dev.jstech.core.machine.FacePicture.Place  type record(int x, int y)
+76 dev.jstech.core.machine.FacePicture.Place  static final Codec<Place> CODEC
+76 dev.jstech.core.machine.FacePicture.Port  type record(int x, int y, int slot)
+76 dev.jstech.core.machine.FacePicture.Port  static final Codec<Port> CODEC
+76 dev.jstech.core.machine.FacePicture.Run  type record(int first, int last)
+76 dev.jstech.core.machine.FacePicture.Run  static final Codec<Run> CODEC
+76 dev.jstech.core.machine.FacePicture.Toggle  type record(int x, int y, Optional<Place> on, Optional<Place> off)
+76 dev.jstech.core.machine.FacePicture.Toggle  static final Codec<Toggle> CODEC
+76 dev.jstech.core.machine.FacePicture.Word  type record(String text, double x, double y, String colour, List<Run> frames)
+76 dev.jstech.core.machine.FacePicture.Word  boolean showsOn(int)
+76 dev.jstech.core.machine.FacePicture.Word  int argb()
+76 dev.jstech.core.machine.FacePicture.Word  static final Codec<Word> CODEC
 10 dev.jstech.core.machine.FaceSlot  type record(int index, int x, int y, boolean output)
 12 dev.jstech.core.machine.IMachineDamage  type interface
 12 dev.jstech.core.machine.IMachineDamage  abstract UpgradeEffect effect(MachineHealth, UpgradeEffect)

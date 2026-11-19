@@ -15,6 +15,7 @@ import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.machine.FaceSlot;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.machine.ProcessingInput;
@@ -146,6 +147,13 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
         }
         final List<ResourceLocation> inputs = role.liquid() ? roleLiquids : roleGases;
         return role.role() < inputs.size() ? Set.of(inputs.get(role.role())) : Set.of();
+    }
+
+    /* Its slots where its own face's ports are (ChainFaces), or where the standard face shows them. */
+    @Override
+    public List<FaceSlot> mainSlots() {
+        final List<FaceSlot> own = ChainFaces.slots(machine);
+        return own.isEmpty() ? super.mainSlots() : own;
     }
 
     /* Every machine but the Coke Oven, unless the server lets the computers and the machines run free. */

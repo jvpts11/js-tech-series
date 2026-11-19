@@ -43,7 +43,9 @@ public final class MachineChrome {
     private static final List<TextKey> LAMP_WORDS = List.of(MachineScreenTexts.RUN, MachineScreenTexts.WAIT,
             MachineScreenTexts.FAULT);
     private static final int ICON = 16;
-    private static final int PLATE_TEXT_ROOM = NAME_PLATE_MOST - 16;
+    /* What a plate takes besides its words: its screws and the room round them. */
+    private static final int PLATE_MARGIN = 16;
+    private static final int PLATE_TEXT_ROOM = NAME_PLATE_MOST - PLATE_MARGIN;
     private static final int LAMP_WORD_ROOM = 38;
 
     private MachineChrome() {
@@ -57,10 +59,18 @@ public final class MachineChrome {
 
     /** The machine's name on its aluminium plate, and its class, or FE, on the yellow one. */
     public static void plates(final MachineView view, final Component title) {
+        plates(view, MachineWords.upper(GameText.of(title)), NAME_PLATE_MOST);
+    }
+
+    /**
+     * The same, the name written as {@code name}, its plate at most {@code most} wide, as a face of the machine's own
+     * gives it room.
+     */
+    public static void plates(final MachineView view, final String name, final int most) {
         final MachineArt.Colours c = MachineArt.PALETTE.get();
         final GuiGraphics g = view.g();
-        MachineArt.plate(g, view.font(), view.x(PLATE_X), view.y(NAME_PLATE_Y), MachineArt.fit(view.font(),
-                MachineWords.upper(GameText.of(title)), PLATE_TEXT_ROOM), c.aluminium(), c.plateInk());
+        MachineArt.plate(g, view.font(), view.x(PLATE_X), view.y(NAME_PLATE_Y), MachineArt.fit(view.font(), name,
+                most - PLATE_MARGIN), c.aluminium(), c.plateInk());
         final Optional<EnergyClass> port = view.machine().power().portClass();
         final String rating = port.map(each -> MachineWords.upper(each.ratingKey().map(TextKey::text)
                 .orElse(each.name().text()))).orElse(MachineWords.upper(MachineScreenTexts.FE));

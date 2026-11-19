@@ -236,6 +236,13 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
 - **Every machine shows what it is processing:** it draws the recipe at work with its material, its colour, its part
   and its form, and gives off its particles in the colour of what comes out. A machine of a single recipe (the Coke
   Oven, the Air Separation Unit, the Siemens Reactor) always shows the same.
+- **Every machine has its own screen:** its Main tab is the machine drawn at work in its frame, as the machine does
+  it (the Crusher's jaws, the Grinder's balls cascading in its drum, the Coke Oven's battery pushing its coke), moving
+  while it works and still while it waits. Its slots are let into its body where its items go in and come out, its
+  sight glasses show what each of its tanks holds, and its meter, LCD, lamps and switch stand where every machine
+  screen has them. The words stencilled on its parts are in the player's language. The Optical Polisher shows its lens
+  polisher or, while it draws fibre, its drawing tower; the Crusher writes the running recipe's byproduct chance by its
+  dust outlet. The Large Scale Printer's face comes with its Queue tab.
 - **Particles** belong to the world: a machine gives them off only while it works (dust, sparks, smoke, mist), never
   as part of its model, and a closed machine breathes out now and then. Its beacon turns while it works. What is shut
   while a real machine works stays shut: the Ceramic Kiln's door closes while it fires.
@@ -436,8 +443,8 @@ assembling a computer by hand works as it does today.
   Computer, the small computers to come, and every rack server chassis. The Mainframe and the other big blocks are
   assembled where they stand. A rack server chassis rises and comes down with no arm at work: its parts are not drawn
   on the trays.
-- It takes the Crafting Interface, so the network orders computers like any other craft. Its window is J's Core's
-  standard machine screen.
+- It takes the Crafting Interface, so the network orders computers like any other craft. Its window is the machine
+  screen, with its own face.
 
 **Breaking a computer gives the whole computer**, with its parts inside, as a rack server does today. Parts come out by
 opening the case.

@@ -78,6 +78,7 @@ import dev.jstech.tests.clienttest.computers.InteracTuiClientTests;
 import dev.jstech.tests.clienttest.computers.IsmsClientTests;
 import dev.jstech.tests.clienttest.computers.LargeScalePrinterClientTests;
 import dev.jstech.tests.clienttest.computers.LithographyClientTests;
+import dev.jstech.tests.clienttest.computers.ChainFaceClientTests;
 import dev.jstech.tests.clienttest.computers.LeftoverProgramsClientTests;
 import dev.jstech.tests.clienttest.computers.LiveInstallClientTests;
 import dev.jstech.tests.clienttest.computers.MachineSoundClientTests;
@@ -445,6 +446,7 @@ public final class ClientTestSuite {
             MonitorClientTests.class,
             MsdClientTests.class,
             LithographyClientTests.class,
+            ChainFaceClientTests.class,
             MultipartModelClientTests.class,
             CableBlockClientTests.class,
             ClampMeterClientTests.class,

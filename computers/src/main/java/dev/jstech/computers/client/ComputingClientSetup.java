@@ -16,6 +16,7 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.client.chain.ChainEmitters;
+import dev.jstech.computers.client.chain.ChainFaceScreens;
 import dev.jstech.computers.client.chain.ChainMachineItemRenderer;
 import dev.jstech.computers.client.chain.ChainMachineRenderer;
 import dev.jstech.computers.client.chain.ChainRigs;
@@ -104,6 +105,7 @@ public final class ComputingClientSetup {
         ChainEmitters.listen(modBus);
         ChainRigs.listen(modBus);
         ChainMachineRenderer.listen();
+        ChainFaceScreens.listen(modBus);
         modBus.addListener(RegisterMenuScreensEvent.class, ComputingClientSetup::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, ComputingClientSetup::registerRenderers);
         modBus.addListener(RegisterClientExtensionsEvent.class, ComputingClientSetup::registerItemRenderers);

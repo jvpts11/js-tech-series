@@ -40,6 +40,7 @@ public final class MachineArt {
     private static final float SMALL = MachineScreenLayout.SMALL;
     /* A sight glass's width; an arrow's length, and its shaft's. */
     private static final int GLASS = 8;
+    private static final int SLIM = 6;
     private static final int ARROW = 14;
     private static final int ARROW_SHAFT = 9;
     /* An LCD chart's room above its columns, for its words; how high its columns and its dots reach at their most. */
@@ -333,6 +334,29 @@ public final class MachineArt {
             hline(g, x, x + GLASS, yy, mix(colour, c.black(), 0.25 * (yy - top) / Math.max(1, y + h - top)));
         }
         glassFront(g, x, y, h, top, colour, tick, working);
+    }
+
+    /**
+     * A slim sight glass, of a bank of them, six pixels wide and {@code h} tall with its frame: {@code share} full of
+     * {@code colour}, deeper below, a bubble rising while it works.
+     */
+    public static void slimGlass(final GuiGraphics g, final int x, final int y, final int h, final double share,
+                                 final int colour, final float tick, final boolean working) {
+        final Colours c = PALETTE.get();
+        final int inner = h - 2;
+        fill(g, x, y, x + SLIM, y + h, rgb(90, 96, 104));
+        fill(g, x + 1, y + 1, x + SLIM - 1, y + h - 1, rgb(16, 18, 22));
+        final int top = y + 1 + (int) (inner * (1 - Math.max(0.0, Math.min(1.0, share))));
+        if (share > 0) {
+            for (int yy = top; yy < y + h - 1; yy++) {
+                hline(g, x + 1, x + SLIM - 1, yy, mix(colour, c.black(), 0.25 * (yy - top) / Math.max(1, inner)));
+            }
+            hline(g, x + 1, x + SLIM - 1, top, mix(colour, c.white(), 0.45));
+            if (working) {
+                dot(g, x + 3, y + h - 2 - (int) ((tick * 1.5) % Math.max(1, y + h - 2 - top)), c.white());
+            }
+        }
+        vline(g, x + 1, y + 1, y + h - 1, 60 << 24 | 0xFFFFFF);
     }
 
     /** A sight glass's two bolted brackets and the dark of the empty glass between them. */

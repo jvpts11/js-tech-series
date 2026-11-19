@@ -41,6 +41,9 @@ import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.machine.MachineScreenTexts;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
+import dev.jstech.core.material.Material;
+import dev.jstech.core.material.MaterialLiquids;
+import dev.jstech.core.material.MaterialProperties;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
@@ -91,9 +94,11 @@ public final class StandardFace implements IMachineFace {
     private static final int DEEPEST = 64;
     private static final int PERCENT = 100;
     private static final int LABEL_ROOM = 22;
+    /* What a panel writes under a glass with nothing in it. */
+    private static final String EMPTY_TANK = "-";
     private static final int METER_LABEL_ROOM = 36;
     private static final int SECONDS_A_MINUTE = 60;
-    private static final int MINUTES = MachineHistory.READINGS * MachineHistory.READING_SECONDS / SECONDS_A_MINUTE;
+    static final int MINUTES = MachineHistory.READINGS * MachineHistory.READING_SECONDS / SECONDS_A_MINUTE;
     private static final int TICKS_A_SECOND = 20;
     private static final int RGB = 0xFFFFFF;
 
@@ -101,31 +106,54 @@ public final class StandardFace implements IMachineFace {
     public void draw(final MachineView v) {
         final GuiGraphics g = v.g();
         final MachineBlockEntity machine = v.machine();
-        final Energy energy = machine.power().energy();
-        final long drawn = machine.drawn();
-        this.peak = Math.max(this.peak, drawn);
-        final long mark = MachineScreenLayout.meterMark(this.peak);
-        MachineArt.panelMeter(g, v.font(), v.x(METER_X), v.y(METER_Y), METER_WIDTH, METER_HEIGHT,
-                drawn / (double) (MachineScreenLayout.METER_MARKS * mark), MARKS, true);
-        MachineArt.engrave(g, v.font(), MachineArt.fit(v.font(), GameText.resolve(MachineScreenTexts.METER_RANGE.with(
-                energy.rate(mark))), METER_LABEL_ROOM), v.x(METER_X + METER_WIDTH / 2), v.y(METER_Y + METER_HEIGHT + 8),
-                true);
-        if (this.statistics) {
-            final MachineHistory history = v.menu().history();
-            MachineArt.lcdChart(g, v.font(), v.x(LCD_X), v.y(LCD_Y), LCD_WIDTH, LCD_HEIGHT,
-                    GameText.resolve(MachineScreenTexts.LCD_EFFICIENCY.with(history.efficiency())),
-                    GameText.resolve(MachineScreenTexts.LCD_SPAN.with(MINUTES)), history.made(), history.power());
-        } else {
-            MachineArt.lcd(g, v.font(), v.x(LCD_X), v.y(LCD_Y), LCD_WIDTH, LCD_HEIGHT, lcdLines(machine),
-                    machine.status() == MachineStatus.WORKING, true);
-        }
+        this.peak = meter(v, this.peak, METER_X, METER_Y, METER_WIDTH, METER_HEIGHT, METER_X + METER_WIDTH / 2,
+                METER_Y + METER_HEIGHT + 8);
+        lcd(v, this.statistics, LCD_X, LCD_Y, LCD_WIDTH, LCD_HEIGHT);
         processWindow(v);
         MachineArt.rocker(g, v.x(SWITCH_X), v.y(SWITCH_Y), machine.control().on());
         MachineArt.engrave(g, v.font(), GameText.resolve(MachineScreenTexts.ON), v.x(SWITCH_X + SWITCH_WIDTH + 4),
                 v.y(SWITCH_Y + 4), false);
         MachineArt.engrave(g, v.font(), GameText.resolve(MachineScreenTexts.OFF), v.x(SWITCH_X + SWITCH_WIDTH + 4),
                 v.y(SWITCH_Y + SWITCH_HEIGHT - 4), false);
-        glass(v);
+        final String held = glass(v, GLASS_X, GLASS_Y, GLASS_HEIGHT, 0);
+        if (!held.isEmpty()) {
+            MachineArt.engrave(g, v.font(), MachineArt.fit(v.font(), held.toUpperCase(Locale.ROOT), LABEL_ROOM),
+                    v.x(GLASS_X + GLASS_WIDTH / 2), v.y(GLASS_Y + GLASS_HEIGHT + 11), true);
+        }
+    }
+
+    /*
+     * The panel meter of the energy it draws at the face's ({@code x}, {@code y}), ranging itself to {@code peak}, the
+     * most it has drawn, its range engraved with its middle at ({@code labelX}, {@code labelY}); the peak it ranges to
+     * now.
+     */
+    static long meter(final MachineView v, final long peak, final int x, final int y, final int width,
+                      final int height, final int labelX, final int labelY) {
+        final MachineBlockEntity machine = v.machine();
+        final Energy energy = machine.power().energy();
+        final long drawn = machine.drawn();
+        final long most = Math.max(peak, drawn);
+        final long mark = MachineScreenLayout.meterMark(most);
+        MachineArt.panelMeter(v.g(), v.font(), v.x(x), v.y(y), width, height,
+                drawn / (double) (MachineScreenLayout.METER_MARKS * mark), MARKS, true);
+        MachineArt.engrave(v.g(), v.font(), MachineArt.fit(v.font(), GameText.resolve(MachineScreenTexts.METER_RANGE
+                .with(energy.rate(mark))), METER_LABEL_ROOM), v.x(labelX), v.y(labelY), true);
+        return most;
+    }
+
+    /* The LCD at the face's ({@code x}, {@code y}): its readings, or its page of statistics. */
+    static void lcd(final MachineView v, final boolean statistics, final int x, final int y, final int width,
+                    final int height) {
+        final MachineBlockEntity machine = v.machine();
+        if (statistics) {
+            final MachineHistory history = v.menu().history();
+            MachineArt.lcdChart(v.g(), v.font(), v.x(x), v.y(y), width, height,
+                    GameText.resolve(MachineScreenTexts.LCD_EFFICIENCY.with(history.efficiency())),
+                    GameText.resolve(MachineScreenTexts.LCD_SPAN.with(MINUTES)), history.made(), history.power());
+        } else {
+            MachineArt.lcd(v.g(), v.font(), v.x(x), v.y(y), width, height, lcdLines(machine),
+                    machine.status() == MachineStatus.WORKING, true);
+        }
     }
 
     @Override
@@ -197,7 +225,7 @@ public final class StandardFace implements IMachineFace {
      * The page of statistics told in full: what it makes a minute and the most it made, what it draws now and on the
      * whole, how much of the last minute it worked, and what last jammed it, amber.
      */
-    private static List<Component> statisticsTooltip(final MachineHistory history, final MachineBlockEntity machine) {
+    static List<Component> statisticsTooltip(final MachineHistory history, final MachineBlockEntity machine) {
         final Energy energy = machine.power().energy();
         final UnitFormatter format = UnitFormatter.forCurrentLocale();
         final List<Component> lines = new ArrayList<>();
@@ -316,39 +344,88 @@ public final class StandardFace implements IMachineFace {
                 * share(processing.getProgress(), processing.getMaxProgress())), barTop + 2, lit);
     }
 
-    /* The sight glass, of the machine's first tank, or of its stored energy for a machine with no tank. */
-    private static void glass(final MachineView v) {
+    /*
+     * A sight glass at the face's ({@code faceX}, {@code faceY}), {@code height} tall, of the machine's tank
+     * {@code index} (its liquids in and out first, then each state of matter's), or of its stored energy for a
+     * machine with no such tank; what it holds, in words, or nothing when it holds nothing.
+     */
+    static String glass(final MachineView v, final int faceX, final int faceY, final int height, final int index) {
         final GuiGraphics g = v.g();
         final MachineBlockEntity machine = v.machine();
-        final int x = v.x(GLASS_X);
-        final int y = v.y(GLASS_Y);
-        final Optional<FluidTank> tank = firstTank(machine);
-        final Optional<MatterTank> matter = firstMatter(machine);
+        final int x = v.x(faceX);
+        final int y = v.y(faceY);
+        final List<FluidTank> fluids = fluidTanks(machine);
+        final List<MatterTank> matters = matterTanks(machine);
         final String label;
-        if (tank.isPresent()) {
-            final FluidStack held = tank.get().getFluid();
-            MachineArt.glassBrackets(g, x, y, GLASS_HEIGHT);
-            final int top = MachineArt.glassTop(y, GLASS_HEIGHT, share(held.getAmount(), tank.get().getCapacity()));
+        if (index < fluids.size()) {
+            final FluidTank tank = fluids.get(index);
+            final FluidStack held = tank.getFluid();
+            MachineArt.glassBrackets(g, x, y, height);
+            final int top = MachineArt.glassTop(y, height, share(held.getAmount(), tank.getCapacity()));
             final int tint = held.isEmpty() ? MachineArt.PALETTE.get().water() : fluidTiles(g, held, x, top,
-                    y + GLASS_HEIGHT);
-            MachineArt.glassFront(g, x, y, GLASS_HEIGHT, top, tint, v.tick(), v.working());
+                    y + height);
+            MachineArt.glassFront(g, x, y, height, top, tint, v.tick(), v.working());
             label = held.isEmpty() ? "" : held.getHoverName().getString();
-        } else if (matter.isPresent()) {
-            final Optional<MatterStack> held = matter.get().held();
+        } else if (index - fluids.size() < matters.size()) {
+            final MatterTank matter = matters.get(index - fluids.size());
+            final Optional<MatterStack> held = matter.held();
             final int colour = held.map(stack -> 0xFF << 24 | stack.material().colour())
                     .orElse(MachineArt.PALETTE.get().water());
-            MachineArt.sightGlass(g, x, y, GLASS_HEIGHT, share(held.map(MatterStack::amount).orElse(0L),
-                    matter.get().capacity()), colour, v.tick(), v.working());
+            MachineArt.sightGlass(g, x, y, height, share(held.map(MatterStack::amount).orElse(0L),
+                    matter.capacity()), colour, v.tick(), v.working());
             label = held.map(stack -> GameText.resolve(stack.material().name())).orElse("");
         } else {
-            MachineArt.sightGlass(g, x, y, GLASS_HEIGHT, share(machine.power().stored(),
+            MachineArt.sightGlass(g, x, y, height, share(machine.power().stored(),
                     machine.capacityShown()), MachineArt.PALETTE.get().lampWait(), v.tick(), v.working());
             label = GameText.resolve(machine.power().energy().unit().symbol());
         }
-        if (!label.isEmpty()) {
-            MachineArt.engrave(g, v.font(), MachineArt.fit(v.font(), label.toUpperCase(Locale.ROOT), LABEL_ROOM),
-                    v.x(GLASS_X + GLASS_WIDTH / 2), v.y(GLASS_Y + GLASS_HEIGHT + 11), true);
+        return label;
+    }
+
+    /*
+     * A slim sight glass, of a bank of them, at the face's ({@code faceX}, {@code faceY}), {@code height} tall, of the
+     * machine's tank {@code index}, empty when it has no such tank.
+     */
+    static void slimGlass(final MachineView v, final int faceX, final int faceY, final int height, final int index) {
+        final MachineBlockEntity machine = v.machine();
+        final List<FluidTank> fluids = fluidTanks(machine);
+        final List<MatterTank> matters = matterTanks(machine);
+        double share = 0.0;
+        int colour = MachineArt.PALETTE.get().water();
+        if (index < fluids.size()) {
+            final FluidStack held = fluids.get(index).getFluid();
+            share = share(held.getAmount(), fluids.get(index).getCapacity());
+            if (!held.isEmpty()) {
+                colour = 0xFF << 24 | IClientFluidTypeExtensions.of(held.getFluid()).getTintColor(held);
+            }
+        } else if (index - fluids.size() < matters.size()) {
+            final MatterTank matter = matters.get(index - fluids.size());
+            share = share(matter.held().map(MatterStack::amount).orElse(0L), matter.capacity());
+            colour = matter.held().map(stack -> 0xFF << 24 | stack.material().colour()).orElse(colour);
         }
+        MachineArt.slimGlass(v.g(), v.x(faceX), v.y(faceY), height, share, colour, v.tick(), v.working());
+    }
+
+    /*
+     * What the machine's tank {@code index} holds, as short as a panel writes it: its formula or its symbol when the
+     * material has one, else its name; a dash when it holds nothing or the machine has no such tank.
+     */
+    static String symbol(final MachineBlockEntity machine, final int index) {
+        final List<FluidTank> fluids = fluidTanks(machine);
+        final List<MatterTank> matters = matterTanks(machine);
+        if (index < fluids.size()) {
+            final FluidStack held = fluids.get(index).getFluid();
+            if (held.isEmpty()) {
+                return EMPTY_TANK;
+            }
+            return MaterialLiquids.materialOf(held.getFluid()).flatMap(StandardFace::symbol)
+                    .orElse(held.getHoverName().getString().toUpperCase(Locale.ROOT));
+        }
+        if (index - fluids.size() < matters.size()) {
+            return matters.get(index - fluids.size()).held().map(stack -> symbol(stack.material())
+                    .orElse(GameText.resolve(stack.material().name()).toUpperCase(Locale.ROOT))).orElse(EMPTY_TANK);
+        }
+        return EMPTY_TANK;
     }
 
     /* The fluid's own texture tiled in the glass from {@code top} down, shaded deeper below; its tint. */
@@ -372,7 +449,7 @@ public final class StandardFace implements IMachineFace {
     }
 
     /* Every tank's contents, or the stored energy for a machine with none. */
-    private static List<Component> glassTooltip(final MachineBlockEntity machine) {
+    static List<Component> glassTooltip(final MachineBlockEntity machine) {
         final List<Component> lines = new ArrayList<>();
         if (machine instanceof ProcessingMachineBlockEntity processing) {
             final ProcessingMachineBlockEntity.Layout layout = processing.layout();
@@ -417,30 +494,35 @@ public final class StandardFace implements IMachineFace {
                         format.compact(held.get().amount()), format.compact(tank.capacity())));
     }
 
-    private static Optional<FluidTank> firstTank(final MachineBlockEntity machine) {
-        if (machine instanceof ProcessingMachineBlockEntity processing) {
-            if (processing.layout().inputTanks() > 0) {
-                return Optional.of(processing.inputTank(0));
-            }
-            if (processing.layout().outputTanks() > 0) {
-                return Optional.of(processing.outputTank(0));
-            }
-        }
-        return Optional.empty();
+    /* A material's formula, or its symbol, when it has either. */
+    private static Optional<String> symbol(final Material material) {
+        return material.value(MaterialProperties.FORMULA).or(() -> material.value(MaterialProperties.SYMBOL));
     }
 
-    private static Optional<MatterTank> firstMatter(final MachineBlockEntity machine) {
+    /* Its liquid tanks, those in, then those out. */
+    private static List<FluidTank> fluidTanks(final MachineBlockEntity machine) {
+        final List<FluidTank> out = new ArrayList<>();
         if (machine instanceof ProcessingMachineBlockEntity processing) {
-            for (final MatterState state : MatterState.values()) {
-                if (!processing.matter().inputs(state).isEmpty()) {
-                    return Optional.of(processing.matter().inputs(state).getFirst());
-                }
-                if (!processing.matter().outputs(state).isEmpty()) {
-                    return Optional.of(processing.matter().outputs(state).getFirst());
-                }
+            for (int i = 0; i < processing.layout().inputTanks(); i++) {
+                out.add(processing.inputTank(i));
+            }
+            for (int i = 0; i < processing.layout().outputTanks(); i++) {
+                out.add(processing.outputTank(i));
             }
         }
-        return Optional.empty();
+        return out;
+    }
+
+    /* Its tanks of matter, each state's in turn, those in, then those out. */
+    private static List<MatterTank> matterTanks(final MachineBlockEntity machine) {
+        final List<MatterTank> out = new ArrayList<>();
+        if (machine instanceof ProcessingMachineBlockEntity processing) {
+            for (final MatterState state : MatterState.values()) {
+                out.addAll(processing.matter().inputs(state));
+                out.addAll(processing.matter().outputs(state));
+            }
+        }
+        return out;
     }
 
     private static double share(final long part, final long whole) {

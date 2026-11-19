@@ -550,6 +550,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   alone in and out, through `ProductFluidHandler` and `ProductMatterHandler`. `IBlockModel.CubeAllLit` and
   `IBlockModel.OrientableLit` lay a texture of lamps over a block, on every face or on its front, drawn at full light;
   a mod that switches over every kind of `IBlockModel` covers the two. Experimental.
+- A machine's own face: J's Core's API is at version 76. `FacePicture` reads, from a mod's resources, a machine's face drawn as a picture of its own, its frames eight to a row (the machine idle, then its working loop) and where on it the game draws what is live: its ports with the slot each shows, its panel meter and the range under it, its LCD, its switch and its words, its sight glasses (bracketed or slim, of a bank) with the tank each shows, the name its plate writes and the words engraved on its parts, each on the frames it shows on. On the player's game `PictureFace` draws it as a machine's Main tab, and a mod registers it with `MachineFaces.register`. Experimental.
 - A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
