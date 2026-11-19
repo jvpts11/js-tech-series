@@ -980,10 +980,14 @@ carries its light ring (an LED). The stock cooler is an aluminium plate in the V
 paste from the Legacy and a copper rod from the Transition; the tower cooler 4 aluminium sheets, 2 copper rods
 (the heat pipes), a fan and thermal paste; the all-in-one MF AquaLoop a copper plate, the pump (a motor), the
 radiator (4 aluminium sheets on the 240, 6 on the 360), 2 or 3 fans, the hose (PVC), its water (a water bottle, the
-game's potion of water, its glass going in with it, about the 250 mB it holds) and thermal paste.
+game's potion of water, its glass going in with it, about the 250 mB it holds) and thermal paste. The Russet Pros'
+heat sinks, Quince's own, are passive, the case's fans blowing through them: no fan of their own, and more aluminium
+and heat pipes than the era's tower cooler for their size.
 
 | Item | Bench | Recipe |
 | --- | --- | --- |
+| Quince Heat Sink (Russet Pro, Transition) | Transition | 4 aluminium sheets, 2 copper rods and 1 thermal paste |
+| Quince Heat Sink (Russet Pro, Standard) | Standard | 6 aluminium sheets, 4 copper rods and 1 thermal paste |
 | Vintage Case Fan, 80 mm | Vintage | 1 electric motor and 1 PVC sheet |
 | Stock Cooler (Vintage) | Vintage | 1 aluminium plate |
 | Legacy Case Fan, 80 mm | Legacy | 1 electric motor and 1 polycarbonate sheet |

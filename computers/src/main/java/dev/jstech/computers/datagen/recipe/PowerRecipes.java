@@ -27,6 +27,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.steelSheet;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 
 import dev.jstech.computers.CoolingItems;
+import dev.jstech.computers.QuinceItems;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -100,6 +101,12 @@ final class PowerRecipes {
                     .get(), copperPlate, 1, motor, 1, aluminiumSheet(), 6, caseFan(era), 3, pvc(), 1, water, 1, paste,
                     1);
         }
+        // The Russet Pros' heat sinks are passive, the case's fans blowing through them: no fan of their own, and more
+        // aluminium and heat pipes than the era's tower cooler for their size.
+        made(output, HardwareEra.TRANSITION, QuinceItems.HEAT_SINK_PRO_2006.get(), aluminiumSheet(), 4, copperRod, 2,
+                paste, 1);
+        made(output, HardwareEra.STANDARD, QuinceItems.HEAT_SINK_PRO_2019.get(), aluminiumSheet(), 6, copperRod, 4,
+                paste, 1);
     }
 
     /*

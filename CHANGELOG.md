@@ -4421,6 +4421,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) Every fan turns real blades: a case fan's, a cooler's and a radiator's, and the fans of the ASIC
   Forges, the Prosa i3 MK3's head and the Russet towers, are seven wide plates pitched about their own line, as a PC
   fan's. They were flat strips lying in the fan's face.
+- (Computers) The Russet Pros' heat sinks are made: the Transition's at the Transition electronics bench of 4
+  aluminium sheets, 2 copper rods and a thermal paste, the Standard's at the Standard bench of 6 sheets, 4 rods and a
+  paste. Passive, with no fan of their own, they had no recipe.
 - (Space) A ship's reactor room is walked through: its fusion drum stands against the right wall, an aisle beside it
   from door to door, and its left shield, an invisible wall before, is a lead-grey cabinet against the left wall. The
   drum stood in the middle of the room and a player stopped at its door.
