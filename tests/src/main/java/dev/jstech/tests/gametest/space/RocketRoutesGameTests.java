@@ -394,9 +394,10 @@ public final class RocketRoutesGameTests {
                     moon.setChunkForced(down[0], down[1], false);
                     made(moon, lander, down);
                     final Box box = lander.bounds();
-                    helper.assertTrue(box.maxY() - box.minY() + 1 <= LANDER_TALL, "the lander stands on its own legs,"
-                            + " no spent stage under it: " + (box.maxY() - box.minY() + 1) + " blocks tall");
                     final FlightComputerBlockEntity aboard = computerOf(moon, lander);
+                    helper.assertTrue(box.maxY() - box.minY() + 1 <= LANDER_TALL, "the lander stands on its own legs,"
+                            + " no spent stage under it: " + (box.maxY() - box.minY() + 1) + " blocks tall, "
+                            + aboard.separated() + " stages let go, the descent stage kept " + aboard.landerDescent());
                     aboard.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
                     aboard.press(FlightComputerBlockEntity.LEFT + aboard.destinations().indexOf(
                             SolarSystemWorlds.OVERWORLD));
