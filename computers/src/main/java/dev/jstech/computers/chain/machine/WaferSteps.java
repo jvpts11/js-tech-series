@@ -51,22 +51,22 @@ final class WaferSteps {
     private static final int[] LAYERS = {2, 3, 4, 6, 8};
     private static final int LIGHT_LAYERS = 1;
     /* What each layer takes, in millibuckets: the resist, the immersion's water, a laser's gas, the etch's acid. */
-    private static final int PHOTORESIST = 100;
-    private static final int IMMERSION = 100;
-    private static final int LASER_GAS = 10;
-    private static final int ACID = 100;
-    private static final int CHLORINE = 100;
-    private static final int ETCH_ARGON = 10;
+    static final int PHOTORESIST = 100;
+    static final int IMMERSION = 100;
+    static final int LASER_GAS = 10;
+    static final int ACID = 100;
+    static final int CHLORINE = 100;
+    static final int ETCH_ARGON = 10;
     /* One dopant dust dopes this many layers; one tin nugget gives the EUV plasma's droplets for this many. */
     static final int DOPED_LAYERS = 8;
     static final int DROPLET_LAYERS = 4;
     /* What one finished wafer is cut into: memory and controller dies are small, a processor's or graphics' big. */
-    private static final int SMALL_DIES = 8;
-    private static final int BIG_DIES = 4;
-    private static final int LASER_DIODES = 16;
-    private static final int LEDS = 32;
+    static final int SMALL_DIES = 8;
+    static final int BIG_DIES = 4;
+    static final int LASER_DIODES = 16;
+    static final int LEDS = 32;
     /* The epoxy and the copper foil of a package go four chips to one. */
-    private static final int CHIPS_A_SHARE = 4;
+    static final int CHIPS_A_SHARE = 4;
     private static final int TICKS = 20;
 
     private WaferSteps() {
@@ -304,7 +304,7 @@ final class WaferSteps {
     }
 
     /* Whether a memory or controller chip, the small dies a wafer gives eight of. */
-    private static boolean small(final Item chip) {
+    static boolean small(final Item chip) {
         for (int i = 0; i < ChainParts.ERAS.size(); i++) {
             if (ChainParts.MEMORY_CHIPS.get(i).get() == chip || ChainParts.CONTROLLER_CHIPS.get(i).get() == chip) {
                 return true;
@@ -322,19 +322,19 @@ final class WaferSteps {
         return stack.get(ComputingComponents.WAFER_WORK.get());
     }
 
-    private static Item nugget(final Element element) {
+    static Item nugget(final Element element) {
         return nuggetOf(Elements.of(element));
     }
 
-    private static Item nuggetOf(final Material material) {
+    static Item nuggetOf(final Material material) {
         return MaterialUses.item(material, Forms.NUGGET).get();
     }
 
-    private static Item plateOf(final Material material) {
+    static Item plateOf(final Material material) {
         return MaterialUses.item(material, Forms.PLATE).get();
     }
 
-    private static ResourceLocation idOf(final ItemLike item) {
+    static ResourceLocation idOf(final ItemLike item) {
         return BuiltInRegistries.ITEM.getKey(item.asItem());
     }
 
@@ -391,7 +391,7 @@ final class WaferSteps {
     }
 
     /* The three wafers of light: the era each is first made in, what it is cut into, its finished wafer. */
-    private enum Light {
+    enum Light {
         GALLIUM_ARSENIDE(HardwareEra.LEGACY, false),
         ALGAINP(HardwareEra.TRANSITION, false),
         GALLIUM_NITRIDE_LASER(HardwareEra.STANDARD, false),

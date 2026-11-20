@@ -12,11 +12,13 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.chain.ChainChips;
+import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.chain.machine.MaskWriting;
 import dev.jstech.computers.chain.machine.WaferMachineBlockEntity;
+import dev.jstech.computers.chain.machine.WaferPages;
 import dev.jstech.computers.client.CommandPromptScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
@@ -36,7 +38,10 @@ import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.EraKit;
 import dev.jstech.tests.testkit.computers.EraNetwork;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -63,6 +68,9 @@ public final class LithographyClientTests {
 
     private static final int SETTLE = 4;
     private static final int SCREEN_WAIT = 120;
+    /* The deposition's pages, a metal each and the Standard's first layer; the fewest masks, and chips, of the eras. */
+    private static final long DEPOSITIONS = 8;
+    private static final long MASKS = 20;
     private static final int BOOT_WAIT = 1_200;
     /* A Legacy station's layer, twenty seconds, with room over it. */
     private static final int WRITE_WAIT = 600;
@@ -173,6 +181,42 @@ public final class LithographyClientTests {
                         "the viewer's recipe screen")
                 .thenScreenshot(SETTLE * 4, "jei-mask-writing")
                 .then(SETTLE, () -> ctx.mc().setScreen(null));
+    }
+
+    /**
+     * A wafer's steps in the viewer (computers/docs/design/survival.md, "How a chip is made"): each step has its pages,
+     * a page a mask for lithography, an era for etching and implanting, a metal for deposition and a chip for
+     * packaging; U on a wafer in process shows the steps it goes through; and each step's page is its machine's own
+     * face at work, the step's items in the face's slots.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void jei_waferStepsShowEachStepOnItsMachinesFace(final ClientTestContext ctx) {
+        if (!ModList.get().isLoaded("jei")) {
+            ctx.then(0, () -> { });
+            return;
+        }
+        final ItemStack wafer = new ItemStack(ChainChips.waferInProcess(HardwareEra.LEGACY).get());
+        ctx.then(SETTLE, () -> {
+            final Map<WaferPages.Step, Long> counts = new EnumMap<>(WaferPages.Step.class);
+            for (final WaferPages.Step step : WaferPages.Step.values()) {
+                counts.put(step, JscJeiPlugin.waferPageCount(step));
+            }
+            ctx.assertTrue(counts.get(WaferPages.Step.ETCH) == ChainParts.ERAS.size()
+                    && counts.get(WaferPages.Step.IMPLANT) == ChainParts.ERAS.size()
+                    && counts.get(WaferPages.Step.DEPOSITION) == DEPOSITIONS
+                    && counts.get(WaferPages.Step.LITHOGRAPHY) >= MASKS
+                    && counts.get(WaferPages.Step.PACKAGING) >= MASKS, "each step has its pages: " + counts);
+        })
+                .then(SETTLE, () -> ctx.assertTrue(JscJeiPlugin.showUses(wafer), "U on a wafer in process"))
+                .thenWaitUntil(JscJeiPlugin::viewerScreenOpen, SCREEN_WAIT, "the viewer's recipe screen")
+                .thenScreenshot(SETTLE * 4, "jei-wafer-uses")
+                .then(SETTLE, () -> ctx.mc().setScreen(null));
+        for (final WaferPages.Step step : WaferPages.Step.values()) {
+            ctx.then(SETTLE, () -> ctx.assertTrue(JscJeiPlugin.showWaferStep(step), "the viewer opens on " + step))
+                    .thenWaitUntil(JscJeiPlugin::viewerScreenOpen, SCREEN_WAIT, "the viewer's recipe screen")
+                    .thenScreenshot(SETTLE * 4, "jei-wafer-" + step.name().toLowerCase(Locale.ROOT))
+                    .then(SETTLE, () -> ctx.mc().setScreen(null));
+        }
     }
 
     /* The station {@code machine} laid round its own terminal and formed, its peripheral port cabled to the east. */

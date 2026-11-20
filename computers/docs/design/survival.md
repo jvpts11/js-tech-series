@@ -406,6 +406,12 @@ take one layer through the laser mask (from the Legacy) or the LED mask (from th
 Line cuts a finished one into 16 laser diodes or 32 LEDs. It grows calcium fluoride from 4 fluorspar dust
 (fluorspar is calcium fluoride), and the Optical Polisher cuts each boule into 4 lenses.
 
+**The steps in JEI.** No recipe holds a wafer's steps, so JEI shows pages worked out from their rules: Lithography a page
+a mask, Plasma Etching and Ion Implantation a page an era, Deposition a page a metal, and Packaging a page a
+chip. Each page is the step running on its machine's own face, the step's items in the face's slots and its liquids
+and gases in its sight glasses, with three lines under it: the layer and the next step, the time and what it uses,
+and what else the machine needs. U on a wafer in process shows the steps it goes through.
+
 ### Chips are made by the computers of the era before
 
 From the Legacy on, an era's Lithography Station only works linked by peripheral cable, on its peripheral socket (a

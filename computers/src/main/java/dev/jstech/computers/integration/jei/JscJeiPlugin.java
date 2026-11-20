@@ -8,6 +8,7 @@
 package dev.jstech.computers.integration.jei;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.chain.machine.WaferPages;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.menu.DesktopMenu;
@@ -43,6 +44,7 @@ import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * The recipe viewer plugin. A recipe transferred from the viewer lands in the Pattern Studio's bench or machine
@@ -53,6 +55,9 @@ import java.util.List;
  */
 @JeiPlugin
 public final class JscJeiPlugin implements IModPlugin {
+
+    /* A wafer's steps' pages, by their step, worked out as JEI registers its categories and used on after. */
+    private Map<WaferPages.Step, List<WaferPages.Page>> waferPages = Map.of();
 
     @Nullable
     private static IJeiRuntime runtime;
@@ -119,10 +124,16 @@ public final class JscJeiPlugin implements IModPlugin {
         }
     }
 
-    /* How a mask is written by the computer of a Lithography Station, from the Legacy on. */
+    /*
+     * How a mask is written by the computer of a Lithography Station, from the Legacy on; and a wafer's steps, each on
+     * its machine's own face, their pages worked out once as JEI loads.
+     */
     @Override
     public void registerCategories(final IRecipeCategoryRegistration registration) {
         registration.addRecipeCategories(new MaskWritingCategory(registration.getJeiHelpers().getGuiHelper()));
+        this.waferPages = WaferStepCategory.pages();
+        this.waferPages.forEach((step, pages) -> registration.addRecipeCategories(new WaferStepCategory(
+                registration.getJeiHelpers().getGuiHelper(), step, pages)));
     }
 
     @Override
@@ -130,6 +141,11 @@ public final class JscJeiPlugin implements IModPlugin {
         for (final ItemLike station : MaskWritingCategory.stations()) {
             registration.addRecipeCatalyst(station, MaskWritingCategory.TYPE);
         }
+        this.waferPages.forEach((step, pages) -> {
+            for (final ItemLike machine : WaferStepCategory.machines(pages)) {
+                registration.addRecipeCatalyst(machine, WaferStepCategory.TYPES.get(step));
+            }
+        });
     }
 
     /*
@@ -139,6 +155,7 @@ public final class JscJeiPlugin implements IModPlugin {
     @Override
     public void registerRecipes(final IRecipeRegistration registration) {
         registration.addRecipes(MaskWritingCategory.TYPE, MaskWritingCategory.pages());
+        this.waferPages.forEach((step, pages) -> registration.addRecipes(WaferStepCategory.TYPES.get(step), pages));
         for (final ProgramSpec program : OsRegistry.programs()) {
             final ItemStack installer = InstallerStacks.forProgram(program.id());
             if (!installer.isEmpty()) {
@@ -203,6 +220,31 @@ public final class JscJeiPlugin implements IModPlugin {
         runtime.getRecipesGui().show(runtime.getJeiHelpers().getFocusFactory()
                 .createFocus(RecipeIngredientRole.OUTPUT, VanillaTypes.ITEM_STACK, result));
         return true;
+    }
+
+    /** Opens the viewer's recipe screen on what {@code ingredient} is used in, as U on it does; false without it. */
+    public static boolean showUses(final ItemStack ingredient) {
+        if (runtime == null) {
+            return false;
+        }
+        runtime.getRecipesGui().show(runtime.getJeiHelpers().getFocusFactory()
+                .createFocus(RecipeIngredientRole.INPUT, VanillaTypes.ITEM_STACK, ingredient));
+        return true;
+    }
+
+    /** Opens the viewer's recipe screen on the pages of a wafer's step {@code step}; false without the viewer. */
+    public static boolean showWaferStep(final WaferPages.Step step) {
+        if (runtime == null) {
+            return false;
+        }
+        runtime.getRecipesGui().showTypes(List.of(WaferStepCategory.TYPES.get(step)));
+        return true;
+    }
+
+    /** How many pages the viewer has of a wafer's step {@code step}; none without the viewer. */
+    public static long waferPageCount(final WaferPages.Step step) {
+        return runtime == null ? 0 : runtime.getRecipeManager().createRecipeLookup(WaferStepCategory.TYPES.get(step))
+                .get().count();
     }
 
     /** Opens the viewer's recipe screen on the Mask Writing page of {@code mask}; false without the viewer or one. */

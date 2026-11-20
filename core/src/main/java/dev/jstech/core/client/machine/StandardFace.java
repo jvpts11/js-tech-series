@@ -86,7 +86,7 @@ public final class StandardFace implements IMachineFace {
     /* Whether the LCD shows its page of statistics, the last ten minutes, rather than its readings. */
     private boolean statistics;
 
-    private static final List<String> MARKS = List.of("0", "1", "2", "3", "4");
+    static final List<String> MARKS = List.of("0", "1", "2", "3", "4");
     private static final int TILE = 8;
     private static final int OVER_ITEMS = 200;
     private static final int GHOST = 0x90 << 24 | 0x8B8B8B;

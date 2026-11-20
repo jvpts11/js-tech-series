@@ -13,11 +13,16 @@ import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.machine.MachineScreenTexts;
+import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.text.GameText;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -45,6 +50,8 @@ public final class PictureFace implements IMachineFace {
     private static final double MILLIS_A_TICK = 50.0;
     /* How far the name plate keeps from the LCD's bezel. */
     private static final int PLATE_GAP = 4;
+    /* What a still's glass with nothing in it writes under it. */
+    private static final String EMPTY_GLASS = "-";
 
     /**
      * @param frames  its frames, laid out {@link FacePicture#COLUMNS} to a row, the idle one first, each as large as
@@ -62,32 +69,61 @@ public final class PictureFace implements IMachineFace {
     @Override
     public void draw(final MachineView v) {
         final MachineBlockEntity machine = v.machine();
-        final int frame = v.working() ? 1 + (int) (v.tick() * MILLIS_A_TICK / this.picture.millis())
-                % this.picture.frames() : 0;
-        v.g().blit(this.frames, v.x(0), v.y(0), frame % FacePicture.COLUMNS * MachineScreenLayout.FACE_WIDTH,
-                frame / FacePicture.COLUMNS * MachineScreenLayout.FACE_HEIGHT, MachineScreenLayout.FACE_WIDTH,
-                MachineScreenLayout.FACE_HEIGHT, FacePicture.COLUMNS * MachineScreenLayout.FACE_WIDTH,
-                this.picture.rows() * MachineScreenLayout.FACE_HEIGHT);
+        final int frame = v.working() ? loopFrame(this.picture, v.tick() * MILLIS_A_TICK) : 0;
+        frame(v.g(), v.x(0), v.y(0), this.frames, this.picture, frame);
         // The plates: the name its picture writes on them, else the screen's title, as far as its LCD leaves room.
         final Screen open = Minecraft.getInstance().screen;
         final String name = this.picture.plate().map(plate -> this.say.apply(machine, plate)).orElseGet(() ->
                 MachineWords.upper(GameText.of(open != null ? open.getTitle()
                         : machine.getBlockState().getBlock().getName())));
-        MachineChrome.plates(v, name, this.picture.lcd().x() - PLATE_GAP - MachineScreenLayout.PLATE_X);
+        MachineChrome.plates(v, name, plateRoom(this.picture));
         MachineChrome.lamps(v);
         meter(v);
         final FacePicture.Box lcd = this.picture.lcd();
         StandardFace.lcd(v, this.statistics, lcd.x(), lcd.y(), lcd.w(), lcd.h());
-        toggle(v);
+        toggle(v.g(), v.font(), v.x(0), v.y(0), this.picture, machine.control().on());
         for (final FacePicture.Glass glass : this.picture.glasses()) {
             glass(v, glass);
         }
-        for (final FacePicture.Word word : this.picture.words()) {
-            if (word.showsOn(frame)) {
-                MachineArt.text(v.g(), v.font(), this.say.apply(machine, word.text()),
-                        v.x((int) Math.round(word.x())), v.y((int) Math.round(word.y())), word.argb());
+        words(v.g(), v.font(), v.x(0), v.y(0), this.picture, frame, written -> this.say.apply(machine, written));
+    }
+
+    /**
+     * A face as a still of its machine at work, for a page with no machine behind it (a recipe viewer's): the frame of
+     * its loop the clock is on, its top left at ({@code x}, {@code y}) on the screen, and over it what {@code still}
+     * says its plates, LCD, meter and sight glasses show; its switch on and its RUN lamp lit.
+     *
+     * @param say what a word of the picture says: its translation
+     */
+    public static void drawStill(final GuiGraphics g, final Font font, final int x, final int y,
+                                 final ResourceLocation frames, final FacePicture picture, final Still still,
+                                 final UnaryOperator<String> say) {
+        final long now = System.currentTimeMillis();
+        final int frame = loopFrame(picture, now);
+        frame(g, x, y, frames, picture, frame);
+        MachineChrome.plates(g, font, x, y, still.name(), plateRoom(picture), still.rating());
+        MachineChrome.lamps(g, font, x, y, MachineStatus.Lamp.RUN);
+        final FacePicture.Meter meter = picture.meter();
+        MachineArt.panelMeter(g, font, x + meter.x(), y + meter.y(), meter.w(), meter.h(), still.meter(),
+                StandardFace.MARKS, true);
+        final FacePicture.Box lcd = picture.lcd();
+        MachineArt.lcd(g, font, x + lcd.x(), y + lcd.y(), lcd.w(), lcd.h(), still.lcd(), true, true);
+        toggle(g, font, x, y, picture, true);
+        final float tick = (float) (now / MILLIS_A_TICK);
+        for (int i = 0; i < picture.glasses().size(); i++) {
+            final FacePicture.Glass glass = picture.glasses().get(i);
+            final Optional<Fill> fill = i < still.fills().size() ? still.fills().get(i) : Optional.empty();
+            final double share = fill.map(Fill::share).orElse(0.0);
+            final int colour = fill.map(Fill::colour).orElse(MachineArt.PALETTE.get().water());
+            if (glass.slim()) {
+                MachineArt.slimGlass(g, x + glass.x(), y + glass.y(), glass.h(), share, colour, tick, true);
+            } else {
+                MachineArt.sightGlass(g, x + glass.x(), y + glass.y(), glass.h(), share, colour, tick, true);
             }
+            glass.label().ifPresent(label -> MachineArt.textCentred(g, font, fill.map(Fill::symbol)
+                    .orElse(EMPTY_GLASS), x + label.x(), y + label.y(), label.argb()));
         }
+        words(g, font, x, y, picture, frame, say);
     }
 
     @Override
@@ -151,14 +187,45 @@ public final class PictureFace implements IMachineFace {
         this.peak = StandardFace.meter(v, this.peak, meter.x(), meter.y(), meter.w(), meter.h(), labelX, labelY);
     }
 
-    /* The switch, and its words on and off where the picture writes them. */
-    private void toggle(final MachineView v) {
-        final FacePicture.Toggle toggle = this.picture.toggle();
-        MachineArt.rocker(v.g(), v.x(toggle.x()), v.y(toggle.y()), v.machine().control().on());
-        toggle.on().ifPresent(at -> MachineArt.text(v.g(), v.font(), GameText.resolve(MachineScreenTexts.ON),
-                v.x(at.x()), v.y(at.y()), MachineArt.PALETTE.get().title()));
-        toggle.off().ifPresent(at -> MachineArt.text(v.g(), v.font(), GameText.resolve(MachineScreenTexts.OFF),
-                v.x(at.x()), v.y(at.y()), MachineArt.PALETTE.get().title()));
+    /* The frame of the loop {@code millis} into it. */
+    private static int loopFrame(final FacePicture picture, final double millis) {
+        return 1 + (int) (millis / picture.millis()) % picture.frames();
+    }
+
+    /* Frame {@code frame} of the picture, the face's top left at ({@code x}, {@code y}). */
+    private static void frame(final GuiGraphics g, final int x, final int y, final ResourceLocation frames,
+                              final FacePicture picture, final int frame) {
+        g.blit(frames, x, y, frame % FacePicture.COLUMNS * MachineScreenLayout.FACE_WIDTH,
+                frame / FacePicture.COLUMNS * MachineScreenLayout.FACE_HEIGHT, MachineScreenLayout.FACE_WIDTH,
+                MachineScreenLayout.FACE_HEIGHT, FacePicture.COLUMNS * MachineScreenLayout.FACE_WIDTH,
+                picture.rows() * MachineScreenLayout.FACE_HEIGHT);
+    }
+
+    /* How wide its name plate may grow: as far as its LCD leaves room. */
+    private static int plateRoom(final FacePicture picture) {
+        return picture.lcd().x() - PLATE_GAP - MachineScreenLayout.PLATE_X;
+    }
+
+    /* The switch, {@code on} or off, and its words on and off where the picture writes them. */
+    private static void toggle(final GuiGraphics g, final Font font, final int x, final int y,
+                               final FacePicture picture, final boolean on) {
+        final FacePicture.Toggle toggle = picture.toggle();
+        MachineArt.rocker(g, x + toggle.x(), y + toggle.y(), on);
+        toggle.on().ifPresent(at -> MachineArt.text(g, font, GameText.resolve(MachineScreenTexts.ON), x + at.x(),
+                y + at.y(), MachineArt.PALETTE.get().title()));
+        toggle.off().ifPresent(at -> MachineArt.text(g, font, GameText.resolve(MachineScreenTexts.OFF), x + at.x(),
+                y + at.y(), MachineArt.PALETTE.get().title()));
+    }
+
+    /* The words engraved on its parts that show on frame {@code frame}, each as {@code say} says it. */
+    private static void words(final GuiGraphics g, final Font font, final int x, final int y,
+                              final FacePicture picture, final int frame, final UnaryOperator<String> say) {
+        for (final FacePicture.Word word : picture.words()) {
+            if (word.showsOn(frame)) {
+                MachineArt.text(g, font, say.apply(word.text()), x + (int) Math.round(word.x()),
+                        y + (int) Math.round(word.y()), word.argb());
+            }
+        }
     }
 
     /* A sight glass of the machine's tank, and what it holds written where the picture writes it. */
@@ -170,6 +237,33 @@ public final class PictureFace implements IMachineFace {
         }
         glass.label().ifPresent(label -> MachineArt.textCentred(v.g(), v.font(),
                 StandardFace.symbol(v.machine(), glass.tank()), v.x(label.x()), v.y(label.y()), label.argb()));
+    }
+
+    /**
+     * What a still of a face shows, with no machine behind it.
+     *
+     * @param name   what its name plate writes
+     * @param rating what its class plate writes
+     * @param lcd    its LCD's lines
+     * @param meter  how far up its scale its meter's needle stands, from 0 to 1
+     * @param fills  what each of its sight glasses holds, in the order the picture lists them; none, an empty glass
+     */
+    public record Still(String name, String rating, List<String> lcd, double meter, List<Optional<Fill>> fills) {
+
+        public Still {
+            lcd = List.copyOf(lcd);
+            fills = List.copyOf(fills);
+        }
+    }
+
+    /**
+     * What a still's sight glass holds.
+     *
+     * @param colour its colour, opaque ARGB
+     * @param share  how full the glass is, from 0 to 1
+     * @param symbol what is written under the glass, its formula or its symbol
+     */
+    public record Fill(int colour, double share, String symbol) {
     }
 
     /* Whether ({@code x}, {@code y}) is on its switch. */

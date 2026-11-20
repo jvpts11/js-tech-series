@@ -20,12 +20,14 @@ import static dev.jstech.core.machine.MachineScreenLayout.TABS;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.energy.EnergyClass;
+import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineScreenTexts;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -74,30 +76,46 @@ public final class MachineChrome {
      * gives it room.
      */
     public static void plates(final MachineView view, final String name, final int most) {
+        plates(view.g(), view.font(), view.x(0), view.y(0), name, most, rating(view.machine()));
+    }
+
+    /**
+     * The plates of a face whose top left stands at ({@code x}, {@code y}) on the screen: {@code name} on the aluminium
+     * one, at most {@code most} wide, and {@code rating} on the yellow one; for a face shown with no machine behind it,
+     * as a recipe viewer's page shows one.
+     */
+    public static void plates(final GuiGraphics g, final Font font, final int x, final int y, final String name,
+                              final int most, final String rating) {
         final MachineArt.Colours c = MachineArt.PALETTE.get();
-        final GuiGraphics g = view.g();
-        MachineArt.plate(g, view.font(), view.x(PLATE_X), view.y(NAME_PLATE_Y), MachineArt.fit(view.font(), name,
-                most - PLATE_MARGIN), c.aluminium(), c.plateInk());
-        final Optional<EnergyClass> port = view.machine().power().portClass();
-        final String rating = port.map(each -> MachineWords.upper(each.ratingKey().map(TextKey::text)
-                .orElse(each.name().text()))).orElse(MachineWords.upper(MachineScreenTexts.FE));
-        MachineArt.plate(g, view.font(), view.x(PLATE_X), view.y(CLASS_PLATE_Y), MachineArt.fit(view.font(),
-                rating, PLATE_TEXT_ROOM), c.classPlate(), c.classInk());
+        MachineArt.plate(g, font, x + PLATE_X, y + NAME_PLATE_Y, MachineArt.fit(font, name, most - PLATE_MARGIN),
+                c.aluminium(), c.plateInk());
+        MachineArt.plate(g, font, x + PLATE_X, y + CLASS_PLATE_Y, MachineArt.fit(font, rating, PLATE_TEXT_ROOM),
+                c.classPlate(), c.classInk());
+    }
+
+    /** What a machine's class plate says: its energy port's class, or FE. */
+    public static String rating(final MachineBlockEntity machine) {
+        final Optional<EnergyClass> port = machine.power().portClass();
+        return port.map(each -> MachineWords.upper(each.ratingKey().map(TextKey::text).orElse(each.name().text())))
+                .orElse(MachineWords.upper(MachineScreenTexts.FE));
     }
 
     /** The three lamps, the one of the machine's state lit, their words engraved beside them. */
     public static void lamps(final MachineView view) {
+        lamps(view.g(), view.font(), view.x(0), view.y(0), view.machine().status().lamp());
+    }
+
+    /** The three lamps of a face whose top left stands at ({@code x}, {@code y}) on the screen, {@code lit} lit. */
+    public static void lamps(final GuiGraphics g, final Font font, final int x, final int y,
+                             final MachineStatus.Lamp lit) {
         final MachineArt.Colours c = MachineArt.PALETTE.get();
-        final MachineStatus.Lamp lit = view.machine().status().lamp();
         final int[] colours = {c.lampRun(), c.lampWait(), c.lampFault()};
         final List<MachineStatus.Lamp> lamps = List.of(MachineStatus.Lamp.RUN, MachineStatus.Lamp.WAIT,
                 MachineStatus.Lamp.FAULT);
         for (int i = 0; i < lamps.size(); i++) {
-            MachineArt.lamp(view.g(), view.x(LAMP_X), view.y(LAMP_Y + i * LAMP_PITCH), colours[i],
-                    lamps.get(i) == lit);
-            MachineArt.engrave(view.g(), view.font(), MachineArt.fit(view.font(), MachineWords.upper(
-                    LAMP_WORDS.get(i)), LAMP_WORD_ROOM), view.x(LAMP_WORD_X), view.y(LAMP_Y + 1 + i * LAMP_PITCH),
-                    false);
+            MachineArt.lamp(g, x + LAMP_X, y + LAMP_Y + i * LAMP_PITCH, colours[i], lamps.get(i) == lit);
+            MachineArt.engrave(g, font, MachineArt.fit(font, MachineWords.upper(LAMP_WORDS.get(i)), LAMP_WORD_ROOM),
+                    x + LAMP_WORD_X, y + LAMP_Y + 1 + i * LAMP_PITCH, false);
         }
     }
 

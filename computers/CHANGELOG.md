@@ -116,6 +116,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- A wafer's steps in JEI: Lithography, Plasma Etching, Ion Implantation, Deposition and Packaging, each page the step running on its machine's own face, the step's items in the face's slots and its liquids and gases in its sight glasses, with three lines saying the layer and the next step, the time and what it uses, and what else the machine needs. A page a mask, an era, a metal or a chip; U on a wafer in process shows the steps it goes through.
 - Midsoft Lithography, the program of a computer cabled to a Lithography Station from the Legacy on,
   writes the station's masks: put a Mask Blank in the station, pick the mask, and Write puts it on the blank in one
   layer's time, half on a computer two eras newer, the mask then standing where the blank was. On MC-DOS and MC-NET it
