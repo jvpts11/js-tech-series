@@ -120,6 +120,15 @@ public final class SystemSpaceRenderer {
     }
 
     /**
+     * The world under the Solar System's space whose sphere is {@code body}, as the server last told: none while the
+     * player is not in that space.
+     */
+    public static @Nullable ClimbWorldsPayload.ClimbWorld worldBelow(final SolarBody body) {
+        final ClientLevel level = Minecraft.getInstance().level;
+        return level != null && level.dimension().equals(SOLAR_SYSTEM_SPACE) ? WORLDS_BELOW.get(body.name()) : null;
+    }
+
+    /**
      * Draws the Solar System's space as seen from {@code eye}, a point of the space, the farthest first: {@code home}
      * {@code homeFade} of itself under {@code homeVeil}, the other worlds {@code fade} of themselves and the Sun
      * {@code sunFade} of itself over what is behind. Between {@link SphereDrawing#begin} and {@link SphereDrawing#end}.

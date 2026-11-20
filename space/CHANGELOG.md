@@ -996,6 +996,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   away from the handle, as the Apollo lunar module's did (the cabin's pressure held it shut), standing beside the
   seat, the cabin's front wall open behind it and its frame a ring round the opening; used again it swings shut, and
   the lander shuts it as it lifts off. Its cabin is drawn hollow now, each wall lined inside. It was only drawn before.
+- The way home on a ship's HUD: the game keeps, for each player and each world, where their ship last left
+  the ground, and the HUD at the top right shows its pilot the way back there by hand. In the world's sky, LIFT-OFF
+  with how far the place is and its bearing, the home mark (a little house) on the heading tape at that bearing and
+  over the place itself; in the system's space over a world, BELOW and the place of the map under the ship, where it
+  comes down if it goes down now, then LIFT-OFF with how far the place is from there in kilometres, its mark over the
+  spot of the orbit to come down from. Only the ship's HUD shows it, never on foot.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

@@ -221,6 +221,14 @@ kit for its vehicles.
   PULSE OFF framed a moment, with why. Two docked ships do not jump: they undock first, and B held docked shows PULSE
   OFF with DOCKED: UNDOCK FIRST. B held where it may not jump shows PULSE OFF with why the same way: NEAR the world
   its nose points back over, NEAR THE SUN, SHIP NEAR, or PULSE OFF alone in a world's air.
+- **The way home.** The game keeps, for each player and each world, where their ship last left the ground, and the HUD
+  at the top right shows the way back there by hand, no autopilot needed. In the world's sky: LIFT-OFF, how far the
+  place is and its bearing (LIFT-OFF 3,120 M BRG 026), with the home mark, a little house, on the heading tape at that
+  bearing and over the place itself. In the system's space over a world: BELOW and the place of the map under the
+  ship, which is where it comes down if it goes down now, then LIFT-OFF with how far the place is from there, in
+  kilometres, and the home mark over the spot of the orbit to come down from; a block of space is thousands of the
+  map's, so a descent by hand lands some way off and the pilot flies the rest to the mark. Only the ship's HUD shows
+  it; on foot there is none.
 
 ### Autopilots
 

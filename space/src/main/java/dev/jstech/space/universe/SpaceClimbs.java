@@ -270,7 +270,7 @@ public final class SpaceClimbs {
             SpaceWorlds.get(player.serverLevel(), SolarSystemWorlds.worldOf(body))
                     .map(found -> player.server.getLevel(found.dimension()))
                     .ifPresent(level -> worlds.add(new ClimbWorldsPayload.ClimbWorld(body.name(),
-                            level.getMaxBuildHeight(), FarMaps.seaOf(level),
+                            level.dimension().location(), level.getMaxBuildHeight(), FarMaps.seaOf(level),
                             Math.max(1, level.getWorldBorder().getSize()))));
         }
         PacketDistributor.sendToPlayer(player, new ClimbWorldsPayload(worlds));

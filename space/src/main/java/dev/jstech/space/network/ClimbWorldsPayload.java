@@ -44,15 +44,17 @@ public record ClimbWorldsPayload(List<ClimbWorld> worlds) implements CustomPacke
     /**
      * One world under the space.
      *
-     * @param body   its sphere, by name
-     * @param limit  its build limit
-     * @param sea    its sea's height
-     * @param width  how many blocks round it is
+     * @param body      its sphere, by name
+     * @param dimension the world itself
+     * @param limit     its build limit
+     * @param sea       its sea's height
+     * @param width     how many blocks round it is
      */
-    public record ClimbWorld(String body, int limit, int sea, double width) {
+    public record ClimbWorld(String body, ResourceLocation dimension, int limit, int sea, double width) {
 
         static final StreamCodec<RegistryFriendlyByteBuf, ClimbWorld> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.STRING_UTF8, ClimbWorld::body,
+                ResourceLocation.STREAM_CODEC, ClimbWorld::dimension,
                 ByteBufCodecs.VAR_INT, ClimbWorld::limit,
                 ByteBufCodecs.VAR_INT, ClimbWorld::sea,
                 ByteBufCodecs.DOUBLE, ClimbWorld::width,

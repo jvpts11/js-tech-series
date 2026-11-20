@@ -30,6 +30,7 @@ import dev.jstech.space.api.ShipPartKind;
 import dev.jstech.space.landing.Runways;
 import dev.jstech.space.landing.ShipLandingTexts;
 import dev.jstech.space.landing.ShipLandings;
+import dev.jstech.space.landing.ShipLiftOffs;
 import dev.jstech.space.rocket.SpaceAhead;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.SpaceClimbs;
@@ -323,8 +324,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final Step out = spooled >= ShipPulse.SPOOL_TICKS && flown.next() instanceof ShipFlight after
                 ? new Step(flown.pose(), after.jumping(ShipPulse.Jump.begun())) : flown;
         if (out.next() instanceof ShipFlight after && after.grounded() != this.grounded) {
-            // Come down onto the land or lifted off it: its boarding stair follows, where its outer door is open.
-            ShipStairs.groundChanged(level, body, after.grounded());
+            groundChanged(level, body, after.grounded());
         }
         return out;
     }
@@ -612,10 +612,20 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 : new ShipFlightModel.State(0, 0, after.state().throttle(), 0, after.state().nozzles()))
                 .sequenced(Optional.empty());
         if (out.grounded() != this.grounded) {
-            // Come down onto the land or lifted off it: its boarding stair follows, where its outer door is open.
-            ShipStairs.groundChanged(level, body, out.grounded());
+            groundChanged(level, body, out.grounded());
         }
         return new Step(flown.pose(), out);
+    }
+
+    /*
+     * {@code body} came down onto the land, or lifted off it ({@code grounded}): its boarding stair follows, where its
+     * outer door is open; lifted off, its place is where everyone aboard last took off from in this world.
+     */
+    private static void groundChanged(final ServerLevel level, final MovingStructure body, final boolean grounded) {
+        ShipStairs.groundChanged(level, body, grounded);
+        if (!grounded) {
+            ShipLiftOffs.liftedOff(level, body);
+        }
     }
 
     /* Whether its pilot holds any of the helm's keys, taking the helm back from the autopilot. */

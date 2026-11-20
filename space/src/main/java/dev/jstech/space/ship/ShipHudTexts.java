@@ -52,6 +52,10 @@ public final class ShipHudTexts {
     public static final TextKey OVERWORLD = TextKey.of("jsspace.ship_hud.overworld", "OVERWORLD");
     public static final TextKey MOON = TextKey.of("jsspace.ship_hud.moon", "MOON");
     public static final TextKey MARS = TextKey.of("jsspace.ship_hud.mars", "MARS");
+    public static final TextKey BELOW = TextKey.of("jsspace.ship_hud.below", "BELOW X %s  Z %s");
+    public static final TextKey LIFT_OFF_KM = TextKey.of("jsspace.ship_hud.lift_off_km", "LIFT-OFF %s KM");
+    public static final TextKey LIFT_OFF_M = TextKey.of("jsspace.ship_hud.lift_off_m", "LIFT-OFF %s M");
+    public static final TextKey BEARING = TextKey.of("jsspace.ship_hud.bearing", "%s  BRG %s");
 
     private ShipHudTexts() {
     }

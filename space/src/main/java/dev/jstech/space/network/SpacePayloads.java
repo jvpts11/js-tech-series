@@ -46,6 +46,8 @@ public final class SpacePayloads {
     };
     private static volatile IShipyardSaidReceiver shipyardSaidReceiver = said -> {
     };
+    private static volatile ILiftOffsReceiver liftOffsReceiver = places -> {
+    };
 
     private SpacePayloads() {
     }
@@ -71,6 +73,8 @@ public final class SpacePayloads {
                     (payload, context) -> context.enqueueWork(() -> shipPulseReceiver.receive(payload)));
             registrar.playToClient(ShipyardSaidPayload.TYPE, ShipyardSaidPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> shipyardSaidReceiver.receive(payload)));
+            registrar.playToClient(LiftOffsPayload.TYPE, LiftOffsPayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> liftOffsReceiver.receive(payload)));
             registrar.playToServer(ShipHelmKeysPayload.TYPE, ShipHelmKeysPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> {
                         if (context.player() instanceof ServerPlayer player) {
@@ -128,6 +132,11 @@ public final class SpacePayloads {
         shipyardSaidReceiver = receiver;
     }
 
+    /** Gives what a player's game does with where its player last took off from, from its side's entry point. */
+    public static void onLiftOffs(final ILiftOffsReceiver receiver) {
+        liftOffsReceiver = receiver;
+    }
+
     /** What a player's game does with the Overworld's map number. */
     @FunctionalInterface
     public interface IMapSeedReceiver {
@@ -175,5 +184,12 @@ public final class SpacePayloads {
     public interface IShipyardSaidReceiver {
 
         void receive(ShipyardSaidPayload said);
+    }
+
+    /** What a player's game does with where its player last took off from in each world. */
+    @FunctionalInterface
+    public interface ILiftOffsReceiver {
+
+        void receive(LiftOffsPayload places);
     }
 }

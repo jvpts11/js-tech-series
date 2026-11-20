@@ -19,6 +19,7 @@ import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.client.ship.ShipHud;
+import dev.jstech.space.landing.ShipLiftOffs;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAutopilot;
 import dev.jstech.space.ship.ShipBoost;
@@ -91,8 +92,13 @@ public final class ShipHudClientTests {
      */
     private static final int[][] CARET = {{-4, -5}, {4, -5}, {-6, -7}, {6, -7}};
     private static final int[][] DIAMOND = {{-4, -5}, {4, -5}, {-4, 5}, {4, 5}};
+    /* Dots of the home mark, from its middle: its roof's chevron over its square. */
+    private static final int[][] HOUSE = {{-2, -4}, {2, -4}, {-3, 2}, {4, 2}};
     /* How far ahead of the ship the spot LAND is sent to stands, in blocks. */
     private static final int LAND_AHEAD = 50;
+    /* How far ahead of the ship, and to its right, the place the pilot took off from lies, in blocks. */
+    private static final double HOME_AHEAD = 300;
+    private static final double HOME_RIGHT = 60;
     /* What reads as the HUD's green: its green high, its blue middling, its red low. */
     private static final int GREEN_AT_LEAST = 200;
     private static final int BLUE_AT_LEAST = 110;
@@ -222,6 +228,31 @@ public final class ShipHudClientTests {
     }
 
     /*
+     * The place the pilot last took off from in the world lying ahead of the ship, a little to its right, as the
+     * approved mock of the way home draws it: the place's distance and bearing at the top right, and the home mark on
+     * the heading tape and over the place itself, where the pilot looks.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void hud_theWayHomeAtTheTopRightWithItsMarkOverThePlace(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final Vec3[] home = new Vec3[1];
+        atTheHelm(ctx, ship)
+                .then(0, () -> ctx.mc().options.setCameraType(CameraType.FIRST_PERSON))
+                .thenServer(0, level -> {
+                    final StructurePose at = ship[0].pose();
+                    final double[] nose = ((ShipFlight) ship[0].motion()).noseIn(ship[0].frame());
+                    final BlockPos place = BlockPos.containing(at.x() + nose[0] * HOME_AHEAD - nose[2] * HOME_RIGHT,
+                            ctx.abs(new BlockPos(0, Y_GRASS + 1, 0)).getY(), at.z() + nose[2] * HOME_AHEAD
+                            + nose[0] * HOME_RIGHT);
+                    ShipLiftOffs.note(ctx.serverPlayer(), level, place);
+                    home[0] = Vec3.atBottomCenterOf(place);
+                })
+                .thenWaitUntil(() -> look(ctx, home[0]) && symbol(ctx, home[0], HOUSE), ARRIVE,
+                        "the home mark over the place the pilot took off from, where they look")
+                .thenScreenshot(SETTLE, "ship-hud-home");
+    }
+
+    /*
      * The dock built where the test stands, a ship built in it and let go, {@code ship} told it, taken up and flying
      * on at a cruise, the player at its helm.
      */
@@ -314,7 +345,11 @@ public final class ShipHudClientTests {
 
     /* Turns the player's look to the autopilot's target, from their eyes; whether there is one. */
     private static boolean look(final ClientTestContext ctx) {
-        final Vec3 target = target(ctx);
+        return look(ctx, target(ctx));
+    }
+
+    /* Turns the player's look to {@code target}, from their eyes; whether there is one. */
+    private static boolean look(final ClientTestContext ctx, final @Nullable Vec3 target) {
         if (target == null) {
             return false;
         }
@@ -328,12 +363,16 @@ public final class ShipHudClientTests {
         return true;
     }
 
-    /*
-     * Whether the engaged mode's symbol is drawn where its target falls on the screen: the dots {@code dots} of it,
-     * from its middle, in the approved screen's points, in the HUD's green, each within a point of where it falls.
-     */
+    /* Whether the engaged mode's symbol is drawn where its target falls on the screen, as below. */
     private static boolean symbol(final ClientTestContext ctx, final int[][] dots) {
-        final Vec3 target = target(ctx);
+        return symbol(ctx, target(ctx), dots);
+    }
+
+    /*
+     * Whether a symbol is drawn where {@code target} falls on the screen: the dots {@code dots} of it, from its
+     * middle, in the approved screen's points, in the HUD's green, all but one each within a point of where it falls.
+     */
+    private static boolean symbol(final ClientTestContext ctx, final @Nullable Vec3 target, final int[][] dots) {
         final Vec2 at = target == null ? null : ShipHud.onScreen(target);
         if (at == null) {
             return false;

@@ -24,6 +24,7 @@ import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.crew.ShipCrews;
 import dev.jstech.space.crew.ShipDoorRules;
 import dev.jstech.space.landing.ShipLandingBlocks;
+import dev.jstech.space.landing.ShipLiftOffs;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
 import dev.jstech.space.life.SpaceFlames;
@@ -230,8 +231,10 @@ public final class JsSpace {
         ShipPulse.declare();
         ShipAutopilotControl.declare();
         ShipDocks.listen();
-        // Where a ship sets down: the ship landing pad, and the runway beacon a wheeled ship lines up on.
+        // Where a ship sets down: the ship landing pad, and the runway beacon a wheeled ship lines up on; and where
+        // each player last took off from in each world, the way back their HUD shows.
         ShipLandingBlocks.declare();
+        ShipLiftOffs.listen();
         // Who may do what aboard a ship, and its console's crew page where its owner says so.
         ShipConsole.declare();
         ShipCrews.listen();

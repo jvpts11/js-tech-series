@@ -58,8 +58,10 @@ import org.joml.Vector4f;
  * A ship's HUD, as the approved flight draws it: green symbols projected on its canopy for the pilot at its helm, flat
  * and in pixels. The heading tape across the top; the pitch ladder with the flight path marker in the middle; the speed
  * and the boost's bar on the left, amber while it boosts, TURN SLOW under it; the altitude and the climb on the right;
- * the reactor's power and its deuterium above; the nozzles' angle and the gear below, amber with the gear down; and the
- * autopilot's three modes along the bottom, the one engaged lit, its own symbol standing on its target in the world.
+ * the reactor's power and its deuterium above; the nozzles' angle and the gear below, amber with the gear down; the
+ * way home at the top right, to where the pilot last took off from in the world flown in or over, its mark on the
+ * heading tape and over the place ({@link ShipHudHome}); and the autopilot's three modes along the bottom, the one
+ * engaged lit, its own symbol standing on its target in the world.
  * Laid out on the approved screen's 960 by 540 points, scaled to the player's; seen from behind the ship it spreads
  * over the screen.
  */
@@ -105,6 +107,15 @@ public final class ShipHud {
             ShipAutopilot.Mode.LAND, ShipHudTexts.LAND, ShipAutopilot.Mode.ORBIT, ShipHudTexts.ORBIT,
             ShipAutopilot.Mode.DOCK, ShipHudTexts.DOCK));
     private static final int MODE_STEP = 50;
+    /*
+     * The way home: how far down the box its first line stands and how far apart its lines are; how far down the box
+     * its mark stands on the heading tape, how far under the mark its label stands, and how tall the mark's roof is.
+     */
+    private static final int HOME_LINES = 50;
+    private static final int HOME_LINE = 10;
+    private static final int ON_THE_TAPE = 30;
+    private static final int UNDER_THE_HOUSE = 9;
+    private static final int HOUSE_ROOF = 5;
     private static final double WATTS_A_MEGAWATT = 1.0e6;
     private static final int PERCENT = 100;
     private static final int THOUSAND = 1000;
@@ -119,6 +130,7 @@ public final class ShipHud {
      * marker stands for the game's crosshair, which is not drawn.
      */
     public static void listen(final IEventBus modBus) {
+        ShipHudHome.listen();
         modBus.addListener(RegisterGuiLayersEvent.class,
                 event -> event.registerAbove(VanillaGuiLayers.CROSSHAIR, LAYER, ShipHud::render));
         NeoForge.EVENT_BUS.addListener(RenderGuiLayerEvent.Pre.class, event -> {
@@ -193,10 +205,18 @@ public final class ShipHud {
         final ShipReadings.Pilot pilot = flown.readings().pilot();
         final Vec2 target = pilot.mode().isEmpty() ? null : onScreen(pilot.target());
         final Vec2 world = jumpedTo(flown.readings().pulse(), delta.getGameTimeDeltaPartialTick(false));
-        new Painter(g, minecraft.font, box, ShipHudArt.PALETTE.get()).paint(flown, target == null ? null
-                : new Vec2((target.x - left) / scale, (target.y - top) / scale), world == null ? null
-                : new Vec2((world.x - left) / scale, (world.y - top) / scale));
+        final ShipHudHome.Home home = minecraft.player == null ? ShipHudHome.NONE
+                : ShipHudHome.of(minecraft.level, minecraft.player.position());
+        final Vec2 homeAt = home.mark() == null ? null : onScreen(home.mark());
+        new Painter(g, minecraft.font, box, ShipHudArt.PALETTE.get()).paint(flown, inBox(target, left, top, scale),
+                inBox(world, left, top, scale), home, inBox(homeAt, left, top, scale));
         g.pose().popPose();
+    }
+
+    /* {@code point} of the screen, in the approved screen's points laid {@code scale} to one from its corner. */
+    private static @Nullable Vec2 inBox(final @Nullable Vec2 point, final float left, final float top,
+                                        final float scale) {
+        return point == null ? null : new Vec2((point.x - left) / scale, (point.y - top) / scale);
     }
 
     /*
@@ -275,7 +295,8 @@ public final class ShipHud {
     /* Paints the HUD in its box, in the approved screen's points, as the approved flight's own drawing lays it. */
     private record Painter(GuiGraphics g, Font font, Box box, ShipHudArt.Colours colours) {
 
-        void paint(final Flown flown, final @Nullable Vec2 target, final @Nullable Vec2 world) {
+        void paint(final Flown flown, final @Nullable Vec2 target, final @Nullable Vec2 world,
+                   final ShipHudHome.Home home, final @Nullable Vec2 homeAt) {
             final int cx = (box.x0() + box.x1()) / 2;
             final int cy = (box.y0() + box.y1()) / 2 + 10;
             tape(flown.heading(), cx);
@@ -287,12 +308,47 @@ public final class ShipHud {
             speed(flown.readings(), cy);
             altitude(flown, cy);
             corners(flown);
+            home(home, flown.heading(), cx, labelled, homeAt);
             final ShipReadings.Pilot pilot = flown.readings().pilot();
             modes(cx, pilot.mode());
             if (target != null && box.holds(target)) {
                 symbol(pilot, (int) target.x, (int) target.y);
             }
             pulse(flown.readings().pulse(), cx, cy, world);
+        }
+
+        /*
+         * The way home, as the approved HUD draws it: its lines at the top right, as the reactor's stand at the top
+         * left, the last lit; the home mark on the heading tape at the place's bearing while the tape spans it and no
+         * pulse jump's labels stand there ({@code labelled}), and over the place where it is seen, {@code at}, with
+         * how far it is under it.
+         */
+        private void home(final ShipHudHome.Home home, final double heading, final int cx, final boolean labelled,
+                          final @Nullable Vec2 at) {
+            final List<String> lines = home.lines();
+            for (int k = 0; k < lines.size(); k++) {
+                small(lines.get(k), box.x1() - 6, box.y0() + HOME_LINES + HOME_LINE * k, k == lines.size() - 1
+                        ? colours.symbol() : colours.dim(), Align.RIGHT);
+            }
+            final double off = ((home.bearing() - heading) % FULL_TURN + FULL_TURN + FULL_TURN / 2.0) % FULL_TURN
+                    - FULL_TURN / 2.0;
+            if (!labelled && Math.abs(off) <= TAPE_DEGREES) {
+                house(cx + (int) Math.round(off * TAPE_STEP), box.y0() + ON_THE_TAPE);
+            }
+            if (at != null && box.holds(at)) {
+                house((int) at.x, (int) at.y);
+                small(home.label(), (int) at.x, (int) at.y + UNDER_THE_HOUSE, colours.symbol(), Align.CENTRE);
+            }
+        }
+
+        /* The home mark: a little house, its roof a chevron over a square, standing on {@code y}'s line. */
+        private void house(final int x, final int y) {
+            final int c = colours.symbol();
+            for (int k = 0; k < HOUSE_ROOF; k++) {
+                dot(x - k, y - HOUSE_ROOF - 1 + k, c);
+                dot(x + k, y - HOUSE_ROOF - 1 + k, c);
+            }
+            frame(x - 3, y - 1, x + 4, y + HOUSE_ROOF, c);
         }
 
         /*

@@ -1116,5 +1116,9 @@
   "jsspace.ship_hud.pulse_spent": "D2 ESGOTADO",
   "jsspace.ship_hud.overworld": "SUPERFÍCIE",
   "jsspace.ship_hud.moon": "LUA",
-  "jsspace.ship_hud.mars": "MARTE"
+  "jsspace.ship_hud.mars": "MARTE",
+  "jsspace.ship_hud.below": "ABAIXO X %s  Z %s",
+  "jsspace.ship_hud.lift_off_km": "DECOLAGEM %s KM",
+  "jsspace.ship_hud.lift_off_m": "DECOLAGEM %s M",
+  "jsspace.ship_hud.bearing": "%s  RUMO %s"
 }

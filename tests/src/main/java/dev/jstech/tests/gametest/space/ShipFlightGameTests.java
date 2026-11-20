@@ -31,6 +31,7 @@ import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.landing.ShipLiftOffs;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipBoost;
 import dev.jstech.space.ship.ShipDesign;
@@ -180,6 +181,8 @@ public final class ShipFlightGameTests {
     private static final double PARTS_WEIGHT = 0.15;
     private static final int GRIPPED = 40;
     private static final double HALF = 0.5;
+    /* How many names a lift-off's pilot takes in turn, run after run, by the game's time: a name fits in 16 letters. */
+    private static final long RUN_NAMES = 1_000_000_000L;
     private static final double DELTA_NEWTONS = 400_000;
     /* How long its pilot holds up to rise, and it hovers, and holds forward on the land, in ticks. */
     private static final int RISING = 50;
@@ -405,6 +408,42 @@ public final class ShipFlightGameTests {
             helper.assertTrue(((ShipFlight) ship[0].motion()).grounded() && ship[0].pose().y() < from[1].y() - 1,
                     "held down, it comes back down onto its cradle");
         }).thenExecute(() -> MovingStructures.takeAway(ship[0])).thenSucceed();
+    }
+
+    /*
+     * Let go in its dock, its pilot at the helm holding UP: it lifts off its cradle, and the place under its middle
+     * there is where its pilot last took off from in this world, kept for their HUD's way home. The pilot is named
+     * afresh each run, so a place kept from an earlier run in the same world is not taken for this one.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
+    public static void liftOff_notesWhereItsPilotTookOffFrom(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerPlayer[] pilot = new ServerPlayer[1];
+        final AABB[] standing = new AABB[1];
+        final GameTestSequence sequence = letGo(helper, ship, SHIP).thenWaitUntil(() -> helper.assertTrue(
+                ((ShipFlight) ship[0].motion()).grounded(), "the ship let go stands on its cradle"))
+                .thenExecute(() -> {
+                    final BlockPos seat = aboard(helper, ship[0], plan(helper).where(spot(helper,
+                            ShipKitBlocks.PILOT_SEAT.getId())));
+                    pilot[0] = GameTestPlayers.connected(helper, "jst-up-" + helper.getLevel().getGameTime()
+                            % RUN_NAMES);
+                    helper.assertTrue(MovingStructures.sit(pilot[0], seat), "the pilot sits at its helm");
+                    helper.assertTrue(ShipLiftOffs.of(pilot[0], helper.getLevel().dimension()).isEmpty(),
+                            "the pilot has taken off from nowhere in this world yet");
+                    standing[0] = ship[0].worldBox();
+                });
+        hold(helper, sequence, ship, StructureControls.ControlAxis.UP, RISING).thenExecute(() -> {
+            final BlockPos place = ShipLiftOffs.of(pilot[0], helper.getLevel().dimension()).orElse(null);
+            helper.assertTrue(!((ShipFlight) ship[0].motion()).grounded() && place != null, "lifted off its"
+                    + " cradle, the place its pilot took off from is noted: " + place);
+            final Vec3 middle = standing[0].getCenter();
+            helper.assertTrue(Math.abs(place.getX() + HALF - middle.x) <= 1 && Math.abs(place.getZ() + HALF
+                    - middle.z) <= 1 && Math.abs(place.getY() - standing[0].minY) <= 1, "it is the place under the"
+                    + " ship's middle where it stood: " + place + " under " + standing[0]);
+        }).thenExecute(() -> {
+            GameTestPlayers.leave(pilot[0]);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
     }
 
     /*
