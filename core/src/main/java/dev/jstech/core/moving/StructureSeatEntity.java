@@ -33,6 +33,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -464,8 +465,19 @@ public final class StructureSeatEntity extends Entity {
      * the block's middle where its model draws none.
      */
     private static double[] sitsAt(final Level level, final BlockPos pos) {
+        final AABB seat = drawnSeat(level, pos);
+        return seat == null ? new double[] {HALF, HALF}
+                : new double[] {seat.getCenter().x - pos.getX(), seat.getCenter().z - pos.getZ()};
+    }
+
+    /*
+     * The box round the seat the formed model of the seat block at {@code pos} draws for it, in the level's blocks:
+     * the piece called "seat" that works by this block, which may reach beyond it, as a cockpit's seat drawn on the
+     * ship's middle line between two blocks; none where its model draws none.
+     */
+    static @Nullable AABB drawnSeat(final Level level, final BlockPos pos) {
         if (!(level.getBlockEntity(pos) instanceof IFormedPlaced placed)) {
-            return new double[] {HALF, HALF};
+            return null;
         }
         for (final FormedPlace place : placed.places()) {
             final FormedShape shape = FormedShapes.get(level, place.model()).orElse(null);
@@ -475,20 +487,28 @@ public final class StructureSeatEntity extends Entity {
             for (final FormedPiece piece : shape.pieces()) {
                 if (piece.name().equals(SEAT_PIECE) && piece.usesCell().isPresent()
                         && piece.usesCell().getAsLong() == place.cell()) {
-                    final double[] middle = middleOf(piece);
-                    final double[] local = {middle[0] - shape.origin()[0] - MeshCells.x(place.cell()), HALF,
-                        middle[2] - shape.origin()[2] - MeshCells.z(place.cell())};
-                    final double[] turned = new double[AXES];
-                    CellSpace.toWorld(local, place.turn(), turned);
-                    return new double[] {turned[0], turned[2]};
+                    final double[][] corners = cornersOf(piece);
+                    final double[] low = new double[AXES];
+                    final double[] high = new double[AXES];
+                    CellSpace.toWorld(inCell(corners[0], shape, place), place.turn(), low);
+                    CellSpace.toWorld(inCell(corners[1], shape, place), place.turn(), high);
+                    return new AABB(pos.getX() + low[0], pos.getY() + low[1], pos.getZ() + low[2],
+                            pos.getX() + high[0], pos.getY() + high[1], pos.getZ() + high[2]);
                 }
             }
         }
-        return new double[] {HALF, HALF};
+        return null;
     }
 
-    /* The middle of the box round the solids of {@code piece}, in its model's space. */
-    private static double[] middleOf(final FormedPiece piece) {
+    /* {@code point} of a model's space, measured from the corner of the cell {@code place} stands for. */
+    private static double[] inCell(final double[] point, final FormedShape shape, final FormedPlace place) {
+        return new double[] {point[0] - shape.origin()[0] - MeshCells.x(place.cell()),
+            point[1] - shape.origin()[1] - MeshCells.y(place.cell()),
+            point[2] - shape.origin()[2] - MeshCells.z(place.cell())};
+    }
+
+    /* The box round the solids of {@code piece}, its lowest corner and its highest, in its model's space. */
+    private static double[][] cornersOf(final FormedPiece piece) {
         final double[] low = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
         final double[] high = {-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
         for (final float[] solid : piece.solids()) {
@@ -499,6 +519,6 @@ public final class StructureSeatEntity extends Entity {
                 }
             }
         }
-        return new double[] {(low[0] + high[0]) / 2, (low[1] + high[1]) / 2, (low[2] + high[2]) / 2};
+        return new double[][] {low, high};
     }
 }

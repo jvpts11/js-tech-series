@@ -2625,6 +2625,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   land it left never ran, each holding the land round it; the chunks waiting to unload grew by thousands a minute and
   every tick went through them all. One turn in four of the queue now goes to the land let go while any waits, the
   rest to the land wanted as before, so neither waits on the other for good.
+- A seat aboard is sat in wherever the player aims at the seat its model draws: on its half drawn over the block
+  beside its own, as a small ship's pilot seat stands half over the cockpit's aisle, and past the part of the seat
+  drawn in the blocks round it, which no longer stands in the way of the seat itself. Aimed at, the pilot seat often
+  sat no one, the click landing on the seat's parts in the next block or going through to the deck.
 
 ## [0.5.3a] - 2026-11-04
 

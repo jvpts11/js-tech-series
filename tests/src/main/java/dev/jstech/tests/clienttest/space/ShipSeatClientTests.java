@@ -40,8 +40,9 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * A small ship's pilot seat, on a player's game: aimed at from outside, through its canopy, using it sits no one;
- * from inside the cockpit it is sat in, aimed at by its back too, which stands in the block over it; and its pilot
- * getting up stands inside the ship, never out of the hull.
+ * from inside the cockpit it is sat in, aimed at by its half over the aisle beside its block, where the aim goes on
+ * through to the deck, and by its back, which stands in the block over it; and its pilot getting up stands inside the
+ * ship, never out of the hull.
  */
 public final class ShipSeatClientTests {
 
@@ -67,6 +68,8 @@ public final class ShipSeatClientTests {
     private static final Vec3 OVER_THE_CANOPY = new Vec3(0.3, 3.6, 3.6);
     private static final Vec3 BEHIND_THE_SEAT = new Vec3(0.5, 0.95 + EYE, 4.85);
     private static final Vec3 SEAT_BACK = new Vec3(-0.1, 1.9, 4.4);
+    /* The seat's half over the aisle, drawn beside the block it works by, over no block. */
+    private static final Vec3 OVER_THE_AISLE = new Vec3(0.25, 1.4, 4.2);
     private static final double ROOM_X = 1.6;
     private static final double FLOOR = 0.3;
     private static final double ROOF = 2.9;
@@ -153,6 +156,15 @@ public final class ShipSeatClientTests {
                             && at.z < ROOM_Z1, "got up, the pilot stands inside the ship, in the cockpit's model at "
                             + at);
                 });
+        // Behind it again, aiming at its half over the aisle: the aim goes on through to the deck, and it is the seat
+        // drawn there that is used.
+        look(ctx, plan, BEHIND_THE_SEAT, OVER_THE_AISLE);
+        ctx.then(SETTLE, () -> {
+            ctx.assertTrue(ctx.mc().hitResult instanceof BlockHitResult, "aiming at the seat's half over the aisle,"
+                    + " the player aims at a block: " + ctx.mc().hitResult);
+            ctx.mc().gameMode.useItemOn(ctx.player(), InteractionHand.MAIN_HAND, (BlockHitResult) ctx.mc().hitResult);
+        }).thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity, ARRIVE,
+                "aimed at the seat's half over the aisle, the player to sit in it");
     }
 
     /* The player, flying, their eyes at {@code eye} of the cockpit's model, looking at {@code target} of it. */

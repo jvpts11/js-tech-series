@@ -49,6 +49,8 @@ final class StructureSeating {
      * beyond the block it works by, as a cab's seat does.
      */
     private static final double SEAT_FROM_ITS_BLOCK = 2;
+    /* How far round a drawn seat a point aimed at still counts as on it, in blocks: a pixel. */
+    private static final double ON_THE_SEAT = 1.0 / 16;
 
     private StructureSeating() {
     }
@@ -148,15 +150,21 @@ final class StructureSeating {
     }
 
     /*
-     * A player uses a block of a structure that is a seat: they sit on it, unless crouching, or it is taken, or it is
-     * not in their sight, the structure's own wall or window between their eyes and it: a cockpit's seat is sat in
-     * from the cockpit, not reached through its canopy from outside.
+     * A player uses a seat: they sit on it, unless crouching, or it is taken, or it is not in their sight, the
+     * structure's own wall or window between their eyes and it: a cockpit's seat is sat in from the cockpit, not
+     * reached through its canopy from outside. They use the seat as its model draws it: the seat's own block, or the
+     * point they aim at inside the seat drawn for a seat block beside the one they hit, as a cockpit's seat drawn half
+     * over the empty aisle beside its block, where the aim goes on through to the floor.
      */
     private static void onUse(final PlayerInteractEvent.RightClickBlock event) {
-        final BlockPos pos = event.getPos();
         final Player player = event.getEntity();
         final Level level = event.getLevel();
-        if (player.isSecondaryUseActive() || player.isPassenger() || !usable(level, pos)) {
+        if (player.isSecondaryUseActive() || player.isPassenger()) {
+            return;
+        }
+        final Vec3 aimed = event.getHitVec().getLocation();
+        final BlockPos pos = usable(level, event.getPos()) ? event.getPos() : drawnSeatAt(level, event.getPos(), aimed);
+        if (pos == null) {
             return;
         }
         event.setCanceled(true);
@@ -164,15 +172,32 @@ final class StructureSeating {
         // A seat standing in the world is in sight as any block used is; one aboard is looked at through its structure.
         final IStructureBody body = MovingStructures.at(level, pos);
         if (player instanceof ServerPlayer sitter && (body == null || inSight(level, sitter, body.frame(), pos,
-                event.getHitVec().getLocation()))) {
+                aimed))) {
             sit(sitter, pos);
         }
     }
 
     /*
+     * The seat block beside {@code hit}, or {@code hit} itself, whose drawn seat holds the point {@code aimed}; none
+     * when the point is in no seat drawn there.
+     */
+    private static @Nullable BlockPos drawnSeatAt(final Level level, final BlockPos hit, final Vec3 aimed) {
+        for (final BlockPos near : BlockPos.betweenClosed(hit.offset(-1, -1, -1), hit.offset(1, 1, 1))) {
+            if (usable(level, near)) {
+                final AABB seat = StructureSeatEntity.drawnSeat(level, near);
+                if (seat != null && seat.inflate(ON_THE_SEAT).contains(aimed)) {
+                    return near.immutable();
+                }
+            }
+        }
+        return null;
+    }
+
+    /*
      * Whether nothing of a structure standing as {@code frame} but the seat at {@code seat} is between
-     * {@code player}'s eyes and the point {@code aimed} of the seat they used, in the yard: the line to it stops a hair
-     * short of it, so the face aimed at does not stand in its way.
+     * {@code player}'s eyes and the point {@code aimed} of the seat they used, in the yard: the line to it stops a
+     * hair short of it, so the face aimed at does not stand in its way; and the seat drawn for the block, reaching into
+     * the blocks beside it, does not stand in the way of itself.
      */
     private static boolean inSight(final Level level, final Player player, final StructureFrame frame,
                                    final BlockPos seat, final Vec3 aimed) {
@@ -187,7 +212,11 @@ final class StructureSeating {
         final Vec3 to = from.add(along.scale((length - SHORT_OF_IT) / length));
         final BlockHitResult hit = level.clip(new ClipContext(from, to, ClipContext.Block.OUTLINE,
                 ClipContext.Fluid.NONE, player));
-        return hit.getType() == HitResult.Type.MISS || hit.getBlockPos().equals(seat);
+        if (hit.getType() == HitResult.Type.MISS || hit.getBlockPos().equals(seat)) {
+            return true;
+        }
+        final AABB drawn = StructureSeatEntity.drawnSeat(level, seat);
+        return drawn != null && drawn.inflate(ON_THE_SEAT).contains(hit.getLocation());
     }
 
     /* The seat entity someone sits in on the seat at {@code pos}, aboard or in the world, or null for a seat free. */
