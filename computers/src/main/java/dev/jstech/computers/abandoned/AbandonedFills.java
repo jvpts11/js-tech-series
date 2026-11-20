@@ -73,8 +73,8 @@ final class AbandonedFills {
     }
 
     /*
-     * A computer of the era: whole and set to come up in a working building, its parts only by chance in a ruin, built
-     * as a player builds one, by the computer's own rules.
+     * A computer of the era: whole and set to come up in a working building, with the cards for the screens its mark
+     * says it drives; its parts only by chance in a ruin; built as a player builds one, by the computer's own rules.
      */
     static @Nullable CompoundTag computer(final LevelReader level, final StructureTemplate.StructureBlockInfo placed,
                                           final CompoundTag mark, final Era era, final boolean working,
@@ -86,8 +86,8 @@ final class AbandonedFills {
         }
         final Era own = eraOf(mark, era);
         final boolean broken = mark.getBoolean("broken") || !working;
-        final ComputerKit.Built built = ComputerKit.assemble(new ItemStack(block),
-                broken ? leftIn(AbandonedLoadouts.parts(own), random) : AbandonedLoadouts.parts(own));
+        final ComputerKit.Built built = ComputerKit.assemble(new ItemStack(block), broken
+                ? leftIn(AbandonedLoadouts.parts(own), random) : AbandonedLoadouts.parts(own, mark.getInt("screens")));
         if (!built.computer().isEmpty()) {
             final ItemStack item = built.computer();
             item.remove(ComputingComponents.NEVER_STARTED.get());

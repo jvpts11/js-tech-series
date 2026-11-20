@@ -4460,6 +4460,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   them has graphics of its own, so each now holds a modest graphics card of its era (a VGA-256, a Vertex FX 5200, a
   Vertex 8600 GT, a Vertex GTX 550 Ti, a Vertex RTX 3060), which the chests may also give; and the Legacy computer is
   whole, its processor a Pentix 4 2.4C that fits its Socket 478 board.
+- (Computers) Abandoned buildings: a working datacenter works. Over each hot aisle hang as many Server Routers as their
+  era's rack budget asks (five in the Legacy, one in the Advanced), each over its own length of the tray, so every
+  rack is managed, where most stood outside any router's budget; its Mainframe stands in the hall, at the head of the
+  middle cold aisle; the operations room's computers are on its network, and each drives its own screen and a row of
+  the wall of screens, which stands a block off the wall with its cables behind it, where the wall was linked to
+  nothing; the battery banks feed every rack, the Mainframe, the desks, the Chillers and the Cooling Tower; the plant's
+  pipes meet the ports that take its water, the tower a block off the wall where its cold outlet was walled in; and
+  its hall and its two rooms are lit by panels in the ceiling, where the hall was dark and the rooms unlit.
+- (Computers) Abandoned buildings: a working building's Mainframes and rack servers show a picture. A Mainframe's board
+  and the Legacy server's drive no screen by themselves, so each now holds the plainest graphics card of its era that
+  its board takes.
 - (Core) A model's glass is drawn after everything solid behind it: through a docked ship's canopy its cockpit shows, its walls, seats and consoles, no longer the ground beyond the ship, which showed where the glass had been drawn before the cockpit's parts behind it.
 - (Space) The Cab cockpit is walked into: its flight deck stands lower, its pilot's seat on a plinth as high as before,
   so a player stands beside the seat under the cabin's roof, and the slab hidden where the cabin sits on the chin, which

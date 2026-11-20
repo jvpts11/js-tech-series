@@ -1038,6 +1038,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   them has graphics of its own, so each now holds a modest graphics card of its era (a VGA-256, a Vertex FX 5200, a
   Vertex 8600 GT, a Vertex GTX 550 Ti, a Vertex RTX 3060), which the chests may also give; and the Legacy computer is
   whole, its processor a Pentix 4 2.4C that fits its Socket 478 board.
+- Abandoned buildings: a working datacenter works. Over each hot aisle hang as many Server Routers as their
+  era's rack budget asks (five in the Legacy, one in the Advanced), each over its own length of the tray, so every
+  rack is managed, where most stood outside any router's budget; its Mainframe stands in the hall, at the head of the
+  middle cold aisle; the operations room's computers are on its network, and each drives its own screen and a row of
+  the wall of screens, which stands a block off the wall with its cables behind it, where the wall was linked to
+  nothing; the battery banks feed every rack, the Mainframe, the desks, the Chillers and the Cooling Tower; the plant's
+  pipes meet the ports that take its water, the tower a block off the wall where its cold outlet was walled in; and
+  its hall and its two rooms are lit by panels in the ceiling, where the hall was dark and the rooms unlit.
+- Abandoned buildings: a working building's Mainframes and rack servers show a picture. A Mainframe's board
+  and the Legacy server's drive no screen by themselves, so each now holds the plainest graphics card of its era that
+  its board takes.
 - Every fan turns real blades: a case fan's, a cooler's and a radiator's, and the fans of the ASIC
   Forges, the Prosa i3 MK3's head and the Russet towers, are seven wide plates pitched about their own line, as a PC
   fan's. They were flat strips lying in the fan's face.

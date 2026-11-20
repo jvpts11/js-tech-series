@@ -537,6 +537,12 @@ together give about one building every 190 blocks, most of them the small common
 - **The plant:** the datacenter has two Chillers on its roof and a Cooling Tower in its yard; the supercomputing centre
   a Chiller and two Cooling Towers in its yard, and a CDU at the head of each row of racks
   ([Temperature](temperature.md)). They stand formed, in a ruin as in a working building.
+- **A working datacenter works:** its Mainframe stands in the hall, at the head of the middle cold aisle; over each hot
+  aisle hang as many Server Routers as their era's rack budget asks, each giving a section to the racks behind its
+  length of the tray, so every rack is managed; the operations room's two computers are on the Mainframe's network,
+  each driving its own screen and a row of the wall of screens; the UPS room's battery banks feed every machine, the
+  plant's too, and the plant's pipes meet the Chillers' and the tower's ports. Every working building's Mainframe and
+  rack servers hold a graphics card of their era, so each shows a picture.
 - The **hardware box** is a loot block of its own, printed with its era's machine.
 - **Each building's own case:** the electronic waste dump works through its office's computer; the delivery van never
   works; a software house office has the house its era's sign names, never Midsoft: Nouvell in the Vintage, Daylight

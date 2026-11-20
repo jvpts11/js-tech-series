@@ -25,33 +25,49 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
+import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ComputerKit;
 import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.computers.datacenter.DatacenterSection;
+import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.plant.CduBlock;
 import dev.jstech.computers.plant.CduBlockEntity;
+import dev.jstech.computers.plant.ChillerBlockEntity;
+import dev.jstech.computers.plant.CoolingWater;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.villager.VillageShops;
 import dev.jstech.core.bigblock.BigBlockPartBlockEntity;
 import dev.jstech.core.cable.CableBlock;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CableType;
 import dev.jstech.core.jstechseries.energy.BatteryBankBlockEntity;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.worldgen.structure.ChosenElement;
 import dev.jstech.core.worldgen.structure.ITemplateChooser;
 import dev.jstech.core.worldgen.structure.TemplateChoosers;
 import dev.jstech.tests.JsTests;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
@@ -73,6 +89,7 @@ import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
@@ -80,11 +97,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -123,6 +145,11 @@ public final class AbandonedBuildingGameTests {
     private static final int SETTLE_TICKS = 400;
     /* A charge in thousandths: full. */
     private static final int FULL = 1000;
+    /* The racks' warm water given each of the datacenter's Chillers, in millibuckets. */
+    private static final int RACKS_WATER = 200;
+    /* The make-up water the tower is given, more than its evaporation over the test. */
+    private static final int MAKE_UP = 200;
+    private static final int PLANT_TICKS = 600;
 
     private AbandonedBuildingGameTests() {
     }
@@ -287,6 +314,27 @@ public final class AbandonedBuildingGameTests {
         helper.succeed();
     }
 
+    /*
+     * A working building's rack server and Mainframe of every era show a picture too: each holds the plainest graphics
+     * card of its era its board takes, since a Mainframe's board drives no screen by itself; the server goes together.
+     */
+    @GameTest(template = SMALL)
+    public static void working_serversAndMainframesOfEveryEraShowAPicture(final GameTestHelper helper) {
+        final List<String> wrong = new ArrayList<>();
+        for (final Era era : HardwareEra.WITH_PARTS) {
+            final ItemStack server = ComputerKit.assemble(AbandonedLoadouts.server(era),
+                    AbandonedLoadouts.serverParts(era)).computer();
+            if (server.isEmpty() || MachinePorts.of(ServerItem.build(server), PortKind.VIDEO) <= 0) {
+                wrong.add(era.path() + (server.isEmpty() ? " server does not go together" : " server"));
+            }
+            if (MachinePorts.of(ServerItem.buildFrom(AbandonedLoadouts.mainframeParts(era)), PortKind.VIDEO) <= 0) {
+                wrong.add(era.path() + " Mainframe");
+            }
+        }
+        helper.assertTrue(wrong.isEmpty(), "every era's server and Mainframe with a picture: " + wrong);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void ruin_chestsDrawFromTheBuildingsTablesOfItsEra(final GameTestHelper helper) {
         place(helper, AbandonedBuilding.ABANDONED_HOUSE, HardwareEra.LEGACY, false);
@@ -358,6 +406,92 @@ public final class AbandonedBuildingGameTests {
                     && formed.getOrDefault("cooling_tower_terminal", 0) == 2,
                     "the Chiller and the two Cooling Towers stand formed: " + formed);
         });
+    }
+
+    /*
+     * A working datacenter is one network: its Mainframe in the hall; over each hot aisle as many Server Routers as
+     * the era's rack budget asks, each taking the network on its back and giving the racks whose backs touch its length
+     * of tray a section on its bottom, every rack in a section and managed; the operations room's computers on the
+     * Mainframe's network, each of their screens on an output of its own; every machine able to show a picture; and the
+     * battery banks of the UPS room reaching every rack, the Mainframe and the desks along the power wire.
+     */
+    @GameTest(template = ARENA, timeoutTicks = SETTLE_TICKS)
+    public static void datacenter_isOneNetworkPoweredByItsBanks(final GameTestHelper helper) {
+        oneNetworkPowered(helper, HardwareEra.STANDARD);
+    }
+
+    /* The same in the Legacy, the oldest datacenter: its backbone the HBW cable, its routers of four racks. */
+    @GameTest(template = ARENA, timeoutTicks = SETTLE_TICKS)
+    public static void datacenter_isOneNetworkPoweredByItsBanksInTheLegacy(final GameTestHelper helper) {
+        oneNetworkPowered(helper, HardwareEra.LEGACY);
+    }
+
+    /* The same in the Transition, its routers of eight racks. */
+    @GameTest(template = ARENA, timeoutTicks = SETTLE_TICKS)
+    public static void datacenter_isOneNetworkPoweredByItsBanksInTheTransition(final GameTestHelper helper) {
+        oneNetworkPowered(helper, HardwareEra.TRANSITION);
+    }
+
+    /* The same in the Advanced, one router over each aisle. */
+    @GameTest(template = ARENA, timeoutTicks = SETTLE_TICKS)
+    public static void datacenter_isOneNetworkPoweredByItsBanksInTheAdvanced(final GameTestHelper helper) {
+        oneNetworkPowered(helper, HardwareEra.ADVANCED);
+    }
+
+    /*
+     * A working datacenter's plant works whole: its two Chillers and its Cooling Tower stand formed, the battery banks
+     * reach their power entries, and the condenser water goes round. Its loop filled as a player fills one, plain water
+     * at each Chiller's cold inlet, and given the racks' warm water and the tower's make-up, both Chillers chill all of
+     * the racks' water; their warm water goes along the warm run to the tower, which cools it, and all of it comes back
+     * along the cold run to the Chillers: none is left in a Chiller's warm outlet or the tower's cold one.
+     */
+    @GameTest(template = ARENA, timeoutTicks = PLANT_TICKS)
+    public static void datacenter_plantChillsAndItsWaterGoesRound(final GameTestHelper helper) {
+        place(helper, AbandonedBuilding.DATACENTER, HardwareEra.STANDARD, true);
+        final Set<BlockPos> powered = poweredFromBanks(helper);
+        helper.forEveryBlockInStructure(pos -> {
+            if (helper.getBlockState(pos).is(ChainMachineBlocks.POWER_ENTRY.get())) {
+                helper.assertTrue(powered.contains(helper.absolutePos(pos)), "the banks reach the power entry at "
+                        + pos);
+            }
+        });
+        final List<ChainMachineBlockEntity> chillers = new ArrayList<>();
+        final List<ChainMachineBlockEntity> towers = new ArrayList<>();
+        helper.startSequence().thenWaitUntil(() -> {
+            chillers.clear();
+            towers.clear();
+            for (final ChainMachineBlockEntity machine : found(helper, ChainMachineBlockEntity.class)) {
+                final String name = BuiltInRegistries.BLOCK.getKey(machine.getBlockState().getBlock()).getPath();
+                if (machine.formed() && "chiller_terminal".equals(name)) {
+                    chillers.add(machine);
+                } else if (machine.formed() && "cooling_tower_terminal".equals(name)) {
+                    towers.add(machine);
+                }
+            }
+            helper.assertTrue(chillers.size() == 2 && towers.size() == 1, "two Chillers and a tower formed");
+        }).thenExecute(() -> {
+            for (final ChainMachineBlockEntity chiller : chillers) {
+                pour(helper, chiller, Fluids.WATER, ChillerBlockEntity.towerShare(RACKS_WATER));
+                pour(helper, chiller, CoolingWater.HOT.get(), RACKS_WATER);
+            }
+            pour(helper, towers.getFirst(), Fluids.WATER, MAKE_UP);
+        }).thenWaitUntil(() -> {
+            int back = 0;
+            for (final ChainMachineBlockEntity chiller : chillers) {
+                final String at = "the Chiller at " + helper.relativePos(chiller.getBlockPos());
+                final int chilled = held(helper, chiller, CoolingWater.COLD.get());
+                helper.assertTrue(chilled == RACKS_WATER, at + " chilled all of the racks' water: " + chilled);
+                helper.assertTrue(held(helper, chiller, CoolingWater.HOT.get()) == 0, at + " sent its warm water on");
+                for (int tank = 0; tank < 2; tank++) {
+                    if (chiller.inputTank(tank).getFluid().is(CoolingWater.COLD.get())) {
+                        back += chiller.inputTank(tank).getFluid().getAmount();
+                    }
+                }
+            }
+            helper.assertTrue(held(helper, towers.getFirst(), CoolingWater.COLD.get()) == 0
+                    && back == 2 * ChillerBlockEntity.towerShare(RACKS_WATER), "the tower's cold water all came back "
+                    + "to the Chillers: " + back);
+        }).thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
@@ -556,6 +690,148 @@ public final class AbandonedBuildingGameTests {
         helper.forEveryBlockInStructure(pos -> laid[0] += helper.getBlockState(pos).is(Blocks.IRON_TRAPDOOR) ? 1 : 0);
         helper.assertValueEqual(laid[0], tiles, "the raised floor's tiles all laid");
         helper.succeed();
+    }
+
+    /*
+     * Every block the power wire reaches from the arena's battery banks: the cables holding it, joined block to block,
+     * and every block beside them.
+     */
+    private static Set<BlockPos> poweredFromBanks(final GameTestHelper helper) {
+        final CableType wire = SharedEnergy.INSULATED_COPPER_CABLE.get();
+        final Set<BlockPos> reached = new HashSet<>();
+        final Deque<BlockPos> open = new ArrayDeque<>();
+        found(helper, BatteryBankBlockEntity.class).forEach(bank -> open.add(bank.getBlockPos()));
+        final Set<BlockPos> seen = new HashSet<>(open);
+        while (!open.isEmpty()) {
+            final BlockPos at = open.poll();
+            for (final Direction side : Direction.values()) {
+                final BlockPos next = at.relative(side);
+                reached.add(next);
+                if (seen.add(next) && helper.getLevel().getBlockEntity(next) instanceof CableBlockEntity cable
+                        && cable.holds(wire)) {
+                    open.add(next);
+                }
+            }
+        }
+        return reached;
+    }
+
+    /* A working datacenter of {@code era} placed, then checked as one network powered by its banks. */
+    private static void oneNetworkPowered(final GameTestHelper helper, final Era era) {
+        place(helper, AbandonedBuilding.DATACENTER, era, true);
+        final List<MainframeBlockEntity> mainframes = found(helper, MainframeBlockEntity.class);
+        final List<ServerRouterBlockEntity> routers = found(helper, ServerRouterBlockEntity.class);
+        final List<ServerRackBlockEntity> racks = found(helper, ServerRackBlockEntity.class);
+        final List<AbstractSmallComputerBlockEntity> desks = found(helper, AbstractSmallComputerBlockEntity.class);
+        helper.assertTrue(mainframes.size() == 1 && mainframes.getFirst().buildValid(), "one Mainframe, whole");
+        final MainframeBlockEntity mainframe = mainframes.getFirst();
+        helper.assertTrue(!routers.isEmpty() && routers.stream().allMatch(router -> router.era() == era),
+                "Server Routers of the era: " + routers.size());
+        helper.assertTrue(!desks.isEmpty() && desks.stream().allMatch(AbstractSmallComputerBlockEntity::buildValid),
+                "the operations room's computers, whole");
+        helper.assertTrue(mainframe.ports(PortKind.VIDEO) > 0 && racks.stream().allMatch(rack -> rack.ports(
+                PortKind.VIDEO) > 0), "the Mainframe and every rack's servers show a picture");
+        final Set<BlockPos> powered = poweredFromBanks(helper);
+        helper.assertTrue(reaches(helper, powered, mainframe.getBlockPos()), "the banks reach the Mainframe");
+        for (final AbstractSmallComputerBlockEntity desk : desks) {
+            helper.assertTrue(powered.contains(desk.getBlockPos()), "the banks reach the computer at "
+                    + helper.relativePos(desk.getBlockPos()));
+        }
+        for (final ServerRackBlockEntity rack : racks) {
+            helper.assertTrue(ServerRackStructure.allPositions(rack.getBlockPos(), rack.getBlockState().getValue(
+                    ServerRackBlock.FACING)).stream().anyMatch(powered::contains), "the banks reach the rack at "
+                    + helper.relativePos(rack.getBlockPos()));
+        }
+        helper.succeedWhen(() -> {
+            screensOnOutputsOfTheirOwn(helper);
+            final Set<Long> inSections = new HashSet<>();
+            for (final ServerRouterBlockEntity router : routers) {
+                router.recomputeNow();
+                final Direction back = router.getBlockState().getValue(HorizontalDirectionalBlock.FACING)
+                        .getOpposite();
+                final String at = "the router at " + helper.relativePos(router.getBlockPos());
+                helper.assertTrue(router.inputFace() == back, at + " takes the network on its back: "
+                        + router.inputFace());
+                helper.assertTrue(router.unmanagedRacks().isEmpty(), at + " manages every rack it reaches: "
+                        + router.unmanagedRacks().size() + " over");
+                for (final DatacenterSection section : router.sections()) {
+                    helper.assertTrue(section.face() == Direction.DOWN, at + " gives its section below: "
+                            + section.face());
+                    helper.assertTrue(inSections.stream().noneMatch(section.rackPositions()::contains), at
+                            + " shares no rack with another router");
+                    inSections.addAll(section.rackPositions());
+                }
+            }
+            for (final ServerRackBlockEntity rack : racks) {
+                helper.assertTrue(inSections.contains(rack.getBlockPos().asLong()), "the rack at "
+                        + helper.relativePos(rack.getBlockPos()) + " in a section");
+            }
+            for (final AbstractSmallComputerBlockEntity desk : desks) {
+                helper.assertTrue(mainframe.nativeNetworkUuid().equals(desk.networkUuid()), "the computer at "
+                        + helper.relativePos(desk.getBlockPos()) + " on the Mainframe's network");
+            }
+        });
+    }
+
+    /*
+     * Every screen of the arena finds its computer, and no computer drives more screens than it has video outputs:
+     * each screen a player turns to shows a picture.
+     */
+    private static void screensOnOutputsOfTheirOwn(final GameTestHelper helper) {
+        final Map<Long, Integer> driven = new HashMap<>();
+        for (final MonitorBlockEntity monitor : found(helper, MonitorBlockEntity.class)) {
+            final OptionalLong owner = PeripheralLinks.discoverOwner(helper.getLevel(),
+                    monitor.getBlockPos().asLong());
+            helper.assertTrue(owner.isPresent(), "the screen at " + helper.relativePos(monitor.getBlockPos())
+                    + " finds its computer");
+            driven.merge(owner.getAsLong(), 1, Integer::sum);
+        }
+        driven.forEach((owner, screens) -> {
+            final BlockPos at = BlockPos.of(owner);
+            helper.assertTrue(helper.getLevel().getBlockEntity(at) instanceof IPeripheralOwner computer
+                    && computer.ports(PortKind.VIDEO) >= screens, "the computer at " + helper.relativePos(at)
+                    + " has an output for each of its " + screens + " screens");
+        });
+    }
+
+    /* Pours {@code amount} of {@code fluid} into the machine's inlet that takes it. */
+    private static void pour(final GameTestHelper helper, final ChainMachineBlockEntity machine, final Fluid fluid,
+                             final int amount) {
+        final IFluidHandler inlet = plantPort(helper, machine, true, fluid);
+        if (inlet == null || inlet.fill(new FluidStack(fluid, amount), IFluidHandler.FluidAction.EXECUTE) != amount) {
+            throw new IllegalStateException("no inlet took " + amount + " mB of " + BuiltInRegistries.FLUID.getKey(
+                    fluid));
+        }
+    }
+
+    /* How much of {@code fluid} the machine's outlet that gives it holds. */
+    private static int held(final GameTestHelper helper, final ChainMachineBlockEntity machine, final Fluid fluid) {
+        final IFluidHandler outlet = plantPort(helper, machine, false, fluid);
+        return outlet == null ? 0 : outlet.drain(new FluidStack(fluid, Integer.MAX_VALUE),
+                IFluidHandler.FluidAction.SIMULATE).getAmount();
+    }
+
+    /* The machine's inlet, or outlet, bound to {@code fluid}, as a pipe on it sees it, or none. */
+    private static IFluidHandler plantPort(final GameTestHelper helper, final ChainMachineBlockEntity machine,
+                                           final boolean inlet, final Fluid fluid) {
+        final MachineStructure structure = machine.structure();
+        if (structure == null) {
+            return null;
+        }
+        final ResourceLocation id = BuiltInRegistries.FLUID.getKey(fluid);
+        for (final MachineStructure.PortAt port : structure.ports()) {
+            if (port.kind().input() == inlet && machine.portProducts(port.pos()).contains(id)) {
+                return helper.getLevel().getCapability(Capabilities.FluidHandler.BLOCK, port.pos(), Direction.UP);
+            }
+        }
+        return null;
+    }
+
+    /* Whether the power reaches the machine whose origin is {@code origin}, at its origin or at any of its parts. */
+    private static boolean reaches(final GameTestHelper helper, final Set<BlockPos> powered, final BlockPos origin) {
+        return powered.stream().anyMatch(pos -> pos.equals(origin)
+                || helper.getLevel().getBlockEntity(pos) instanceof BigBlockPartBlockEntity part
+                && origin.equals(part.originPos()));
     }
 
     /* Whether a player can get {@code state}: its item, or what breaking it with a pickaxe gives. */

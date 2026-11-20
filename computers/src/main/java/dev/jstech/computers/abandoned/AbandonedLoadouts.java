@@ -9,6 +9,8 @@ package dev.jstech.computers.abandoned;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamSpec;
@@ -31,10 +33,12 @@ import net.minecraft.world.item.ItemStack;
  * The machines of each era as an abandoned building holds them, their boards with their firmware written. A computer
  * is the one its mock draws in the case (the board, the processor and the memory) with the supply, the disk, the
  * cooler and a graphics card of its era (none of these processors has graphics of its own, and a desktop board shows
- * no picture without a card), and the system its working machines run. A rack's server and a Mainframe have their
- * era's board, and on it the parts a player picks from the era's catalogue: the strongest processor of the board's
- * socket and era, the largest memory it takes, the strongest supply of the era. A rack holds its era's supply unit at
- * its foot and its switch at its top.
+ * no picture without a card), and the system its working machines run; one that drives more screens than a card has
+ * outputs holds as many cards as they take. A rack's server and a Mainframe have their era's board, and on it the parts
+ * a player picks from the era's catalogue: the strongest processor of the board's socket and era, the largest memory
+ * it takes, the strongest supply of the era, and the plainest graphics card of the era it takes, since not every
+ * server board drives a screen by itself and a player uses every machine through one. A rack holds its era's supply
+ * unit at its foot and its switch at its top.
  */
 public final class AbandonedLoadouts {
 
@@ -75,6 +79,21 @@ public final class AbandonedLoadouts {
         return out;
     }
 
+    /**
+     * The parts of {@code era}'s computer as {@link #parts(Era)} gives them, with as many of its graphics card as it
+     * takes to drive {@code screens} screens.
+     */
+    public static List<ItemStack> parts(final Era era, final int screens) {
+        final List<ItemStack> out = parts(era);
+        final ItemStack card = out.stream().filter(part -> HardwareRegistry.gpu(part) != null).findFirst()
+                .orElseThrow(() -> new IllegalStateException("no graphics card in the " + era.path() + " computer"));
+        final int outputs = MachinePorts.videoOutputs(HardwareRegistry.gpu(card).era());
+        for (int driven = outputs; driven < screens; driven += outputs) {
+            out.add(card.copy());
+        }
+        return out;
+    }
+
     /** Whether {@code part} sits on the board, and goes with it: everything but the supply and the disk. */
     public static boolean onBoard(final ItemStack part) {
         return HardwareRegistry.psu(part) == null && HardwareRegistry.disk(part) == null;
@@ -95,14 +114,20 @@ public final class AbandonedLoadouts {
         return new ItemStack(item(loadout(era).parts().get(DISK)));
     }
 
-    /** The parts of {@code era}'s rack server: its board first, then the processor, the memory, the supply. */
+    /**
+     * The parts of {@code era}'s rack server: its board first, then the processor, the memory, the supply and the
+     * graphics card.
+     */
     public static List<ItemStack> serverParts(final Era era) {
-        return onBoard(item(loadout(era).serverBoard()), era);
+        return withCard(item(loadout(era).serverBoard()), era);
     }
 
-    /** The parts of {@code era}'s Mainframe: its board first, then the processor, the memory, the supply. */
+    /**
+     * The parts of {@code era}'s Mainframe: its board first, then the processor, the memory, the supply and the
+     * graphics card.
+     */
     public static List<ItemStack> mainframeParts(final Era era) {
-        return onBoard(item(loadout(era).mainframeBoard()), era);
+        return withCard(item(loadout(era).mainframeBoard()), era);
     }
 
     /** {@code era}'s 1U server, still empty. */
@@ -168,6 +193,15 @@ public final class AbandonedLoadouts {
         return List.of(flashed(new ItemStack(board)), new ItemStack(cpu), new ItemStack(ram), new ItemStack(psu));
     }
 
+    /* A server-class board and what a player seats on it, with the plainest graphics card of its era it takes. */
+    private static List<ItemStack> withCard(final Item board, final Era era) {
+        final MotherboardSpec spec = HardwareRegistry.board(new ItemStack(board));
+        final List<ItemStack> out = new ArrayList<>(onBoard(board, era));
+        out.add(new ItemStack(best(item -> HardwareRegistry.gpu(new ItemStack(item)) instanceof GpuSpec gpu
+                && gpu.era() == spec.era() && spec.takes(gpu), item -> -gpu(item).tdpWatts())));
+        return out;
+    }
+
     /* A board with its firmware written, as the machine that held it ran on it: anything else as it is. */
     private static ItemStack flashed(final ItemStack part) {
         return HardwareRegistry.board(part) != null && BoardFirmware.blank(part) ? BoardFirmware.written(part) : part;
@@ -182,6 +216,10 @@ public final class AbandonedLoadouts {
 
     private static CpuSpec cpu(final Item item) {
         return HardwareRegistry.cpu(new ItemStack(item));
+    }
+
+    private static GpuSpec gpu(final Item item) {
+        return HardwareRegistry.gpu(new ItemStack(item));
     }
 
     private static RamSpec ram(final Item item) {
