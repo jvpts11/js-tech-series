@@ -41,6 +41,11 @@
         },
         {
           "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_3060",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
           "name": "jsc:bd_rom",
           "weight": 2
         },

@@ -4454,6 +4454,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Computers) Abandoned buildings: a working building's computers show a picture. None of the eras' processors in
+  them has graphics of its own, so each now holds a modest graphics card of its era (a VGA-256, a Vertex FX 5200, a
+  Vertex 8600 GT, a Vertex GTX 550 Ti, a Vertex RTX 3060), which the chests may also give; and the Legacy computer is
+  whole, its processor a Pentix 4 2.4C that fits its Socket 478 board.
 - (Core) A model's glass is drawn after everything solid behind it: through a docked ship's canopy its cockpit shows, its walls, seats and consoles, no longer the ground beyond the ship, which showed where the glass had been drawn before the cockpit's parts behind it.
 - (Space) The Cab cockpit is walked into: its flight deck stands lower, its pilot's seat on a plinth as high as before,
   so a player stands beside the seat under the cabin's roof, and the slab hidden where the cabin sits on the chin, which

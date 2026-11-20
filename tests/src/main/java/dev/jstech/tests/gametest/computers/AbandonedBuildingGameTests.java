@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.abandoned.AbandonedBuilding;
 import dev.jstech.computers.abandoned.AbandonedBuildings;
@@ -27,6 +28,7 @@ import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
+import dev.jstech.computers.chain.machine.ComputerKit;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.plant.CduBlock;
@@ -37,6 +39,7 @@ import dev.jstech.core.bigblock.BigBlockPartBlockEntity;
 import dev.jstech.core.cable.CableBlock;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.jstechseries.energy.BatteryBankBlockEntity;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.worldgen.structure.ChosenElement;
@@ -255,6 +258,30 @@ public final class AbandonedBuildingGameTests {
                     "its era's system installed");
             helper.assertTrue(computer.isAutoStart(), "set to come up as soon as it has energy");
         }
+        helper.succeed();
+    }
+
+    /*
+     * A working building's computer of every era, built of the parts it is given, is whole and shows a picture: none
+     * of the eras' processors has graphics of its own, so it holds a graphics card of its era.
+     */
+    @GameTest(template = SMALL)
+    public static void working_computersOfEveryEraShowAPicture(final GameTestHelper helper) {
+        final List<String> wrong = new ArrayList<>();
+        for (final Era era : HardwareEra.WITH_PARTS) {
+            final Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                    (era == HardwareEra.STANDARD ? "" : era.path() + "_") + "personal_computer"));
+            helper.setBlock(FOOT, block.defaultBlockState());
+            if (!(helper.getBlockEntity(FOOT) instanceof AbstractSmallComputerBlockEntity computer)) {
+                throw new IllegalStateException("no computer of the " + era.path());
+            }
+            computer.applyComponentsFromItemStack(ComputerKit.assemble(new ItemStack(block),
+                    AbandonedLoadouts.parts(era)).computer());
+            if (!computer.buildValid() || computer.ports(PortKind.VIDEO) <= 0) {
+                wrong.add(era.path() + (computer.buildValid() ? " has no video output" : " is not whole"));
+            }
+        }
+        helper.assertTrue(wrong.isEmpty(), "every era's computer whole, with a picture: " + wrong);
         helper.succeed();
     }
 

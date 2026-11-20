@@ -10,7 +10,7 @@
         },
         {
           "type": "minecraft:item",
-          "name": "jsc:cpu_integra_pentix_4_520"
+          "name": "jsc:cpu_integra_pentix_4_2_4c"
         },
         {
           "type": "minecraft:item",
@@ -31,6 +31,10 @@
         {
           "type": "minecraft:item",
           "name": "jsc:stock_cooler_legacy"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_fx_5200"
         }
       ],
       "rolls": {

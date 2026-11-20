@@ -41,6 +41,11 @@
         },
         {
           "type": "minecraft:item",
+          "name": "jsc:gpu_vga_256",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
           "name": "jsc:floppy_disk",
           "weight": 2
         },

@@ -31,6 +31,10 @@
         {
           "type": "minecraft:item",
           "name": "jsc:stock_cooler_vintage"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vga_256"
         }
       ],
       "rolls": {

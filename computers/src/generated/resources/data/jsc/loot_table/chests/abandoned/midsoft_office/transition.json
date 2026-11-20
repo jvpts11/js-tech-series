@@ -41,6 +41,11 @@
         },
         {
           "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_8600_gt",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
           "name": "jsc:dvd_rom",
           "weight": 2
         },

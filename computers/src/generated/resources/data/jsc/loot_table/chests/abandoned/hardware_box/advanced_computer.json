@@ -31,6 +31,10 @@
         {
           "type": "minecraft:item",
           "name": "jsc:stock_cooler_advanced"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_3060"
         }
       ],
       "rolls": {

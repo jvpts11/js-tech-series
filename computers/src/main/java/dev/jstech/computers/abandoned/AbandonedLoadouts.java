@@ -29,31 +29,34 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * The machines of each era as an abandoned building holds them, their boards with their firmware written. A computer
- * is the one its mock draws in the case (the board, the processor and the memory) with the supply, the disk and the
- * cooler of its era, and the system its working machines run. A rack's server and a Mainframe have their era's board,
- * and on it the parts a player picks from the era's catalogue: the strongest processor of the board's socket and era,
- * the largest memory it takes, the strongest supply of the era. A rack holds its era's supply unit at its foot and its
- * switch at its top.
+ * is the one its mock draws in the case (the board, the processor and the memory) with the supply, the disk, the
+ * cooler and a graphics card of its era (none of these processors has graphics of its own, and a desktop board shows
+ * no picture without a card), and the system its working machines run. A rack's server and a Mainframe have their
+ * era's board, and on it the parts a player picks from the era's catalogue: the strongest processor of the board's
+ * socket and era, the largest memory it takes, the strongest supply of the era. A rack holds its era's supply unit at
+ * its foot and its switch at its top.
  */
 public final class AbandonedLoadouts {
 
     private static final Map<Era, Loadout> LOADOUTS = Map.of(
             HardwareEra.VINTAGE, new Loadout(List.of("motherboard_babyat_vintage", "cpu_integra_486dx2", "ram_simm_16",
-                    "ram_simm_16", "psu_200", "disk_vaultis_trench_100m", "stock_cooler_vintage"), "mc_dos",
-                    "motherboard_eeb_vintage", "motherboard_mtx_vintage", "vintage_"),
-            HardwareEra.LEGACY, new Loadout(List.of("motherboard_atx_legacy_478", "cpu_integra_pentix_4_520",
-                    "ram_ddr_512", "ram_ddr_512", "psu_350", "disk_vaultis_link_ide_40g", "stock_cooler_legacy"),
-                    "frames_xp", "motherboard_eatx_legacy_604", "motherboard_mtx_legacy", "legacy_"),
+                    "ram_simm_16", "psu_200", "disk_vaultis_trench_100m", "stock_cooler_vintage", "gpu_vga_256"),
+                    "mc_dos", "motherboard_eeb_vintage", "motherboard_mtx_vintage", "vintage_"),
+            HardwareEra.LEGACY, new Loadout(List.of("motherboard_atx_legacy_478", "cpu_integra_pentix_4_2_4c",
+                    "ram_ddr_512", "ram_ddr_512", "psu_350", "disk_vaultis_link_ide_40g", "stock_cooler_legacy",
+                    "gpu_vertex_fx_5200"), "frames_xp", "motherboard_eatx_legacy_604", "motherboard_mtx_legacy",
+                    "legacy_"),
             HardwareEra.TRANSITION, new Loadout(List.of("motherboard_atx_transition_775",
                     "cpu_integra_centro_2_duo_e6600", "ram_ddr2_2048", "ram_ddr2_2048", "psu_500b", "disk_hdd_500g",
-                    "stock_cooler_transition"), "frames_7", "motherboard_eeb_t_1366", "motherboard_mtx_t",
-                    "transition_"),
+                    "stock_cooler_transition", "gpu_vertex_8600_gt"), "frames_7", "motherboard_eeb_t_1366",
+                    "motherboard_mtx_t", "transition_"),
             HardwareEra.STANDARD, new Loadout(List.of("motherboard_atx_standard_1155", "cpu_integra_centro_c7_2600k",
-                    "ram_ddr3_8192", "ram_ddr3_8192", "psu_650g", "disk_ssd_500g", "stock_cooler_standard"),
-                    "frames_10", "motherboard_eeb_s_2011", "motherboard_mtx_s_2011", ""),
+                    "ram_ddr3_8192", "ram_ddr3_8192", "psu_650g", "disk_ssd_500g", "stock_cooler_standard",
+                    "gpu_vertex_gtx_550_ti"), "frames_10", "motherboard_eeb_s_2011", "motherboard_mtx_s_2011", ""),
             HardwareEra.ADVANCED, new Loadout(List.of("motherboard_atx_advanced_1700", "cpu_integra_centro_c9_12900k",
-                    "ram_ddr5_16384", "ram_ddr5_16384", "psu_850g", "disk_nvme_1t", "stock_cooler_advanced"),
-                    "frames_11", "motherboard_eeb_a_sp3", "motherboard_mtx_a_sp3", "advanced_"));
+                    "ram_ddr5_16384", "ram_ddr5_16384", "psu_850g", "disk_nvme_1t", "stock_cooler_advanced",
+                    "gpu_vertex_rtx_3060"), "frames_11", "motherboard_eeb_a_sp3", "motherboard_mtx_a_sp3",
+                    "advanced_"));
     /** The system every Mainframe runs its network with. */
     private static final ResourceLocation NETWORK_SYSTEM = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
             "mc_net");
