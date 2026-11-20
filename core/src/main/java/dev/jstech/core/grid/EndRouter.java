@@ -24,8 +24,9 @@ import org.jetbrains.annotations.Nullable;
  * tick, and fills its block no further than the amount its filter keeps there.
  *
  * <p>Among the ends a share could go to, the highest priority fills first, and those of one priority take turns: each
- * tick the next of them is served first, so a lower one never gets what a higher one still wants. The whole part moves
- * no more in a tick than its slowest cable carries.
+ * time the part moves something the next of them is served first, so a block that gives out its batch only now and
+ * then feeds them all in turn, and a lower one never gets what a higher one still wants. The whole part moves no more
+ * in a tick than its slowest cable carries.
  */
 public final class EndRouter {
 
@@ -39,8 +40,8 @@ public final class EndRouter {
 
     /**
      * Moves one tick's worth through a part whose ends are {@code ends}, at most {@code budget}, only what
-     * {@code carries} lets the part's cables carry, moving each share with {@code move}; {@code turn} counts the ticks,
-     * so the ends of one priority take turns. How much moved.
+     * {@code carries} lets the part's cables carry, moving each share with {@code move}; {@code turn} counts the times
+     * the part moved something, so the ends of one priority take turns. How much moved.
      */
     public static <R> long route(final List<? extends IEnd<R>> ends, final long budget, final long turn,
                                  final Predicate<R> carries, final IMove<R> move) {

@@ -26,6 +26,7 @@ import dev.jstech.core.grid.PartTally;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.transfer.Batch;
 import dev.jstech.core.transfer.HandlerSteps;
+import dev.jstech.core.util.EndTurns;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,7 +64,11 @@ public final class LevelItems implements IGridMover {
     private long builtVersion = -1L;
     private long builtTaps = -1L;
     private long taps;
-    private long turn;
+    /*
+     * Each part's turn, counted by its deliveries, so a machine that gives out its batch at once feeds the next end
+     * each time, not the same one.
+     */
+    private final EndTurns turns = new EndTurns();
     private final LineFlows flows = new LineFlows();
 
     /** What the debug screen calls the time the item grid takes to move a tick's items. */
@@ -118,18 +123,21 @@ public final class LevelItems implements IGridMover {
             build(level, grid);
             this.builtVersion = grid.version();
             this.builtTaps = this.taps;
+            this.turns.keep(this.parts.stream().map(Part::ends).toList());
         }
         final long[] moved = new long[this.parts.size()];
         final List<FlowTrace> traces = new ArrayList<>(this.parts.size());
         for (int i = 0; i < moved.length; i++) {
             final Part part = this.parts.get(i);
             part.tally().reset();
-            moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turn, stack -> true,
-                    (from, to, item, amount) -> part.tally().moved(from.key(), to.key(),
+            moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turns.of(part.ends()),
+                    stack -> true, (from, to, item, amount) -> part.tally().moved(from.key(), to.key(),
                             move(part.trace(), from, to, item, amount)));
             traces.add(part.trace());
+            if (moved[i] > 0) {
+                this.turns.moved(part.ends());
+            }
         }
-        this.turn++;
         this.lastTick = moved;
         this.flows.tick(level, traces);
     }

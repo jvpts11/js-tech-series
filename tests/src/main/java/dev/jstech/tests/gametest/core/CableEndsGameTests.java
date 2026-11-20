@@ -33,6 +33,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
@@ -73,6 +74,8 @@ public final class CableEndsGameTests {
     private static final BlockPos SIDE = new BlockPos(3, 2, 3);
     private static final int WATER = 1_000;
     private static final int WAIT = 20;
+    /* How many batches the output gives out, a second apart, for two ends to share. */
+    private static final int BATCHES = 4;
 
     private CableEndsGameTests() {
     }
@@ -100,6 +103,28 @@ public final class CableEndsGameTests {
                     "the same share over time, never more than a tick's worth apart: " + side + " and " + far);
             helper.assertTrue(side + far == WATER, "and none is lost");
         });
+    }
+
+    /*
+     * A block that gives out its batch only now and then, as a machine does once a second, still feeds the ends of one
+     * priority in turn: each batch goes to the next of them, not every one to the same.
+     */
+    @GameTest(template = ARENA)
+    public static void samePriority_takeTurnsAtBatchesGivenNowAndThen(final GameTestHelper helper) {
+        final FluidTank output = fluidEnds(helper, TestCableTypes.PLAIN_PIPE);
+        output.drain(WATER, IFluidHandler.FluidAction.EXECUTE);
+        GameTestSequence batches = helper.startSequence();
+        for (int batch = 0; batch < BATCHES; batch++) {
+            batches = batches.thenExecuteAfter(WAIT, () -> output.fill(new FluidStack(Fluids.WATER,
+                    (int) TestCableTypes.PLAIN_RATE), IFluidHandler.FluidAction.EXECUTE));
+        }
+        batches.thenExecuteAfter(WAIT, () -> {
+            final int side = tank(helper, SIDE).getFluidAmount();
+            final int far = tank(helper, FAR).getFluidAmount();
+            helper.assertTrue(output.isEmpty() && side + far == BATCHES * TestCableTypes.PLAIN_RATE, "every batch "
+                    + "went out: " + side + " and " + far);
+            helper.assertTrue(side == far, "each end took every other batch: " + side + " and " + far);
+        }).thenSucceed();
     }
 
     @GameTest(template = ARENA)

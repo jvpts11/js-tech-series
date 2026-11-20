@@ -36,6 +36,7 @@ import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.transfer.Batch;
+import dev.jstech.core.util.EndTurns;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,7 +90,11 @@ public final class LevelMatter implements IGridMover {
     private long builtVersion = -1L;
     private long builtTaps = -1L;
     private long taps;
-    private long turn;
+    /*
+     * Each part's turn, counted by its deliveries, so a machine that gives out its batch at once feeds the next end
+     * each time, not the same one.
+     */
+    private final EndTurns turns = new EndTurns();
     private final LineFlows flows = new LineFlows();
 
     /** What the debug screen calls the time the grids of the states of matter take to move a tick's matter. */
@@ -186,6 +191,7 @@ public final class LevelMatter implements IGridMover {
             build(level, grid);
             this.builtVersion = grid.version();
             this.builtTaps = this.taps;
+            this.turns.keep(this.parts.stream().map(Part::ends).toList());
         }
         final long[] moved = new long[this.parts.size()];
         final List<FlowTrace> traces = new ArrayList<>(this.parts.size());
@@ -197,7 +203,7 @@ public final class LevelMatter implements IGridMover {
             final Part part = this.parts.get(i);
             part.tally().reset();
             final Set<Material> carried = counting && !part.wearable().isEmpty() ? new HashSet<>() : null;
-            moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turn,
+            moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turns.of(part.ends()),
                     part.carries(), (from, to, substance, amount) -> {
                         final long done = move(part.trace(), from, to, substance, amount);
                         if (carried != null && done > 0 && substance.material() != null) {
@@ -212,12 +218,14 @@ public final class LevelMatter implements IGridMover {
                 wear(part, carried, worn, wornBy);
             }
             traces.add(part.trace());
+            if (moved[i] > 0) {
+                this.turns.moved(part.ends());
+            }
         }
         for (final LineWear.Pipe through : LineWear.wear(level, worn)) {
             through.type().breach().exposed(level, new LineBreach(through.at(), through.type(),
                     LineBreach.Reason.WORN_OUT, wornBy.get(through)), level.getGameTime());
         }
-        this.turn++;
         this.lastTick = moved;
         this.flows.tick(level, traces);
     }

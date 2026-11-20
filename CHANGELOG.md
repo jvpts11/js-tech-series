@@ -4452,6 +4452,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and at T-0 the same rocket goes. The count stayed at its release for good.
 - (Space) Two docked ships do not pulse jump: they undock first, and B held docked shows PULSE OFF with DOCKED: UNDOCK
   FIRST, where nothing said why the drive would not spool.
+- (Core) The ends of one priority on a line take turns by the line's deliveries: each time it moves something, the
+  next of them is served first. They took turns by the tick, so a block that gives out its batch only now and then, as
+  a machine does once a second, fed the same end every time while the others waited: a CDU's chilled water reached
+  only some of the racks along its pipe.
 - (Space) A Small Shipyard takes a ship back only when asked: Take ship in, on the Starship Design screen in the place
   of Release ship while the dock stands open, has it take the ship in its bay and close round it, and only a pilot of
   that ship may ask. A pilot's hand on the flight console of a ship let go near a dock had the dock take it straight

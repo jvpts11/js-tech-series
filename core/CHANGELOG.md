@@ -2291,6 +2291,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 - The design pages describe what came with this release: J's Computers' and J's Core's pages say
   what is built, and each lists at its end only what is still to build.
+- The ends of one priority on a line take turns by the line's deliveries: each time it moves something, the
+  next of them is served first. They took turns by the tick, so a block that gives out its batch only now and then, as
+  a machine does once a second, fed the same end every time while the others waited: a CDU's chilled water reached
+  only some of the racks along its pipe.
 
 ### Fixed
 - A model's glass is drawn after everything solid behind it: through a docked ship's canopy its cockpit shows, its walls, seats and consoles, no longer the ground beyond the ship, which showed where the glass had been drawn before the cockpit's parts behind it.
