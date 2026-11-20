@@ -108,6 +108,13 @@
     "jsc:large_scale_printer_print_unit",
     "jsc:large_scale_printer_inking_unit",
     "jsc:large_scale_printer_perfect_binder",
+    "jsc:cooling_tower_basin",
+    "jsc:cooling_tower_louvre",
+    "jsc:cooling_tower_fill",
+    "jsc:cooling_tower_fan",
+    "jsc:chiller_evaporator",
+    "jsc:chiller_condenser",
+    "jsc:chiller_compressor",
     "jsc:crusher_terminal",
     "jsc:grinder_terminal",
     "jsc:induction_furnace_terminal",
@@ -141,6 +148,8 @@
     "jsc:assembly_advanced_terminal",
     "jsc:prebuilder_terminal",
     "jsc:preinstaller_terminal",
-    "jsc:large_scale_printer_terminal"
+    "jsc:large_scale_printer_terminal",
+    "jsc:cooling_tower_terminal",
+    "jsc:chiller_terminal"
   ]
 }

@@ -63,6 +63,7 @@ final class MachineBlockRecipes {
         chipFactory(output);
         assemblyLines(output);
         largeScalePrinter(output);
+        coolingPlant(output);
         terminals(output);
     }
 
@@ -298,6 +299,27 @@ final class MachineBlockRecipes {
                 'C', ChainParts.COPPER_COIL.get(), 'R', steelRod(), 'M', motor);
         made(output, HardwareEra.LEGACY, block("large_scale_printer_print_unit"), steelPlate(), 4,
                 board(HardwareEra.LEGACY), 1, controller(HardwareEra.LEGACY), 4, motor, 1);
+    }
+
+    /*
+     * The datacenter's cooling plant's parts at the Crafting Table: the tower's basin in steel, its louvres of
+     * aluminium slats, its fill of PVC film as a real tower's, its fan's aluminium blades on a motor; the chiller's
+     * evaporator lagged with wool, its condenser's copper tubes, its compressor driven by a motor.
+     */
+    private static void coolingPlant(final RecipeOutput output) {
+        final Item mc = block("machine_casing").asItem();
+        final Item motor = ChainParts.ELECTRIC_MOTOR.get();
+        grid(output, block("cooling_tower_basin"), 1, rows("P P", "PCP"), 'P', steelPlate(), 'C', mc);
+        grid(output, block("cooling_tower_louvre"), 4, rows("AAA", "BCB", "AAA"), 'A', aluminiumPlate(),
+                'B', Items.IRON_BARS, 'C', mc);
+        grid(output, block("cooling_tower_fill"), 2, rows("VVV", "VCV", "VVV"), 'V', pvc(), 'C', mc);
+        grid(output, block("cooling_tower_fan"), 1, rows("A A", " M ", "PCP"), 'A', aluminiumPlate(), 'M', motor,
+                'P', steelPlate(), 'C', mc);
+        grid(output, block("chiller_evaporator"), 1, rows("WWW", "UCU", "WWW"), 'W', Items.WHITE_WOOL,
+                'U', Items.COPPER_INGOT, 'C', mc);
+        grid(output, block("chiller_condenser"), 1, rows("UUU", "PCP", "UUU"), 'U', Items.COPPER_INGOT,
+                'P', steelPlate(), 'C', mc);
+        grid(output, block("chiller_compressor"), 1, rows("PMP", "PCP"), 'P', steelPlate(), 'M', motor, 'C', mc);
     }
 
     private static ItemLike block(final String id) {

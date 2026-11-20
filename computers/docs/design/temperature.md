@@ -66,6 +66,34 @@ seats, for a second processor and memory modules 5 to 8, shown only when a two-s
 All of this is in J's Computers, without J's Industrial. J's Industrial's machines (heat pipes, chillers, towers) can
 join later, trading heat through a heat capability of J's Core.
 
+## Liquid cooling
+
+A datacenter that outgrows its air cools its racks with water, through J's Core's fluid pipes. Two liquids of J's
+Computers go round two loops: **Cold Water**, going out to what it cools, and **Hot Water**, coming back. The heat rides
+the water: **1 mB a second carries 1 kW**. Every number here is an estimate.
+
+- **The Supercomputer Rack** (and the AI Rack when it comes) takes Cold Water in at the top block at its back right, as
+  one faces its front, and gives Hot Water out at the top block at its front left. Once a second it turns as many mB of
+  cold water into hot as its heat over its air budget needs, up to **8 mB/s**, and its budget grows by **1,000 W** for
+  each: up to **+8,000 W**. Short of cold water, or with its hot water's way out full, it gets the share that went
+  through. Its window shows a drop before its state while water cools it: blue while it gets all it asks, amber when
+  short; the drop's tooltip gives the watts and the flow.
+- **The Chiller** (3 long, 2 high, 2 deep) cools the racks' Hot Water into Cold Water, up to **120 mB/s** (120 kW), for
+  its compressor's **30 kW** at full load; for every 20 mB it cools it turns **25 mB** of the tower's Cold Water into
+  Hot Water (150 kW at full load: the racks' heat and its own). Without the tower's water it cools nothing. Its water
+  box is four ports, one a block: the racks' pair on its end (COLD out, HOT in), the tower's pair above them on its
+  front and back (COLD in, HOT out).
+- **The Cooling Tower** (3 wide, 4 high, 3 deep) cools the Chiller's Hot Water into Cold Water, up to **200 mB/s**
+  (200 kW), evaporating **1 mB** of plain water from its FILL inlet for every **10 mB** it cools (20 mB/s at full load);
+  its fan draws up to **2 kW**. Its inputs, HOT and FILL, are on its left side, its COLD output on its right, its
+  power at its back.
+- **Filling a loop**: plain water piped into any COLD inlet counts as Cold Water, so a loop is filled once from any
+  water supply, as a real plant fills its loops from the mains; the tower makes its own from FILL.
+
+The Chiller and the Cooling Tower are built of the chain's kit (Machine Casing, Liquid Inlets and Outlets, a Power
+Entry and the machine's terminal) and parts of their own (the tower's Basin, Louvres, Fills and Fan; the Chiller's
+Evaporator, Condenser and Compressor), and work like any chain machine; each has its own screen.
+
 ## Temperature and its thresholds
 
 The **temperature** is the surroundings' temperature plus the rise the load causes: the surroundings + 60 × (the load ÷

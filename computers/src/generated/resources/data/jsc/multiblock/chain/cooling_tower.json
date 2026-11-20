@@ -1,0 +1,73 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:cooling_tower_basin"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:cooling_tower_louvre"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:cooling_tower_fill"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:cooling_tower_fan"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:liquid_outlet"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "aaa",
+      "aba",
+      "aaa"
+    ],
+    [
+      "ccc",
+      "cdc",
+      "ccc"
+    ],
+    [
+      "a#f",
+      "gda",
+      "ahf"
+    ],
+    [
+      "aaa",
+      "aea",
+      "aaa"
+    ]
+  ],
+  "name": "cooling_tower",
+  "ports": {
+    "f": "fluid_input",
+    "g": "fluid_output",
+    "h": "energy_input"
+  },
+  "terminal": "jsc:cooling_tower_terminal"
+}

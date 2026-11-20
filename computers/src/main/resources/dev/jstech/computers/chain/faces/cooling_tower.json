@@ -1,0 +1,80 @@
+{
+ "frames": 64,
+ "millis": 90,
+ "plate": "COOLING TOWER",
+ "ports": [],
+ "meter": {
+  "x": 10,
+  "y": 37,
+  "w": 18,
+  "h": 56,
+  "label": {
+   "x": 20,
+   "y": 97
+  }
+ },
+ "lcd": {
+  "x": 102,
+  "y": 5,
+  "w": 56,
+  "h": 22
+ },
+ "switch": {
+  "x": 212,
+  "y": 50,
+  "on": {
+   "x": 215,
+   "y": 42
+  },
+  "off": {
+   "x": 212,
+   "y": 75
+  }
+ },
+ "glasses": [
+  {
+   "x": 179,
+   "y": 40,
+   "h": 24,
+   "w": 6,
+   "tank": 0,
+   "fluid": "jsc:hot_water"
+  },
+  {
+   "x": 197,
+   "y": 40,
+   "h": 24,
+   "w": 6,
+   "tank": 0,
+   "fluid": "minecraft:water"
+  },
+  {
+   "x": 179,
+   "y": 72,
+   "h": 24,
+   "w": 6,
+   "tank": 2,
+   "fluid": "jsc:cold_water"
+  }
+ ],
+ "words": [
+  {
+   "text": "HOT",
+   "x": 175,
+   "y": 65,
+   "colour": "dce0e6"
+  },
+  {
+   "text": "FILL",
+   "x": 192,
+   "y": 65,
+   "colour": "dce0e6"
+  },
+  {
+   "text": "COLD",
+   "x": 173,
+   "y": 97,
+   "colour": "dce0e6"
+  }
+ ]
+}

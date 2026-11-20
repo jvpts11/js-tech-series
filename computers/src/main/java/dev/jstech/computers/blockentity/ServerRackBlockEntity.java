@@ -47,6 +47,7 @@ import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.os.BoardFirmware;
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.plant.RackCoolant;
 import dev.jstech.computers.portable.AlertKind;
 import dev.jstech.computers.power.UpsRating;
 import dev.jstech.computers.power.UpsReading;
@@ -146,6 +147,7 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.ArrayDeque;
@@ -426,6 +428,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final DerivedInt bayPowerShown = fields().derived("BayPower", () -> ~this.bayPowerOff & 0xFF).toMenu();
     private final DerivedInt throttleShown = fields().derived("Throttle", this::thermalThrottlePercent).toMenu();
     private final DerivedInt temperatureShown = fields().derived("RackTemp", () -> thermal().celsius()).toMenu();
+    private final DerivedInt coolingShown = fields().derived("Cooling", this::liquidCooledWatts).toMenu();
+    private final DerivedInt coolingAskedShown = fields().derived("CoolingAsked",
+            () -> liquidCooled() ? this.coolant.askedWatts() : 0).toMenu();
     /** Rebuild progress in permille, one handle per unit, filled in the constructor. */
     private final DerivedInt[] rebuildShown = new DerivedInt[CAPACITY_U];
     /* The drive of each Tape Library, by the row it is topped at: what it winds and what it does there. */
@@ -1125,6 +1130,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final UpsBattery ups = new UpsBattery();
     /* How hot the cabinet is: one temperature for every machine in it (computers/docs/design/temperature.md). */
     private final ComputerHeat heat = new ComputerHeat();
+    /* A Supercomputer or AI rack's liquid cooling: cold water in at one top port, hot water out at the other. */
+    private final RackCoolant coolant = new RackCoolant();
     /* The chunks round the cabinet its servers' Network Anchor Cards keep loaded while they run. */
     private final ChunkAnchor anchor = new ChunkAnchor();
     /* What its servers moved for the network since its section's router last read it. */
@@ -1222,6 +1229,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         fields().part("Energy", energy.store()).save();
         fields().part("Heat", IFieldPart.of((tag, registries) -> heat.save(tag),
                 (tag, registries) -> heat.load(tag))).save();
+        fields().part("Coolant", IFieldPart.of(coolant::save, coolant::load)).save();
         fields().part("Cabinet", new CabinetPart()).toClient();
         for (int slot = 0; slot < CAPACITY_U; slot++) {
             final int row = slot;
@@ -1329,6 +1337,16 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     }
 
     /** The cabinet's temperature in whole °C, as last shown to the open menu. */
+    /** The watts the rack's water carried in the last second, as the server last told the screen. */
+    public int coolingShown() {
+        return coolingShown.getAsInt();
+    }
+
+    /** The watts the rack asked of its water in the last second, as the server last told the screen. */
+    public int coolingAskedShown() {
+        return coolingAskedShown.getAsInt();
+    }
+
     public int temperatureShown() {
         return temperatureShown.getAsInt();
     }
@@ -1832,9 +1850,41 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     /**
      * The heat this cabinet can shed: its own dissipation plus what every Cooling Unit mounted sheds, by its era, and
-     * every Vent Panel.
+     * every Vent Panel; and for a liquid-cooled rack, what its water carried away in the last second.
      */
     public int thermalBudgetWatts() {
+        return airBudgetWatts() + (liquidCooled() ? coolant.cooledWatts() : 0);
+    }
+
+    /** Whether the cabinet takes cold water at its top, as the Supercomputer Rack and the AI Rack do. */
+    public boolean liquidCooled() {
+        return rackType() != RackChassis.RackType.SERVER;
+    }
+
+    /** The water's part of this rack's budget in the last second, in watts; nothing for a rack cooled by air only. */
+    public int liquidCooledWatts() {
+        return liquidCooled() ? coolant.cooledWatts() : 0;
+    }
+
+    /**
+     * The coolant's port at {@code part}, one of this rack's own blocks, as its roof draws them to one facing its
+     * front: the cold water's inlet in the top block at its back right, the hot water's outlet in the top block at its
+     * front left; none elsewhere or on a rack cooled by air only.
+     */
+    public @Nullable IFluidHandler coolantPort(final BlockPos part) {
+        if (!liquidCooled() || !getBlockState().hasProperty(ServerRackBlock.FACING)) {
+            return null;
+        }
+        final Direction facing = getBlockState().getValue(ServerRackBlock.FACING);
+        final int top = ServerRackStructure.HEIGHT - 1;
+        if (part.equals(ServerRackStructure.at(worldPosition, facing, 0, top, 1))) {
+            return coolant.inlet();
+        }
+        return part.equals(ServerRackStructure.at(worldPosition, facing, 1, top, 0)) ? coolant.outlet() : null;
+    }
+
+    /* What the cabinet sheds by air: its own, its Cooling Units', its Vent Panels'. */
+    private int airBudgetWatts() {
         int cooling = 0;
         for (int i = 0; i < CAPACITY_U; i++) {
             cooling += RackUnitItem.coolingWattsOf(servers.getStackInSlot(i));
@@ -3468,6 +3518,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      */
     private void tickHeat(final ServerLevel level) {
         final int load = thermalLoadWatts();
+        if (liquidCooled()) {
+            coolant.tick(load - airBudgetWatts());
+        }
         if (!heat.tick(level, worldPosition, level.getGameTime(), load > 0, load, thermalBudgetWatts())) {
             return;
         }

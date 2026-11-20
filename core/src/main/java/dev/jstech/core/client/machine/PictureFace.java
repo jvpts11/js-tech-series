@@ -15,10 +15,12 @@ import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.machine.MachineScreenTexts;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.text.GameText;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -228,15 +230,26 @@ public final class PictureFace implements IMachineFace {
         }
     }
 
-    /* A sight glass of the machine's tank, and what it holds written where the picture writes it. */
+    /*
+     * A sight glass of the machine's tank, the one holding its liquid for a glass of a liquid, and what it holds
+     * written where the picture writes it. A glass of a liquid no tank holds or has room for stands empty.
+     */
     private static void glass(final MachineView v, final FacePicture.Glass glass) {
+        final int tank = glass.fluid().map(ids -> StandardFace.tankFor(v.machine(), Arrays.stream(ids.split("\\|"))
+                .map(ResourceLocation::parse).collect(Collectors.toSet()), glass.tank())).orElse(glass.tank());
+        if (tank < 0) {
+            if (glass.slim()) {
+                StandardFace.slimGlass(v, glass.x(), glass.y(), glass.h(), Integer.MAX_VALUE);
+            }
+            return;
+        }
         if (glass.slim()) {
-            StandardFace.slimGlass(v, glass.x(), glass.y(), glass.h(), glass.tank());
+            StandardFace.slimGlass(v, glass.x(), glass.y(), glass.h(), tank);
         } else {
-            StandardFace.glass(v, glass.x(), glass.y(), glass.h(), glass.tank());
+            StandardFace.glass(v, glass.x(), glass.y(), glass.h(), tank);
         }
         glass.label().ifPresent(label -> MachineArt.textCentred(v.g(), v.font(),
-                StandardFace.symbol(v.machine(), glass.tank()), v.x(label.x()), v.y(label.y()), label.argb()));
+                StandardFace.symbol(v.machine(), tank), v.x(label.x()), v.y(label.y()), label.argb()));
     }
 
     /**

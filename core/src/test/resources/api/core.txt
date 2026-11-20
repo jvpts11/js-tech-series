@@ -7531,7 +7531,7 @@ stable 4
 76 dev.jstech.core.machine.FacePicture  static final int COLUMNS
 76 dev.jstech.core.machine.FacePicture.Box  type record(int x, int y, int w, int h)
 76 dev.jstech.core.machine.FacePicture.Box  static final Codec<Box> CODEC
-76 dev.jstech.core.machine.FacePicture.Glass  type record(int x, int y, int w, int h, int tank, Optional<Label> label)
+79 dev.jstech.core.machine.FacePicture.Glass  type record(int x, int y, int w, int h, int tank, Optional<Label> label, Optional<String> fluid)
 76 dev.jstech.core.machine.FacePicture.Glass  boolean slim()
 76 dev.jstech.core.machine.FacePicture.Glass  static final Codec<Glass> CODEC
 76 dev.jstech.core.machine.FacePicture.Glass  static final int SLIM

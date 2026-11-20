@@ -21,6 +21,11 @@ final class ServerRackTexts {
     /* The rack units in use out of the cabinet's, then its state. */
     static final TextKey THROTTLED = TextKey.of("jsc.rack.throttled", "%s/%sU  %s°C  THROTTLED %s%%");
     static final TextKey LINKED = TextKey.of("jsc.rack.linked", "%s/%sU  LINKED");
+    /* The drop's tooltip on a liquid-cooled rack: what its water carried of what it asked, and how much water. */
+    static final TextKey LIQUID_COOLING = TextKey.of("jsc.rack.liquid_cooling", "Liquid cooling");
+    static final TextKey LIQUID_WATTS = TextKey.of("jsc.rack.liquid_watts", "%s W of %s W");
+    static final TextKey LIQUID_FLOW = TextKey.of("jsc.rack.liquid_flow", "%s mB/s of cold water");
+    static final TextKey LIQUID_SHORT = TextKey.of("jsc.rack.liquid_short", "short of cold water");
     static final TextKey OFFLINE = TextKey.of("jsc.rack.offline", "%s/%sU  OFFLINE");
     static final TextKey UNIT = TextKey.of("jsc.rack.unit", "%sU");
     static final TextKey INCOMPLETE = TextKey.of("jsc.rack.incomplete", "INCOMPLETE");

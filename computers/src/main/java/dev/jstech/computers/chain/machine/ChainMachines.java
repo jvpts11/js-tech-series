@@ -13,6 +13,8 @@ import static dev.jstech.computers.registry.ComputingContent.shelf;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
 import dev.jstech.computers.chain.ChainBenches;
+import dev.jstech.computers.plant.ChillerBlockEntity;
+import dev.jstech.computers.plant.CoolingTowerBlockEntity;
 import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.core.content.BlockEntry;
@@ -252,6 +254,25 @@ public final class ChainMachines {
                         + "e=power_entry,f=large_scale_printer_perfect_binder,g=large_scale_printer_print_unit,"
                         + "h=peripheral_port,i=large_scale_printer_inking_unit")
                 .works(LargeScalePrinterBlockEntity::new).declare();
+        // The datacenter's cooling plant (computers/docs/design/temperature.md): the tower takes the Chiller's hot
+        // water on its left with its make-up water, and gives cold water back on its right; the Chiller cools the
+        // racks' water on its water box's end and heats the tower's on its front and back.
+        machine("cooling_tower").named("Cooling Tower").era(HardwareEra.STANDARD)
+                .step(1, CoolingTowerBlockEntity.FAN_WATTS)
+                .slots(0, 0, 2, 1, 0, 0)
+                .shape("aaa,aba,aaa", "ccc,cdc,ccc", "a#f,gda,ahf", "aaa,aea,aaa")
+                .legend("a=machine_casing,b=cooling_tower_basin,c=cooling_tower_louvre,d=cooling_tower_fill,"
+                        + "e=cooling_tower_fan,f=liquid_inlet,g=liquid_outlet,h=power_entry")
+                .products('f', "jsc:hot_water", "minecraft:water").products('g', "jsc:cold_water")
+                .works(CoolingTowerBlockEntity::new).declare();
+        machine("chiller").named("Chiller").era(HardwareEra.STANDARD).step(1, ChillerBlockEntity.COMPRESSOR_WATTS)
+                .slots(0, 0, 2, 2, 0, 0)
+                .shape("hbg,acf", "#df,aag")
+                .legend("a=machine_casing,b=chiller_evaporator,c=chiller_condenser,d=chiller_compressor,"
+                        + "f=liquid_inlet,g=liquid_outlet,h=power_entry")
+                .products('f', "jsc:hot_water", "jsc:cold_water|minecraft:water")
+                .products('g', "jsc:cold_water", "jsc:hot_water")
+                .works(ChillerBlockEntity::new).declare();
     }
 
     private ChainMachines() {

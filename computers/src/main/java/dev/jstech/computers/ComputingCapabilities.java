@@ -24,6 +24,7 @@ import dev.jstech.core.heat.ThermalBudgets;
 import dev.jstech.core.signal.Signals;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -60,6 +61,9 @@ public final class ComputingCapabilities {
                 (rack, side) -> new RackThermalBudget(rack));
         ThermalBudgets.BUDGET.onBlockEntity(event, ComputingModule.SERVER_RACK_PART_BE.get(),
                 (part, side) -> RackThermalBudget.ofPart(part));
+        // A liquid-cooled rack's two water ports, each in its own top block, taken from above.
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, ComputingModule.SERVER_RACK_PART_BE.get(),
+                (part, side) -> side == null || side == Direction.UP ? RackThermalBudget.coolantPort(part) : null);
         // What every computer draws its energy through, on every face; the Mainframe's other blocks take it for it.
         offerEnergy(event, ComputingModule.PERSONAL_COMPUTER_BE.get());
         offerEnergy(event, ComputingModule.SMALL_COMPUTER_BE.get());

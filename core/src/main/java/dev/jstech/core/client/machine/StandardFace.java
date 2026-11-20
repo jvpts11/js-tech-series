@@ -54,11 +54,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -404,6 +407,28 @@ public final class StandardFace implements IMachineFace {
             colour = matter.held().map(stack -> 0xFF << 24 | stack.material().colour()).orElse(colour);
         }
         MachineArt.slimGlass(v.g(), v.x(faceX), v.y(faceY), height, share, colour, v.tick(), v.working());
+    }
+
+    /*
+     * The machine's liquid tank a glass of {@code fluids} shows, among its tanks in when {@code side} is one of them,
+     * among its tanks out otherwise: the one holding one of them, else the first empty one, which is where it would
+     * go; -1 when every one holds another.
+     */
+    static int tankFor(final MachineBlockEntity machine, final Set<ResourceLocation> fluids, final int side) {
+        final List<FluidTank> tanks = fluidTanks(machine);
+        final int inputs = machine instanceof ProcessingMachineBlockEntity processing
+                ? processing.layout().inputTanks() : 0;
+        final int from = side < inputs ? 0 : inputs;
+        final int to = side < inputs ? inputs : tanks.size();
+        int empty = -1;
+        for (int index = from; index < to; index++) {
+            final FluidStack held = tanks.get(index).getFluid();
+            if (!held.isEmpty() && fluids.contains(BuiltInRegistries.FLUID.getKey(held.getFluid()))) {
+                return index;
+            }
+            empty = empty < 0 && held.isEmpty() ? index : empty;
+        }
+        return empty;
     }
 
     /*

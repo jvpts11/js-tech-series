@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    }
+  },
+  "pattern": [
+    "P P",
+    "PCP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:cooling_tower_basin"
+  }
+}

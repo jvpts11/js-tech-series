@@ -105,9 +105,12 @@ public record FacePicture(int frames, int millis, Optional<String> plate, List<P
     /**
      * A sight glass: its left, its top, its width (a slim one, of a bank of them, narrower than the bracketed one) and
      * its height; the machine's tank it shows (its liquid tanks in, then out, then each state of matter's in turn, in
-     * then out); and where what it holds is written, when the picture writes it.
+     * then out); where what it holds is written, when the picture writes it; and, for a machine whose ports fill
+     * whichever of its tanks is free, the liquid it shows, by its id (or a few joined by '|'), in whichever of its
+     * liquid tanks holds it, among
+     * its tanks in when its tank is one of those and its tanks out otherwise, empty while none holds it or has room.
      */
-    public record Glass(int x, int y, int w, int h, int tank, Optional<Label> label) {
+    public record Glass(int x, int y, int w, int h, int tank, Optional<Label> label, Optional<String> fluid) {
 
         /** How wide a slim glass is, of a bank of them. */
         public static final int SLIM = 6;
@@ -116,7 +119,8 @@ public record FacePicture(int frames, int millis, Optional<String> plate, List<P
                 Codec.INT.fieldOf("x").forGetter(Glass::x), Codec.INT.fieldOf("y").forGetter(Glass::y),
                 Codec.INT.fieldOf("w").forGetter(Glass::w), Codec.INT.fieldOf("h").forGetter(Glass::h),
                 Codec.INT.fieldOf("tank").forGetter(Glass::tank),
-                Label.CODEC.optionalFieldOf("label").forGetter(Glass::label)).apply(i, Glass::new));
+                Label.CODEC.optionalFieldOf("label").forGetter(Glass::label),
+                Codec.STRING.optionalFieldOf("fluid").forGetter(Glass::fluid)).apply(i, Glass::new));
 
         /** Whether it is a slim glass, of a bank of them. */
         public boolean slim() {

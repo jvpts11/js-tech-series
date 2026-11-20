@@ -28,6 +28,7 @@ import dev.jstech.computers.item.TapeItem;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.operation.payload.RackBayPowerPayload;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.plant.CoolingWater;
 import dev.jstech.computers.power.UpsRating;
 import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.rack.IMountableRackUnit;
@@ -53,6 +54,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -71,12 +73,19 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
 
     /* The unit the card describes: the top row of a mounted computer, picked by clicking its faceplate. */
     private int selected;
+    /* Where the liquid cooling's drop was drawn this frame, its left edge on the screen, or -1 when it was not. */
+    private int dropX = -1;
 
     private static final int ROWS = ServerRackLayout.ROWS;
     private static final int PITCH = ServerRackLayout.ROW_PITCH;
     /** The post's holes, three to a rack unit, from the unit's top. */
     private static final int[] POST_HOLES = {3, 9, 15};
     private static final int GHOST_ALPHA = 110;
+    /* The drop's rows, each its first and last pixel: five wide, seven high, its tip up; and its gap to the lamp. */
+    private static final int[][] DROP = {{2, 2}, {2, 2}, {1, 3}, {0, 4}, {0, 4}, {0, 4}, {1, 3}};
+    private static final int DROP_W = 5;
+    private static final int DROP_GAP = 3;
+    private static final int WATTS_A_MILLIBUCKET = CoolingWater.KILOWATT_A_MILLIBUCKET * 1_000;
 
     /**
      * The cabinet's metal and its units' faceplates, per era: the metal its posts and its back are made of, the colour
@@ -200,6 +209,12 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
      */
     @Override
     protected void renderTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {
+        final int dropY = topPos + ServerRackLayout.TITLE_Y;
+        if (dropX >= 0 && mouseX >= dropX && mouseX < dropX + DROP_W && mouseY >= dropY && mouseY < dropY
+                + DROP.length) {
+            g.renderComponentTooltip(font, dropTooltip(), mouseX, mouseY);
+            return;
+        }
         final Slot slot = hoveredSlot;
         final int index = slot == null ? -1 : frontIndex(slot);
         // A unit or a drive held over a row or a bay that keeps it out says why, rather than nothing happening.
@@ -258,6 +273,37 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         final int pillX = x + ServerRackLayout.HEADER_X + ServerRackLayout.HEADER_W - 4 - font.width(pill);
         JsTechTheme.text(g, font, pill, pillX, y + ServerRackLayout.TITLE_Y, colour);
         AssemblyPainter.drawLamp(g, pillX - 7, y + ServerRackLayout.TITLE_Y + 3, colour, true);
+        // A liquid-cooled rack its water is cooling shows a drop before the state: blue while it gets all it asks,
+        // amber when short of cold water.
+        dropX = -1;
+        if (menu.coolingAskedWatts() > 0 || menu.coolingWatts() > 0) {
+            dropX = pillX - 7 - DROP_GAP - DROP_W;
+            drawDrop(g, dropX, y + ServerRackLayout.TITLE_Y, menu.coolingWatts() < menu.coolingAskedWatts()
+                    ? JsTechTheme.amber() : FastColor.ARGB32.opaque(CoolingWater.COLD_WATER.colour()));
+        }
+    }
+
+    /* The liquid cooling's drop, five pixels wide and seven high, its tip up, a glint on its left. */
+    private static void drawDrop(final GuiGraphics g, final int x, final int y, final int colour) {
+        for (int row = 0; row < DROP.length; row++) {
+            g.fill(x + DROP[row][0], y + row, x + DROP[row][1] + 1, y + row + 1, colour);
+        }
+        g.fill(x + 1, y + 4, x + 2, y + 5, AssemblyPainter.mix(colour, JsTechTheme.text(), 0.7f));
+    }
+
+    /* The drop's tooltip: the watts the water carried of those asked, and its flow or that it ran short. */
+    private List<Component> dropTooltip() {
+        final int cooled = menu.coolingWatts();
+        final int asked = menu.coolingAskedWatts();
+        final List<Component> lines = new ArrayList<>();
+        lines.add(GameText.component(ServerRackTexts.LIQUID_COOLING));
+        lines.add(GameText.component(ServerRackTexts.LIQUID_WATTS.with(String.format(Locale.ROOT, "%,d", cooled),
+                String.format(Locale.ROOT, "%,d", asked))).withStyle(cooled < asked ? ChatFormatting.GOLD
+                : ChatFormatting.AQUA));
+        lines.add((cooled < asked ? GameText.component(ServerRackTexts.LIQUID_SHORT)
+                : GameText.component(ServerRackTexts.LIQUID_FLOW.with(cooled / WATTS_A_MILLIBUCKET)))
+                .withStyle(ChatFormatting.GRAY));
+        return lines;
     }
 
     /* The cabinet's back between the posts, and the two posts with their holes. */

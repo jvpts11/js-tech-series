@@ -53,6 +53,7 @@ import dev.jstech.computers.operation.payload.crafting.CraftingPayloads;
 import dev.jstech.computers.operation.payload.program.DebugPayloads;
 import dev.jstech.computers.operation.payload.update.UpdatePayloads;
 import dev.jstech.computers.operation.payload.workshop.WorkshopPayloads;
+import dev.jstech.computers.plant.CoolingWater;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.OsRegistry;
@@ -151,6 +152,8 @@ public class JsComputers {
         ComputersGuide.declare();
         // What the own chain uses of J's Core's catalogue, and the veins its ores lie in.
         ChainMaterials.declare();
+        // The cold and the hot water of the datacenter's cooling loops.
+        CoolingWater.declare();
         ChainDeposits.declare();
         ChainParts.declare();
         ChainChips.declare();

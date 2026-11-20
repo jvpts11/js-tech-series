@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "A": {
+      "item": "jscore:aluminium_plate"
+    },
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    }
+  },
+  "pattern": [
+    "A A",
+    " M ",
+    "PCP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:cooling_tower_fan"
+  }
+}

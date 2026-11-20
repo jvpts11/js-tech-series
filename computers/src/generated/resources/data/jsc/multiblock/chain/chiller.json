@@ -1,0 +1,56 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:chiller_evaporator"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:chiller_condenser"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:chiller_compressor"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:liquid_outlet"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "hbg",
+      "acf"
+    ],
+    [
+      "#df",
+      "aag"
+    ]
+  ],
+  "name": "chiller",
+  "ports": {
+    "f": "fluid_input",
+    "g": "fluid_output",
+    "h": "energy_input"
+  },
+  "terminal": "jsc:chiller_terminal"
+}

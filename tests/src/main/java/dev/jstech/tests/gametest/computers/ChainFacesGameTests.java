@@ -99,8 +99,14 @@ public final class ChainFacesGameTests {
                 }
                 final int tanks = tanks(machine);
                 final Set<Integer> shown = new HashSet<>();
+                final Set<String> liquids = new HashSet<>();
                 for (final FacePicture.Glass glass : picture.get().glasses()) {
-                    if (glass.tank() < 0 || glass.tank() >= tanks || !shown.add(glass.tank())) {
+                    // A glass of a liquid shows it in whichever tank of its half (in, or out) holds it: a tank of
+                    // that half and a liquid no other glass of the half shows; any other glass a tank of its own.
+                    final boolean own = glass.fluid().map(fluid -> liquids.add(fluid + "@"
+                            + (glass.tank() < machine.layout().inputTanks() ? "in" : "out")))
+                            .orElseGet(() -> shown.add(glass.tank()));
+                    if (glass.tank() < 0 || glass.tank() >= tanks || !own) {
                         wrong.add(machine.id() + "'s glass of tank " + glass.tank() + " (it has " + tanks + ")");
                     }
                 }

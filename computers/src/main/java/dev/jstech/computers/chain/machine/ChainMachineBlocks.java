@@ -214,6 +214,15 @@ public final class ChainMachineBlocks {
         put(plain("large_scale_printer_print_unit", HardwareEra.LEGACY).named("Print Unit").register());
         put(plain("large_scale_printer_inking_unit", HardwareEra.LEGACY).named("Inking Unit").register());
         put(plain("large_scale_printer_perfect_binder", HardwareEra.LEGACY).named("Perfect Binder").register());
+        // The datacenter's cooling plant's, from the Standard, as the Supercomputer Rack it cools
+        // (computers/docs/design/temperature.md).
+        put(plain("cooling_tower_basin", HardwareEra.STANDARD).named("Cooling Tower Basin").register());
+        put(plain("cooling_tower_louvre", HardwareEra.STANDARD).named("Cooling Tower Louvre").register());
+        put(plain("cooling_tower_fill", HardwareEra.STANDARD).named("Cooling Tower Fill").register());
+        put(plain("cooling_tower_fan", HardwareEra.STANDARD).named("Cooling Tower Fan").register());
+        put(plain("chiller_evaporator", HardwareEra.STANDARD).named("Chiller Evaporator").register());
+        put(plain("chiller_condenser", HardwareEra.STANDARD).named("Chiller Condenser").register());
+        put(plain("chiller_compressor", HardwareEra.STANDARD).named("Chiller Compressor").register());
     }
 
     private static <B extends Block> BlockEntry<B> put(final BlockEntry<B> block) {

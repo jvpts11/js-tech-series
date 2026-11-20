@@ -143,6 +143,16 @@ public class ServerRackMenu extends CoreMenu {
         return rack.temperatureShown();
     }
 
+    /** The watts a liquid-cooled rack's water carried in the last second. */
+    public int coolingWatts() {
+        return rack.coolingShown();
+    }
+
+    /** The watts a liquid-cooled rack asked of its water in the last second; more than it carried when short. */
+    public int coolingAskedWatts() {
+        return rack.coolingAskedShown();
+    }
+
     /** The heat the machines switched on in the cabinet make, in watts: what they draw, from the synced slots. */
     public int thermalLoadWatts() {
         int watts = 0;

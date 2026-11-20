@@ -93,4 +93,9 @@ public final class ServerRackStructure {
                                        final int w, final int h) {
         return origin.relative(facing.getClockWise(), w).above(h);
     }
+
+    /** The cabinet's block {@code w} columns clockwise of the origin's, {@code h} up and {@code d} back. */
+    public static BlockPos at(final BlockPos origin, final Direction facing, final int w, final int h, final int d) {
+        return origin.relative(facing.getClockWise(), w).above(h).relative(facing.getOpposite(), d);
+    }
 }

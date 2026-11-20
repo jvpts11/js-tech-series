@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/cooling_tower_fan"
+    }
+  }
+}

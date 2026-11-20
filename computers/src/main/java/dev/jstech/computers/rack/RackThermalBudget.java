@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.core.heat.IThermalBudget;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,6 +35,16 @@ public record RackThermalBudget(ServerRackBlockEntity rack) implements IThermalB
         }
         return Loaded.blockEntity(part.getLevel(), origin) instanceof ServerRackBlockEntity rack
                 ? new RackThermalBudget(rack) : null;
+    }
+
+    /** The coolant's port at {@code part}, a block of a liquid-cooled rack, or none. */
+    public static @Nullable IFluidHandler coolantPort(final ServerRackPartBlockEntity part) {
+        final BlockPos origin = part.originPos();
+        if (origin == null || part.getLevel() == null) {
+            return null;
+        }
+        return Loaded.blockEntity(part.getLevel(), origin) instanceof ServerRackBlockEntity rack
+                ? rack.coolantPort(part.getBlockPos()) : null;
     }
 
     @Override
