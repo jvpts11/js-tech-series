@@ -1032,6 +1032,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- Abandoned buildings: a working building's racks stand with their UPS charged, as its battery banks are;
+  they stood at no charge.
 - Abandoned buildings: a working building's computers show a picture. None of the eras' processors in
   them has graphics of its own, so each now holds a modest graphics card of its era (a VGA-256, a Vertex FX 5200, a
   Vertex 8600 GT, a Vertex GTX 550 Ti, a Vertex RTX 3060), which the chests may also give; and the Legacy computer is

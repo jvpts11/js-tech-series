@@ -121,6 +121,8 @@ public final class AbandonedBuildingGameTests {
     /* The factory's Electronics Assembly Line's Crafting Interface, on the cable against its inlet. */
     private static final BlockPos INTERFACE = new BlockPos(5, GROUND, 8);
     private static final int SETTLE_TICKS = 400;
+    /* A charge in thousandths: full. */
+    private static final int FULL = 1000;
 
     private AbandonedBuildingGameTests() {
     }
@@ -373,6 +375,7 @@ public final class AbandonedBuildingGameTests {
             final ItemStack server = rack.getServers().getStackInSlot(1);
             helper.assertTrue(server.getItem() instanceof ServerItem
                     && ServerItem.hardware(server).nonEmptyItems().iterator().hasNext(), "a whole server between");
+            helper.assertValueEqual(rack.upsReading().permille(), FULL, "its UPS charged");
         }
         helper.succeed();
     }

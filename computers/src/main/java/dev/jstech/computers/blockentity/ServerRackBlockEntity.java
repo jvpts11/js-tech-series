@@ -3369,7 +3369,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return ServerItem.psu(soleServerStack());
     }
 
-    /** Sets what the rack's UPS battery holds, for a test to start an outage from. */
+    /** Sets what the rack's UPS battery holds: a working abandoned building's charged, or a test's outage to start. */
     public void setUpsCharge(final long joules) {
         ups.setCharge(joules);
     }

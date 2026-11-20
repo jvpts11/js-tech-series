@@ -18,6 +18,8 @@ import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.chain.machine.ComputerKit;
 import dev.jstech.computers.hardware.RigGeometry;
+import dev.jstech.computers.item.RackUnitItem;
+import dev.jstech.computers.power.UpsRating;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableType;
@@ -154,6 +156,11 @@ final class AbandonedFills {
             if (rows.insertItem(row, unit, false).isEmpty() && !broken && (nodes || row != 0 && row != last)) {
                 rack.insertDrive(row, AbandonedLoadouts.disk(own));
             }
+        }
+        // A working building's racks stand with their UPS charged, as its battery banks are.
+        final UpsRating ups = RackUnitItem.rackUps(ServerRackBlockEntity.CAPACITY_U, rows::getStackInSlot);
+        if (working && ups != null) {
+            rack.setUpsCharge(ups.batteryJoules());
         }
         return rack.saveWithFullMetadata(level.registryAccess());
     }
