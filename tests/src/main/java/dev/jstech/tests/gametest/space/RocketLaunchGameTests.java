@@ -39,6 +39,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -93,6 +94,13 @@ public final class RocketLaunchGameTests {
         final BlockPos[] flying = new BlockPos[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(body.ready(), "its body stands ready"))
+                // Its flight computer reads the flight only once its yard's chunk ticks, which comes after the chunk
+                // is loaded: lifted before, a busy server could see it burn out before a reading.
+                .thenWaitUntil(() -> {
+                    final BlockPos aboard = aboard(body, computer);
+                    helper.assertTrue(level.shouldTickBlocksAt(aboard)
+                            && level.areEntitiesLoaded(ChunkPos.asLong(aboard)), "its flight computer's chunk ticks");
+                })
                 .thenExecute(() -> {
                     // Where its blocks are aboard, read before it moves.
                     flying[0] = aboard(body, computer);
