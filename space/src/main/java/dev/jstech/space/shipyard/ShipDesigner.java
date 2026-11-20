@@ -66,6 +66,19 @@ public final class ShipDesigner {
                             told.getLast()), going));
                 }
             });
+    /**
+     * The ship standing in the open dock's bay taken back onto the grid, the pair of {@link #RELEASE}: a dock takes a
+     * ship only when asked; the screen told what the dock said.
+     */
+    public static final MenuCall<ShipDesignMenu, Boolean> TAKE_IN = MenuCalls.declare(id("ship_design_take_in"),
+            ShipDesignMenu.class, ByteBufCodecs.BOOL, (menu, player, any) -> {
+                final List<Text> told = new ArrayList<>();
+                final boolean taken = menu.terminal().takeIn(player, told::add);
+                if (!told.isEmpty()) {
+                    PacketDistributor.sendToPlayer(player, new ShipyardSaidPayload(GameText.component(
+                            told.getLast()), taken));
+                }
+            });
 
     private ShipDesigner() {
     }

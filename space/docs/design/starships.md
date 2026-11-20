@@ -143,8 +143,9 @@ the floor as it moves is hurt as by any moving block.
 
 An empty dock stands open, ready for a ship to come in, whether it has just formed or its plan was put away before
 anything was built. A ship comes back the same way it left: one on legs comes down through the open top onto the floor,
-one on wheels rolls in from the front. Its pilot uses its console, and the dock takes it back onto the grid, set
-straight in the bay, and closes round it: the cradle rises and closes on its hull first, holding it, and only then
+one on wheels rolls in from the front. Its pilot presses Take ship in on the Starship Design screen, in the place of
+Release ship, and the dock takes it back onto the grid, set straight in the bay, and closes round it; a dock takes a
+ship back only when asked, never because its pilot uses the ship's console: the cradle rises and closes on its hull first, holding it, and only then
 does its gear fold and the floor go down from under it, then the crane rolls back over the bay. A design sent to an open, empty dock closes it the same way, for the arms
 to build. A ship is changed only in a dock, closed round it. A dock broken while it moves sets its moving parts down
 where they are and comes apart as any broken structure does, the cradle's blocks it held dropping as items. A repair

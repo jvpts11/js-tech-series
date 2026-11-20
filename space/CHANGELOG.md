@@ -1016,6 +1016,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   and at T-0 the same rocket goes. The count stayed at its release for good.
 - Two docked ships do not pulse jump: they undock first, and B held docked shows PULSE OFF with DOCKED: UNDOCK
   FIRST, where nothing said why the drive would not spool.
+- A Small Shipyard takes a ship back only when asked: Take ship in, on the Starship Design screen in the place
+  of Release ship while the dock stands open, has it take the ship in its bay and close round it, and only a pilot of
+  that ship may ask. A pilot's hand on the flight console of a ship let go near a dock had the dock take it straight
+  back, so a ship released from the screen was taken in again by the first use of its console.
 
 ### Fixed
 - The Cab cockpit is walked into: its flight deck stands lower, its pilot's seat on a plinth as high as before,

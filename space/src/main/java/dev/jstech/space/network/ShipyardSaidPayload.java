@@ -17,8 +17,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * What a Small Shipyard said as its builder's screen asked it to let its ship go: that it opens round the ship, its
- * {@code going}, or why it cannot; the screen shows it over its keys.
+ * What a Small Shipyard said as its builder's screen asked it to let its ship go, or to take the ship in its bay back:
+ * that it does, its {@code going}, or why it cannot; the screen shows it over its keys.
  */
 public record ShipyardSaidPayload(Component words, boolean going) implements CustomPacketPayload {
 

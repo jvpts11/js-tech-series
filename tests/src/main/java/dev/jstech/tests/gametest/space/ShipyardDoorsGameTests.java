@@ -29,6 +29,7 @@ import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipDesignMenu;
 import dev.jstech.space.shipyard.ShipDesigner;
 import dev.jstech.space.shipyard.ShipyardBlocks;
+import dev.jstech.space.shipyard.ShipyardDoorTexts;
 import dev.jstech.space.shipyard.ShipyardDoors;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -55,6 +57,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -238,6 +241,40 @@ public final class ShipyardDoorsGameTests {
                             .noneMatch(level::isEmptyBlock), "its crane over the bay, its floor down, its cradle up");
                     helper.assertTrue(dock(level, terminal).plan().isPresent() && dock(level, terminal).built(),
                             "the ship its plan again, whole");
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A ship let go is taken back only when someone asks: its pilot using its flight console in the open bay has the
+     * dock take nothing, the ship flying on; Take ship in, asked by its pilot from the dock's screen, has the dock take
+     * it and close round it; asked again with no ship in its bay, the dock says so.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    public static void back_aShipLetGoIsTakenBackOnlyWhenAsked(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final ServerPlayer pilot = GameTestPlayers.connected(helper, "dock-pilot");
+        final MovingStructure[] ship = new MovingStructure[1];
+        final List<Text> told = new ArrayList<>();
+        opened(helper, terminal, WHEELS, ship)
+                .thenExecute(() -> {
+                    final BlockPos console = ((ShipFlight) ship[0].motion()).consoleIn(ship[0]).orElseThrow();
+                    level.getBlockState(console).useWithoutItem(level, pilot, new BlockHitResult(
+                            Vec3.atCenterOf(console), Direction.UP, console, false));
+                    helper.assertTrue(ship[0].motion() instanceof ShipFlight && dock(level, terminal).plan().isEmpty(),
+                            "its pilot's hand on its console takes nothing back");
+                    helper.assertTrue(dock(level, terminal).takeIn(pilot, told::add)
+                            && told.getLast().equals(ShipyardDoorTexts.TAKEN_IN.text()), "Take ship in has the dock "
+                            + "take it");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED
+                        && dock(level, terminal).plan().isPresent(), "and close round it, the ship its plan again"))
+                .thenExecute(() -> {
+                    helper.assertTrue(!dock(level, terminal).takeIn(pilot, told::add)
+                            && told.getLast().equals(ShipyardDoorTexts.NO_SHIP.text()), "asked with no ship in its "
+                            + "bay, it says so");
+                    GameTestPlayers.leave(pilot);
                 })
                 .thenSucceed();
     }

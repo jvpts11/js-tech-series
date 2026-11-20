@@ -15,6 +15,7 @@ import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineResource;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.MachineStructure;
+import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureAssembly;
@@ -39,7 +40,9 @@ import dev.jstech.core.util.Loaded;
 import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
+import dev.jstech.space.crew.CrewRole;
 import dev.jstech.space.crew.ShipCrew;
+import dev.jstech.space.crew.ShipCrews;
 import dev.jstech.space.hangar.ItemPortBlockEntity;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAboard;
@@ -62,6 +65,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -587,6 +591,37 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
             this.doors.close(server, told);
         }
         return true;
+    }
+
+    /**
+     * Takes back the ship standing in its bay, as {@code by} asks from the dock's screen with Take ship in, the pair of
+     * Release ship: a dock takes a ship back only when someone asks it to, never because a pilot uses the ship's
+     * console. Only a pilot of that ship may ask. Whether it did; told why when it does not: no ship in the bay, the
+     * asker no pilot of it, or the ship not to be set down where its plan goes.
+     */
+    public boolean takeIn(final ServerPlayer by, final Consumer<Text> told) {
+        final Optional<Orientation> dock = turn();
+        if (!(this.level instanceof ServerLevel server) || dock.isEmpty()) {
+            return false;
+        }
+        for (final IStructureBody body : MovingStructures.near(server, ShipyardStructure.bay(this.worldPosition,
+                dock.get()))) {
+            if (!(body instanceof MovingStructure ship) || consoleIn(server, ship).isEmpty()) {
+                continue;
+            }
+            if (!ShipCrews.roleOf(by, ship).holds(CrewRole.PILOT)) {
+                told.accept(ShipyardDoorTexts.NOT_YOUR_SHIP.text());
+                return false;
+            }
+            if (!seat(ship, told)) {
+                told.accept(ShipyardDoorTexts.CANNOT_TAKE.text());
+                return false;
+            }
+            told.accept(ShipyardDoorTexts.TAKEN_IN.text());
+            return true;
+        }
+        told.accept(ShipyardDoorTexts.NO_SHIP.text());
+        return false;
     }
 
     /** Whether {@code design} is ready to be built in a Small Shipyard: nothing keeps it down, and it fits the bay. */

@@ -77,6 +77,7 @@ public final class ShipDesignTexts {
     public static final TextKey TO_BRING = TextKey.of("jsspace.ship_design.to_bring", "%s to bring");
     public static final TextKey SHIP_WHOLE = TextKey.of("jsspace.ship_design.ship_whole", "Ship whole");
     public static final TextKey RELEASE = TextKey.of("jsspace.ship_design.release", "Release ship");
+    public static final TextKey TAKE_IN = TextKey.of("jsspace.ship_design.take_in", "Take ship in");
     // The keys, and what the screen says.
     public static final TextKey KEY_DELETE = TextKey.of("jsspace.ship_design.key_delete", "Del");
     public static final TextKey SEND = TextKey.of("jsspace.ship_design.send", "Dock");

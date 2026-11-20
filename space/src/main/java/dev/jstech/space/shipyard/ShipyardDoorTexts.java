@@ -28,6 +28,14 @@ public final class ShipyardDoorTexts {
             "The ship cannot go: %s. The dock closes round it again");
     public static final TextKey NOT_READY = TextKey.of("jsspace.shipyard.doors.not_ready",
             "it is not whole, or its flight console is gone");
+    /** What the dock says when it is asked to take the ship in its bay back. */
+    public static final TextKey TAKEN_IN = TextKey.of("jsspace.shipyard.doors.taken_in",
+            "The dock takes the ship in and closes round it");
+    public static final TextKey NO_SHIP = TextKey.of("jsspace.shipyard.doors.no_ship", "No ship stands in the bay");
+    public static final TextKey NOT_YOUR_SHIP = TextKey.of("jsspace.shipyard.doors.not_your_ship",
+            "Only a pilot of the ship in the bay may have it taken in");
+    public static final TextKey CANNOT_TAKE = TextKey.of("jsspace.shipyard.doors.cannot_take",
+            "The ship in the bay cannot be set down in the dock");
     /** What the dock does as it opens or closes, as its builder's screen shows it in place of its Release button. */
     public static final TextKey CRANE_BACK = TextKey.of("jsspace.shipyard.doors.crane_back", "Crane rolling back");
     public static final TextKey FLOOR_UP = TextKey.of("jsspace.shipyard.doors.floor_up", "Floor rising");

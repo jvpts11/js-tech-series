@@ -219,8 +219,8 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     }
 
     /**
-     * What a shipyard said as this player's screen asked it to let its ship go, said over the screen's keys while it
-     * is open: green as the dock opens, red as it refuses.
+     * What a shipyard said as this player's screen asked it to let its ship go or take one back, said over the screen's
+     * keys while it is open: green as the dock does it, red as it refuses.
      */
     public static void said(final ShipyardSaidPayload said) {
         if (Minecraft.getInstance().screen instanceof ShipDesignScreen screen) {
@@ -305,6 +305,10 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         if (button == InputConstants.MOUSE_BUTTON_LEFT) {
             if (releasable() && ShipDesignLayout.onRelease(x, y)) {
                 ShipDesigner.RELEASE.send(true);
+                return true;
+            }
+            if (takeable() && ShipDesignLayout.onRelease(x, y)) {
+                ShipDesigner.TAKE_IN.send(true);
                 return true;
             }
             if (clickTop(x, y) || clickParts(x, y) || ShipDesignLayout.onPanel(x, y)) {
@@ -1233,6 +1237,13 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
             ShipDesignArt.bar(g, x0, dy + 29, x1 - x0, blocks > 0 ? held / (double) blocks : 0, c.amber());
             Draw.text(g, this.font, GameText.resolve(ShipDesignTexts.TO_BRING.with(Math.max(0, blocks - held))),
                     x0, dy + 36, c.amber());
+            // Its ship let go and the dock standing open, the ship in its bay is taken back from here, the pair of
+            // Release: a dock takes a ship back only when asked.
+            if (takeable()) {
+                ShipDesignArt.wideButton(g, this.font, x0, ShipDesignLayout.RELEASE_Y0, x1, ShipDesignLayout.RELEASE_H,
+                        GameText.resolve(ShipDesignTexts.TAKE_IN), c.accent(), ShipDesignLayout.onRelease(mouseX,
+                                mouseY));
+            }
             return;
         }
         // The ship whole: let go from here as from its flight console, while the dock stands closed round it; while
@@ -1253,6 +1264,11 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     /* Whether the Release button stands on the screen: the ship whole in the dock, the dock closed round it. */
     private boolean releasable() {
         return this.menu.whole() && this.menu.terminal().doors() == ShipyardDoors.State.CLOSED;
+    }
+
+    /* Whether the Take ship in button stands on the screen: the dock open, no ship of its own in it. */
+    private boolean takeable() {
+        return this.menu.terminal().plan().isEmpty() && this.menu.terminal().doors() == ShipyardDoors.State.OPEN;
     }
 
     /* The ship's figure {@code row}: its name, its value at the right, its bar under them. */

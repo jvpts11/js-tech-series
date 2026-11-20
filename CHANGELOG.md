@@ -4452,6 +4452,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and at T-0 the same rocket goes. The count stayed at its release for good.
 - (Space) Two docked ships do not pulse jump: they undock first, and B held docked shows PULSE OFF with DOCKED: UNDOCK
   FIRST, where nothing said why the drive would not spool.
+- (Space) A Small Shipyard takes a ship back only when asked: Take ship in, on the Starship Design screen in the place
+  of Release ship while the dock stands open, has it take the ship in its bay and close round it, and only a pilot of
+  that ship may ask. A pilot's hand on the flight console of a ship let go near a dock had the dock take it straight
+  back, so a ship released from the screen was taken in again by the first use of its console.
 
 ### Fixed
 - (Computers) Abandoned buildings: a working building's racks stand with their UPS charged, as its battery banks are;

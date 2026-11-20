@@ -33,28 +33,21 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 
 /**
  * The cockpit's flight console, which keeps the small ship's air reserve ({@link AirReserveEntity}) and tops up the
  * pressurised cabin from it; an oxygen bottle used on it pours into the reserve. Used with an empty hand in a ship
  * built whole in its dock, it starts the ship: the ship leaves the dock's hold, a moving structure from then on.
- * Aboard the ship, a pilot's hand on it near a dock has the dock take the ship back; else it opens its screen, the
- * ship's crew page ({@link ShipConsole}).
+ * Aboard the ship it opens its screen, the ship's crew page ({@link ShipConsole}); it never has a dock take the ship
+ * back, which only the dock's own screen asks for (Take ship in).
  */
 public final class FlightConsoleBlock extends ShipFixtureBlock implements EntityBlock {
-
-    /* How far from a dock's terminal a ship's console may be for the dock to take the ship back, in blocks. */
-    private static final double DOCK_REACH = 32;
 
     public FlightConsoleBlock(final Properties properties) {
         super(properties);
     }
 
-    /*
-     * Starts the ship it is the console of, while the ship stands whole in the dock that built it; aboard a ship come
-     * into a dock's bay, has the dock take it back onto the grid, to change it there.
-     */
+    /* Starts the ship it is the console of, while the ship stands whole in the dock that built it; aboard, opens. */
     @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player, final BlockHitResult hit) {
@@ -67,16 +60,6 @@ public final class FlightConsoleBlock extends ShipFixtureBlock implements Entity
                 return InteractionResult.PASS;
             }
             final CrewRole role = ShipCrews.roleOf(using, ship);
-            // A pilot near a dock has it take the ship back.
-            if (role.holds(CrewRole.PILOT)) {
-                final Vec3 here = Vec3.atCenterOf(MovingStructures.inWorld(server, pos));
-                for (final ShipyardTerminalBlockEntity dock : ShipyardTerminalBlockEntity.near(server, here,
-                        DOCK_REACH)) {
-                    if (dock.seat(ship, why -> using.displayClientMessage(GameText.component(why), true))) {
-                        return InteractionResult.CONSUME;
-                    }
-                }
-            }
             // Its screen shows the ship's crew.
             if (server.getBlockEntity(pos) instanceof AirReserveEntity console && console.crew().isPresent()) {
                 ShipConsole.open(using, console, role);
