@@ -113,6 +113,11 @@ public final class ShipFlightGameTests {
     private static final String ARENA = "shipyard";
     private static final String BATCH = "jsspace_ship_flight";
     /*
+     * The ticks a test of a ship let go from its dock has at most: its yard's chunks load at the disk's pace while the
+     * test server's ticks run unbounded, which a loaded runner draws out far past the second it takes alone.
+     */
+    private static final int YARD_LOADS = 1200;
+    /*
      * How long a test whose ship is built, let go and then watched a while may take, in ticks: the test server runs
      * its ticks as fast as it can while the land its ship's yard stands in loads at its own pace, slower on a busy
      * machine, so the ticks it waits on the yard are not the test's to count.
@@ -309,7 +314,7 @@ public final class ShipFlightGameTests {
                 }).thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void flight_fastItsWingsHoldItUpAndTooSlowItSinksOntoTheLand(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[2];
@@ -355,7 +360,7 @@ public final class ShipFlightGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void flight_theBoostTakesItPastItsCruiseAcrossAnEmptyStretch(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final GameTestSequence sequence = flying(helper, ship, STRAIGHT_WEST).thenExecute(() -> {
@@ -375,8 +380,7 @@ public final class ShipFlightGameTests {
         }).thenSucceed();
     }
 
-    // Its yard's chunks load at the disk's pace while the ticks run unbounded, which a loaded runner draws out.
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void flight_itRisesStraightOffItsCradleHoversAndComesBackDown(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[2];
@@ -408,7 +412,7 @@ public final class ShipFlightGameTests {
      * stops under it, never past it, the bridge never in its hull and not one of its blocks holed for pressing up
      * against it.
      */
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 900)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS + 300)
     public static void flight_heldUpUnderTheCranesBridgeItStopsUnderItWhole(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final int[] blocks = new int[1];
@@ -436,7 +440,7 @@ public final class ShipFlightGameTests {
      * Let go in its dock, then meeting what is over it going up, fast enough to be holed twice: the two blocks holed
      * are its topmost, what met it, never its feet.
      */
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void impact_goingUpItsTopIsHoledNotItsFeet(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final Set<BlockPos> before = new HashSet<>();
@@ -476,7 +480,7 @@ public final class ShipFlightGameTests {
     }
 
     /* A crash hard enough to hurt its crew bursts where the ship is seen in the world, not where its blocks lie. */
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void impact_aHardCrashBurstsWhereTheShipIsSeen(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final Bursts bursts = new Bursts();
@@ -496,7 +500,7 @@ public final class ShipFlightGameTests {
      * On feet, hovering near the land, DOWN held a moment: it comes down by itself onto the land under it, slowing as
      * it nears it, its pilot holding UP meanwhile for nothing, and stands there whole, at rest, in about four seconds.
      */
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void sequence_onFeetDownNearTheLandSetsItDownByItselfWhole(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final int[] blocks = new int[1];
@@ -531,7 +535,7 @@ public final class ShipFlightGameTests {
      * by itself, its pilot holding DOWN meanwhile for nothing, its gear folded away, and in about three seconds hovers
      * there, the helm its pilot's again.
      */
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 800)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS + 200)
     public static void sequence_onFeetUpStandingLiftsItOffByItselfAndHandsTheHelmBack(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[2];
@@ -572,7 +576,7 @@ public final class ShipFlightGameTests {
     }
 
     /* On wheels, hovering, DOWN held: it comes down no faster than a touch down takes unharmed, and stands whole. */
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void flight_onWheelsHoveringDownItTouchesDownWhole(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final int[] blocks = new int[1];
@@ -593,7 +597,7 @@ public final class ShipFlightGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void flight_onTheLandItRollsOnWheels(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[1];
@@ -605,7 +609,7 @@ public final class ShipFlightGameTests {
         }).thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = YARD_LOADS)
     public static void flight_onTheLandItStandsOnFeet(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[1];
