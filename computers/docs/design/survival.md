@@ -543,6 +543,11 @@ together give about one building every 190 blocks, most of them the small common
   each driving its own screen and a row of the wall of screens; the UPS room's battery banks feed every machine, the
   plant's too, and the plant's pipes meet the Chillers' and the tower's ports. Every working building's Mainframe and
   rack servers hold a graphics card of their era, so each shows a picture.
+- **A working supercomputing centre works:** the fabric runs behind each row of racks, and the HBW Interface at its
+  end joins the cluster to the network of the Mainframe beside it; the Cluster Management Computer and the desks in the
+  control room are on that network, the Cluster Management Computer driving the visualisation wall; each CDU's water
+  runs over its row's racks and back, and the chilled water and the condenser water run apart to the Chiller and the
+  towers, all at the ports that take them; the battery banks feed every machine.
 - The **hardware box** is a loot block of its own, printed with its era's machine.
 - **Each building's own case:** the electronic waste dump works through its office's computer; the delivery van never
   works; a software house office has the house its era's sign names, never Midsoft: Nouvell in the Vintage, Daylight

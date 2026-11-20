@@ -4476,6 +4476,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   nothing; the battery banks feed every rack, the Mainframe, the desks, the Chillers and the Cooling Tower; the plant's
   pipes meet the ports that take its water, the tower a block off the wall where its cold outlet was walled in; and
   its hall and its two rooms are lit by panels in the ceiling, where the hall was dark and the rooms unlit.
+- (Computers) Abandoned buildings: a working supercomputing centre works. The fabric runs behind each row of racks,
+  where a supercomputer rack takes it, where it ran over their tops and joined none, and the HBW Interface at its east
+  end joins every node to the network of the Mainframe under it and of the control room's computers; the Cluster
+  Management Computer comes up, where it stood off and on no network, and drives its two screens and the
+  visualisation wall, which stands a block off the front with its cables behind it; the racks' water runs from each
+  CDU over every rack's inlet and back from its outlet, the chilled water between the CDUs and the Chiller and the
+  condenser water between the Chiller and both towers, each dyed apart and at the ports that take it, where the runs
+  met no port and the hall's loop joined the yard's; the battery banks feed the racks, the CDUs, the Mainframe, the
+  desks, the Chiller and the towers; and panels in the ceiling light every room.
 - (Computers) Abandoned buildings: a working building's Mainframes and rack servers show a picture. A Mainframe's board
   and the Legacy server's drive no screen by themselves, so each now holds the plainest graphics card of its era that
   its board takes.
