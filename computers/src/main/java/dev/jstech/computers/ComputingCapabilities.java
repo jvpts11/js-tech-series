@@ -17,6 +17,8 @@ import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ComputerThermalBudget;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
+import dev.jstech.computers.plant.CduBlockEntity;
+import dev.jstech.computers.plant.CoolingPlant;
 import dev.jstech.computers.rack.RackThermalBudget;
 import dev.jstech.core.bigblock.BigBlockPartBlockEntity;
 import dev.jstech.core.energy.EnergyPorts;
@@ -64,6 +66,20 @@ public final class ComputingCapabilities {
         // A liquid-cooled rack's two water ports, each in its own top block, taken from above.
         event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, ComputingModule.SERVER_RACK_PART_BE.get(),
                 (part, side) -> side == null || side == Direction.UP ? RackThermalBudget.coolantPort(part) : null);
+        // The CDU's four water ports in its roof, taken from above, and its energy at its back.
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, CoolingPlant.CDU_PART_BE.get(), (part, side) -> {
+            final CduBlockEntity cdu = CduBlockEntity.of(part);
+            return cdu != null && (side == null || side == Direction.UP) ? cdu.waterPort(part.getBlockPos()) : null;
+        });
+        event.registerBlockEntity(EnergyPorts.PORT, CoolingPlant.CDU_PART_BE.get(), (part, side) -> {
+            final CduBlockEntity cdu = CduBlockEntity.of(part);
+            return cdu != null && (side == null || side == cdu.back()) ? cdu.energyClassPort(part.getBlockPos())
+                    : null;
+        });
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CoolingPlant.CDU_PART_BE.get(), (part, side) -> {
+            final CduBlockEntity cdu = CduBlockEntity.of(part);
+            return cdu != null && (side == null || side == cdu.back()) ? cdu.feEnergyPort(part.getBlockPos()) : null;
+        });
         // What every computer draws its energy through, on every face; the Mainframe's other blocks take it for it.
         offerEnergy(event, ComputingModule.PERSONAL_COMPUTER_BE.get());
         offerEnergy(event, ComputingModule.SMALL_COMPUTER_BE.get());

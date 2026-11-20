@@ -14,6 +14,7 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.client.PrinterQueueTab;
+import dev.jstech.computers.plant.CoolingPlant;
 import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
 import dev.jstech.core.client.machine.IMachineFace;
 import dev.jstech.core.client.machine.MachineFaces;
@@ -44,6 +45,7 @@ public final class ChainFaceScreens {
     /* The word of the printer's face the game puts the sheets in its feeder in for, on its counter. */
     private static final String SHEETS = "{sheets}";
     private static final String PRINTER = "large_scale_printer";
+    private static final String CDU = "cdu";
     private static final String NO_CHANCE = " --%";
     private static final int PERCENT = 100;
 
@@ -76,6 +78,11 @@ public final class ChainFaceScreens {
                 MachineFaces.registerTabs(ChainMachines.typeOf(machine), List.of(PrinterQueueTab.tab()));
             }
         }
+        // The cooling plant's CDU, a big block rather than a chain machine, drawn on the same faces.
+        ChainFaces.of(CDU).ifPresent(picture -> {
+            final PictureFace own = new PictureFace(frames(CDU), picture, ChainFaceScreens::say);
+            MachineFaces.register(CoolingPlant.CDU_BE.get(), cdu -> own);
+        });
     }
 
     private static ResourceLocation frames(final String face) {

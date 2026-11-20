@@ -21,6 +21,8 @@
     "jsc:mining_computer_part",
     "jsc:asic_forge_s1",
     "jsc:asic_forge_a2",
+    "jsc:cdu",
+    "jsc:cdu_part",
     "jsc:machine_casing",
     "jsc:refractory_casing",
     "jsc:lined_casing",

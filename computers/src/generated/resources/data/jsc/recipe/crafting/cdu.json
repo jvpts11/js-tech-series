@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "I": {
+      "item": "jsc:liquid_inlet"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "O": {
+      "item": "jsc:liquid_outlet"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    }
+  },
+  "pattern": [
+    "IPO",
+    "MCM",
+    "IPO"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:cdu"
+  }
+}

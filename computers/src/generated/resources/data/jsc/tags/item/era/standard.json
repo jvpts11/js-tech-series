@@ -27,6 +27,7 @@
     "jsc:compute_server_case",
     "jsc:compute_server",
     "jsc:supercomputer_node",
+    "jsc:cdu",
     "jsc:kvm_switch",
     "jsc:rack_ups",
     "jsc:cooling_unit",

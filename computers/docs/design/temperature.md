@@ -78,7 +78,13 @@ the water: **1 mB a second carries 1 kW**. Every number here is an estimate.
   each: up to **+8,000 W**. Short of cold water, or with its hot water's way out full, it gets the share that went
   through. Its window shows a drop before its state while water cools it: blue while it gets all it asks, amber when
   short; the drop's tooltip gives the watts and the flow.
-- **The Chiller** (3 long, 2 high, 2 deep) cools the racks' Hot Water into Cold Water, up to **120 mB/s** (120 kW), for
+- **The CDU** (placed whole, the Supercomputer Rack's own cabinet, 2 wide, 3 high, 2 deep) stands between the racks
+  and the plant: its pumps take the racks' Hot Water back and send them Cold Water, up to **64 mB/s** (eight racks),
+  and its plate exchanger turns a mB of the plant's Cold Water into Hot Water, for the Chiller, for every mB it cools;
+  its pumps draw up to **1.5 kW**. Its four water ports are in its roof: as one faces its front, the racks' pair on
+  the left (COLD out at the front, HOT in at the back), the plant's on the right (COLD in at the front, HOT out at the
+  back); its energy at the bottom of its back left.
+- **The Chiller** (3 long, 2 high, 2 deep) cools the CDUs' Hot Water into Cold Water, up to **120 mB/s** (120 kW), for
   its compressor's **30 kW** at full load; for every 20 mB it cools it turns **25 mB** of the tower's Cold Water into
   Hot Water (150 kW at full load: the racks' heat and its own). Without the tower's water it cools nothing. Its water
   box is four ports, one a block: the racks' pair on its end (COLD out, HOT in), the tower's pair above them on its

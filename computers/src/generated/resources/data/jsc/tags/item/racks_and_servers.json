@@ -36,6 +36,7 @@
     "jsc:compute_server_case",
     "jsc:compute_server",
     "jsc:supercomputer_node",
+    "jsc:cdu",
     "jsc:advanced_server_rack",
     "jsc:advanced_supercomputer_rack",
     "jsc:advanced_server_case",

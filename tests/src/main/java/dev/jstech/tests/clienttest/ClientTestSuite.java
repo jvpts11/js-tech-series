@@ -14,6 +14,7 @@ import dev.jstech.tests.clienttest.computers.AdvancementTabsClientTests;
 import dev.jstech.tests.clienttest.computers.AnchorCardClientTests;
 import dev.jstech.tests.clienttest.computers.AssemblyScreensClientTests;
 import dev.jstech.tests.clienttest.computers.RackCoolingClientTests;
+import dev.jstech.tests.clienttest.computers.CduClientTests;
 import dev.jstech.tests.clienttest.computers.AutomationManagerClientTests;
 import dev.jstech.tests.clienttest.computers.BackupConsoleClientTests;
 import dev.jstech.tests.clienttest.computers.BookPagesClientTests;
@@ -359,6 +360,7 @@ public final class ClientTestSuite {
             ChainMachineIconsClientTests.class,
             AssemblyScreensClientTests.class,
             RackCoolingClientTests.class,
+            CduClientTests.class,
             CdeClientTests.class,
             ComputerCaseClientTests.class,
             CoreStateClientTests.class,

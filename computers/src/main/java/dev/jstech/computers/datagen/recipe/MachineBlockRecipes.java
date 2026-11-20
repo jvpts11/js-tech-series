@@ -26,6 +26,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.computers.plant.CoolingPlant;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesAlloys;
@@ -320,6 +321,9 @@ final class MachineBlockRecipes {
         grid(output, block("chiller_condenser"), 1, rows("UUU", "PCP", "UUU"), 'U', Items.COPPER_INGOT,
                 'P', steelPlate(), 'C', mc);
         grid(output, block("chiller_compressor"), 1, rows("PMP", "PCP"), 'P', steelPlate(), 'M', motor, 'C', mc);
+        // The CDU whole: its four ports, its two pumps' motors, its cabinet.
+        grid(output, CoolingPlant.CDU.get(), 1, rows("IPO", "MCM", "IPO"), 'I', block("liquid_inlet"),
+                'P', steelPlate(), 'O', block("liquid_outlet"), 'M', motor, 'C', mc);
     }
 
     private static ItemLike block(final String id) {

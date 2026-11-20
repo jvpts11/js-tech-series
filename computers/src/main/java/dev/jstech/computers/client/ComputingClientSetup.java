@@ -25,6 +25,7 @@ import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.client.portable.PortableItemRenderer;
 import dev.jstech.computers.client.portable.PortableScreen;
 import dev.jstech.computers.client.portable.PortableViews;
+import dev.jstech.computers.plant.CoolingPlant;
 import dev.jstech.computers.portable.PortableItem;
 import dev.jstech.computers.portable.Portables;
 import dev.jstech.computers.block.IBootMenuScreenOpener;
@@ -256,6 +257,8 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), CabinetRenderer::mainframe);
         // And the WAN Gateway Computer, a block wider, with its line modules.
         event.registerBlockEntityRenderer(ComputingModule.WAN_GATEWAY_BE.get(), WanGatewayRenderer::create);
+        // The CDU, a rack's cabinet with pumps in its bay, drawn whole from its origin too.
+        event.registerBlockEntityRenderer(CoolingPlant.CDU_BE.get(), CduRenderer::create);
         // The Mining Computers: each era's open frame, the parts in it, the cards standing on its risers.
         event.registerBlockEntityRenderer(ComputingModule.MINING_COMPUTER_BE.get(), RigRenderer::create);
         // Blockwright's ASICs: each model's chassis, its fans turning while it mines.

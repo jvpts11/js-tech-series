@@ -53,6 +53,7 @@ import dev.jstech.computers.operation.payload.crafting.CraftingPayloads;
 import dev.jstech.computers.operation.payload.program.DebugPayloads;
 import dev.jstech.computers.operation.payload.update.UpdatePayloads;
 import dev.jstech.computers.operation.payload.workshop.WorkshopPayloads;
+import dev.jstech.computers.plant.CoolingPlant;
 import dev.jstech.computers.plant.CoolingWater;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsMotions;
@@ -154,6 +155,7 @@ public class JsComputers {
         ChainMaterials.declare();
         // The cold and the hot water of the datacenter's cooling loops.
         CoolingWater.declare();
+        CoolingPlant.declare();
         ChainDeposits.declare();
         ChainParts.declare();
         ChainChips.declare();

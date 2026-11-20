@@ -12554,5 +12554,9 @@
   "block.jsc.cooling_tower_fan": "Ventilador da Torre de Resfriamento",
   "block.jsc.cooling_tower_fill": "Enchimento da Torre de Resfriamento",
   "block.jsc.cooling_tower_louvre": "Veneziana da Torre de Resfriamento",
-  "block.jsc.cooling_tower_terminal": "Terminal da Torre de Resfriamento"
+  "block.jsc.cooling_tower_terminal": "Terminal da Torre de Resfriamento",
+  "jsc.machine_face_word.plant": "PLANTA",
+  "jsc.machine_face_word.cdu": "CDU",
+  "block.jsc.cdu": "CDU",
+  "block.jsc.cdu_part": "CDU"
 }
