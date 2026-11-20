@@ -95,6 +95,12 @@ public final class PictureFace implements IMachineFace {
         this.standard.drawOver(v);
     }
 
+    /* Its plates are drawn over its picture, the name it gives them as wide as its LCD leaves room. */
+    @Override
+    public boolean drawsPlates() {
+        return true;
+    }
+
     @Override
     public boolean clicked(final MachineView v, final double x, final double y, final int button) {
         if (button != InputConstants.MOUSE_BUTTON_LEFT) {

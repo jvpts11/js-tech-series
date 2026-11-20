@@ -242,7 +242,10 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
   sight glasses show what each of its tanks holds, and its meter, LCD, lamps and switch stand where every machine
   screen has them. The words stencilled on its parts are in the player's language. The Optical Polisher shows its lens
   polisher or, while it draws fibre, its drawing tower; the Crusher writes the running recipe's byproduct chance by its
-  dust outlet. The Large Scale Printer's face comes with its Queue tab.
+  dust outlet. The Large Scale Printer's face shows its feeder's slot with the sheets it holds on a counter and the three
+  places a book waits in; its queue is on a sixth tab, Queue: each book with how many and from which computer,
+  the copy it is on and its bar, PAUSE and CANCEL, the BOOKS TO lever (the network or the chest), the counter of books
+  printed and the lamp of whether the server lets enchanted books print.
 - **Particles** belong to the world: a machine gives them off only while it works (dust, sparks, smoke, mist), never
   as part of its model, and a closed machine breathes out now and then. Its beacon turns while it works. What is shut
   while a real machine works stays shut: the Ceramic Kiln's door closes while it fires.

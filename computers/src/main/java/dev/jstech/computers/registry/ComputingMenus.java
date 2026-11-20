@@ -29,7 +29,6 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.menu.NetTerminalMenu;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
 import dev.jstech.computers.menu.ExtendedCdDriveMenu;
-import dev.jstech.computers.menu.LargeScalePrinterMenu;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.menu.PrinterMenu;
@@ -95,9 +94,6 @@ public final class ComputingMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<ScannerMenu>> SCANNER_MENU =
             menu("scanner", ScannerMenu::fromNetwork);
-
-    public static final DeferredHolder<MenuType<?>, MenuType<LargeScalePrinterMenu>> LARGE_SCALE_PRINTER_MENU =
-            menu("large_scale_printer", LargeScalePrinterMenu::fromNetwork);
 
     public static final DeferredHolder<MenuType<?>, MenuType<ExtendedCdDriveMenu>> EXTENDED_CD_DRIVE_MENU =
             menu("extended_cd_drive", ExtendedCdDriveMenu::fromNetwork);

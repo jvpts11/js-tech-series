@@ -84,6 +84,13 @@ public final class MachineMenu extends CoreMenu {
     public static final int FIRST_FILTER = 700;
     /** The most a wheel shows: three digits. */
     public static final int WHEEL_MOST = 999;
+    /**
+     * The buttons of a machine's own tabs, {@code FIRST_OWN + button}, each handed to the machine
+     * ({@link MachineBlockEntity#pressed}) when the player may set it up.
+     */
+    public static final int FIRST_OWN = 900;
+    /** The most buttons a machine's own tabs have. */
+    public static final int OWN_BUTTONS = 32;
 
     /** The menu of {@code machine} for the player whose {@code inventory} it is. */
     public MachineMenu(final int containerId, final Inventory inventory, final MachineBlockEntity machine) {
@@ -203,6 +210,11 @@ public final class MachineMenu extends CoreMenu {
             button(FIRST_TAB + i, player -> showTab(index));
         }
         button(SWITCH, player -> settable(player, () -> machine.control().setOn(!machine.control().on())));
+        // A machine with tabs of its own answers their buttons itself.
+        for (int i = 0; this.tabs > MachineScreenLayout.TABS && i < OWN_BUTTONS; i++) {
+            final int own = i;
+            button(FIRST_OWN + i, player -> settable(player, () -> machine.pressed(own)));
+        }
         for (int i = 0; i < RedstoneMode.round().size(); i++) {
             final RedstoneMode mode = RedstoneMode.round().get(i);
             button(FIRST_MODE + i, player -> settable(player, () -> machine.control().setMode(mode)));

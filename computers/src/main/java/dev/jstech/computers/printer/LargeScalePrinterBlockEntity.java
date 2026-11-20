@@ -23,6 +23,7 @@ import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.ProcessingInput;
 import dev.jstech.core.multiblock.ShapeMatch;
@@ -75,6 +76,12 @@ public final class LargeScalePrinterBlockEntity extends ChainMachineBlockEntity 
     public static final int SHEETS_A_BOOK = 3;
     /** The most jobs waiting at once. */
     public static final int QUEUE_MAX = 16;
+    /** Its Queue tab, numbered after the five every machine's screen has. */
+    public static final int QUEUE_TAB = MachineScreenLayout.TABS;
+    /** The buttons of its Queue tab ({@link #pressed(int)}). */
+    public static final int PAUSE = 0;
+    public static final int CANCEL = 1;
+    public static final int DESTINATION = 2;
     /* How far through a book it is, in thousandths, as the players' games draw it. */
     private static final int WHOLE = 1_000;
     private static final int TICKS_A_SECOND = 20;
@@ -102,6 +109,25 @@ public final class LargeScalePrinterBlockEntity extends ChainMachineBlockEntity 
     /** Whether the server lets it print enchanted books, as its window says it. */
     public boolean enchantedAllowed() {
         return enchanted.getAsInt() == 1;
+    }
+
+    /** Its Queue tab, after the five every machine has. */
+    @Override
+    public int ownTabs() {
+        return 1;
+    }
+
+    /** Its Queue tab's buttons: pause or go on, cancel the book printing, and send its books the other way. */
+    @Override
+    public void pressed(final int button) {
+        switch (button) {
+            case PAUSE -> togglePaused();
+            case CANCEL -> cancelCurrent();
+            case DESTINATION -> toggleDestination();
+            default -> {
+                // No other button.
+            }
+        }
     }
 
     /**

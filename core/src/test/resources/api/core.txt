@@ -7693,6 +7693,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  void moved(BlockPos, BlockMove)
 10 dev.jstech.core.machine.MachineBlockEntity  void onLoad()
 10 dev.jstech.core.machine.MachineBlockEntity  void own(Ownership)
+77 dev.jstech.core.machine.MachineBlockEntity  void pressed(int)
 10 dev.jstech.core.machine.MachineBlockEntity  void setAccess(Access)
 10 dev.jstech.core.machine.MachineBlockEntity  void setChanged()
 10 dev.jstech.core.machine.MachineBlockEntity  void setRemoved()
@@ -7790,10 +7791,12 @@ stable 4
 10 dev.jstech.core.machine.MachineMenu  static final int FIRST_FILTER
 10 dev.jstech.core.machine.MachineMenu  static final int FIRST_LOCK
 10 dev.jstech.core.machine.MachineMenu  static final int FIRST_MODE
+77 dev.jstech.core.machine.MachineMenu  static final int FIRST_OWN
 10 dev.jstech.core.machine.MachineMenu  static final int FIRST_READS
 10 dev.jstech.core.machine.MachineMenu  static final int FIRST_SIDE
 10 dev.jstech.core.machine.MachineMenu  static final int FIRST_TAB
 10 dev.jstech.core.machine.MachineMenu  static final int MAIN
+77 dev.jstech.core.machine.MachineMenu  static final int OWN_BUTTONS
 10 dev.jstech.core.machine.MachineMenu  static final int PROTECTION
 10 dev.jstech.core.machine.MachineMenu  static final int PULL
 10 dev.jstech.core.machine.MachineMenu  static final int PULL_DOWN

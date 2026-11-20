@@ -13,6 +13,8 @@ import dev.jstech.computers.chain.machine.ChainFaces;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.computers.client.PrinterQueueTab;
+import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
 import dev.jstech.core.client.machine.IMachineFace;
 import dev.jstech.core.client.machine.MachineFaces;
 import dev.jstech.core.client.machine.MachineView;
@@ -39,6 +41,9 @@ public final class ChainFaceScreens {
 
     /* The word of a face's file the game puts the running recipe's byproduct chance in for. */
     private static final String BYPRODUCT = "{byproduct}";
+    /* The word of the printer's face the game puts the sheets in its feeder in for, on its counter. */
+    private static final String SHEETS = "{sheets}";
+    private static final String PRINTER = "large_scale_printer";
     private static final String NO_CHANCE = " --%";
     private static final int PERCENT = 100;
 
@@ -66,6 +71,10 @@ public final class ChainFaceScreens {
             } else {
                 MachineFaces.register(ChainMachines.typeOf(machine), terminal -> own);
             }
+            if (machine.id().equals(PRINTER)) {
+                // The printer's queue, pause, cancel and lever on a tab of its own after the five.
+                MachineFaces.registerTabs(ChainMachines.typeOf(machine), List.of(PrinterQueueTab.tab()));
+            }
         }
     }
 
@@ -80,6 +89,10 @@ public final class ChainFaceScreens {
     private static String say(final MachineBlockEntity machine, final String written) {
         if (written.equals(BYPRODUCT)) {
             return byproductChance(machine);
+        }
+        if (written.equals(SHEETS)) {
+            return machine instanceof LargeScalePrinterBlockEntity printer
+                    ? String.format(Locale.ROOT, "%04d", printer.sheets()) : "";
         }
         // A name plate's few words are one sentence; anything else, each word on its own.
         final Optional<ChainFaceWord> whole = ChainFaceWord.of(written);

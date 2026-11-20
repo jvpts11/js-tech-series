@@ -62,11 +62,14 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
  * The screen every machine of every mod opens, as the approved design draws it, in the game's own look: five tabs
  * along the top of a window holding the machine's steel face, with its name and class on plates and its three lamps,
  * RUN, WAIT and FAULT, on every tab; and the player's inventory below, in a window of its own. The Main tab shows the
- * machine's own face ({@link MachineFaces}); Sides, Redstone, Upgrades and Protection are every machine's.
+ * machine's own face ({@link MachineFaces}); Sides, Redstone, Upgrades and Protection are every machine's; a machine
+ * with tabs of its own has them after these, each with its icon and its face.
  */
 public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
 
     private final List<IMachineFace> faces = new ArrayList<>();
+    /* The machine's own tabs after the five, as many as both its menu and its mod's client give it. */
+    private final List<MachineFaces.OwnTab> own;
     private int ticks;
 
     /** The steel face every machine's tabs are drawn on. */
@@ -88,6 +91,11 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
         this.faces.add(new RedstoneTab());
         this.faces.add(new UpgradesTab());
         this.faces.add(new ProtectionTab());
+        final List<MachineFaces.OwnTab> declared = MachineFaces.tabsOf(menu.machine());
+        this.own = declared.subList(0, Math.min(declared.size(), menu.tabs() - TABS));
+        for (final MachineFaces.OwnTab tab : this.own) {
+            this.faces.add(tab.face().apply(menu.machine()));
+        }
     }
 
     /**
@@ -113,7 +121,7 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
 
     @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        final int tab = MachineScreenLayout.tabAt(mouseX - this.leftPos, mouseY - this.topPos);
+        final int tab = MachineScreenLayout.tabAt(mouseX - this.leftPos, mouseY - this.topPos, this.faces.size());
         if (tab >= 0 && button == InputConstants.MOUSE_BUTTON_LEFT) {
             this.menu.showTab(tab);
             sendButton(MachineMenu.FIRST_TAB + tab);
@@ -124,7 +132,7 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
             return true;
         }
         final MachineView view = view(null, (int) mouseX, (int) mouseY, 0F);
-        if (onFace(view) && this.faces.get(this.menu.tab()).clicked(view, view.faceMouseX(), view.faceMouseY(),
+        if (onFace(view) && this.faces.get(shownTab()).clicked(view, view.faceMouseX(), view.faceMouseY(),
                 button)) {
             return true;
         }
@@ -135,7 +143,7 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX,
                                  final double scrollY) {
         final MachineView view = view(null, (int) mouseX, (int) mouseY, 0F);
-        if (scrollY != 0 && onFace(view) && this.faces.get(this.menu.tab()).scrolled(view, view.faceMouseX(),
+        if (scrollY != 0 && onFace(view) && this.faces.get(shownTab()).scrolled(view, view.faceMouseX(),
                 view.faceMouseY(), scrollY)) {
             return true;
         }
@@ -150,8 +158,8 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
 
     @Override
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
-        final int active = this.menu.tab();
-        for (int i = 0; i < TABS; i++) {
+        final int active = shownTab();
+        for (int i = 0; i < this.faces.size(); i++) {
             if (i != active) {
                 tab(g, i, false);
             }
@@ -163,7 +171,9 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
         g.blit(STEEL, this.leftPos + FACE_X, this.topPos + FACE_Y, 0, 0, FACE_WIDTH, FACE_HEIGHT, FACE_WIDTH,
                 FACE_HEIGHT);
         final MachineView view = view(g, mouseX, mouseY, partialTick);
-        MachineChrome.plates(view, this.title);
+        if (!this.faces.get(active).drawsPlates()) {
+            MachineChrome.plates(view, this.title);
+        }
         MachineChrome.lamps(view);
         this.faces.get(active).draw(view);
         MachineArt.window(g, this.leftPos + INVENTORY_X, this.topPos + INVENTORY_Y,
@@ -180,7 +190,7 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         Draw.text(g, this.font, this.playerInventoryTitle, INVENTORY_X + INVENTORY_WORD_X,
                 INVENTORY_Y + INVENTORY_WORD_Y, MachineArt.PALETTE.get().title());
-        this.faces.get(this.menu.tab()).drawOver(new MachineView(g, this.font, this.menu, 0, 0,
+        this.faces.get(shownTab()).drawOver(new MachineView(g, this.font, this.menu, 0, 0,
                 mouseX - this.leftPos, mouseY - this.topPos, this.ticks, this::sendButton));
     }
 
@@ -188,9 +198,9 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
     private List<Component> tooltip(final MachineView view) {
         final double x = view.mouseX() - this.leftPos;
         final double y = view.mouseY() - this.topPos;
-        final int tab = MachineScreenLayout.tabAt(x, y);
+        final int tab = MachineScreenLayout.tabAt(x, y, this.faces.size());
         if (tab >= 0) {
-            return List.of(GameText.component(TAB_NAMES.get(tab)));
+            return List.of(GameText.component(tab < TABS ? TAB_NAMES.get(tab) : this.own.get(tab - TABS).name()));
         }
         if (this.hoveredSlot != null && lockable(this.hoveredSlot)) {
             final ItemStack locked = lockedTo(this.hoveredSlot);
@@ -215,17 +225,27 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
             return view.machine().note().isEmpty() ? List.of(status)
                     : List.of(status, GameText.component(view.machine().note()));
         }
-        return this.faces.get(this.menu.tab()).tooltip(view, fx, fy);
+        return this.faces.get(shownTab()).tooltip(view, fx, fy);
     }
 
     /* Tab {@code index} on the window's top edge, with its icon. */
     private void tab(final GuiGraphics g, final int index, final boolean active) {
-        MachineChrome.tab(g, this.leftPos + MachineScreenLayout.tabX(index), this.topPos, index, active);
+        if (index < TABS) {
+            MachineChrome.tab(g, this.leftPos + MachineScreenLayout.tabX(index), this.topPos, index, active);
+        } else {
+            MachineChrome.tab(g, this.leftPos + MachineScreenLayout.tabX(index), this.topPos,
+                    this.own.get(index - TABS).icon(), active);
+        }
     }
 
     private MachineView view(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         return new MachineView(g, this.font, this.menu, this.leftPos, this.topPos, mouseX, mouseY,
                 this.ticks + partialTick, this::sendButton);
+    }
+
+    /* The tab shown: the menu's, or the Main tab for one of the machine's own its mod's client gave no face. */
+    private int shownTab() {
+        return this.menu.tab() < this.faces.size() ? this.menu.tab() : MachineMenu.MAIN;
     }
 
     private boolean onFace(final MachineView view) {

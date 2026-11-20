@@ -92,6 +92,7 @@ public enum ChainFaceWord {
     ION_IMPLANTER(TextKey.of("jsc.machine_face_word.ion_implanter", "ION IMPLANTER")),
     LAMINATOR(TextKey.of("jsc.machine_face_word.laminator", "LAMINATOR")),
     LITHOGRAPHY(TextKey.of("jsc.machine_face_word.lithography", "LITHOGRAPHY")),
+    LS_PRINTER(TextKey.of("jsc.machine_face_word.ls_printer", "LS PRINTER")),
     OPTICAL_POLISHER(TextKey.of("jsc.machine_face_word.optical_polisher", "OPTICAL POLISHER")),
     PACKAGING_LINE(TextKey.of("jsc.machine_face_word.packaging_line", "PACKAGING LINE")),
     PLASMA_ETCHER(TextKey.of("jsc.machine_face_word.plasma_etcher", "PLASMA ETCHER")),

@@ -12,6 +12,7 @@ import dev.jstech.computers.chain.machine.ChainFaces;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
 import dev.jstech.core.machine.FacePicture;
 import dev.jstech.core.machine.FaceSlot;
 import dev.jstech.core.machine.MachineScreenLayout;
@@ -77,7 +78,7 @@ public final class ChainFacesGameTests {
             }
             final int items = machine.layout().firstUpgrade();
             for (int index = 0; index < items; index++) {
-                if (!shown.contains(index)) {
+                if (!shown.contains(index) && !fedByItsInlet(machine, index)) {
                     wrong.add(machine.id() + " shows no port for slot " + index);
                 }
             }
@@ -132,6 +133,12 @@ public final class ChainFacesGameTests {
         }
         helper.assertTrue(untranslated.isEmpty(), "every word on a face is translated or data: " + untranslated);
         helper.succeed();
+    }
+
+    /* Whether slot {@code index} of {@code machine} is one its inlet fills, no port of its own: the printer's feeder. */
+    private static boolean fedByItsInlet(final ChainMachine machine, final int index) {
+        return machine.id().equals("large_scale_printer") && index > 0
+                && index < LargeScalePrinterBlockEntity.INPUTS;
     }
 
     /* How many tanks {@code machine} has: its liquid tanks, then each state of matter's. */

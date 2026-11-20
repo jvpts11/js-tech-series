@@ -315,6 +315,13 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return 0;
     }
 
+    /**
+     * Answers button {@code button} of its own tabs ({@link MachineMenu#FIRST_OWN}), pressed by a player who may set it
+     * up: nothing, unless a machine with tabs of its own says otherwise.
+     */
+    public void pressed(final int button) {
+    }
+
     /** What its own screen shows that only the server knows ({@link MachineScreenData}); none unless it says. */
     public @Nullable MachineScreenData<?> screenData() {
         return null;

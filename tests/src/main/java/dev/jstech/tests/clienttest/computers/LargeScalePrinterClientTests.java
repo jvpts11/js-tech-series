@@ -13,7 +13,6 @@ import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
-import dev.jstech.computers.client.LargeScalePrinterScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.EditorApp;
@@ -28,7 +27,11 @@ import dev.jstech.computers.os.fs.ScanFile;
 import dev.jstech.computers.printer.BookJob;
 import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
 import dev.jstech.computers.printer.LargeScalePrinters;
+import dev.jstech.core.client.machine.MachineScreen;
+import dev.jstech.core.machine.MachineMenu;
+import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.text.GameText;
+import java.util.Objects;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.ArrayList;
@@ -74,6 +77,9 @@ public final class LargeScalePrinterClientTests {
     private static final String EDITOR = "jsc:editor";
     /* Before the machine's front and to its right, a few steps back from it. */
     private static final BlockPos IN_FRONT = CORNER.offset(6, 0, -4);
+    /* Points of its Queue tab's face: the PAUSE button's cap, and the lever. */
+    private static final int[] PAUSE_AT = {128, 42};
+    private static final int[] LEVER_AT = {191, 57};
 
     private LargeScalePrinterClientTests() {
     }
@@ -101,12 +107,31 @@ public final class LargeScalePrinterClientTests {
                 })
                 .thenTeleport(SETTLE, terminal.north(2), Direction.SOUTH)
                 .thenRightClick(SETTLE, terminal)
-                .thenAwaitScreen(LargeScalePrinterScreen.class, SCREEN_WAIT)
+                .thenAwaitScreen(MachineScreen.class, SCREEN_WAIT)
                 .thenWaitUntilServer(level -> printer(ctx, level, terminal).done() > 0, WAIT,
                         "the printer to make a book of the first job", level -> "done="
                                 + printer(ctx, level, terminal).done())
                 .then(PRINTING, () -> ctx.mc().getToasts().clear())
-                .thenScreenshot(1, "lsp-printing")
+                .thenScreenshot(1, "lsp-main")
+                // Its Queue tab, the sixth: its queue, its buttons and its lever.
+                .then(0, () -> {
+                    ctx.assertTrue(menu(ctx).tabs() == LargeScalePrinterBlockEntity.QUEUE_TAB + 1,
+                            "the printer's screen has its Queue tab after the five: " + menu(ctx).tabs() + " tabs");
+                    tab(ctx, LargeScalePrinterBlockEntity.QUEUE_TAB);
+                })
+                .thenScreenshot(SETTLE, "lsp-printing")
+                .then(0, () -> face(ctx, PAUSE_AT))
+                .thenWaitUntilServer(level -> printer(ctx, level, terminal).paused(), SCREEN_WAIT,
+                        "PAUSE to pause it", level -> "still printing")
+                .then(SETTLE, () -> face(ctx, PAUSE_AT))
+                .thenWaitUntilServer(level -> !printer(ctx, level, terminal).paused(), SCREEN_WAIT,
+                        "RESUME to set it going again", level -> "still paused")
+                .then(SETTLE, () -> face(ctx, LEVER_AT))
+                .thenWaitUntilServer(level -> !printer(ctx, level, terminal).toNetwork(), SCREEN_WAIT,
+                        "the lever to send its books to the chest", level -> "still to the network")
+                .then(SETTLE, () -> face(ctx, LEVER_AT))
+                .thenWaitUntilServer(level -> printer(ctx, level, terminal).toNetwork(), SCREEN_WAIT,
+                        "and back to the network", level -> "still to the chest")
                 .then(0, () -> ComputersServerConfig.FILE.set(ComputersServerConfig.PRINT_ENCHANTED_BOOKS, false))
                 .then(SETTLE * 10, () -> ctx.mc().getToasts().clear())
                 .thenScreenshot(1, "lsp-enchanted-off")
@@ -201,6 +226,30 @@ public final class LargeScalePrinterClientTests {
     private static LargeScalePrinterBlockEntity printer(final ClientTestContext ctx, final ServerLevel level,
                                                         final BlockPos terminal) {
         return (LargeScalePrinterBlockEntity) level.getBlockEntity(ctx.abs(terminal));
+    }
+
+    private static MachineMenu menu(final ClientTestContext ctx) {
+        return ((MachineScreen) Objects.requireNonNull(ctx.mc().screen, "no screen")).getMenu();
+    }
+
+    /* Clicks tab {@code index} of the machine's screen, drawn in the middle of the window. */
+    private static void tab(final ClientTestContext ctx, final int index) {
+        ctx.click(left(ctx) + MachineScreenLayout.tabX(index) + MachineScreenLayout.TAB_WIDTH / 2.0,
+                top(ctx) + MachineScreenLayout.TAB_HEIGHT / 2.0);
+    }
+
+    /* Clicks the point {@code at} of the steel face. */
+    private static void face(final ClientTestContext ctx, final int[] at) {
+        ctx.click(left(ctx) + MachineScreenLayout.faceX(at[0]) + 0.5, top(ctx) + MachineScreenLayout.faceY(at[1])
+                + 0.5);
+    }
+
+    private static int left(final ClientTestContext ctx) {
+        return (ctx.mc().getWindow().getGuiScaledWidth() - MachineScreenLayout.WIDTH) / 2;
+    }
+
+    private static int top(final ClientTestContext ctx) {
+        return (ctx.mc().getWindow().getGuiScaledHeight() - MachineScreenLayout.HEIGHT) / 2;
     }
 
     @Nullable

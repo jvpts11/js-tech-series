@@ -29,6 +29,7 @@ import java.util.Optional;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * What every machine's screen draws round what its tab shows, whichever screen it is: a tab with its icon, the
@@ -55,6 +56,12 @@ public final class MachineChrome {
     public static void tab(final GuiGraphics g, final int x, final int y, final int index, final boolean active) {
         MachineArt.tab(g, x, y, active);
         g.blit(TAB_ICONS, x + TAB_ICON, y + TAB_ICON, index * ICON, 0, ICON, ICON, ICON * TABS, ICON);
+    }
+
+    /** A tab of a machine's own at {@code x, y}, raised when it is the one shown, with its icon drawn as an item. */
+    public static void tab(final GuiGraphics g, final int x, final int y, final ItemStack icon, final boolean active) {
+        MachineArt.tab(g, x, y, active);
+        g.renderItem(icon, x + TAB_ICON, y + TAB_ICON);
     }
 
     /** The machine's name on its aluminium plate, and its class, or FE, on the yellow one. */

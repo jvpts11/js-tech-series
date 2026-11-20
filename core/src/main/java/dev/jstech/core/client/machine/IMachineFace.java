@@ -42,4 +42,12 @@ public interface IMachineFace {
     default List<Component> tooltip(final MachineView view, final double x, final double y) {
         return List.of();
     }
+
+    /**
+     * Whether it draws the machine's plates itself ({@link MachineChrome#plates(MachineView, String, int)}), with a
+     * name and a room of its own: then the screen draws none under them. No, unless it says.
+     */
+    default boolean drawsPlates() {
+        return false;
+    }
 }

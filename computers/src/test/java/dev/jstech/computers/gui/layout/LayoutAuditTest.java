@@ -67,7 +67,7 @@ class LayoutAuditTest {
             "InstallerLayout",
             "BootSequenceLayout", "QuinceStartLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "NetworkEventLogLayout", "PrinterLayout", "DockLayout",
-            "PrintedPaperLayout", "ScannerLayout", "LargeScalePrinterLayout", "ExtendedCdDriveLayout",
+            "PrintedPaperLayout", "ScannerLayout", "ExtendedCdDriveLayout",
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
             "EffectsPageLayout", "TransitionPanelLayout", "WorkbenchLayout",
             "SoftwareManagerLayout", "UpdateManagerLayout", "NetBootLayout", "PlayerPagesLayout",
@@ -331,8 +331,6 @@ class LayoutAuditTest {
         c.add(new AuditCase("DockLayout", DockLayout.layout(), true));
         // A scanner's window: the glass and what it makes, where it saves, the page it reads, the inventory.
         c.add(new AuditCase("ScannerLayout", ScannerLayout.layout(), true));
-        // The Large Scale Printer's window: the feeder, the job and its book, the queue, where the books go.
-        c.add(new AuditCase("LargeScalePrinterLayout", LargeScalePrinterLayout.layout(), true));
         // The Extended CD Drive's window: the reading tray, the seven writing trays, the buttons, the inventory.
         c.add(new AuditCase("ExtendedCdDriveLayout", ExtendedCdDriveLayout.layout(), true));
         // Soundfoundry's vinyl plate on its Legacy and Transition looks, under the player.

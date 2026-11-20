@@ -214,7 +214,6 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
         event.register(ComputingMenus.PRINTER_MENU.get(), PrinterScreen::new);
         event.register(ComputingMenus.SCANNER_MENU.get(), ScannerScreen::new);
-        event.register(ComputingMenus.LARGE_SCALE_PRINTER_MENU.get(), LargeScalePrinterScreen::new);
         event.register(ComputingMenus.EXTENDED_CD_DRIVE_MENU.get(), ExtendedCdDriveScreen::new);
         event.register(ComputingMenus.WORKBENCH_MENU.get(), WorkbenchScreen::new);
         event.register(ComputingMenus.DOCK_STATION_MENU.get(), DockStationScreen::new);
