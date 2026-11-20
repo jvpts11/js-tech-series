@@ -14,6 +14,7 @@ import dev.jstech.computers.block.AccessPointBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.operation.NetworkStorage;
@@ -33,6 +34,7 @@ import dev.jstech.computers.portable.PortableBuildSource;
 import dev.jstech.computers.portable.PortableDevices;
 import dev.jstech.computers.portable.PortableGallery;
 import dev.jstech.computers.portable.PortableItem;
+import dev.jstech.computers.portable.PortableLinks;
 import dev.jstech.computers.portable.PortableMaps;
 import dev.jstech.computers.portable.PortableModel;
 import dev.jstech.computers.portable.PortableNetwork;
@@ -268,13 +270,23 @@ public final class PortableAppsGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(base.mainframe().networkUuid() != null, "the network is up"))
                 .thenExecute(() -> base.rack().consoleOf(0).install(Programs.MESSENGER_SERVICE.toString()))
                 .thenExecuteFor(Portables.LOOK_EVERY * 2, () -> tick(player, phone))
+                // The service starts on its server's own clock, not the game's: the phone on the network and the
+                // service up before a word is said.
+                .thenWaitUntil(() -> {
+                    tick(player, phone);
+                    final PortableLinks.Joined joined = PortableLinks.of(helper.getLevel(), id);
+                    helper.assertTrue(joined != null && ServerServices.find(helper.getLevel(), joined.network(),
+                            Programs.MESSENGER_SERVICE) != null, "the phone on the network, its Messenger service up");
+                })
                 .thenExecute(() -> {
                     act(helper, player, new PortableActionPayload(id, Action.SAY, MessengerLog.LOBBY,
                             "the furnace line is stuck", Optional.empty(), 0L));
                     final MessengerLog log = base.rack().messengerAt(0);
                     helper.assertTrue(log != null && log.room(MessengerLog.LOBBY, 4).stream().anyMatch(message ->
                                     "the furnace line is stuck".equals(message.text())),
-                            "said in the network's lobby");
+                            "said in the network's lobby: " + (log == null ? null : log.room(MessengerLog.LOBBY, 4))
+                                    + ", the phone's apps "
+                                    + PortableDevices.get(helper.getLevel().getServer()).find(id).installed());
                 })
                 .thenSucceed();
     }
@@ -389,18 +401,22 @@ public final class PortableAppsGameTests {
         helper.succeed();
     }
 
-    /** A device out of every inventory and dock longer than the server allows is let go; one seen since stays. */
+    /**
+     * A device out of every inventory and dock longer than the server allows is let go; one seen since stays. In a store
+     * of the test's own: letting go of every device unseen in the server's would take those of the tests running beside
+     * it, their apps and all.
+     */
     @GameTest(template = ARENA, timeoutTicks = 100)
     public static void lost_aDeviceUnseenTooLongIsLetGo(final GameTestHelper helper) {
         final ServerPlayer player = player(helper);
-        final PortableDevices devices = PortableDevices.get(helper.getLevel().getServer());
-        final ItemStack kept = hold(player, PortableItems.QPHONE.get());
-        final UUID lost = Portables.id(hold(player, PortableItems.QPHONE_5.get()));
+        final PortableDevices devices = new PortableDevices();
         final long now = helper.getLevel().getGameTime();
-        devices.seen(Portables.id(kept), now + 10, player.getUUID());
+        final UUID kept = carried(devices, PortableModel.QPHONE, player, now);
+        final UUID lost = carried(devices, PortableModel.QPHONE_5, player, now);
+        devices.seen(kept, now + 10, player.getUUID());
         final List<UUID> gone = devices.eraseUnseenSince(now + 5, everyone -> true);
         helper.assertTrue(gone.contains(lost) && devices.find(lost) == null, "the unseen one is let go");
-        helper.assertTrue(devices.find(Portables.id(kept)) != null, "the one seen since stays");
+        helper.assertTrue(devices.find(kept) != null, "the one seen since stays");
         helper.succeed();
     }
 
@@ -411,11 +427,11 @@ public final class PortableAppsGameTests {
     @GameTest(template = ARENA, timeoutTicks = 100)
     public static void lost_aDeviceOfAPlayerAwayOrHoldingAWalletStays(final GameTestHelper helper) {
         final ServerPlayer player = player(helper);
-        final PortableDevices devices = PortableDevices.get(helper.getLevel().getServer());
-        final UUID carried = Portables.id(hold(player, PortableItems.QPHONE.get()));
-        final UUID wallet = Portables.id(hold(player, PortableItems.QPHONE_5.get()));
-        devices.keepWallet(wallet, "TRC1away", "key");
+        final PortableDevices devices = new PortableDevices();
         final long now = helper.getLevel().getGameTime();
+        final UUID carried = carried(devices, PortableModel.QPHONE, player, now);
+        final UUID wallet = carried(devices, PortableModel.QPHONE_5, player, now);
+        devices.keepWallet(wallet, "TRC1away", "key");
         devices.eraseUnseenSince(now + 5, nobody -> false);
         helper.assertTrue(devices.find(carried) != null, "its player away, the device they carried stays");
         final List<UUID> gone = devices.eraseUnseenSince(now + 5, everyone -> true);
@@ -543,6 +559,15 @@ public final class PortableAppsGameTests {
         player.getInventory().clearContent();
         player.setPos(Vec3.atCenterOf(helper.absolutePos(NEAR)));
         return player;
+    }
+
+    /* A new device of {@code model} kept in {@code devices}, seen at {@code now} in {@code player}'s inventory. */
+    private static UUID carried(final PortableDevices devices, final PortableModel model, final ServerPlayer player,
+                                final long now) {
+        final UUID id = UUID.randomUUID();
+        devices.of(id, model);
+        devices.seen(id, now, player.getUUID());
+        return id;
     }
 
     /* A new device of {@code item} in {@code player}'s main hand, carried once, so it is on. */
