@@ -22,6 +22,8 @@ public final class MaterialTexts {
     public static final TextKey LIQUEFIED = TextKey.of("jscore.material.liquefied", "Liquid %s");
     /** A bucket of a liquid, as the game names its own: "Gasoline Bucket". */
     public static final TextKey BUCKET = TextKey.of("jscore.material.bucket", "%s Bucket");
+    /** A few pieces of an ore lying on the ground over its vein: "Chalcopyrite Pieces". */
+    public static final TextKey PIECES = TextKey.of("jscore.material.pieces", "%s Pieces");
 
     private MaterialTexts() {
     }

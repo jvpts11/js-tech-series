@@ -11,6 +11,8 @@ Ores do not lie scattered through the rock: they lie in veins. A vein is a body 
 
 Between the veins a little of each ore lies loose, in small knots of a handful of blocks, as the game's own ores lie scattered: digging anywhere turns up some of every kind at its heights, enough to start with, never enough to live on.
 
+Over a vein, a few pieces of its ore lie on the ground, as loose stones do: two to four small pieces of the vein's own ore together, about eight such spots over a vein, on solid ground and never in water. Broken by hand they give one of the ore, raw iron for iron.
+
 > [!DEFINE] Zone
 > A square of the world three chunks a side. A zone holds one vein at most, and most hold none.
 
@@ -34,11 +36,12 @@ Table: The veins of the series
 
 ## How to use it
 
-1. Look where ore shows on a cave's wall or a cliff: a vein is far larger than what shows, so dig round it.
-2. Follow it the way its ore grows thicker: that way lies its middle.
-3. Follow it from rock to rock: the same vein lays iron ore in the stone and deepslate iron ore in the deepslate.
-4. With a mod's prospecting instrument, learn which way the nearest veins lie and how strongly each shows; standing in one, what it holds and about how much.
-5. When a vein is mined out, look a few chunks on: the next is at least a zone away.
+1. Walking the land, look for pieces of ore on the ground: a vein of that ore lies under them, somewhere down the column and round it, and where several lie its middle is near.
+2. Look where ore shows on a cave's wall or a cliff: a vein is far larger than what shows, so dig round it.
+3. Follow it the way its ore grows thicker: that way lies its middle.
+4. Follow it from rock to rock: the same vein lays iron ore in the stone and deepslate iron ore in the deepslate.
+5. With a mod's prospecting instrument, learn which way the nearest veins lie and how strongly each shows; standing in one, what it holds and about how much.
+6. When a vein is mined out, look a few chunks on: the next is at least a zone away.
 
 ## What can go wrong
 

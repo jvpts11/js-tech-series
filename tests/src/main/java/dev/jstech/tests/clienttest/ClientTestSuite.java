@@ -203,6 +203,7 @@ import dev.jstech.tests.clienttest.core.KeyActionClientTests;
 import dev.jstech.tests.clienttest.core.EffectsClientTests;
 import dev.jstech.tests.clienttest.core.LightingClientTests;
 import dev.jstech.tests.clienttest.core.TerrainClientTests;
+import dev.jstech.tests.clienttest.core.OrePiecesClientTests;
 import dev.jstech.tests.clienttest.core.TestKitClientTests;
 import dev.jstech.tests.clienttest.core.PlacesClientTests;
 import dev.jstech.tests.clienttest.core.LandDrawingClientTests;
@@ -479,6 +480,7 @@ public final class ClientTestSuite {
             LightingClientTests.class,
             EffectsClientTests.class,
             TerrainClientTests.class,
+            OrePiecesClientTests.class,
             PlacesClientTests.class,
             LandDrawingClientTests.class,
             SkyClientTests.class,

@@ -11,6 +11,8 @@ Os minérios não ficam espalhados pela rocha: ficam em veios. Um veio é um cor
 
 Entre os veios um pouco de cada minério fica solto, em pequenos nós de um punhado de blocos, como os minérios do próprio jogo ficam espalhados: cavar em qualquer lugar encontra um pouco de cada tipo nas suas alturas, o bastante para começar, nunca o bastante para viver disso.
 
+Sobre um veio, alguns pedaços do minério dele ficam no chão, como pedras soltas: de dois a quatro pedacinhos do próprio minério do veio juntos, umas oito dessas manchas sobre cada veio, em chão firme e nunca na água. Quebrados com a mão, dão um do minério, ferro bruto no caso do ferro.
+
 > [!DEFINE] Zona
 > Um quadrado do mundo de três chunks de lado. Uma zona tem no máximo um veio, e a maioria não tem nenhum.
 
@@ -34,11 +36,12 @@ Table: Os veios da série
 
 ## Como usar
 
-1. Olhe onde o minério aparece na parede de uma caverna ou num penhasco: um veio é bem maior do que o que aparece, então cave em volta.
-2. Siga-o para o lado em que o minério fica mais grosso: para lá está o meio.
-3. Siga-o de uma rocha a outra: o mesmo veio põe minério de ferro na pedra e minério de ferro de ardósia profunda na ardósia profunda.
-4. Com o instrumento de prospecção de um mod, saiba para que lado ficam os veios mais próximos e com que força cada um aparece; de pé dentro de um, o que ele tem e mais ou menos quanto.
-5. Quando um veio se esgota, procure alguns chunks adiante: o próximo está a pelo menos uma zona de distância.
+1. Andando pelo terreno, procure pedaços de minério no chão: um veio desse minério está embaixo deles, em algum ponto mais fundo da coluna e ao redor, e onde há vários o meio dele está perto.
+2. Olhe onde o minério aparece na parede de uma caverna ou num penhasco: um veio é bem maior do que o que aparece, então cave em volta.
+3. Siga-o para o lado em que o minério fica mais grosso: para lá está o meio.
+4. Siga-o de uma rocha a outra: o mesmo veio põe minério de ferro na pedra e minério de ferro de ardósia profunda na ardósia profunda.
+5. Com o instrumento de prospecção de um mod, saiba para que lado ficam os veios mais próximos e com que força cada um aparece; de pé dentro de um, o que ele tem e mais ou menos quanto.
+6. Quando um veio se esgota, procure alguns chunks adiante: o próximo está a pelo menos uma zona de distância.
 
 ## O que pode dar errado
 

@@ -54,24 +54,30 @@ public final class VeinFeature extends Feature<NoneFeatureConfiguration> {
         final VeinField field = Veins.field(kinds);
         int laid = 0;
         for (final VeinField.Vein vein : field.reaching(level.getSeed(), x0, z0, x0 + CHUNK - 1, z0 + CHUNK - 1)) {
-            laid += lay(context, random, kinds.get(vein.kind()), vein, x0, z0);
+            laid += lay(context, random, kinds.get(vein.kind()), vein, x0, z0, true);
         }
         // A little of every kind lies loose between the veins, as the game's own ores lie scattered, so a player
         // digging anywhere comes on some of each; as many knots as the kind is common.
         for (final VeinField.Vein knot : field.knots(level.getSeed(), chunk.x, chunk.z,
                 KNOTS * VeinBalance.loose(), KNOT_RADIUS, KNOT_THICKNESS)) {
-            laid += lay(context, random, kinds.get(knot.kind()), knot, x0, z0);
+            laid += lay(context, random, kinds.get(knot.kind()), knot, x0, z0, false);
         }
         return laid > 0;
     }
 
-    /* Lays {@code vein} of {@code kind} over the chunk from {@code x0, z0}, where it is found; how many blocks. */
+    /*
+     * Lays {@code vein} of {@code kind} over the chunk from {@code x0, z0}, where it is found, and over a vein, not a
+     * loose knot, the {@code pieces} of its ore on the surface, a prospector's float; how many blocks.
+     */
     private static int lay(final FeaturePlaceContext<NoneFeatureConfiguration> context, final RandomState random,
-                           final Deposits.Entry kind, final VeinField.Vein vein, final int x0, final int z0) {
+                           final Deposits.Entry kind, final VeinField.Vein vein, final int x0, final int z0,
+                           final boolean pieces) {
         if (!Veins.found(context.chunkGenerator(), random, kind, vein)) {
             return 0;
         }
-        return VeinPainter.paint(context.level(), kind, vein, Veins.density(kind), x0, z0, x0 + CHUNK - 1,
-                z0 + CHUNK - 1);
+        final int x1 = x0 + CHUNK - 1;
+        final int z1 = z0 + CHUNK - 1;
+        final int laid = VeinPainter.paint(context.level(), kind, vein, Veins.density(kind), x0, z0, x1, z1);
+        return pieces ? laid + OrePieces.lay(context.level(), kind, vein, x0, z0, x1, z1) : laid;
     }
 }

@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.client.material;
 
+import com.google.common.base.Suppliers;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.log.CoreLogs;
@@ -22,6 +24,7 @@ import dev.jstech.core.material.MaterialLiquid;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.OreLook;
+import dev.jstech.core.material.OrePiecesBlock;
 import dev.jstech.core.material.RegisteredThing;
 import dev.jstech.core.resource.CachedRuntimeFiles;
 import dev.jstech.core.resource.IRuntimeFiles;
@@ -30,12 +33,14 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +61,18 @@ public final class MaterialArt implements IRuntimeFiles {
     private static final Logger LOG = CoreLogs.CONTENT.logger();
     private static final int SIZE = FormArt.SIZE;
     /** The way the art is drawn, raised whenever it changes, so what was kept on disk is drawn again. */
-    private static final int DRAWING = 2;
+    private static final int DRAWING = 4;
+    private static final int QUARTER = 90;
+    private static final int CHANNEL = 0xFF;
+    /*
+     * The ways an ore's pieces lie over its vein: each piece its box's corners on the ground and its height, in
+     * sixteenths of a block, x0, z0, x1, z1 and height.
+     */
+    private static final int[][][] PIECES = {
+        {{4, 5, 10, 10, 3}, {9, 3, 13, 7, 2}, {3, 9, 6, 12, 2}},
+        {{5, 4, 11, 9, 2}, {3, 8, 7, 12, 3}},
+        {{6, 6, 11, 11, 3}, {10, 3, 13, 6, 2}, {3, 4, 6, 7, 1}, {11, 10, 13, 13, 1}}
+    };
 
     private MaterialArt() {
     }
@@ -115,6 +131,29 @@ public final class MaterialArt implements IRuntimeFiles {
             } else {
                 out.put(assets + "models/item/" + path + ".json", json(itemModel(thing)));
                 out.put(assets + "textures/item/" + path + ".png", () -> png(itemTexture(thing, read)));
+            }
+        }
+        // The pieces of each ore over its veins: three ways of lying, each turned any way, cut from the picture of its
+        // ore in plain stone, the Core's drawn here or the game's own (copper, gold).
+        final Map<ResourceLocation, RegisteredThing> drawn = new HashMap<>();
+        MaterialUses.registered().forEach(thing -> drawn.put(thing.id(), thing));
+        for (final Map.Entry<Material, ResourceLocation> each : MaterialUses.pieces().entrySet()) {
+            final HostRock rock = MaterialUses.pieceRock(each.getKey());
+            if (rock == null) {
+                continue;
+            }
+            final ResourceLocation ore = BuiltInRegistries.BLOCK.getKey(MaterialUses.oreBlock(each.getKey(), rock)
+                    .get());
+            final RegisteredThing own = drawn.get(ore);
+            final Supplier<int[]> picture = Suppliers.memoize(() -> own != null
+                    ? blockTexture(own, rock.texture(), read) : gamePicture(ore, read));
+            final ResourceLocation id = each.getValue();
+            final String assets = "assets/" + id.getNamespace() + "/";
+            out.put(assets + "blockstates/" + id.getPath() + ".json", json(piecesState(id)));
+            for (int layout = 0; layout < OrePiecesBlock.LAYOUTS; layout++) {
+                final int way = layout;
+                out.put(assets + "models/block/" + id.getPath() + "_" + layout + ".json",
+                        () -> piecesModel(ore, way, picture.get()).toString().getBytes(StandardCharsets.UTF_8));
             }
         }
         for (final MaterialLiquid liquid : MaterialLiquids.registered()) {
@@ -273,6 +312,137 @@ public final class MaterialArt implements IRuntimeFiles {
         final JsonObject state = new JsonObject();
         state.add("variants", variants);
         return state;
+    }
+
+    /*
+     * The picture of a block another mod or the game draws, {@code block}'s texture of its own name, none where it
+     * cannot be read whole at the art's size.
+     */
+    private static int @Nullable [] gamePicture(final ResourceLocation block,
+                                                final Map<ResourceLocation, Optional<GameTexture>> read) {
+        return read.computeIfAbsent(texture(block.withPrefix("block/")), GameTexture::read)
+                .filter(picture -> picture.width() == SIZE && picture.texels().length == SIZE * SIZE)
+                .map(GameTexture::texels).orElse(null);
+    }
+
+    /* The pieces' block state: each way they lie, turned to each side. */
+    private static JsonObject piecesState(final ResourceLocation id) {
+        final JsonObject variants = new JsonObject();
+        final String[] sides = {"north", "east", "south", "west"};
+        for (int layout = 0; layout < OrePiecesBlock.LAYOUTS; layout++) {
+            for (int turn = 0; turn < sides.length; turn++) {
+                final JsonObject model = new JsonObject();
+                model.addProperty("model", id.getNamespace() + ":block/" + id.getPath() + "_" + layout);
+                if (turn > 0) {
+                    model.addProperty("y", turn * QUARTER);
+                }
+                variants.add("facing=" + sides[turn] + ",layout=" + layout, model);
+            }
+        }
+        final JsonObject state = new JsonObject();
+        state.add("variants", variants);
+        return state;
+    }
+
+    /*
+     * The pieces' model lying the way {@code layout} says: each piece a box whose faces are cut from the ore's picture,
+     * {@code ore}'s texture, where the mineral shows most in a window of the piece's size, or where the piece lies on
+     * it when the picture could not be read.
+     */
+    private static JsonObject piecesModel(final ResourceLocation ore, final int layout,
+                                          final int @Nullable [] picture) {
+        final String texture = ore.getNamespace() + ":block/" + ore.getPath();
+        final JsonObject textures = new JsonObject();
+        textures.addProperty("ore", texture);
+        textures.addProperty("particle", texture);
+        final JsonArray elements = new JsonArray();
+        for (final int[] piece : PIECES[layout]) {
+            final int x0 = piece[0];
+            final int z0 = piece[1];
+            final int x1 = piece[2];
+            final int z1 = piece[3];
+            final int height = piece[4];
+            final JsonObject element = new JsonObject();
+            element.add("from", numbers(x0, 0, z0));
+            element.add("to", numbers(x1, height, z1));
+            // Each face its own cut of the ore, of its own size, where the mineral shows most.
+            final JsonObject top = face(picture, x0, z0, x1 - x0, z1 - z0);
+            final JsonObject across = face(picture, x0, z0, x1 - x0, height);
+            final JsonObject along = face(picture, z0, x0, z1 - z0, height);
+            final JsonObject faces = new JsonObject();
+            faces.add("up", top);
+            faces.add("north", across);
+            faces.add("south", across);
+            faces.add("east", along);
+            faces.add("west", along);
+            element.add("faces", faces);
+            elements.add(element);
+        }
+        final JsonObject model = new JsonObject();
+        model.addProperty("ambientocclusion", false);
+        model.add("textures", textures);
+        model.add("elements", elements);
+        return model;
+    }
+
+    /* The window of the picture {@code width} by {@code height} whose colours vary most: where its mineral shows. */
+    private static int[] richest(final int[] picture, final int width, final int height) {
+        double best = -1;
+        int[] at = {0, 0};
+        for (int y = 0; y + height <= SIZE; y++) {
+            for (int x = 0; x + width <= SIZE; x++) {
+                final double spread = spread(picture, x, y, width, height);
+                if (spread > best) {
+                    best = spread;
+                    at = new int[] {x, y};
+                }
+            }
+        }
+        return at;
+    }
+
+    /* How far the window's colours lie from their mean, the three channels added. */
+    private static double spread(final int[] picture, final int x0, final int y0, final int width, final int height) {
+        final double[] sum = new double[3];
+        final double[] squares = new double[3];
+        final int count = width * height;
+        for (int y = y0; y < y0 + height; y++) {
+            for (int x = x0; x < x0 + width; x++) {
+                final int argb = picture[y * SIZE + x];
+                for (int c = 0; c < 3; c++) {
+                    final int value = argb >> (16 - 8 * c) & CHANNEL;
+                    sum[c] += value;
+                    squares[c] += (double) value * value;
+                }
+            }
+        }
+        double spread = 0;
+        for (int c = 0; c < 3; c++) {
+            final double mean = sum[c] / count;
+            spread += Math.sqrt(Math.max(0, squares[c] / count - mean * mean));
+        }
+        return spread;
+    }
+
+    /*
+     * A face {@code width} by {@code height} cut from the ore's picture where its mineral shows most, or, the picture
+     * unread, where the piece lies on it, from {@code x, y}.
+     */
+    private static JsonObject face(final int @Nullable [] picture, final int x, final int y, final int width,
+                                   final int height) {
+        final int[] at = picture == null ? new int[] {x, y} : richest(picture, width, height);
+        final JsonObject face = new JsonObject();
+        face.add("uv", numbers(at[0], at[1], at[0] + width, at[1] + height));
+        face.addProperty("texture", "#ore");
+        return face;
+    }
+
+    private static JsonArray numbers(final int... values) {
+        final JsonArray out = new JsonArray();
+        for (final int value : values) {
+            out.add(value);
+        }
+        return out;
     }
 
     private static JsonObject parent(final String parent) {

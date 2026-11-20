@@ -82,6 +82,14 @@ public final class MaterialData implements IRuntimeFiles {
             out.put("data/" + thing.id().getNamespace() + "/loot_table/blocks/" + thing.id().getPath() + ".json",
                     json(loot));
         }
+        // The pieces of an ore over its veins give the ore itself, one of what its ore block gives, never a trace.
+        MaterialUses.pieces().forEach((material, id) -> material.oreDrop().ifPresent(drop -> {
+            final JsonArray conditions = new JsonArray();
+            conditions.add(condition("minecraft:survives_explosion"));
+            out.put("data/" + id.getNamespace() + "/loot_table/blocks/" + id.getPath() + ".json",
+                    json(lootTable(id, item(BuiltInRegistries.ITEM.getKey(MaterialUses.item(material, drop).get())
+                            .toString()), conditions)));
+        }));
         // A liquid is in the common tag of its name, c:molten_iron, its flowing fluid with it.
         final Map<String, Set<String>> fluidTags = new LinkedHashMap<>();
         for (final MaterialLiquid liquid : MaterialLiquids.registered()) {
@@ -171,6 +179,11 @@ public final class MaterialData implements IRuntimeFiles {
 
     private static JsonObject lootTable(final RegisteredThing thing, final JsonObject entry,
                                         final JsonArray conditions) {
+        return lootTable(thing.id(), entry, conditions);
+    }
+
+    private static JsonObject lootTable(final ResourceLocation block, final JsonObject entry,
+                                        final JsonArray conditions) {
         final JsonArray entries = new JsonArray();
         entries.add(entry);
         final JsonObject pool = new JsonObject();
@@ -185,7 +198,7 @@ public final class MaterialData implements IRuntimeFiles {
         final JsonObject table = new JsonObject();
         table.addProperty("type", "minecraft:block");
         table.add("pools", pools);
-        table.addProperty("random_sequence", thing.id().getNamespace() + ":blocks/" + thing.id().getPath());
+        table.addProperty("random_sequence", block.getNamespace() + ":blocks/" + block.getPath());
         return table;
     }
 

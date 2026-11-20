@@ -8930,15 +8930,19 @@ stable 4
 10 dev.jstech.core.material.MaterialTexts  static final TextKey ISOTOPE
 10 dev.jstech.core.material.MaterialTexts  static final TextKey LIQUEFIED
 10 dev.jstech.core.material.MaterialTexts  static final TextKey MOLTEN
+78 dev.jstech.core.material.MaterialTexts  static final TextKey PIECES
 10 dev.jstech.core.material.MaterialThing  type record(Material material, Form form)
 10 dev.jstech.core.material.MaterialThing  String toString()
 10 dev.jstech.core.material.MaterialUse  type record(String modid, Material material, Form form, HostRock rock, boolean shared)
 10 dev.jstech.core.material.MaterialUse  MaterialThing thing()
 10 dev.jstech.core.material.MaterialUse  Optional<HostRock> inRock()
 10 dev.jstech.core.material.MaterialUses  type final class
+78 dev.jstech.core.material.MaterialUses  static HostRock pieceRock(Material)
 10 dev.jstech.core.material.MaterialUses  static List<Item> sharedItems()
 10 dev.jstech.core.material.MaterialUses  static List<MaterialUse> all()
 10 dev.jstech.core.material.MaterialUses  static List<RegisteredThing> registered()
+78 dev.jstech.core.material.MaterialUses  static Map<Material, ResourceLocation> pieces()
+78 dev.jstech.core.material.MaterialUses  static Optional<Block> piecesOf(Material)
 10 dev.jstech.core.material.MaterialUses  static Optional<MaterialThing> thingOf(Item)
 10 dev.jstech.core.material.MaterialUses  static Set<String> users()
 10 dev.jstech.core.material.MaterialUses  static Supplier<Block> block(Material, Form)
@@ -9049,6 +9053,18 @@ stable 4
 10 dev.jstech.core.material.OreLook.Pattern  REDSTONE
 16 dev.jstech.core.material.OreLook.Pattern  String rock(boolean)
 10 dev.jstech.core.material.OreLook.Pattern  String texture(boolean)
+78 dev.jstech.core.material.OrePiecesBlock  type class extends Block
+78 dev.jstech.core.material.OrePiecesBlock  Material material()
+78 dev.jstech.core.material.OrePiecesBlock  MutableComponent getName()
+78 dev.jstech.core.material.OrePiecesBlock  new(Properties, Material)
+78 dev.jstech.core.material.OrePiecesBlock  protected BlockState updateShape(BlockState, Direction, BlockState, LevelAccessor, BlockPos, BlockPos)
+78 dev.jstech.core.material.OrePiecesBlock  protected VoxelShape getCollisionShape(BlockState, BlockGetter, BlockPos, CollisionContext)
+78 dev.jstech.core.material.OrePiecesBlock  protected VoxelShape getShape(BlockState, BlockGetter, BlockPos, CollisionContext)
+78 dev.jstech.core.material.OrePiecesBlock  protected boolean canSurvive(BlockState, LevelReader, BlockPos)
+78 dev.jstech.core.material.OrePiecesBlock  protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState>)
+78 dev.jstech.core.material.OrePiecesBlock  static final DirectionProperty FACING
+78 dev.jstech.core.material.OrePiecesBlock  static final IntegerProperty LAYOUT
+78 dev.jstech.core.material.OrePiecesBlock  static final int LAYOUTS
 10 dev.jstech.core.material.RegisteredThing  type record(MaterialThing thing, HostRock rock, ResourceLocation id)
 10 dev.jstech.core.material.RegisteredThing  Optional<HostRock> inRock()
 10 dev.jstech.core.material.RegisteredThing  boolean isBlock()
@@ -13221,6 +13237,9 @@ stable 4
 10 dev.jstech.core.worldgen.vein.MovedOres  static long version()
 10 dev.jstech.core.worldgen.vein.MovedOres  static void forget()
 10 dev.jstech.core.worldgen.vein.MovedOres  static void note(ResourceLocation, OreConfiguration)
+78 dev.jstech.core.worldgen.vein.OrePieces  type final class
+78 dev.jstech.core.worldgen.vein.OrePieces  static final int A_VEIN
+78 dev.jstech.core.worldgen.vein.OrePieces  static int lay(WorldGenLevel, Deposits.Entry, VeinField.Vein, int, int, int, int)
 10 dev.jstech.core.worldgen.vein.OreTable  type final class
 10 dev.jstech.core.worldgen.vein.OreTable  static Block oreOf(ResourceLocation, HostRock)
 10 dev.jstech.core.worldgen.vein.OreTable  static HostRock rockOf(Block)

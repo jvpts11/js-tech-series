@@ -39,6 +39,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -70,7 +71,11 @@ public final class MaterialUses {
     private static final float BLOCK_HARDNESS = 5.0f;
     private static final float BLOCK_RESISTANCE = 6.0f;
 
+    /* What the pieces of a mineral's ore over its veins are named after it: chalcopyrite_pieces. */
+    private static final String PIECES_SUFFIX = "_pieces";
+
     private static volatile List<RegisteredThing> registered = List.of();
+    private static volatile Map<Material, ResourceLocation> pieces = Map.of();
     private static volatile Set<MaterialThing> sharedThings = Set.of();
     private static volatile boolean closed;
 
@@ -198,6 +203,44 @@ public final class MaterialUses {
         return Optional.ofNullable(THINGS.get(item));
     }
 
+    /**
+     * The pieces of each mineral's ore that lie over its veins ({@link OrePiecesBlock}), by their mineral: one for
+     * every material some mod uses an ore of, the game's own ores' with the rest, in the catalogue's order.
+     */
+    public static Map<Material, ResourceLocation> pieces() {
+        return pieces;
+    }
+
+    /** The pieces of {@code material}'s ore that lie over its veins, when it has an ore. */
+    public static Optional<Block> piecesOf(final Material material) {
+        final ResourceLocation id = pieces.get(material);
+        return id == null ? Optional.empty() : Optional.of(BuiltInRegistries.BLOCK.get(id));
+    }
+
+    /**
+     * The rock whose ore of {@code material} its pieces are cut from, as they lie on the surface: plain stone where a
+     * mod uses its ore there, else the first rock near the surface one does, deepslate's only when it is the one; none
+     * when no mod uses its ore at all.
+     */
+    public static @Nullable HostRock pieceRock(final Material material) {
+        HostRock near = null;
+        HostRock deep = null;
+        for (final MaterialUse use : USES) {
+            if (use.material() != material || use.rock() == null) {
+                continue;
+            }
+            if (use.rock() == HostRocks.STONE) {
+                return use.rock();
+            }
+            if (use.rock() == HostRocks.DEEPSLATE) {
+                deep = deep == null ? use.rock() : deep;
+            } else if (near == null) {
+                near = use.rock();
+            }
+        }
+        return near != null ? near : deep;
+    }
+
     /** Hands the mod's bus the registering of the union, once, from the Core's constructor. */
     @ApiStatus.Internal
     public static void listen(final IEventBus modBus) {
@@ -234,6 +277,19 @@ public final class MaterialUses {
                             thing.thing(), thing.rock()));
                 }
             }
+            // The pieces of each ore that lie over its veins, one a material whatever rocks its ore is in, the game's
+            // own ores' (copper, gold) with the rest.
+            final Map<Material, ResourceLocation> ids = new LinkedHashMap<>();
+            for (final Material material : Materials.all()) {
+                if (pieceRock(material) != null) {
+                    final ResourceLocation id = material.id().withSuffix(PIECES_SUFFIX);
+                    ids.put(material, id);
+                    helper.register(id, new OrePiecesBlock(BlockBehaviour.Properties.of().mapColor(MapColor.STONE)
+                            .instabreak().noCollission().noOcclusion().replaceable().sound(SoundType.GRAVEL)
+                            .pushReaction(PushReaction.DESTROY), material));
+                }
+            }
+            pieces = Collections.unmodifiableMap(ids);
         });
         event.register(Registries.ITEM, helper -> {
             /*

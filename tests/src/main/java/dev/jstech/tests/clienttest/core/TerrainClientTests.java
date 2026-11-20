@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest.core;
 
 import dev.jstech.core.dimension.RuntimeDimensions;
+import dev.jstech.core.material.OrePiecesBlock;
 import dev.jstech.core.worldgen.landform.LandformField;
 import dev.jstech.core.worldgen.landform.Landforms;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
@@ -33,6 +34,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -63,6 +65,11 @@ public final class TerrainClientTests {
     private static final int RESERVOIR_CUT = 32;
     private static final int DEEP = 8;
     private static final int UPDATE = 2;
+    /*
+     * How far east of a vein's ore pieces the player looks down at them from, over the next column, so a loose block
+     * beside them does not stand in between.
+     */
+    private static final int PIECES_BACK = 1;
 
     private TerrainClientTests() {
     }
@@ -159,6 +166,58 @@ public final class TerrainClientTests {
                     if (ores == 0) {
                         throw new ClientTestFailure("the vein's cut face shows no ore on the player's game");
                     }
+                });
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void testLand_showsPiecesOfOreOverAVein(final ClientTestContext ctx) {
+        final BlockPos[] piece = new BlockPos[1];
+        final Vec3[] stand = new Vec3[1];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            final BlockPos home = ctx.origin().above(2);
+            ctx.serverPlayer().teleportTo(ctx.server().overworld(), home.getX() + 0.5, home.getY(),
+                    home.getZ() + 0.5, 0F, 0F);
+            RuntimeDimensions.remove(ctx.server(), LAND);
+        }));
+        ctx.thenServer(0, level -> {
+            final ServerLevel land = RuntimeDimensions.getOrCreate(level.getServer(), LAND,
+                    TestWorldGen.TEST_LAND.id());
+            level.getServer().overworld().setDayTime(NOON);
+            final VeinField.Vein vein = LandSurvey.vein(land, TestWorldGen.IRON_VEINS, CELLS);
+            if (vein == null) {
+                return;
+            }
+            final int reach = (int) Math.ceil(vein.radius());
+            for (int x = vein.x() - reach; x <= vein.x() + reach && piece[0] == null; x++) {
+                for (int z = vein.z() - reach; z <= vein.z() + reach && piece[0] == null; z++) {
+                    final BlockPos top = top(land, x, z);
+                    if (land.getBlockState(top).getBlock() instanceof OrePiecesBlock) {
+                        piece[0] = top;
+                    }
+                }
+            }
+            if (piece[0] != null) {
+                final int ground = top(land, piece[0].getX() + PIECES_BACK, piece[0].getZ()).getY() + 1;
+                stand[0] = new Vec3(piece[0].getX() + PIECES_BACK + 0.5, Math.max(ground, piece[0].getY()) + 0.2,
+                        piece[0].getZ() + 0.5);
+                go(ctx, land, stand[0]);
+            }
+        })
+                .thenAssert(1, () -> piece[0] != null, "a vein of the test land has pieces of its ore over it")
+                .thenWaitUntil(() -> arrived(ctx, stand[0], piece[0]), ARRIVE, "the player's game to reach them")
+                .then(1, () -> ctx.lookAt(new Vec3(piece[0].getX() + 0.5, piece[0].getY() + 0.1,
+                        piece[0].getZ() + 0.5)))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "ore_pieces_over_a_vein")
+                .then(1, () -> {
+                    if (!(ctx.mc().level.getBlockState(piece[0]).getBlock() instanceof OrePiecesBlock)) {
+                        throw new ClientTestFailure("the pieces at " + piece[0] + " are not on the player's game");
+                    }
+                    if (!(ctx.mc().hitResult instanceof BlockHitResult hit) || !hit.getBlockPos().equals(piece[0])) {
+                        throw new ClientTestFailure("the player looks at the pieces at " + piece[0] + ", nothing in "
+                                + "between: " + ctx.mc().hitResult);
+                    }
+                    OrePiecesClientTests.expectArtDrawn(ctx, "the pieces");
                 });
     }
 

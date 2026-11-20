@@ -2106,6 +2106,7 @@
   "jscore.material.metallic_hydrogen": "Hidrogênio Metálico",
   "jscore.material.metallurgical_silicon": "Silício Metalúrgico",
   "jscore.material.molten": "%s em Fusão",
+  "jscore.material.pieces": "Pedaços de %s",
   "jscore.material.molybdenum": "Molibdênio",
   "jscore.material.moscovium": "Moscóvio",
   "jscore.material.negative_mass_matter": "Matéria de Massa Negativa",

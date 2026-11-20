@@ -107,6 +107,8 @@ public final class ContentGameTests {
                 blocks.add(liquid.id());
                 items.add(liquid.bucketId());
             }
+            // And the pieces of each ore that lie over its veins, a block with no item, which OrePiecesGameTests reads.
+            blocks.addAll(MaterialUses.pieces().values());
             CatalogueItems.registered().forEach(entry -> items.add(entry.id()));
             // So are the variants of the kinds a mod declared, which VariantGameTests reads.
             for (final Variant variant : Variants.registered()) {

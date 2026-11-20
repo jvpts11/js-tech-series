@@ -67,6 +67,10 @@ the edges, so a player finds nothing, or hundreds. The vein system is a kit any 
 - **A little of each kind lies loose between the veins**, in small knots of a handful of blocks, as vanilla's ores lie
   scattered: as many of a kind a chunk as it is common, at its heights and in its rocks, so a player digging anywhere
   comes on some of every kind; a vein is still where the ore is.
+- **Pieces of its ore lie on the surface over a vein**, as a prospector's float: about 8 a vein within its reach, on solid
+  ground only, each two to four pieces cut from the ore's own picture, lying one of three ways turned any way. A piece
+  breaks at once by hand and gives the ore itself, one of what its ore block gives (never a trace item), as in GregTech;
+  it is walked through, and placing a block where it lies replaces it.
 - **Prospecting** asks the kit for the direction and strength of nearby veins, never their coordinates, and for a vein's
   composition and size; the tools that ask are a mod's (J's Industrial's prospecting pick and scanner).
 - **A field manual of the veins** for players, in the Technical Reference, written in Markdown ([Manuals](manuals.md)):
