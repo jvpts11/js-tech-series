@@ -66,6 +66,9 @@ public final class ShipFlightClientTests {
     private static final int SETTLE = 20;
     /* How long the player walks aft, in ticks. */
     private static final int WALK = 15;
+    /* How far aft of where the player gets up the airlock's pressure door stands, in blocks; and half a block past. */
+    private static final double DOOR_AFT = 2;
+    private static final double HALF = 0.5;
     /* How far the ship flies on with its pilot's key held, and how far its crew walks aft, at least, in blocks. */
     private static final double FLOWN = 6;
     private static final double WALKED = 2;
@@ -262,7 +265,21 @@ public final class ShipFlightClientTests {
                     standing[0].assertAimHeld();
                 })
                 .thenScreenshot(0, "ship-flight-aim")
-                .then(0, () -> {
+                /*
+                 * Up beside the seat, west of the ship's middle, the player steps into the way aft, which runs along
+                 * the middle through the airlock's open pressure door, past the seat; facing aft as the ship heads
+                 * now.
+                 */
+                .thenServer(0, level -> {
+                    final Vec3 at = MovingStructures.toYard(ship[0], ctx.serverPlayer().position());
+                    final double middle = MovingStructures.toYard(ship[0], where(ship[0])).x;
+                    final Vec3 way = MovingStructures.toWorld(ship[0], new Vec3(middle, at.y, at.z + DOOR_AFT
+                            + HALF));
+                    ctx.serverPlayer().teleportTo(way.x, way.y, way.z);
+                })
+                .thenWaitUntil(() -> ctx.player().onGround(), ARRIVE, "the player to stand in the way aft")
+                .then(SETTLE, () -> {
+                    turn[0] = ctx.server().submit(() -> heading(ship[0])).join();
                     ctx.player().setYRot(AFT + turn[0]);
                     ctx.player().setXRot(0);
                     from[0] = ctx.server().submit(() -> MovingStructures.toYard(ship[0], ctx.serverPlayer()

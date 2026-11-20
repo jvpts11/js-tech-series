@@ -53,12 +53,13 @@ public final class ShipDockedClientTests {
     private static final float DOWN = 35F;
     /*
      * How light the deck's grey is at least in every channel, and how far its channels are apart at most; how much of
-     * the lower view it fills, drawn.
+     * the lower view it fills, drawn: the cockpit's pilot's seat on its plinth and its console take part of the view,
+     * leaving the deck and the hull about two fifths of it, where a ship left out leaves next to none.
      */
     private static final int LIGHT = 140;
     private static final int FLAT = 20;
     private static final int CHANNEL = 0xFF;
-    private static final double DRAWN = 0.5;
+    private static final double DRAWN = 0.3;
     /*
      * Where the canopy is seen from, from the flight console, and where it is looked at; where its glass stands in the
      * frame, as shares of its width and height; how light the cockpit's walls seen through the glass are at least in
