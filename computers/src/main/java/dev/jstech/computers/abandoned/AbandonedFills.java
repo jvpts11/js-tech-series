@@ -33,6 +33,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
@@ -208,8 +209,9 @@ final class AbandonedFills {
     }
 
     /*
-     * A cable of the game holding the wires its mark names, and the part on one of its faces (a Crafting Interface),
-     * that face turned with the building.
+     * A cable of the game holding the wires its mark names, in the colour it names (a plant's cold water blue, its
+     * warm water red, so the two runs side by side stay apart), and the part on one of its faces (a Crafting
+     * Interface), that face turned with the building.
      */
     static @Nullable CompoundTag cable(final LevelReader level, final StructureTemplate.StructureBlockInfo placed,
                                        final CompoundTag mark, final Era era, final StructurePlaceSettings settings) {
@@ -224,6 +226,10 @@ final class AbandonedFills {
             return null;
         }
         final CableBlockEntity cable = CableBlockEntity.unsettled(placed.pos(), types);
+        final DyeColor colour = DyeColor.byName(mark.getString("colour"), null);
+        if (colour != null) {
+            types.forEach(type -> cable.dye(type, colour));
+        }
         final Direction face = Direction.byName(mark.getString("face"));
         if (mark.contains("part") && face != null) {
             final Direction turned = settings.getRotation().rotate(settings.getMirror().mirror(face));

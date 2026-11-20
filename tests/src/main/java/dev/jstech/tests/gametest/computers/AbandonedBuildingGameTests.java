@@ -8,14 +8,11 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.PeripheralLinks;
-import dev.jstech.computers.abandoned.AbandonedBlocks;
 import dev.jstech.computers.abandoned.AbandonedBuilding;
 import dev.jstech.computers.abandoned.AbandonedBuildings;
 import dev.jstech.computers.abandoned.AbandonedLoadouts;
 import dev.jstech.computers.abandoned.AbandonedLoot;
 import dev.jstech.computers.abandoned.AbandonedMachines;
-import dev.jstech.computers.abandoned.AbandonedPropBlock;
-import dev.jstech.computers.abandoned.AbandonedProps;
 import dev.jstech.computers.abandoned.AbandonedSettings;
 import dev.jstech.computers.abandoned.AbandonedSoftware;
 import dev.jstech.computers.abandoned.HardwareBoxBlock;
@@ -32,8 +29,12 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.plant.CduBlock;
+import dev.jstech.computers.plant.CduBlockEntity;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.villager.VillageShops;
 import dev.jstech.core.bigblock.BigBlockPartBlockEntity;
+import dev.jstech.core.cable.CableBlock;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.jstechseries.energy.BatteryBankBlockEntity;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -44,12 +45,14 @@ import dev.jstech.core.worldgen.structure.TemplateChoosers;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -62,6 +65,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
@@ -73,8 +77,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -83,8 +90,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * with a template for each era it may be of, working and in ruin; the chooser picks the era by the distance from the
  * world's spawn and working as often as the server says; placed, a working building's machines are whole and set to
  * come up (computers, racks, Mainframes, the mining farm's rigs with their risers and cards, the factory's machines
- * formed and the Lithography Station linked to its computer), its battery bank charged; its chests and hardware boxes draw from their tables, the main chest from the
- * one that holds a graphical system; its fittings stand as the decor block and its frames hold boxed programs.
+ * formed and the Lithography Station linked to its computer), its battery bank charged; its chests and hardware boxes
+ * draw from their tables, the main chest from the one that holds a graphical system; every block of every building is
+ * one a player can get, its lights are the game's own and its frames hold boxed programs.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -291,6 +299,38 @@ public final class AbandonedBuildingGameTests {
         });
     }
 
+    /*
+     * The supercomputing centre's plant stands as its yard and its hall draw it: the Chiller and the two Cooling Towers
+     * formed, and a CDU at the head of each row of racks, whole, each of its parts bound to it.
+     */
+    @GameTest(template = ARENA, timeoutTicks = SETTLE_TICKS)
+    public static void supercomputingCentre_plantStandsFormedItsCdusWhole(final GameTestHelper helper) {
+        place(helper, AbandonedBuilding.SUPERCOMPUTING_CENTRE, HardwareEra.STANDARD, true);
+        final List<CduBlockEntity> cdus = found(helper, CduBlockEntity.class);
+        helper.assertTrue(cdus.size() == 2, "a CDU at the head of each row of racks: " + cdus.size());
+        for (final CduBlockEntity cdu : cdus) {
+            final BlockPos origin = cdu.getBlockPos();
+            for (final BlockPos part : ServerRackStructure.allPositions(origin, cdu.getBlockState().getValue(
+                    CduBlock.FACING))) {
+                helper.assertTrue(part.equals(origin) || helper.getLevel().getBlockEntity(part)
+                        instanceof BigBlockPartBlockEntity bound && origin.equals(bound.originPos()), "the CDU at "
+                        + helper.relativePos(origin) + " has its part at " + helper.relativePos(part));
+            }
+        }
+        helper.succeedWhen(() -> {
+            final Map<String, Integer> formed = new HashMap<>();
+            for (final ChainMachineBlockEntity machine : found(helper, ChainMachineBlockEntity.class)) {
+                if (machine.formed()) {
+                    formed.merge(BuiltInRegistries.BLOCK.getKey(machine.getBlockState().getBlock()).getPath(), 1,
+                            Integer::sum);
+                }
+            }
+            helper.assertTrue(formed.getOrDefault("chiller_terminal", 0) == 1
+                    && formed.getOrDefault("cooling_tower_terminal", 0) == 2,
+                    "the Chiller and the two Cooling Towers stand formed: " + formed);
+        });
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void datacenter_racksFilledMainframeWhole(final GameTestHelper helper) {
         place(helper, AbandonedBuilding.DATACENTER, HardwareEra.STANDARD, true);
@@ -385,21 +425,46 @@ public final class AbandonedBuildingGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = ARENA, timeoutTicks = 200)
-    public static void props_standAsTheDecorBlockAndTheLightsLight(final GameTestHelper helper) {
-        place(helper, AbandonedBuilding.SCHOOL, HardwareEra.VINTAGE, true);
-        final List<BlockState> props = new ArrayList<>();
-        helper.forEveryBlockInStructure(pos -> {
-            final BlockState state = helper.getBlockState(pos);
-            if (state.is(AbandonedBlocks.PROP.get())) {
-                props.add(state);
+    /*
+     * Every block of every building of every era, worn or whole, and of every village's computer shop is one a player
+     * can get: it has an item, or breaking it gives one (a cauldron of water gives the cauldron). The cable gives the
+     * lines it holds, and the hardware box is emptied as a chest is.
+     */
+    @GameTest(template = SMALL)
+    public static void buildings_holdOnlyBlocksAPlayerCanGet(final GameTestHelper helper) {
+        final List<ResourceLocation> templates = new ArrayList<>();
+        for (final AbandonedBuilding building : AbandonedBuilding.values()) {
+            for (final Era era : building.eras()) {
+                templates.add(AbandonedBuildings.template(building, era, true));
+                templates.add(AbandonedBuildings.template(building, era, false));
+            }
+        }
+        VillageShops.KINDS.forEach(kind -> templates.add(VillageShops.template(kind)));
+        final Map<BlockState, ResourceLocation> states = new LinkedHashMap<>();
+        for (final ResourceLocation id : templates) {
+            for (final BlockState state : blocksOf(helper, helper.getLevel().getStructureManager().get(id)
+                    .orElseThrow()).values()) {
+                states.putIfAbsent(state, id);
+            }
+        }
+        final List<String> wrong = new ArrayList<>();
+        states.forEach((state, id) -> {
+            if (!obtainable(helper, state)) {
+                wrong.add(BuiltInRegistries.BLOCK.getKey(state.getBlock()) + " in " + id);
             }
         });
-        helper.assertTrue(!props.isEmpty(), "the school's fittings stand as the decor block");
-        helper.assertTrue(props.stream().anyMatch(state -> state.getLightEmission() > 0),
-                "its ceiling lights light the room");
-        helper.assertTrue(props.stream().allMatch(state -> !AbandonedProps.shape(state.getValue(
-                AbandonedPropBlock.PART), state.getValue(AbandonedPropBlock.FACING)).isEmpty()), "each has its shape");
+        helper.assertTrue(wrong.isEmpty(), "every block one a player can get: " + wrong.stream().limit(SHOWN)
+                .toList());
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void school_isLitAndItsFramesHoldBoxedPrograms(final GameTestHelper helper) {
+        place(helper, AbandonedBuilding.SCHOOL, HardwareEra.VINTAGE, true);
+        final boolean[] lit = new boolean[1];
+        helper.forEveryBlockInStructure(pos -> lit[0] |= helper.getBlockState(pos).getLightEmission(helper.getLevel(),
+                helper.absolutePos(pos)) > 0);
+        helper.assertTrue(lit[0], "its ceiling lights light the room");
         final List<ItemFrame> frames = helper.getLevel().getEntitiesOfClass(ItemFrame.class,
                 new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(48));
         helper.assertTrue(!frames.isEmpty() && frames.stream().allMatch(frame -> frame.getItem().has(
@@ -461,6 +526,17 @@ public final class AbandonedBuildingGameTests {
         helper.forEveryBlockInStructure(pos -> laid[0] += helper.getBlockState(pos).is(Blocks.IRON_TRAPDOOR) ? 1 : 0);
         helper.assertValueEqual(laid[0], tiles, "the raised floor's tiles all laid");
         helper.succeed();
+    }
+
+    /* Whether a player can get {@code state}: its item, or what breaking it with a pickaxe gives. */
+    private static boolean obtainable(final GameTestHelper helper, final BlockState state) {
+        final Block block = state.getBlock();
+        if (state.isAir() || block.asItem() != Items.AIR || block instanceof CableBlock
+                || block instanceof HardwareBoxBlock) {
+            return true;
+        }
+        return !state.getDrops(new LootParams.Builder(helper.getLevel()).withParameter(LootContextParams.ORIGIN,
+                Vec3.ZERO).withParameter(LootContextParams.TOOL, new ItemStack(Items.NETHERITE_PICKAXE))).isEmpty();
     }
 
     /* Every block {@code template} holds, by its place in it, as it was saved. */

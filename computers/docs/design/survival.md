@@ -528,6 +528,15 @@ together give about one building every 190 blocks, most of them the small common
   roof fallen in parts, moss, vines and cobwebs, its machines open with half their parts in their seats. Every computer
   stands on a desk of upside-down wooden stairs (their steps at both ends when it stands free in a room), its case and
   its monitor side by side, a chair in front. The signs are in English and never name an invented company.
+- **Every block is one a player can get:** a building stands only of the game's blocks and the series' real ones, so
+  whatever a player breaks gives its block back. Its signs are the game's signs with their words on them; its lights
+  are sea lanterns in the ceiling or hanging lanterns; a wafer or a tray of chips on a bench is an item frame lying on
+  it with the series' own item; its cables are the real cables of J's Computers and its pipes the Core's, the cold
+  water's dyed light blue and the warm water's red, so the two never join. In a snowy village the snow on the
+  computer shop's roof is the biome's own, as on every house there.
+- **The plant:** the datacenter has two Chillers on its roof and a Cooling Tower in its yard; the supercomputing centre
+  a Chiller and two Cooling Towers in its yard, and a CDU at the head of each row of racks
+  ([Temperature](temperature.md)). They stand formed, in a ruin as in a working building.
 - The **hardware box** is a loot block of its own, printed with its era's machine.
 - **Each building's own case:** the electronic waste dump works through its office's computer; the delivery van never
   works; a software house office has the house its era's sign names, never Midsoft: Nouvell in the Vintage, Daylight

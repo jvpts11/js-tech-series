@@ -888,6 +888,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 
 ### Changed
+- Abandoned buildings of real blocks: every block of every building and of the villages' computer shops
+  is one a player can get back by breaking it. The Fitting block is gone: the signs are the game's signs with their
+  words on them, the lights sea lanterns and lanterns, the benches' wafers, chips and Phi coprocessors item frames
+  holding the real items, the seats and counters the game's slabs and stairs, and the cable trays and coolant lines
+  the real cables of J's Computers and the Core's copper pipes, the cold water's dyed light blue and the warm
+  water's red. The datacenter is cooled by two Chillers on its roof and a Cooling Tower in its yard, the
+  supercomputing centre by a Chiller and two Cooling Towers in its yard and a CDU at the head of each row of racks,
+  all formed.
 - The chain's machines wear the series' ports: every entry, on a formed machine and as a loose block, a
   steel recess in the machine's own wall with an opening the shape of what it carries (an item hatch, a liquid's mouth,
   a gas's perforated cap, the gold ring of FE, a J's Energy bushing, the peripheral socket) and lamps green in and red

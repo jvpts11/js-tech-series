@@ -19,19 +19,12 @@ import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
- * The blocks only the abandoned buildings set down (computers/docs/design/survival.md, "Abandoned buildings"): their
- * fittings, and the hardware box. Neither has an item: a player finds them, and takes what a box holds.
+ * The block only the abandoned buildings set down (computers/docs/design/survival.md, "Abandoned buildings"): the
+ * hardware box. It has no item: a player finds it, and takes what it holds, as from a chest. Everything else a building
+ * stands of is a block a player can get.
  */
 public final class AbandonedBlocks {
 
-    /** A fitting of a building: a board, a light, a sign; its model by its part. */
-    public static final BlockEntry<AbandonedPropBlock> PROP = CONTENT.block("abandoned_prop", AbandonedPropBlock::new)
-            .named("Fitting")
-            .properties(properties -> properties.mapColor(MapColor.METAL).strength(1.5F).sound(SoundType.METAL)
-                    .noOcclusion())
-            .look(IBlockLook.facingByState(state -> new IBlockModel.Handmade("abandoned_prop/p"
-                    + state.getValue(AbandonedPropBlock.PART))))
-            .register();
     /** The hardware box, printed with its era's machine; drawn by era, kind and whether it stands open. */
     public static final BlockEntry<HardwareBoxBlock> HARDWARE_BOX = CONTENT.block("hardware_box",
                     HardwareBoxBlock::new)
