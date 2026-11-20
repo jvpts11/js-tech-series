@@ -153,6 +153,19 @@ public final class ShipStairs {
     }
 
     /**
+     * The rails beside the treads of a way down within its block {@code place}, as {@link #treads} gives the treads:
+     * the airlock's stair's, or the Side Door hold's own; none for a ramp or a wing's stair.
+     */
+    public static List<double[]> rails(final FormedPlace place) {
+        final String name = ShipPartModels.name(place.model());
+        if (ShipWingStairGeometry.of(name).isPresent() || place.model().getPath().endsWith(RAMP_MODEL)) {
+            return List.of();
+        }
+        return SIDE_DOOR_MODEL.equals(name) ? ShipStairGeometry.mirroredRails(place.x(), place.y(), place.z())
+                : ShipStairGeometry.rails(place.x(), place.y(), place.z());
+    }
+
+    /**
      * The stair of the wing beside the side door {@code door}, kept as a door of the wing's: the block keeping whether
      * it is down; none for a door away from the wings, or not a Side Door hold's.
      */

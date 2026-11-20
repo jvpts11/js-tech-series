@@ -20,6 +20,8 @@ import dev.jstech.space.crew.ShipDoorRules;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipStairBlock;
+import dev.jstech.space.ship.ShipStairEntity;
 import dev.jstech.space.ship.ShipStairGeometry;
 import dev.jstech.space.ship.ShipStairs;
 import dev.jstech.space.ship.ShipWingStairGeometry;
@@ -347,11 +349,14 @@ public final class ShipSideDoorGameTests {
      */
     private static List<Double> treads(final ServerLevel level, final FormedDoors.Door door, final FormedPlace hold,
                                        final List<int[]> cells) {
+        // The treads its blocks' shapes hold; its rails beside them are no treads.
         VoxelShape all = Shapes.empty();
         for (final int[] cell : cells) {
             final BlockPos at = FormedDoors.blockOf(door.uses(), hold, MeshCells.key(cell[0], cell[1], cell[2]));
-            if (ShipStairs.down(level, at)) {
-                all = Shapes.joinUnoptimized(all, level.getBlockState(at).getCollisionShape(level, at)
+            if (ShipStairs.down(level, at) && level.getBlockEntity(at) instanceof ShipStairEntity stair
+                    && stair.place() != null) {
+                all = Shapes.joinUnoptimized(all, Shapes.join(level.getBlockState(at).getCollisionShape(level, at),
+                        ShipStairBlock.shapeOf(ShipStairs.treads(stair.place()), stair.place()), BooleanOp.AND)
                         .move(at.getX(), at.getY(), at.getZ()), BooleanOp.OR);
             }
         }

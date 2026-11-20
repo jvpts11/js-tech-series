@@ -17,6 +17,7 @@ import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.CellSpace;
 import dev.jstech.core.multiblock.shape.FormedDoors;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.IFormedPlaced;
@@ -34,6 +35,8 @@ import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.ShipRampGeometry;
+import dev.jstech.space.ship.ShipStairBlock;
+import dev.jstech.space.ship.ShipStairEntity;
 import dev.jstech.space.ship.ShipStairGeometry;
 import dev.jstech.space.ship.ShipStairs;
 import dev.jstech.space.ship.SmallShipParts;
@@ -127,6 +130,21 @@ public final class ShipDoorsGameTests {
     private static final double HALF_A_PLAYER = 0.3;
     private static final double A_PLAYER_TALL = 1.8;
     private static final double OFF_THE_SILL = 0.01;
+    /*
+     * The airlock's outer doorway in its model: its middle along the airlock, where its stair's middle runs too, and a
+     * point across it on its sill; how far off its middle a player passes through it, and is stopped by its frame; how
+     * far off the stair's middle a rail stands past the treads' ends, and short of them none; how far over a tread
+     * the room beside it is looked at, and how high.
+     */
+    private static final double DOOR_MIDDLE = 2.0;
+    private static final double ON_THE_SILL = -1.66;
+    private static final double THROUGH_THE_DOOR = 0.19;
+    private static final double AGAINST_THE_FRAME = 0.25;
+    private static final double PAST_THE_TREADS = 0.52;
+    private static final double SHORT_OF_THE_TREADS = 0.47;
+    private static final double OVER_THE_TREAD = 0.1;
+    private static final double BESIDE_THE_TREAD = 0.7;
+    private static final double TRIMMED = 0.01;
     /* How finely a door's blocks are searched for a point a click finds the door at, a side in so many parts. */
     private static final int SAMPLES = 32;
     private static final double HALF = 0.5;
@@ -328,6 +346,23 @@ public final class ShipDoorsGameTests {
                         above = tread;
                     }
                     helper.assertTrue(above - (hull + LAND) <= NEAR_THE_LAND, "down to near the land: " + above);
+                    // Its doorway lets a player through within a fifth of a block of its middle, and its rails keep a
+                    // climber there: past the treads' ends a rail stands, over the lowest tread's outer end, short of
+                    // them none.
+                    final List<double[]> steps = ShipStairGeometry.steps();
+                    final double[] lowest = steps.getLast();
+                    final double[] next = steps.get(steps.size() - 2);
+                    for (final double side : new double[] {-1, 1}) {
+                        helper.assertTrue(level.noCollision(inYard(level, outer, player(DOOR_MIDDLE + side
+                                * THROUGH_THE_DOOR))), "a player a fifth of a block off the doorway's middle goes"
+                                + " through it");
+                        helper.assertFalse(level.noCollision(inYard(level, outer, player(DOOR_MIDDLE + side
+                                * AGAINST_THE_FRAME))), "a quarter off, its frame stops them");
+                        helper.assertFalse(level.noCollision(inYard(level, outer, beside(lowest, next, side
+                                * PAST_THE_TREADS))), "past the treads' ends a rail stands, on the " + side + " side");
+                        helper.assertTrue(level.noCollision(inYard(level, outer, beside(lowest, next, side
+                                * SHORT_OF_THE_TREADS))), "short of them nothing stands, on the " + side + " side");
+                    }
                     helper.assertTrue(FormedDoors.use(level, crew, outer) && stairs(level, outer).isEmpty(),
                             "shut again, its stair goes up");
                     GameTestPlayers.leave(crew);
@@ -787,12 +822,15 @@ public final class ShipDoorsGameTests {
                 .filter(each -> each.model().equals(outer.model())).findFirst().orElseThrow();
         final List<int[]> cells = ShipDoorRules.RAMP.equals(outer.piece()) ? ShipRampGeometry.CELLS
                 : ShipStairGeometry.CELLS;
-        // Its blocks' shapes as one, so a tread standing across two blocks is one tread with one top.
+        // The treads its blocks' shapes hold, as one, so a tread standing across two blocks is one tread with one top;
+        // a stair's rails beside them are no treads.
         VoxelShape all = Shapes.empty();
         for (final int[] cell : cells) {
             final BlockPos at = FormedDoors.blockOf(outer.uses(), place, MeshCells.key(cell[0], cell[1], cell[2]));
-            if (ShipStairs.down(level, at)) {
-                all = Shapes.joinUnoptimized(all, level.getBlockState(at).getCollisionShape(level, at)
+            if (ShipStairs.down(level, at) && level.getBlockEntity(at) instanceof ShipStairEntity stair
+                    && stair.place() != null) {
+                all = Shapes.joinUnoptimized(all, Shapes.join(level.getBlockState(at).getCollisionShape(level, at),
+                        ShipStairBlock.shapeOf(ShipStairs.treads(stair.place()), stair.place()), BooleanOp.AND)
                         .move(at.getX(), at.getY(), at.getZ()), BooleanOp.OR);
             }
         }
@@ -804,6 +842,44 @@ public final class ShipDoorsGameTests {
         }
         tops.sort((a, b) -> Double.compare(b, a));
         return tops;
+    }
+
+    /*
+     * A player standing on the airlock's sill in its outer doorway, their middle {@code along} the airlock: the room
+     * they fill, its lowest corner then its highest, in the airlock's model.
+     */
+    private static double[] player(final double along) {
+        return new double[] {ON_THE_SILL - HALF_A_PLAYER, FLOOR + OFF_THE_SILL, along - HALF_A_PLAYER,
+            ON_THE_SILL + HALF_A_PLAYER, FLOOR + OFF_THE_SILL + A_PLAYER_TALL, along + HALF_A_PLAYER};
+    }
+
+    /*
+     * The room over the outer end of the stair's tread {@code tread}, the part of it the tread over it {@code next}
+     * does not reach under, from the stair's middle out to {@code off} from it, across the stair, in the airlock's
+     * model.
+     */
+    private static double[] beside(final double[] tread, final double[] next, final double off) {
+        return new double[] {tread[0] + TRIMMED, tread[4] + OVER_THE_TREAD, Math.min(DOOR_MIDDLE, DOOR_MIDDLE + off),
+            next[0] - TRIMMED, tread[4] + OVER_THE_TREAD + BESIDE_THE_TREAD, Math.max(DOOR_MIDDLE, DOOR_MIDDLE + off)};
+    }
+
+    /* The box {@code box} of the airlock's model, its lowest corner then its highest, where it stands in the yard. */
+    private static AABB inYard(final ServerLevel level, final FormedDoors.Door outer, final double[] box) {
+        final FormedPlace place = ((IFormedPlaced) level.getBlockEntity(outer.uses())).places().stream()
+                .filter(each -> each.model().equals(outer.model())).findFirst().orElseThrow();
+        final Vec3 low = inYard(outer, place, box[0], box[1], box[2]);
+        final Vec3 high = inYard(outer, place, box[3], box[4], box[5]);
+        return new AABB(low, high);
+    }
+
+    /* The point ({@code x}, {@code y}, {@code z}) of the model {@code place} is of, where it stands in the yard. */
+    private static Vec3 inYard(final FormedDoors.Door outer, final FormedPlace place, final double x, final double y,
+                               final double z) {
+        final int[] cell = {(int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z)};
+        final BlockPos block = FormedDoors.blockOf(outer.uses(), place, MeshCells.key(cell[0], cell[1], cell[2]));
+        final double[] turned = new double[3];
+        CellSpace.toWorld(new double[] {x - cell[0], y - cell[1], z - cell[2]}, place.turn(), turned);
+        return new Vec3(block.getX() + turned[0], block.getY() + turned[1], block.getZ() + turned[2]);
     }
 
     /* The blocks of a boarding stair standing on the grid round the dock's terminal at {@code terminal}. */

@@ -1204,6 +1204,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   hundred blocks up, nor shows as a dome of loaded land ringed in black, the fog the black of its sky closing it in;
   from its ground up, as on the way up past the build limit, the far map goes on from the loaded land to the
   horizon, and nothing fades the land short of it.
+- An airlock's boarding stair, and the Side Door hold's own, keep their climber between their rails, as they
+  are drawn: the outer door's opening, a block wide, lets a player through only near its middle, and one who went up
+  the stair along its edge, the rails nothing to the touch, stopped at the top against the door's frame.
 
 ## [0.5.3a] - 2026-11-04
 

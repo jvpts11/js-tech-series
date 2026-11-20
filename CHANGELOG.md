@@ -5341,6 +5341,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   beside its own, as a small ship's pilot seat stands half over the cockpit's aisle, and past the part of the seat
   drawn in the blocks round it, which no longer stands in the way of the seat itself. Aimed at, the pilot seat often
   sat no one, the click landing on the seat's parts in the next block or going through to the deck.
+- (Space) An airlock's boarding stair, and the Side Door hold's own, keep their climber between their rails, as they
+  are drawn: the outer door's opening, a block wide, lets a player through only near its middle, and one who went up
+  the stair along its edge, the rails nothing to the touch, stopped at the top against the door's frame.
 
 ## [0.5.3a] - 2026-11-04
 
