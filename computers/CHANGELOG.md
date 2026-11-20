@@ -1040,8 +1040,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whole, its processor a Pentix 4 2.4C that fits its Socket 478 board.
 - Abandoned buildings: a working datacenter works. Over each hot aisle hang as many Server Routers as their
   era's rack budget asks (five in the Legacy, one in the Advanced), each over its own length of the tray, so every
-  rack is managed, where most stood outside any router's budget; its Mainframe stands in the hall, at the head of the
-  middle cold aisle; the operations room's computers are on its network, and each drives its own screen and a row of
+  rack is managed, where most stood outside any router's budget; its Mainframe stands in the hall, against its south
+  wall facing the rows; the operations room's computers are on its network, and each drives its own screen and a row of
   the wall of screens, which stands a block off the wall with its cables behind it, where the wall was linked to
   nothing; the battery banks feed every rack, the Mainframe, the desks, the Chillers and the Cooling Tower; the plant's
   pipes meet the ports that take its water, the tower a block off the wall where its cold outlet was walled in; and
