@@ -39,6 +39,8 @@ public final class ShipKitBlocks {
     public static final ContentTab.Section SHIP_PARTS = SpaceContent.TAB.section();
     /* Every block of the kit, as declared. */
     private static final List<BlockEntry<Block>> ALL = new ArrayList<>();
+    /* A lamp's full light, as the game's lamps give. */
+    private static final int FULL_LIGHT = 15;
 
     // The structure every section shares.
     public static final BlockEntry<Block> HULL_FRAME = add(kit("hull_frame").named("Hull Frame").register());
@@ -56,7 +58,9 @@ public final class ShipKitBlocks {
     public static final BlockEntry<Block> CONDUIT = add(kit("conduit").named("Conduit").register());
     public static final BlockEntry<Block> CABLE_TRAY = add(kit("cable_tray").named("Cable Tray").register());
     public static final BlockEntry<Block> VIEWPORT = add(kit("viewport").named("Viewport").register());
-    public static final BlockEntry<Block> LIGHT_PANEL = add(kit("light_panel").named("Light Panel").register());
+    /** A ceiling light: every section's ceiling has one, so a ship's inside is always lit, at a lamp's full light. */
+    public static final BlockEntry<Block> LIGHT_PANEL = add(kit("light_panel").named("Light Panel")
+            .properties(properties -> properties.lightLevel(state -> FULL_LIGHT)).register());
     // The cockpit.
     public static final BlockEntry<Block> CANOPY_GLASS = add(kit("canopy_glass").named("Canopy Glass").register());
     public static final BlockEntry<Block> CANOPY_FRAME = add(kit("canopy_frame").named("Canopy Frame").register());

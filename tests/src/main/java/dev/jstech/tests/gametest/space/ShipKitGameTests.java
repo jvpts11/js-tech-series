@@ -8,7 +8,11 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.multiblock.plan.IPlanMember;
+import dev.jstech.core.region.Box;
 import dev.jstech.space.api.ShipClass;
 import dev.jstech.space.api.ShipKit;
 import dev.jstech.space.api.ShipKits;
@@ -25,13 +29,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.locale.Language;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -48,8 +56,50 @@ public final class ShipKitGameTests {
 
     private static final String ARENA = "empty";
     private static final String BATCH = "jsspace_ship_kits";
+    /* The panel's post, from its foot to its top, and the panel hung from its top beside it; how bright is lit. */
+    private static final int POST_X = 3;
+    private static final int POST_FOOT = 2;
+    private static final int POST_TOP = 4;
+    private static final int PANEL_Z = 2;
+    private static final BlockPos PANEL = new BlockPos(2, POST_TOP, PANEL_Z);
+    private static final int LIT = 14;
 
     private ShipKitGameTests() {
+    }
+
+    /*
+     * The Light Panel lights where it hangs, at a lamp's full light under it; and made part of a moving structure, as a
+     * ship's ceiling is, it lights the structure's inside where its blocks are kept, as it is drawn by.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 4000)
+    public static void lightPanel_lightsUnderItOnTheGroundAndAboard(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        // A post of stone, the panel hung from its top over the air beside it.
+        for (int y = POST_FOOT; y <= POST_TOP; y++) {
+            helper.setBlock(new BlockPos(POST_X, y, PANEL_Z), Blocks.STONE);
+        }
+        helper.setBlock(PANEL, ShipKitBlocks.LIGHT_PANEL.get());
+        final MovingStructure[] made = new MovingStructure[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.getBrightness(LightLayer.BLOCK,
+                        helper.absolutePos(PANEL.below())) >= LIT, "the panel lights under it: " + level.getBrightness(
+                        LightLayer.BLOCK, helper.absolutePos(PANEL.below()))))
+                .thenExecute(() -> {
+                    final StructureResult result = MovingStructures.assemble(level, helper.absolutePos(new BlockPos(
+                            PANEL.getX(), POST_FOOT, PANEL_Z)), helper.absolutePos(new BlockPos(POST_X, POST_TOP,
+                            PANEL_Z)));
+                    helper.assertTrue(result.ok(), "the post and its panel make a structure: " + result.refusal());
+                    made[0] = result.structure();
+                })
+                .thenWaitUntil(() -> helper.assertTrue(made[0].ready(), "its blocks come into its yard"))
+                .thenWaitUntil(() -> {
+                    final BlockPos panel = aboard(level, made[0]);
+                    helper.assertTrue(panel != null && level.getBrightness(LightLayer.BLOCK, panel.below()) >= LIT,
+                            "aboard, the panel lights under it where its blocks are kept: " + (panel == null ? "no "
+                                    + "panel" : level.getBrightness(LightLayer.BLOCK, panel.below())));
+                })
+                .thenExecute(() -> MovingStructures.takeAway(made[0]))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH)
@@ -144,6 +194,18 @@ public final class ShipKitGameTests {
             helper.assertTrue(laidParts.size() == spine.size() + hung.size(), ship.getKey() + " lays every part");
         }
         helper.succeed();
+    }
+
+    /* The place in its yard of the Light Panel of {@code structure}, or null. */
+    private static BlockPos aboard(final ServerLevel level, final MovingStructure structure) {
+        final Box box = structure.bounds();
+        for (final BlockPos at : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(),
+                box.maxZ())) {
+            if (level.getBlockState(at).is(ShipKitBlocks.LIGHT_PANEL.get())) {
+                return at.immutable();
+            }
+        }
+        return null;
     }
 
     /* The small ship's parts, by id. */
