@@ -218,9 +218,7 @@ public final class ShipFlightGameTests {
     private static final double UP_HIT = 14;
     /* How fast a ship crashes in the test of its burst, in blocks a second: past what its crew stand. */
     private static final double HARD_HIT = 40;
-    /* How long a turn is held, and let go, in the test of its bank, in ticks; how far it leans at least, and how near
-     * level it comes back, in degrees. */
-    private static final int BANKING = 30;
+    /* How far a ship turning leans at least, in the test of its bank, and how near level it comes back, in degrees. */
     private static final double LEANS = 15;
     private static final double LEVEL_WITHIN = 3;
     /* How far a hovering ship may drift up or down, and roll on wheels at least, in blocks; its nozzles, in degrees. */
@@ -530,14 +528,14 @@ public final class ShipFlightGameTests {
             MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISE, 0, CRUISE / CRUISING, 0,
                     0)));
         });
-        hold(helper, sequence, ship, StructureControls.ControlAxis.LEFT, BANKING).thenExecute(() -> helper.assertTrue(
+        // Waited for, not counted in ticks: a ship waiting out a tick the land ahead is not going in holds its pose.
+        holdTill(helper, sequence, ship, StructureControls.ControlAxis.LEFT, () -> helper.assertTrue(
                 bank(ship[0]) > LEANS, "turning left it banks left: " + bank(ship[0]) + " degrees"));
-        cruise(helper, sequence, ship, BANKING).thenExecute(() -> {
-            helper.assertTrue(Math.abs(bank(ship[0])) < LEVEL_WITHIN, "let go, it levels: " + bank(ship[0])
-                    + " degrees");
-            MovingStructures.takeAway(ship[0]);
-            keep(helper, false, STRAIGHT_WEST);
-        }).thenSucceed();
+        cruiseTill(helper, sequence, ship, () -> helper.assertTrue(Math.abs(bank(ship[0])) < LEVEL_WITHIN,
+                "let go, it levels: " + bank(ship[0]) + " degrees")).thenExecute(() -> {
+                    MovingStructures.takeAway(ship[0]);
+                    keep(helper, false, STRAIGHT_WEST);
+                }).thenSucceed();
     }
 
     /* A crash hard enough to hurt its crew bursts where the ship is seen in the world, not where its blocks lie. */
@@ -1130,6 +1128,18 @@ public final class ShipFlightGameTests {
             });
         }
         return sequence;
+    }
+
+    /*
+     * Its pilot sits at the helm holding nothing, its throttle where they left it, till {@code done} holds, which says
+     * why not yet: waited for, not counted in ticks, as a ship waits out a tick the land ahead of it is not going in.
+     */
+    private static GameTestSequence cruiseTill(final GameTestHelper helper, final GameTestSequence sequence,
+                                               final MovingStructure[] ship, final Runnable done) {
+        return sequence.thenWaitUntil(() -> {
+            pilot(helper, ship[0], Map.of());
+            done.run();
+        });
     }
 
     /* Its pilot sits at the helm {@code ticks} ticks holding nothing, its throttle where they left it. */
