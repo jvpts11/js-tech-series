@@ -13,8 +13,10 @@ import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.audio.MediaBaySounds;
 import dev.jstech.computers.block.PatternEncoderBlock;
+import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
@@ -25,6 +27,8 @@ import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.ITrayBlock;
 import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.core.audio.IAudible;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.IFieldPart;
@@ -82,7 +86,7 @@ import java.util.Set;
  * written, the link and how many jobs wait; the waiting jobs themselves stay on the server.
  */
 @TextHolder
-public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint {
+public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible {
 
     /** What the bay sounds like taking a disc or a USB drive in and giving it back. */
     private final MediaBaySounds baySounds = new MediaBaySounds();
@@ -297,6 +301,44 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
 
     public Phase phase() {
         return phase.get();
+    }
+
+    /* On the player's game its drive is heard while the head is on the medium. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.track(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.untrack(this);
+        }
+    }
+
+    @Override
+    public double audioX() {
+        return worldPosition.getX() + 0.5;
+    }
+
+    @Override
+    public double audioY() {
+        return worldPosition.getY() + 0.5;
+    }
+
+    @Override
+    public double audioZ() {
+        return worldPosition.getZ() + 0.5;
+    }
+
+    /** Its drive turning the disc while it seeks, writes and verifies: a drive writing sounds as one reading. */
+    @Override
+    public List<LoopRequest> loops() {
+        return busy() ? List.of(LoopRequest.of(ComputingSounds.OPTICAL_READ)) : List.of();
     }
 
     /** Whether the head is on the medium (seeking, writing or verifying). */

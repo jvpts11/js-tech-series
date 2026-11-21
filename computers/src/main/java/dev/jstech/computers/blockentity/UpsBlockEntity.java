@@ -9,13 +9,18 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.UpsBlock;
+import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.portable.AlertKind;
 import dev.jstech.computers.power.UpsRating;
 import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.power.UpsTexts;
+import dev.jstech.core.audio.Audio;
+import dev.jstech.core.audio.IAudible;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.bigblock.BigBlockPartBlockEntity;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
@@ -51,7 +56,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Every tick it tells the computers it feeds how it stands, for the battery their systems show; its own players are
  * sent it as it changes by a percent or a minute, for its lamps.
  */
-public final class UpsBlockEntity extends SyncedBlockEntity implements IDescribed {
+public final class UpsBlockEntity extends SyncedBlockEntity implements IDescribed, IAudible {
 
     private final UpsRating rating;
     private final UpsInlet inlet;
@@ -105,6 +110,44 @@ public final class UpsBlockEntity extends SyncedBlockEntity implements IDescribe
                 : this.battery.reading(this.rating, this.load);
     }
 
+    /* On the player's game its alarm is heard while it runs on its battery. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (this.level != null && this.level.isClientSide()) {
+            MachineSoundSources.track(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (this.level != null && this.level.isClientSide()) {
+            MachineSoundSources.untrack(this);
+        }
+    }
+
+    @Override
+    public double audioX() {
+        return this.worldPosition.getX() + 0.5;
+    }
+
+    @Override
+    public double audioY() {
+        return this.worldPosition.getY() + 0.5;
+    }
+
+    @Override
+    public double audioZ() {
+        return this.worldPosition.getZ() + 0.5;
+    }
+
+    /** Its alarm, beeping while it runs on its battery. */
+    @Override
+    public List<LoopRequest> loops() {
+        return reading().onBattery() ? List.of(LoopRequest.of(ComputingSounds.UPS_BEEP)) : List.of();
+    }
+
     /** What its battery holds, in joules. */
     public long charge() {
         return this.battery.charge();
@@ -152,6 +195,10 @@ public final class UpsBlockEntity extends SyncedBlockEntity implements IDescribe
         this.load = watts;
         final UpsReading reading = this.battery.reading(this.rating, watts);
         final boolean wentOnBattery = mode == UpsReading.Mode.ON_BATTERY && was != UpsReading.Mode.ON_BATTERY;
+        if (wentOnBattery || was == UpsReading.Mode.ON_BATTERY && mode != UpsReading.Mode.ON_BATTERY) {
+            // Its relay, as the battery takes the load over from the line and gives it back.
+            Audio.at(level, this.worldPosition, ComputingSounds.UPS_SWITCH);
+        }
         final boolean low = this.battery.low(this.rating);
         final Text name = GameText.of(getBlockState().getBlock().getName());
         for (final AbstractComputerBlockEntity computer : this.loads) {

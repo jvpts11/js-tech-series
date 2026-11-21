@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.block.MiningComputerStructure;
 import dev.jstech.computers.block.MiningComputerTexts;
@@ -25,6 +26,7 @@ import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.teracoin.TeracoinHashrate;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.FieldItemHandler;
@@ -66,6 +68,8 @@ public class MiningComputerBlockEntity extends AbstractSmallComputerBlockEntity
             .accepts(this::takesRiser);
     /* MINE AT START: when the rig starts, its miner goes to work in the background with the settings it last had. */
     private final BoolField mineAtStart = fields().flag("MineAtStart", false).save().toMenu();
+    /* Whether its cards' fans are heard: whether it mines, worked out on the server and sent to the client. */
+    private final BoolField fans = fields().flag("Fans", false).toClient();
     /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */
     private final DerivedInt assemblyRunning = fields().derived("AssemblyRunning", this::isRunning).toMenu();
     private final DerivedInt assemblyBuildValid = fields().derived("AssemblyBuildValid", this::buildValid).toMenu();
@@ -444,6 +448,12 @@ public class MiningComputerBlockEntity extends AbstractSmallComputerBlockEntity
         return assemblyOnNetwork.isSet();
     }
 
+    /** Its cards' fans on their open frame, heard while it mines. */
+    @Override
+    public List<LoopRequest> machineLoops() {
+        return fans.get() ? List.of(LoopRequest.of(ComputingSounds.MINING_RIG_FANS)) : List.of();
+    }
+
     /* A riser of the rig's own era, in one of the slots its frame has room for. */
     private boolean takesRiser(final int slot, final ItemStack stack) {
         return slot < riserCount() && stack.getItem() instanceof MiningRiserItem riser && riser.era() == rigEra();
@@ -451,6 +461,7 @@ public class MiningComputerBlockEntity extends AbstractSmallComputerBlockEntity
 
     /* The rig started this tick with MINE AT START on: its miner goes to work in the background. */
     private void tickStart() {
+        fans.set(mining());
         final boolean running = isRunning();
         if (running && !ranBefore && mineAtStart.get()) {
             final ComputerConsoleState console = console();

@@ -12575,6 +12575,9 @@
   "subtitles.jsc.os.kde_plasma_legacy.notify": "KDE notice",
   "subtitles.jsc.os.kde_plasma_legacy.shutdown": "KDE says goodbye",
   "subtitles.jsc.os.kde_plasma_legacy.startup": "KDE chimes",
+  "subtitles.jsc.portable.dock": "Device docks",
+  "subtitles.jsc.power.ups_beep": "UPS beeps on battery",
+  "subtitles.jsc.power.ups_switch": "UPS relay clicks",
   "subtitles.jsc.printer.epsilon_ecotonk_et_2720": "Ink tank printer prints",
   "subtitles.jsc.printer.epsilon_fx_80": "Dot matrix printer prints",
   "subtitles.jsc.printer.pakard_deskjot_940": "Inkjet printer prints",
@@ -12585,6 +12588,11 @@
   "subtitles.jsc.program.minesweeper_win": "Minefield cleared",
   "subtitles.jsc.rack.slide_in": "Server slides into a rack",
   "subtitles.jsc.rack.slide_out": "Server slides out of a rack",
+  "subtitles.jsc.redstone.relay": "Relay clicks",
+  "subtitles.jsc.scanner.scan": "Scanner scans",
   "subtitles.jsc.server.fan": "Server fans whir",
-  "subtitles.jsc.server.room": "Server room hums"
+  "subtitles.jsc.server.room": "Server room hums",
+  "subtitles.jsc.teracoin.asic_fans": "ASIC fans scream",
+  "subtitles.jsc.teracoin.mining_rig_fans": "Mining rig fans whir",
+  "subtitles.jsc.workbench.assemble": "Workbench assembles"
 }

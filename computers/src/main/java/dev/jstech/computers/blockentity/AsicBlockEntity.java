@@ -10,7 +10,9 @@ package dev.jstech.computers.blockentity;
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.AsicBlock;
+import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.teracoin.AsicModel;
 import dev.jstech.computers.teracoin.MinerKinds;
 import dev.jstech.computers.teracoin.MinerRunner;
@@ -18,6 +20,8 @@ import dev.jstech.computers.teracoin.MinerSettings;
 import dev.jstech.computers.teracoin.MiningPools;
 import dev.jstech.computers.teracoin.TeracoinAddress;
 import dev.jstech.computers.teracoin.TeracoinNbt;
+import dev.jstech.core.audio.IAudible;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.LongField;
@@ -48,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
  * for the pool it chose or alone. It has no system: nothing of it runs but the mining. Its window reads what it shows
  * off the fields here, which the players who see it are sent.
  */
-public class AsicBlockEntity extends SyncedBlockEntity implements INetworkMember {
+public class AsicBlockEntity extends SyncedBlockEntity implements INetworkMember, IAudible {
 
     private final EnergyStore store = new EnergyStore("Energy", JsEnergy.ENERGY, JsEnergy.LOW, 0L, TAKES_A_TICK, 0L,
             this::setChanged);
@@ -99,6 +103,44 @@ public class AsicBlockEntity extends SyncedBlockEntity implements INetworkMember
     @Override
     public NetworkCategory category() {
         return NetworkCategory.B;
+    }
+
+    /* On the player's game its fans are heard while it mines. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.track(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.untrack(this);
+        }
+    }
+
+    @Override
+    public double audioX() {
+        return worldPosition.getX() + 0.5;
+    }
+
+    @Override
+    public double audioY() {
+        return worldPosition.getY() + 0.5;
+    }
+
+    @Override
+    public double audioZ() {
+        return worldPosition.getZ() + 0.5;
+    }
+
+    /** Its fans, screaming while it mines. */
+    @Override
+    public List<LoopRequest> loops() {
+        return mining() ? List.of(LoopRequest.of(ComputingSounds.ASIC_FANS)) : List.of();
     }
 
     /** The network it is on, or null. */

@@ -9,11 +9,13 @@ package dev.jstech.computers.blockentity;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.PortableItems;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.ChargingDockBlock;
 import dev.jstech.computers.portable.PortableBattery;
 import dev.jstech.computers.portable.PortableDevices;
 import dev.jstech.computers.portable.PortableItem;
 import dev.jstech.computers.portable.Portables;
+import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
@@ -82,6 +84,8 @@ public class ChargingDockBlockEntity extends SyncedBlockEntity {
     public void put(final ItemStack stack) {
         if (level instanceof ServerLevel server) {
             Portables.switchOff(server, stack);
+            // Set down in it, it clicks into its contacts and the dock beeps.
+            Audio.at(server, worldPosition, ComputingSounds.DOCK_PLACE);
         }
         device.setStackInSlot(0, stack);
         shownPercent = -1;

@@ -8,8 +8,13 @@
 package dev.jstech.computers.blockentity;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.WorkbenchBlock;
 import dev.jstech.computers.chain.ChainBenches;
+import dev.jstech.computers.client.audio.MachineSoundSources;
+import dev.jstech.core.audio.IAudible;
+import dev.jstech.core.audio.LoopRequest;
+import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
@@ -40,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  * trays hold its ingredients and nothing else, each in a tray of its own and in any order. Its trays are the player's
  * own: nothing reaches them through its sides.
  */
-public class WorkbenchBlockEntity extends SyncedBlockEntity {
+public class WorkbenchBlockEntity extends SyncedBlockEntity implements IAudible {
 
     private final EnergyStore store = new EnergyStore("Energy", JsEnergy.ENERGY, JsEnergy.LOW, 0L, TAKES_A_TICK, 0L,
             this::setChanged);
@@ -49,6 +54,8 @@ public class WorkbenchBlockEntity extends SyncedBlockEntity {
     /* Only the bench puts into it: its menu's slot takes nothing from the player, and no side reaches it. */
     private final FieldItemHandler output = fields().items("Output", 1).save().dropsWhenBroken();
     private final ValueField<Integer> progress = fields().value("Progress", Codec.INT, 0).save();
+    /* Whether it is heard at work: whether it worked its part this tick, worked out on the server, sent to clients. */
+    private final BoolField assembling = fields().flag("Assembling", false).toClient();
     private final TickDraw draw = new TickDraw();
     /* The recipe the trays hold, found again whenever what is in them changes. */
     @Nullable
@@ -91,6 +98,44 @@ public class WorkbenchBlockEntity extends SyncedBlockEntity {
     /** The tray the finished part waits in; nothing is put into it from outside. */
     public FieldItemHandler output() {
         return output;
+    }
+
+    /* On the player's game it is heard while it puts a part together. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.track(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.untrack(this);
+        }
+    }
+
+    @Override
+    public double audioX() {
+        return worldPosition.getX() + 0.5;
+    }
+
+    @Override
+    public double audioY() {
+        return worldPosition.getY() + 0.5;
+    }
+
+    @Override
+    public double audioZ() {
+        return worldPosition.getZ() + 0.5;
+    }
+
+    /** Its iron and its small motors, while it puts a part together. */
+    @Override
+    public List<LoopRequest> loops() {
+        return assembling.get() ? List.of(LoopRequest.of(ComputingSounds.WORKBENCH_ASSEMBLE)) : List.of();
     }
 
     /** How far the part under way has come, from 0 to 1; 0 while nothing is under way. */
@@ -141,6 +186,7 @@ public class WorkbenchBlockEntity extends SyncedBlockEntity {
             working = found;
         }
         final boolean drew = working != null && fits(working.recipe()) && draw.draw(store, watts(era()));
+        assembling.set(drew);
         powered = store.stored() > 0;
         if (!drew) {
             return;

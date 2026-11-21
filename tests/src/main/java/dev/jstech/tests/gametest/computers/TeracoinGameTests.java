@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.computers;
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.MiningComputerBlock;
 import dev.jstech.computers.block.MiningComputerTexts;
 import dev.jstech.computers.blockentity.AsicBlockEntity;
@@ -310,6 +311,8 @@ public final class TeracoinGameTests {
         helper.onEachTick(() -> line.receiveEnergy(ENERGY_A_TICK, false));
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(asic.mining(), "with its watts it mines; " + asic.status()))
+                .thenExecute(() -> helper.assertTrue(asic.loops().stream().anyMatch(loop -> loop.sound()
+                        .equals(ComputingSounds.ASIC_FANS)), "mining, its fans are heard"))
                 .thenWaitUntil(() -> {
                     final TeracoinChain chain = TeracoinState.of(helper.getLevel().getServer()).chain();
                     helper.assertTrue(chain.balance(keys.address()) > 0L, "a Forge A2 alone soon finds a block and is"

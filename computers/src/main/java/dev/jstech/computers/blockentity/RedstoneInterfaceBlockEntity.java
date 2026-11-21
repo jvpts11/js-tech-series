@@ -10,8 +10,10 @@ package dev.jstech.computers.blockentity;
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.RedstoneInterfaceBlock;
 import dev.jstech.computers.menu.RedstoneInterfaceMenu;
+import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
@@ -73,6 +75,8 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
     private final BoolField disabled = fields().flag("Disabled", false).toClient();
     /** What it emits at this moment, which the game asks for and its neighbours were last told of. */
     private int output;
+    /** Whether it has settled once since it loaded: what it emits then is how it was, and its relay is not heard. */
+    private boolean settled;
     /** The name being typed on its screen, taken when the screen closes; null while nothing is being typed. */
     @Nullable
     private String asked;
@@ -330,12 +334,17 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
         reading.set(powered && !emits() ? readFront(level, pos, state) : 0);
         final int now = powered && emits() ? emitStrength() : 0;
         if (now != output) {
+            if (settled && now > 0 != output > 0) {
+                // Its relay, as its output goes on or off; a strength changed while it is on moves no relay.
+                Audio.at(level, pos, ComputingSounds.REDSTONE_RELAY);
+            }
             output = now;
             setChanged();
             if (state.getBlock() instanceof RedstoneInterfaceBlock sensor) {
                 sensor.updateFront(level, pos, state);
             }
         }
+        settled = true;
     }
 
     /*

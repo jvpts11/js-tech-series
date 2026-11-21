@@ -10,6 +10,7 @@ package dev.jstech.computers.blockentity;
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.MediaDevices;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.ScannerBlock;
 import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.os.FilesystemKind;
@@ -23,6 +24,7 @@ import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.printer.Printers;
 import dev.jstech.computers.scan.ScannerModel;
 import dev.jstech.computers.scan.Scans;
+import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.IntField;
@@ -107,6 +109,14 @@ public class ScannerBlockEntity extends SyncedBlockEntity implements IPeripheral
         page.set(0);
         pageTicks.set(0);
         scanning.set(true);
+        sweep();
+    }
+
+    /* The head sweeping the glass, heard once for each page it reads. */
+    private void sweep() {
+        if (level instanceof ServerLevel server) {
+            Audio.at(server, worldPosition, ComputingSounds.SCANNER_SCAN);
+        }
     }
 
     /** Stops reading; what was read is let go, and nothing is written. */
@@ -227,6 +237,7 @@ public class ScannerBlockEntity extends SyncedBlockEntity implements IPeripheral
         pageTicks.set(0);
         page.set(page.get() + 1);
         if (page.get() < Scans.pages(item)) {
+            sweep();
             return;
         }
         scanning.set(false);

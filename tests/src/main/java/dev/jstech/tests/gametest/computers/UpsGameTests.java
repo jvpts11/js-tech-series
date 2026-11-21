@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -123,6 +124,8 @@ public final class UpsGameTests {
                             "on the battery, as the UPS and the computer say; got " + ups.reading() + " and "
                                     + pc.upsReading());
                     helper.assertTrue(ups.charge() < full.get(), "and the battery runs down");
+                    helper.assertTrue(ups.loops().stream().anyMatch(loop -> loop.sound()
+                            .equals(ComputingSounds.UPS_BEEP)), "on its battery, the UPS beeps");
                     final MachineStateService.Ups read = pc.services().state().ups();
                     helper.assertTrue(read != null && read.onBattery() && !read.bypass()
                                     && read.chargePercent() == pc.upsReading().percent()

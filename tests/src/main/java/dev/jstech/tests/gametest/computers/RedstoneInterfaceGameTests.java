@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.RedstoneInterfaceBlock;
 import dev.jstech.computers.blockentity.HubBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -17,6 +18,7 @@ import dev.jstech.core.signal.Signals;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -27,6 +29,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.minecraft.world.level.block.RedstoneLampBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -117,6 +122,13 @@ public final class RedstoneInterfaceGameTests {
         helper.setBlock(FRONT, Blocks.REDSTONE_WIRE);
         final BlockPos beside = SENSOR.north();
         helper.setBlock(beside, Blocks.REDSTONE_LAMP);
+        // Its relay, heard at it: as its output goes on and as it goes off, never as its strength changes.
+        final Vec3 at = Vec3.atCenterOf(helper.absolutePos(SENSOR));
+        final int[] clicks = new int[1];
+        final Consumer<PlayLevelSoundEvent.AtPosition> hearing = event -> clicks[0] += event.getSound() != null
+                && event.getSound().value().getLocation().equals(ComputingSounds.REDSTONE_RELAY.id())
+                && event.getPosition().distanceToSqr(at) < 0.01 ? 1 : 0;
+        NeoForge.EVENT_BUS.addListener(hearing);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE_TICKS, () -> sensor(helper, SENSOR).emit(5, ""))
                 .thenExecuteAfter(SETTLE_TICKS, () -> {
@@ -130,9 +142,13 @@ public final class RedstoneInterfaceGameTests {
                         helper.getBlockState(FRONT).getValue(RedStoneWireBlock.POWER) == 15,
                         "and follows it when it changes"))
                 .thenExecute(() -> sensor(helper, SENSOR).read(""))
-                .thenExecuteAfter(SETTLE_TICKS, () -> helper.assertTrue(
-                        helper.getBlockState(FRONT).getValue(RedStoneWireBlock.POWER) == 0,
-                        "set to read, it emits nothing"))
+                .thenExecuteAfter(SETTLE_TICKS, () -> {
+                    NeoForge.EVENT_BUS.unregister(hearing);
+                    helper.assertTrue(helper.getBlockState(FRONT).getValue(RedStoneWireBlock.POWER) == 0,
+                            "set to read, it emits nothing");
+                    helper.assertTrue(clicks[0] == 2, "its relay clicks as its output goes on and as it goes off, "
+                            + "not as its strength changes: " + clicks[0]);
+                })
                 .thenSucceed();
     }
 

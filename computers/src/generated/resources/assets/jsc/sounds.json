@@ -584,6 +584,27 @@
     ],
     "subtitle": "subtitles.jsc.os.kde_plasma_legacy.startup"
   },
+  "portable/dock": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:portable/dock"
+      }
+    ],
+    "subtitle": "subtitles.jsc.portable.dock"
+  },
+  "power/ups_beep": {
+    "sounds": [
+      "jsc:power/ups_beep"
+    ],
+    "subtitle": "subtitles.jsc.power.ups_beep"
+  },
+  "power/ups_switch": {
+    "sounds": [
+      "jsc:power/ups_switch"
+    ],
+    "subtitle": "subtitles.jsc.power.ups_switch"
+  },
   "printer/epsilon_ecotonk_et_2720": {
     "sounds": [
       {
@@ -659,6 +680,24 @@
     ],
     "subtitle": "subtitles.jsc.rack.slide_out"
   },
+  "redstone/relay": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:redstone/relay"
+      }
+    ],
+    "subtitle": "subtitles.jsc.redstone.relay"
+  },
+  "scanner/scan": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:scanner/scan"
+      }
+    ],
+    "subtitle": "subtitles.jsc.scanner.scan"
+  },
   "server/fan": {
     "sounds": [
       "jsc:server/fan"
@@ -673,5 +712,26 @@
       }
     ],
     "subtitle": "subtitles.jsc.server.room"
+  },
+  "teracoin/asic_fans": {
+    "sounds": [
+      "jsc:teracoin/asic_fans"
+    ],
+    "subtitle": "subtitles.jsc.teracoin.asic_fans"
+  },
+  "teracoin/mining_rig_fans": {
+    "sounds": [
+      "jsc:teracoin/mining_rig_fans"
+    ],
+    "subtitle": "subtitles.jsc.teracoin.mining_rig_fans"
+  },
+  "workbench/assemble": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:workbench/assemble"
+      }
+    ],
+    "subtitle": "subtitles.jsc.workbench.assemble"
   }
 }

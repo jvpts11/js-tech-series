@@ -106,6 +106,38 @@ public final class ComputingSounds {
     public static final SoundKey CDU_PUMPS = CONTENT.sound("machine/cdu").loop()
             .range(16).subtitle("CDU pumps hum").register();
 
+    /** An ASIC's fans screaming while it mines. */
+    public static final SoundKey ASIC_FANS = CONTENT.sound("teracoin/asic_fans").loop()
+            .range(16).subtitle("ASIC fans scream").register();
+
+    /** A Mining Computer's graphics cards' fans on their open frame while it mines. */
+    public static final SoundKey MINING_RIG_FANS = CONTENT.sound("teracoin/mining_rig_fans").loop()
+            .range(16).subtitle("Mining rig fans whir").register();
+
+    /** A scanner's head sweeping its glass, once a scan. */
+    public static final SoundKey SCANNER_SCAN = CONTENT.sound("scanner/scan")
+            .channel(AudioChannels.DEVICES).range(12).subtitle("Scanner scans").register();
+
+    /** A UPS's relay as the line fails and its battery takes over, and as the line comes back. */
+    public static final SoundKey UPS_SWITCH = CONTENT.sound("power/ups_switch")
+            .channel(AudioChannels.DEVICES).subtitle("UPS relay clicks").register();
+
+    /** A UPS's alarm, beeping while it runs on its battery. */
+    public static final SoundKey UPS_BEEP = CONTENT.sound("power/ups_beep").loop()
+            .channel(AudioChannels.ALERTS).range(16).subtitle("UPS beeps on battery").register();
+
+    /** An Electronics Workbench putting a part together: its iron and its small motors. */
+    public static final SoundKey WORKBENCH_ASSEMBLE = CONTENT.sound("workbench/assemble").loop()
+            .channel(AudioChannels.DEVICES).range(12).subtitle("Workbench assembles").register();
+
+    /** A Redstone Interface's relay as its output goes on or off. */
+    public static final SoundKey REDSTONE_RELAY = CONTENT.sound("redstone/relay")
+            .channel(AudioChannels.DEVICES).range(8).subtitle("Relay clicks").register();
+
+    /** A portable set down in a Charging Dock, and its beep. */
+    public static final SoundKey DOCK_PLACE = CONTENT.sound("portable/dock")
+            .channel(AudioChannels.DEVICES).range(8).subtitle("Device docks").register();
+
     /** A server's rails taking its weight as it goes into a rack's bay, and the knock at the end. */
     public static final SoundKey RACK_SLIDE_IN = CONTENT.sound("rack/slide_in")
             .channel(AudioChannels.DEVICES).subtitle("Server slides into a rack").register();

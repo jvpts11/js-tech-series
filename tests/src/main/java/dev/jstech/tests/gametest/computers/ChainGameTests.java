@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.WorkbenchBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.JsCore;
@@ -158,7 +159,12 @@ public final class ChainGameTests {
         final WorkbenchBlockEntity bench = bench(helper, ChainBenches.VINTAGE.get(), BENCH);
         bench.trays().insertItem(0, memoryChips(VINTAGE, 2), false);
         bench.trays().insertItem(7, new ItemStack(ChainParts.ETCHED_BOARDS.get(VINTAGE).get()), false);
+        final boolean[] heard = new boolean[1];
+        helper.onEachTick(() -> heard[0] |= bench.loops().stream().anyMatch(loop -> loop.sound()
+                .equals(ComputingSounds.WORKBENCH_ASSEMBLE)));
         helper.succeedWhen(() -> {
+            helper.assertTrue(heard[0], "at work, the bench is heard putting the part together");
+            helper.assertTrue(bench.loops().isEmpty(), "done, it falls quiet");
             helper.assertTrue(bench.output().getStackInSlot(0).is(ChainParts.CERAMIC_PACKAGE.get()),
                     "the part waits in its tray");
             helper.assertTrue(bench.trays().getStackInSlot(0).isEmpty() && bench.trays().getStackInSlot(7).isEmpty(),

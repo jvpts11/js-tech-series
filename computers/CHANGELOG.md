@@ -893,6 +893,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Stations and the Electronics Assembly Lines of every era, the Preinstaller, the Large Scale Printer, the Cooling
   Tower's fan and the Chiller's compressor; and the CDU's pumps hum while they move the racks' water. Each has its
   subtitle, and is heard on the machines channel of the sound mixer.
+- The devices are heard as they work: an ASIC's fans scream while it mines, and a Mining Computer's cards'
+  fans whir while its miner works; a scanner's head sweeps its glass once a page; a UPS's relay clicks as its battery
+  takes the load from the line and as it gives it back, and its alarm beeps while it runs on the battery; an
+  Electronics Workbench is heard putting a part together; a Pattern Encoder's drive turns while its head is on the
+  disc; a Redstone Interface's relay clicks as its output goes on or off; and a portable set down in a Charging Dock
+  clicks into it and the dock beeps. All from real recordings, each with its subtitle.
   `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
   command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 

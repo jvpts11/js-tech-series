@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.computers;
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PortableItems;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.AccessPointBlock;
 import dev.jstech.computers.block.ChargingDockBlock;
 import dev.jstech.computers.blockentity.ChargingDockBlockEntity;
@@ -39,6 +40,7 @@ import dev.jstech.tests.testkit.computers.TestComputerEnergy;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.EnumSet;
 import java.util.UUID;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -51,7 +53,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -232,7 +236,16 @@ public final class PortableGameTests {
         final ChargingDockBlockEntity dock = dock(helper, PortableItems.TRANSITION_CHARGING_DOCK.get());
         final ItemStack phone = new ItemStack(PortableItems.QPHONE.get());
         Portables.setBattery(phone, PortableModel.QPHONE, 0);
+        // Set down in it, the phone is heard clicking into its contacts, at the dock.
+        final Vec3 at = Vec3.atCenterOf(dock.getBlockPos());
+        final int[] clicks = new int[1];
+        final Consumer<PlayLevelSoundEvent.AtPosition> hearing = event -> clicks[0] += event.getSound() != null
+                && event.getSound().value().getLocation().equals(ComputingSounds.DOCK_PLACE.id())
+                && event.getPosition().distanceToSqr(at) < 0.01 ? 1 : 0;
+        NeoForge.EVENT_BUS.addListener(hearing);
         dock.put(phone);
+        NeoForge.EVENT_BUS.unregister(hearing);
+        helper.assertTrue(clicks[0] == 1, "set down in the dock, the phone clicks into it: " + clicks[0]);
         helper.startSequence()
                 .thenIdle(20)
                 .thenExecute(() -> {

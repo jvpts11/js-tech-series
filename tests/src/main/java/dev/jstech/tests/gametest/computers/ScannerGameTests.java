@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.MediaDevices;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.blockentity.ScannerBlockEntity;
@@ -22,6 +23,7 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
@@ -33,6 +35,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.component.WrittenBookContent;
 import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -64,12 +69,22 @@ public final class ScannerGameTests {
         book.set(DataComponents.WRITTEN_BOOK_CONTENT, new WrittenBookContent(Filterable.passThrough("Mine Log"),
                 "Steve", 0, List.of(Filterable.passThrough(Component.literal("Day 1: iron."))), true));
         scanner.glass().setStackInSlot(0, book);
+        // Its head's sweep, heard at it once for the book's one page.
+        final Vec3 at = Vec3.atCenterOf(helper.absolutePos(SCANNER));
+        final int[] sweeps = new int[1];
+        final Consumer<PlayLevelSoundEvent.AtPosition> hearing = event -> sweeps[0] += event.getSound() != null
+                && event.getSound().value().getLocation().equals(ComputingSounds.SCANNER_SCAN.id())
+                && event.getPosition().distanceToSqr(at) < 0.01 ? 1 : 0;
+        NeoForge.EVENT_BUS.addListener(hearing);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, scanner::scan)
                 .thenExecute(() -> helper.assertTrue(scanner.scanning(), "it reads the book; problem "
                         + scanner.problem()))
                 .thenWaitUntil(() -> helper.assertTrue(scanner.scanned() == 1, "the book is read"))
                 .thenExecute(() -> {
+                    NeoForge.EVENT_BUS.unregister(hearing);
+                    helper.assertTrue(sweeps[0] == 1, "its head sweeps the glass once for the one page: "
+                            + sweeps[0]);
                     helper.assertTrue(scanner.problem() == ScannerBlockEntity.Problem.NONE,
                             "nothing went wrong; " + scanner.problem());
                     final String path = FsPaths.join(scanner.folder(), scanner.lastFile());

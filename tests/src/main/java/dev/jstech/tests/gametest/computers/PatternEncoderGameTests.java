@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -168,6 +169,8 @@ public final class PatternEncoderGameTests {
                         seen.add(phase);
                     }
                     if (encoder.busy()) {
+                        helper.assertTrue(encoder.loops().stream().anyMatch(loop -> loop.sound()
+                                .equals(ComputingSounds.OPTICAL_READ)), "its drive is heard while the head is down");
                         helper.assertTrue(encoder.locked(), "the bay is locked while the head is down");
                         helper.assertTrue(encoder.ejectMedia().isEmpty(), "the medium cannot be pulled mid-job");
                     }
