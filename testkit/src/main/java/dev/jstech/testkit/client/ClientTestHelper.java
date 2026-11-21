@@ -807,8 +807,16 @@ public class ClientTestHelper {
         /** The colour at the GUI's point ({@code x}, {@code y}), as ARGB. */
         public int pixel(final int x, final int y) {
             final double scale = window.getGuiScale();
-            final int px = (int) Math.min(window.getWidth() - 1, x * scale);
-            final int py = (int) Math.min(window.getHeight() - 1, y * scale);
+            return screenPixel((int) (x * scale), (int) (y * scale));
+        }
+
+        /**
+         * The colour at the screen's own pixel ({@code x}, {@code y}), as ARGB: finer than the GUI's points, as a
+         * text drawn under the GUI's scale is.
+         */
+        public int screenPixel(final int x, final int y) {
+            final int px = Math.clamp(x, 0, window.getWidth() - 1);
+            final int py = Math.clamp(y, 0, window.getHeight() - 1);
             final int abgr = image.getPixelRGBA(px, py);
             final int r = abgr & 0xFF;
             final int g = (abgr >> 8) & 0xFF;

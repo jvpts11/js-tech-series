@@ -858,7 +858,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   climb on the right, the reactor's power and its deuterium above,
   the nozzles' angle and the gear below, amber with the gear down, and the autopilot's three modes along the bottom.
   The flight path marker stands for the crosshair. Seen from behind, the camera stands back round the ship, the whole
-  ship in view, and the HUD spreads over the screen.
+  ship in view, and the HUD spreads over the screen. On a small window its words and figures keep at least a screen
+  pixel to each pixel of the font, so no row or column of their letters is lost.
 - A ship's fusion reactor burns its deuterium as the ship flies, a full load lasting four hours aloft; with
   none left it makes nothing, and the ship can neither boost nor pulse jump. A dock fills it again as it takes the ship
   back.

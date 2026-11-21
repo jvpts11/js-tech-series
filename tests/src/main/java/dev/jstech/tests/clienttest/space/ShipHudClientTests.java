@@ -97,6 +97,14 @@ public final class ShipHudClientTests {
     private static final int[][] DIAMOND = {{-4, -5}, {4, -5}, {-4, 5}, {4, 5}};
     /* Dots of the home mark, from its middle: its roof's chevron over its square. */
     private static final int[][] HOUSE = {{-2, -4}, {2, -4}, {-3, 2}, {4, 2}};
+    /*
+     * Round the way home's line at the top right seen from the seat, clear of the heading tape and the ladder: its
+     * corners; how many font pixels tall a capital letter's stem is in the game's font.
+     */
+    private static final int[] SEAT_HOME_LINE = {545, 76, 680, 92};
+    private static final int LETTER_TALL = 7;
+    /* What a screen pixel worked out from the HUD's scale is let off by, so a whole one is not read as the last. */
+    private static final double PIXEL_SLACK = 1e-6;
     /* How far ahead of the ship the spot LAND is sent to stands, in blocks. */
     private static final int LAND_AHEAD = 50;
     /* How far ahead of the ship, and to its right, the place the pilot took off from lies, in blocks. */
@@ -256,7 +264,8 @@ public final class ShipHudClientTests {
     /*
      * The place the pilot last took off from in the world lying ahead of the ship, a little to its right, as the
      * approved mock of the way home draws it: the place's distance and bearing at the top right, and the home mark on
-     * the heading tape and over the place itself, where the pilot looks.
+     * the heading tape and over the place itself, where the pilot looks. Its line is in whole letters: laid out on a
+     * screen larger than the window, its rows fell between the screen's pixels and were lost.
      */
     @ClientTest(timeoutTicks = 2400)
     public static void hud_theWayHomeAtTheTopRightWithItsMarkOverThePlace(final ClientTestContext ctx) {
@@ -275,7 +284,10 @@ public final class ShipHudClientTests {
                 })
                 .thenWaitUntil(() -> look(ctx, home[0]) && symbol(ctx, home[0], HOUSE), ARRIVE,
                         "the home mark over the place the pilot took off from, where they look")
-                .thenScreenshot(SETTLE, "ship-hud-home");
+                .thenScreenshot(SETTLE, "ship-hud-home")
+                .then(0, () -> ctx.assertTrue(tallestStroke(ctx, SEAT_HOME_LINE) >= LETTER_TALL, "the way home's "
+                        + "line in whole letters, its stems as tall as the font draws them: "
+                        + tallestStroke(ctx, SEAT_HOME_LINE) + " screen pixels"));
     }
 
     /*
@@ -421,24 +433,58 @@ public final class ShipHudClientTests {
         return lit >= dots.length - 1;
     }
 
-    /* Whether the screen at the approved screen's point {@code at}, as the HUD is scaled, is the HUD's green. */
+    /*
+     * Whether the screen at the approved screen's point {@code at}, as the HUD is scaled, is the HUD's green: read at
+     * the screen's own pixel the point is drawn on, as a point of the HUD may be finer than the GUI's.
+     */
     private static boolean green(final ClientTestContext ctx, final int[] at) {
-        final int width = ctx.mc().getWindow().getGuiScaledWidth();
-        final int height = ctx.mc().getWindow().getGuiScaledHeight();
-        final double scale = Math.min(width / (double) SCREEN_WIDTH, height / (double) SCREEN_HEIGHT);
-        final int x = (int) Math.round((width - SCREEN_WIDTH * scale) / 2 + at[0] * scale);
-        final int y = (int) Math.round((height - SCREEN_HEIGHT * scale) / 2 + at[1] * scale);
-        if (x < 0 || y < 0 || x >= width || y >= height) {
+        final int[] pixel = pixelOf(ctx, at[0], at[1]);
+        if (pixel[0] < 0 || pixel[1] < 0 || pixel[0] >= ctx.mc().getWindow().getWidth()
+                || pixel[1] >= ctx.mc().getWindow().getHeight()) {
             // Off the screen, as a symbol whose target the last frame drew behind the player's look is.
             return false;
         }
         try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
-            final int argb = frame.pixel(x, y);
-            final int red = argb >> 16 & CHANNEL;
-            final int green = argb >> 8 & CHANNEL;
-            final int blue = argb & CHANNEL;
-            return green >= GREEN_AT_LEAST && blue >= BLUE_AT_LEAST && red <= RED_AT_MOST;
+            return hudGreen(frame.screenPixel(pixel[0], pixel[1]));
         }
+    }
+
+    /* The screen's own pixel the approved screen's point ({@code x}, {@code y}) is drawn on, as the HUD is scaled. */
+    private static int[] pixelOf(final ClientTestContext ctx, final double x, final double y) {
+        final double guiScale = ctx.mc().getWindow().getGuiScale();
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        final double scale = Math.min(width / (double) SCREEN_WIDTH, height / (double) SCREEN_HEIGHT);
+        return new int[] {(int) Math.floor(((width - SCREEN_WIDTH * scale) / 2 + x * scale) * guiScale + PIXEL_SLACK),
+                (int) Math.floor(((height - SCREEN_HEIGHT * scale) / 2 + y * scale) * guiScale + PIXEL_SLACK)};
+    }
+
+    /*
+     * The tallest run of the HUD's green down a column of the screen's own pixels in the approved screen's box
+     * {@code box}, its corners, as the HUD is scaled: a letter's stem, as tall as its rows drawn whole make it.
+     */
+    private static int tallestStroke(final ClientTestContext ctx, final int[] box) {
+        final int[] from = pixelOf(ctx, box[0], box[1]);
+        final int[] to = pixelOf(ctx, box[2], box[3]);
+        int tallest = 0;
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int x = from[0]; x <= to[0]; x++) {
+                int run = 0;
+                for (int y = from[1]; y <= to[1]; y++) {
+                    run = hudGreen(frame.screenPixel(x, y)) ? run + 1 : 0;
+                    tallest = Math.max(tallest, run);
+                }
+            }
+        }
+        return tallest;
+    }
+
+    /* Whether the colour {@code argb} is the HUD's green. */
+    private static boolean hudGreen(final int argb) {
+        final int red = argb >> 16 & CHANNEL;
+        final int green = argb >> 8 & CHANNEL;
+        final int blue = argb & CHANNEL;
+        return green >= GREEN_AT_LEAST && blue >= BLUE_AT_LEAST && red <= RED_AT_MOST;
     }
 
     /*

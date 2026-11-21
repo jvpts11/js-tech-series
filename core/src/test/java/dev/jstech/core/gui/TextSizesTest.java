@@ -51,6 +51,22 @@ class TextSizesTest {
     }
 
     @Test
+    void legible_leavesAScaleOfAScreenPixelOrMoreToAFontPixel() {
+        // The small font at GUI scale 2 is a pixel and a half to a font pixel; the figures at a point a pixel, one.
+        assertEquals(0.75f, TextSizes.legible(0.75f, 2.0), EXACT);
+        assertEquals(1.0f, TextSizes.legible(1.0f, 1.0), EXACT);
+    }
+
+    @Test
+    void legible_raisesAScaleUnderAScreenPixelToOne() {
+        // A HUD of 960 points in a window of 854 pixels: under a pixel to a point, the small font two thirds of one.
+        final double pixels = 854 / 960.0;
+        assertEquals(1.0, TextSizes.legible(0.75f, pixels) * pixels, 1e-6);
+        assertEquals(1.0f, TextSizes.legible(0.75f, 1.0), EXACT);
+        assertEquals(0.75f, TextSizes.legible(0.75f, 0), EXACT, "no window, the scale as it was");
+    }
+
+    @Test
     void grown_roundsToWholePixels() {
         assertEquals(9, TextSizes.grown(9, 1.0f));
         assertEquals(14, TextSizes.grown(9, 1.5f));

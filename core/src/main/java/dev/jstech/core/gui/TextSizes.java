@@ -45,6 +45,19 @@ public final class TextSizes {
         return Math.max(scale, (float) (pixels / guiScale));
     }
 
+    /**
+     * The scale to draw a text at that a picture scaled to the window draws at {@code scale} of its own units, one of
+     * which is {@code pixels} screen pixels: never under one screen pixel to a font pixel. Under one, whole rows and
+     * columns of its letters fall between the screen's pixels and are lost, as a HUD laid out on a screen larger than
+     * the window loses them; at one or more it is left as it is.
+     */
+    public static float legible(final float scale, final double pixels) {
+        if (pixels <= 0 || scale * pixels >= 1) {
+            return scale;
+        }
+        return (float) (1 / pixels);
+    }
+
     /** How many pixels of the GUI a length of {@code length} at the normal size takes at {@code scale}, whole. */
     public static int grown(final int length, final float scale) {
         return Math.round(length * scale);

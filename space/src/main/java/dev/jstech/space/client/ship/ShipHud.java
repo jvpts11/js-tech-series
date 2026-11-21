@@ -11,6 +11,7 @@ import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
+import dev.jstech.core.gui.TextSizes;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.moving.YardLayout;
@@ -208,7 +209,11 @@ public final class ShipHud {
         final ShipHudHome.Home home = minecraft.player == null ? ShipHudHome.NONE
                 : ShipHudHome.of(minecraft.level, minecraft.player.position());
         final Vec2 homeAt = home.mark() == null ? null : onScreen(home.mark());
-        new Painter(g, minecraft.font, box, ShipHudArt.PALETTE.get()).paint(flown, inBox(target, left, top, scale),
+        // Laid out on a screen larger than the window, its text would fall under a screen pixel to a font pixel and
+        // lose whole rows and columns of its letters: it is drawn at one at least.
+        final double pixels = scale * minecraft.getWindow().getGuiScale();
+        new Painter(g, minecraft.font, box, ShipHudArt.PALETTE.get(), TextSizes.legible(SMALL, pixels),
+                TextSizes.legible(FIGURE, pixels)).paint(flown, inBox(target, left, top, scale),
                 inBox(world, left, top, scale), home, inBox(homeAt, left, top, scale));
         g.pose().popPose();
     }
@@ -292,8 +297,12 @@ public final class ShipHud {
         }
     }
 
-    /* Paints the HUD in its box, in the approved screen's points, as the approved flight's own drawing lays it. */
-    private record Painter(GuiGraphics g, Font font, Box box, ShipHudArt.Colours colours) {
+    /*
+     * Paints the HUD in its box, in the approved screen's points, as the approved flight's own drawing lays it, its
+     * small labels and its figures at {@code smallScale} and {@code figureScale} of the game's font.
+     */
+    private record Painter(GuiGraphics g, Font font, Box box, ShipHudArt.Colours colours, float smallScale,
+                           float figureScale) {
 
         void paint(final Flown flown, final @Nullable Vec2 target, final @Nullable Vec2 world,
                    final ShipHudHome.Home home, final @Nullable Vec2 homeAt) {
@@ -371,7 +380,7 @@ public final class ShipHud {
                         ShipPulse.KEY))))), cx, y0 + 48, colours.dim(), Align.CENTRE);
             } else if (pulse.on()) {
                 final String word = GameText.resolve(ShipHudTexts.PULSE);
-                final int half = (Math.round(font.width(word) * FIGURE) + 14) / 2;
+                final int half = (Math.round(font.width(word) * figureScale) + 14) / 2;
                 fill(cx - half, y0 + 30, cx + half, y0 + 44, colours.hot());
                 label(word, cx, y0 + 32, colours.lit());
                 small(GameText.resolve(ShipHudTexts.PULSE_EXIT.with(Text.literal(keyName(Minecraft.getInstance()
@@ -387,7 +396,7 @@ public final class ShipHud {
                 final String off = GameText.resolve(ShipHudTexts.PULSE_OFF);
                 final String why = why(pulse.dropped());
                 final int lines = why.isEmpty() ? 1 : 2;
-                final int half = (Math.round(Math.max(font.width(off), font.width(why)) * FIGURE) + 20) / 2;
+                final int half = (Math.round(Math.max(font.width(off), font.width(why)) * figureScale) + 20) / 2;
                 frame(cx - half, y0 + 30, cx + half, y0 + 30 + 14 * lines + 6, colours.hot());
                 label(off, cx, y0 + 34, colours.hot());
                 if (!why.isEmpty()) {
@@ -627,7 +636,7 @@ public final class ShipHud {
             int k = 0;
             for (final Map.Entry<ShipAutopilot.Mode, TextKey> each : MODES.entrySet()) {
                 final String mode = GameText.resolve(each.getValue());
-                final int w = Math.round(font.width(mode) * SMALL) + 8;
+                final int w = Math.round(font.width(mode) * smallScale) + 8;
                 final int bx = mx + k++ * MODE_STEP;
                 if (each.getKey().serializedName().equals(engaged)) {
                     fill(bx, box.y1() - 18, bx + w, box.y1() - 6, colours.symbol());
@@ -670,24 +679,25 @@ public final class ShipHud {
         }
 
         private void small(final String text, final int x, final int y, final int colour, final Align align) {
-            final int width = Math.round(font.width(text) * SMALL);
+            final int width = Math.round(font.width(text) * smallScale);
             final int left = switch (align) {
                 case LEFT -> x;
                 case CENTRE -> x - width / 2;
                 case RIGHT -> x - width;
             };
-            Draw.textScaled(g, font, text, left, y, colour, SMALL);
+            Draw.textScaled(g, font, text, left, y, colour, smallScale);
         }
 
         /* A label in the figures' size, its middle at {@code x}. */
         private void label(final String text, final int x, final int y, final int colour) {
-            Draw.textScaled(g, font, text, x - Math.round(font.width(text) * FIGURE) / 2, y, colour, FIGURE);
+            Draw.textScaled(g, font, text, x - Math.round(font.width(text) * figureScale) / 2, y, colour,
+                    figureScale);
         }
 
         /* A figure in a box, its right edge at {@code right}. */
         private void figure(final String text, final int right, final int y) {
-            Draw.textScaled(g, font, text, right - Math.round(font.width(text) * FIGURE), y, colours.symbol(),
-                    FIGURE);
+            Draw.textScaled(g, font, text, right - Math.round(font.width(text) * figureScale), y, colours.symbol(),
+                    figureScale);
         }
 
         private void dot(final int x, final int y, final int colour) {
