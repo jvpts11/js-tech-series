@@ -343,19 +343,23 @@ public final class MultiblockBuilderScreen extends Screen {
         }
     }
 
-    /* The foot of the page to build: ready, lacking, or how the building goes. */
+    /* The foot of the page to build: ready, lacking, or how the building goes; built, of a multiblock formed. */
     private void ready(final GuiGraphics g, final NetworkProbeScreen.Colours c, final Colours b,
                        final BuilderPlan plan) {
         final BuildStatus status = BuilderClient.status();
         final boolean ours = aim().filter(status.terminal()::equals).isPresent();
-        final BuildStatus.Phase phase = ours ? status.phase() : BuildStatus.Phase.IDLE;
+        BuildStatus.Phase phase = ours ? status.phase() : BuildStatus.Phase.IDLE;
+        if (plan.formed() && phase != BuildStatus.Phase.BUILDING && phase != BuildStatus.Phase.HELD) {
+            phase = BuildStatus.Phase.BUILT;
+        }
         final Text word;
         final Text line;
         final int colour;
         switch (phase) {
             case BUILDING -> {
+                // Counted as the counts over it count: the places holding their block, of all of them.
                 word = BuilderTexts.BUILDING.text();
-                line = BuilderTexts.BUILDING_LINE.with(status.placed(), status.placed() + plan.wants().size());
+                line = BuilderTexts.BUILDING_LINE.with(plan.already(), plan.already() + plan.wants().size());
                 colour = c.cyan();
             }
             case HELD -> {
@@ -369,8 +373,11 @@ public final class MultiblockBuilderScreen extends Screen {
                 colour = c.green();
             }
             case STOPPED -> {
+                // The block the reason names, as the one it ran out of or the one in its way, and where.
                 word = BuilderTexts.STOPPED.text();
-                line = status.reason().says().with(name(status.block()));
+                line = status.reason().says().with(status.block().isEmpty() ? BuilderTexts.SOMETHING.text()
+                        : name(status.block()), Text.literal(status.at().getX() + " " + status.at().getY() + " "
+                        + status.at().getZ()));
                 colour = b.red();
             }
             default -> {

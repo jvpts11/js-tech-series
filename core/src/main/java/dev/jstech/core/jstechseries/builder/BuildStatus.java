@@ -19,28 +19,28 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * How a Multiblock Builder's building goes, as the server tells the player holding it: what it is doing, how many
- * blocks it has placed, and when it stopped, why.
+ * How a Multiblock Builder's building goes, as the server tells the player holding it: what it is doing, and when it
+ * stopped, why; its display counts how far it got from the multiblock itself.
  *
  * @param terminal the terminal of the multiblock it builds
- * @param phase      what it is doing
- * @param placed     how many blocks it has placed since it began
- * @param reason     why it stopped, or {@link Reason#NONE}
- * @param block      the block the reason names (the one it ran out of), by id, or empty
+ * @param phase    what it is doing
+ * @param reason   why it stopped, or {@link Reason#NONE}
+ * @param block    the block the reason names (the one it ran out of, the one in its way), by id, or empty
+ * @param at       the place the reason names (where its way is blocked), or its terminal's
  */
-public record BuildStatus(BlockPos terminal, Phase phase, int placed, Reason reason, String block)
+public record BuildStatus(BlockPos terminal, Phase phase, Reason reason, String block, BlockPos at)
         implements CustomPacketPayload {
 
     /** Nothing being built. */
-    public static final BuildStatus IDLE = new BuildStatus(BlockPos.ZERO, Phase.IDLE, 0, Reason.NONE, "");
+    public static final BuildStatus IDLE = new BuildStatus(BlockPos.ZERO, Phase.IDLE, Reason.NONE, "", BlockPos.ZERO);
     public static final Type<BuildStatus> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "build_status"));
     public static final StreamCodec<RegistryFriendlyByteBuf, BuildStatus> STREAM_CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, BuildStatus::terminal,
             ByteBufCodecs.fromCodec(StableCodecs.byName(Phase.class)), BuildStatus::phase,
-            ByteBufCodecs.VAR_INT, BuildStatus::placed,
             ByteBufCodecs.fromCodec(StableCodecs.byName(Reason.class)), BuildStatus::reason,
             ByteBufCodecs.STRING_UTF8, BuildStatus::block,
+            BlockPos.STREAM_CODEC, BuildStatus::at,
             BuildStatus::new);
 
     @Override
@@ -85,7 +85,7 @@ public record BuildStatus(BlockPos terminal, Phase phase, int placed, Reason rea
         TOO_FAR("too_far", BuilderTexts.TOO_FAR),
         /** A place is protected from the player. */
         PROTECTED("protected", BuilderTexts.PROTECTED),
-        /** Something it cannot move stands where a block goes, or where it must be left empty. */
+        /** Something it cannot move stands where a block goes, or where it must be left empty: what, and where. */
         BLOCKED("blocked", BuilderTexts.BLOCKED),
         /** The source has none of a block left. */
         RAN_OUT("ran_out", BuilderTexts.RAN_OUT);

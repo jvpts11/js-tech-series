@@ -82,11 +82,13 @@ public final class BuildJobs {
     public static void start(final ServerPlayer player, final BlockPos terminal, final BuilderState state) {
         JOBS.remove(player.getUUID());
         if (!CorePermissions.has(player, CorePermissions.BUILD_MULTIBLOCKS)) {
-            tell(player, new BuildStatus(terminal, BuildStatus.Phase.STOPPED, 0, BuildStatus.Reason.NOT_ALLOWED, ""));
+            tell(player, new BuildStatus(terminal, BuildStatus.Phase.STOPPED, BuildStatus.Reason.NOT_ALLOWED, "",
+                    terminal));
             return;
         }
         if (BuilderPlan.of(player.level(), terminal, player, state).isEmpty()) {
-            tell(player, new BuildStatus(terminal, BuildStatus.Phase.STOPPED, 0, BuildStatus.Reason.UNKNOWN, ""));
+            tell(player, new BuildStatus(terminal, BuildStatus.Phase.STOPPED, BuildStatus.Reason.UNKNOWN, "",
+                    terminal));
             return;
         }
         final Job job = new Job(player, player.level().dimension(), terminal.immutable(), state);
@@ -187,7 +189,7 @@ public final class BuildJobs {
                 stack, new BlockHitResult(Vec3.atCenterOf(at), Direction.UP, at, false)));
         if (!placed.consumesAction()) {
             source.giveBack(player, stack);
-            return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.BLOCKED, "");
+            return job.blocked(at, level.getBlockState(at));
         }
         // Other mods' claims hear of the block as of one the player placed, and may take it back.
         if (EventHooks.onBlockPlace(player, before, Direction.UP)) {
@@ -203,7 +205,6 @@ public final class BuildJobs {
             level.setBlock(at, standing.setValue(BlockStateProperties.HORIZONTAL_FACING, plan.get().facing()),
                     Block.UPDATE_ALL);
         }
-        job.placed++;
         tell(player, job.status(BuildStatus.Phase.BUILDING, BuildStatus.Reason.NONE, ""));
         return null;
     }
@@ -220,7 +221,7 @@ public final class BuildJobs {
         // A part of a formed machine is the block it stands for: that block is what is given back, read before it goes.
         final BlockState original = FormedPartBlock.originalAt(level, at, state);
         if (state.getDestroySpeed(level, at) < 0) {
-            return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.BLOCKED, "");
+            return job.blocked(at, original);
         }
         if (!Protection.may(Actor.of(player), ProtectedAction.BREAK, player.serverLevel(), at)
                 || !level.mayInteract(player, at)
@@ -248,14 +249,13 @@ public final class BuildJobs {
         }
     }
 
-    /** One player's building: whose, where, how the builder was set, how far it got, and whether it is held. */
+    /** One player's building: whose, where, how the builder was set, its pace's credit, and whether it is held. */
     private static final class Job {
 
         private final ServerPlayer player;
         private final ResourceKey<Level> dimension;
         private final BlockPos terminal;
         private final BuilderState state;
-        private int placed;
         private int credit;
         private boolean held;
 
@@ -270,7 +270,13 @@ public final class BuildJobs {
 
         private BuildStatus status(final BuildStatus.Phase phase, final BuildStatus.Reason reason,
                                    final String block) {
-            return new BuildStatus(this.terminal, phase, this.placed, reason, block);
+            return new BuildStatus(this.terminal, phase, reason, block, this.terminal);
+        }
+
+        /* Stopped by {@code there}, standing at {@code at}, which it cannot move: by none named, where it is air. */
+        private BuildStatus blocked(final BlockPos at, final BlockState there) {
+            return new BuildStatus(this.terminal, BuildStatus.Phase.STOPPED, BuildStatus.Reason.BLOCKED,
+                    there.isAir() ? "" : MultiblockBlocks.idOf(there.getBlock()), at.immutable());
         }
     }
 }

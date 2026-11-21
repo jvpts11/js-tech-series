@@ -62,7 +62,11 @@ public final class BuilderClient {
         return status;
     }
 
-    /** What the builder in {@code stack} makes of the terminal it is aimed at, read again every half second. */
+    /**
+     * What the builder in {@code stack} makes of the terminal it is aimed at, read again every half second; none
+     * found is looked for again each time, as a projector just set shows its choice on the player's game only once
+     * the server's word of it arrives.
+     */
     public static Optional<BuilderPlan> plan(final ItemStack stack) {
         final Minecraft minecraft = Minecraft.getInstance();
         final LocalPlayer player = minecraft.player;
@@ -76,7 +80,7 @@ public final class BuilderClient {
         final BuilderState state = MultiblockBuilder.state(stack);
         final long now = minecraft.level.getGameTime();
         final Cached known = cached;
-        if (known != null && known.at().equals(aim.get()) && known.state().equals(state)
+        if (known != null && known.plan().isPresent() && known.at().equals(aim.get()) && known.state().equals(state)
                 && now - known.time() < READ_EVERY) {
             return known.plan();
         }
@@ -110,7 +114,8 @@ public final class BuilderClient {
             }
             final Optional<BuilderPlan> plan = plan(stack);
             final Optional<BlockPos> aim = MultiblockBuilder.aim(stack, player);
-            if (plan.isEmpty() || aim.isEmpty()) {
+            // A multiblock formed has nothing left to show placed.
+            if (plan.isEmpty() || aim.isEmpty() || plan.get().formed()) {
                 continue;
             }
             // A projector aimed at shows the multiblock itself while it is on; its mod is the multiblock's.

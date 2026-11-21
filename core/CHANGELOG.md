@@ -2629,6 +2629,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   beside its own, as a small ship's pilot seat stands half over the cockpit's aisle, and past the part of the seat
   drawn in the blocks round it, which no longer stands in the way of the seat itself. Aimed at, the pilot seat often
   sat no one, the click landing on the seat's parts in the next block or going through to the deck.
+- Multiblock Builder: aimed at a multiblock standing formed, it is built: nothing to place or take out, BUILT,
+  and no ghosts shown. A dock's floor, cradle and crane bridge, moved away as it opens, were taken for missing, and
+  OK would have laid them back into the open dock.
+- Multiblock Builder: a place holding another block counts with the places to fill, in the blocks to place and
+  in what the source must hold, and BUILDING counts as the counts over it do. The earth to dig out of a dock's pit was
+  left out, so it showed 457 blocks to place for 949, and a player could set off short of blocks.
+- Multiblock Builder: a display that has not yet heard of a projector's new choice looks again until it has;
+  used right after a choice, it said it aimed at no multiblock it knew.
+- Multiblock Builder: stopped by a block it cannot move, it names the block and where it stands; and its
+  reasons no longer open with "Stopped:" after STOPPED, which cut them short.
 
 ## [0.5.3a] - 2026-11-04
 

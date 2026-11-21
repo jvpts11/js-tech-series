@@ -16,6 +16,7 @@ import dev.jstech.core.jstechseries.projector.ProjectorSettings;
 import dev.jstech.core.jstechseries.projector.ProjectorView;
 import dev.jstech.core.jstechseries.projector.StructureProjector;
 import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
+import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMultiblocks;
 import dev.jstech.tests.TestStructures;
@@ -125,9 +126,14 @@ public final class MultiblockBuilderGameTests {
     public static void build_takesOutABlockStandingInAPlaceAndGivesItBack(final GameTestHelper helper) {
         final FakePlayer player = builder(helper, "take-out");
         player.getInventory().add(new ItemStack(Items.IRON_BLOCK, 64));
+        final int places = plan(helper, player, BuilderState.DEFAULT).wants().size();
         final BlockPos place = plan(helper, player, BuilderState.DEFAULT).view().places().stream()
                 .filter(each -> !each.ghost().terminal()).findFirst().orElseThrow().pos();
         helper.getLevel().setBlockAndUpdate(place, Blocks.DIRT.defaultBlockState());
+        final BuilderPlan before = plan(helper, player, BuilderState.DEFAULT);
+        helper.assertTrue(before.wants().size() == places && before.wants().stream().anyMatch(want
+                -> new BlockPos(want.x(), want.y(), want.z()).equals(place)), "the place the dirt stands in is still"
+                + " one to fill, counted with the others, as the blocks it takes are");
         BuildJobs.start(player, helper.absolutePos(TERMINAL), BuilderState.DEFAULT);
         helper.succeedWhen(() -> {
             final BuilderPlan now = plan(helper, player, BuilderState.DEFAULT);
@@ -135,6 +141,26 @@ public final class MultiblockBuilderGameTests {
             helper.assertTrue(helper.getLevel().getBlockState(place).is(Blocks.IRON_BLOCK),
                     "the dirt standing in a place gave way to the block that goes there");
             helper.assertTrue(player.getInventory().countItem(Items.DIRT) == 1, "and went back to the inventory");
+        });
+    }
+
+    /*
+     * Built and formed, the multiblock is built: the builder aimed at it has nothing to place and nothing to take out,
+     * every place in, whatever a part of it that moves while it works leaves of its places.
+     */
+    @GameTest(template = ARENA, timeoutTicks = TIME)
+    public static void plan_ofAMultiblockFormedHasNothingToPlaceOrTakeOut(final GameTestHelper helper) {
+        final FakePlayer player = builder(helper, "formed");
+        player.getInventory().add(new ItemStack(Items.IRON_BLOCK, 64));
+        BuildJobs.start(player, helper.absolutePos(TERMINAL), BuilderState.DEFAULT);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(helper.getBlockEntity(TERMINAL) instanceof MachineBlockEntity machine
+                    && machine.structure() != null && machine.structure().formed(), "built, it forms");
+            final BuilderPlan plan = plan(helper, player, BuilderState.DEFAULT);
+            helper.assertTrue(plan.formed() && plan.wants().isEmpty() && plan.toTakeOut().isEmpty(), "formed, it"
+                    + " has nothing to place or take out");
+            helper.assertTrue(plan.already() == plan.view().places().size() - 1, "every place but its terminal's"
+                    + " is in: " + plan.already() + " of " + plan.view().places().size());
         });
     }
 

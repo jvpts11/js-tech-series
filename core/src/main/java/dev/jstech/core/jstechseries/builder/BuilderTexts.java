@@ -64,12 +64,11 @@ public final class BuilderTexts {
     public static final TextKey SHOW = TextKey.of("jscore.builder.show", "SHOW");
     public static final TextKey LIGHT = TextKey.of("jscore.builder.light", "LIGHT");
     public static final TextKey POWER = TextKey.of("jscore.builder.power", "POWER");
-    public static final TextKey PROTECTED = TextKey.of("jscore.builder.protected",
-            "Stopped: a place is protected from you");
-    public static final TextKey TOO_FAR = TextKey.of("jscore.builder.too_far", "Stopped: you walked too far away");
-    public static final TextKey RAN_OUT = TextKey.of("jscore.builder.ran_out", "Stopped: you ran out of %s");
-    public static final TextKey BLOCKED = TextKey.of("jscore.builder.blocked",
-            "Stopped: something it cannot move is in the way");
+    public static final TextKey PROTECTED = TextKey.of("jscore.builder.protected", "A place is protected from you");
+    public static final TextKey TOO_FAR = TextKey.of("jscore.builder.too_far", "You walked too far away");
+    public static final TextKey RAN_OUT = TextKey.of("jscore.builder.ran_out", "You ran out of %s");
+    public static final TextKey BLOCKED = TextKey.of("jscore.builder.blocked", "%s in the way at %s");
+    public static final TextKey SOMETHING = TextKey.of("jscore.builder.something", "Something");
     public static final TextKey NOT_ALLOWED = TextKey.of("jscore.builder.not_allowed",
             "You may not build multiblocks here");
 

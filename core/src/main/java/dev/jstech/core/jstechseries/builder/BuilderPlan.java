@@ -44,7 +44,9 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
  * holds: a terminal's own shape at its least size, standing as the terminal faces, or the multiblock a Structure
  * Projector shows, where and as it shows it, its terminal to be placed too; what of it is in place, missing and wrong;
  * the places still to fill and the blocks that fit each; the places that take several blocks, grouped; the blocks to
- * take out first; and what building it takes from the player's source.
+ * take out first; and what building it takes from the player's source. A multiblock standing formed is built: nothing
+ * is placed or taken out of it, though a part of it that moves while it works, as a dock's floor folding away, leaves
+ * its places as the shape has them.
  *
  * @param name    what the multiblock is called
  * @param preview its places, turned as it stands
@@ -54,9 +56,10 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
  *                fit it
  * @param groups  the places that take several blocks, grouped by the blocks they take
  * @param order   what building it takes from the source, each place's block chosen
+ * @param formed  whether the multiblock aimed at stands formed, so built
  */
 public record BuilderPlan(Text name, ShapePreview preview, Direction facing, ProjectorView view,
-                          List<BuildOrder.Want> wants, List<Group> groups, BuildOrder order) {
+                          List<BuildOrder.Want> wants, List<Group> groups, BuildOrder order, boolean formed) {
 
     public BuilderPlan {
         wants = List.copyOf(wants);
@@ -83,17 +86,20 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
                 || entity instanceof StructureProjectorBlockEntity projector && projector.shape().isPresent();
     }
 
-    /** How many places already hold the right block, its terminal's apart. */
+    /** How many places already hold the right block, its terminal's apart: every one of a multiblock formed. */
     public int already() {
         return (int) this.view.places().stream().filter(place -> !place.ghost().terminal()
-                && place.state() == ProjectorView.State.PLACED).count();
+                && (this.formed || place.state() == ProjectorView.State.PLACED)).count();
     }
 
     /**
      * The blocks to take out before it is built, the highest first, so nothing above falls in: whatever stands where
-     * it must be left empty, and any other block standing in one of its places.
+     * it must be left empty, and any other block standing in one of its places; none of a multiblock formed.
      */
     public List<ProjectorView.Place> toTakeOut() {
+        if (this.formed) {
+            return List.of();
+        }
         final List<ProjectorView.Place> out = new ArrayList<>();
         for (final List<ProjectorView.Place> kind : List.of(this.view.clears(), this.view.places())) {
             for (final ProjectorView.Place place : kind) {
@@ -149,7 +155,7 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
                 return Optional.empty();
             }
             return Optional.of(new Aimed(shape.get(), preview.get(), projector.terminalOf(preview.get()),
-                    facing(projector.orientation(), shape.get()), Projectables.name(id.get()), true));
+                    facing(projector.orientation(), shape.get()), Projectables.name(id.get()), true, false));
         }
         if (!(entity instanceof MachineBlockEntity machine) || machine.structure() == null) {
             return Optional.empty();
@@ -165,18 +171,22 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
         final Orientation stands = Orientation.turns().stream().filter(turn -> facing(turn, shape) == facing)
                 .findFirst().orElse(Orientation.NORTH);
         return Optional.of(new Aimed(shape, laid.get().withTerminal(MultiblockBlocks.idOf(standing.getBlock()))
-                .turned(stands), target, facing, nameOf(shape, standing), false));
+                .turned(stands), target, facing, nameOf(shape, standing), false, machine.structure().formed()));
     }
 
-    /* The plan of {@code aimed}: what is missing and wrong, and what building it takes from the player's source. */
+    /*
+     * The plan of {@code aimed}: what is missing and wrong, and what building it takes from the player's source; a
+     * place holding another block is filled too, once that block is taken out, and counts with the places to fill;
+     * nothing of a multiblock formed.
+     */
     private static BuilderPlan plan(final Level level, final Aimed aimed, final Player player,
                                     final BuilderState state) {
         final ProjectorView view = ProjectorView.of(level, aimed.preview(), aimed.terminal());
         final List<BuildOrder.Want> wants = new ArrayList<>();
         final Map<String, Group> groups = new LinkedHashMap<>();
         BuildOrder.Want terminal = null;
-        for (final ProjectorView.Place place : view.places()) {
-            if (place.state() != ProjectorView.State.MISSING || place.ghost().terminal() && !aimed.placesTerminal()) {
+        for (final ProjectorView.Place place : aimed.formed() ? List.<ProjectorView.Place>of() : view.places()) {
+            if (place.state() == ProjectorView.State.PLACED || place.ghost().terminal() && !aimed.placesTerminal()) {
                 continue;
             }
             final List<String> fits = new ArrayList<>();
@@ -212,7 +222,7 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
                     : (int) Math.min(Integer.MAX_VALUE, SourceCounts.count(player, state.source(), known.asItem()));
         }), quotas, standing(level, view, quotas));
         return new BuilderPlan(aimed.name(), aimed.preview(), aimed.facing(), view, wants,
-                List.copyOf(groups.values()), order);
+                List.copyOf(groups.values()), order, aimed.formed());
     }
 
     /* The way the terminal of {@code shape} faces when the shape stands as {@code stands} says. */
@@ -252,9 +262,9 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
 
     /**
      * What the builder is aimed at, laid out: the shape, its places as it stands, where its terminal stands and which
-     * way it faces, what it is called, and whether the builder places its terminal too.
+     * way it faces, what it is called, whether the builder places its terminal too, and whether it stands formed.
      */
     private record Aimed(IStructureShape shape, ShapePreview preview, BlockPos terminal, Direction facing, Text name,
-                         boolean placesTerminal) {
+                         boolean placesTerminal, boolean formed) {
     }
 }
