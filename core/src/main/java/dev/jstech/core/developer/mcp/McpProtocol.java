@@ -25,8 +25,9 @@ import java.util.function.LongSupplier;
 /**
  * The Model Context Protocol as the server speaks it over HTTP: a client pairs as it initializes, its key the session
  * it is given, made new each time the game starts; every later message carries that key, or is refused; and a call
- * of a tool is let through only when the client was let do what the tool needs, written down whatever became of it.
- * Every request is answered with one JSON message, never a stream.
+ * of a tool is let through only when the client was let do what the tool needs, written down whatever became of it,
+ * and answered with the game's tick and what changed in it while it ran ({@link McpChanges}). Every request is
+ * answered with one JSON message, never a stream.
  */
 public final class McpProtocol {
 
@@ -243,6 +244,7 @@ public final class McpProtocol {
         }
         final McpCall running = new McpCall(client, tool, args);
         final boolean acts = tool.needs() == McpPermission.ACT;
+        final JsonObject before = this.glimpse();
         final long number = this.log.add(client.name(), name, what, acts ? McpWords.ACTING : McpWords.DONE, null,
                 now);
         McpResult result;
@@ -273,7 +275,17 @@ public final class McpProtocol {
         } else {
             this.log.finish(number, result.error() ? McpWords.FAILED : McpWords.DONE, result.why());
         }
-        return reply(200, JsonRpc.result(call.id(), result.toJson()));
+        return reply(200, JsonRpc.result(call.id(), result.with(McpChanges.told(before, this.glimpse())).toJson()));
+    }
+
+    /* The game's glimpse, or none when reading it failed: a call is answered whatever became of its glimpse. */
+    private JsonObject glimpse() {
+        try {
+            return this.host.glimpse();
+        } catch (final RuntimeException failed) {
+            this.logger.warn("The game could not be glimpsed round an MCP call", failed);
+            return new JsonObject();
+        }
     }
 
     private static McpHttp.Response reply(final int status, final JsonObject message) {

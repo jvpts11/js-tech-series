@@ -18,6 +18,7 @@ import dev.jstech.core.client.mcp.McpGame;
 import dev.jstech.core.client.mcp.McpPairingScreen;
 import dev.jstech.core.client.studio.TestRecorder;
 import dev.jstech.core.developer.mcp.McpCall;
+import dev.jstech.core.developer.mcp.McpChanges;
 import dev.jstech.core.developer.mcp.McpGuard;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
@@ -59,7 +60,7 @@ import org.jetbrains.annotations.Nullable;
  * world, opens a machine and reads its screen, walks, picks a slot, places and breaks a block, opens the inventory with
  * its key, takes a picture, waits for what it waits for, runs a GameTest, plays a client test kept as a file, records
  * what it did, and saves and opens the world again; drags a slider, turns the wheel over a list and looks at a point of
- * a face; every call over the wire.
+ * a face; every call over the wire, each answered with the game's tick and what the call changed.
  */
 public final class McpPlayClientTests {
 
@@ -121,7 +122,10 @@ public final class McpPlayClientTests {
                 result.has("title"), "the machine's screen opens: " + result)));
         steps.add(new Step("screen_tree", "{}", result -> ctx.assertTrue(result.has("kind")
                 && !result.get("kind").getAsString().equals("none"), "the screen's parts are read: " + result)));
-        steps.add(new Step("screen_close", "{}", result -> { }));
+        steps.add(new Step("screen_close", "{}", result -> ctx.assertTrue(result.has(McpChanges.TICK)
+                && result.has(McpChanges.CHANGED) && result.getAsJsonObject(McpChanges.CHANGED).has("screen")
+                && result.getAsJsonObject(McpChanges.CHANGED).getAsJsonObject("screen").get(McpChanges.TO)
+                .isJsonNull(), "the answer tells the game's tick and that the call closed the screen: " + result)));
         steps.add(new Step("player_walk_to", "{\"place\":" + place(walkTo) + "}", result -> ctx.assertTrue(
                 result.has("arrived"), "the player walks there: " + result)));
         steps.add(new Step("world_give", "{\"item\":\"minecraft:stone\",\"count\":4}", result -> { }));
@@ -137,7 +141,10 @@ public final class McpPlayClientTests {
             ctx.assertTrue(stone[0] >= 0, "the stone given is in the hotbar: " + result);
         }));
         steps.add(new Step("hotbar_select", () -> "{\"slot\":" + stone[0] + "}", result -> { }));
-        steps.add(new Step("wait_ticks", "{\"ticks\":3}", result -> { }));
+        // The server sets the client's clock now and then, which may move it by a tick: only that time went by counts.
+        steps.add(new Step("wait_ticks", "{\"ticks\":3}", result -> ctx.assertTrue(
+                result.has(McpChanges.TICKS_TAKEN) && result.get(McpChanges.TICKS_TAKEN).getAsLong() >= 1,
+                "the answer tells how many of the game's ticks went by while it waited: " + result)));
         steps.add(new Step("player_state", "{}", result -> ctx.assertTrue(result.get("slot").getAsInt() == stone[0],
                 "the hotbar's key picked the slot: " + result)));
         steps.add(new Step("player_place", "{\"place\":" + place(below) + ",\"face\":\"up\"}", result -> { }));

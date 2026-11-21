@@ -16,7 +16,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.jstech.core.text.Text;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -146,6 +148,30 @@ class McpProtocolTest {
     }
 
     @Test
+    void toolsCall_answersWithTheGamesTickAndWhatTheCallChanged() {
+        final String key = this.paired(McpPermission.ACT);
+        this.host.glimpses.add(JsonParser.parseString("{game_tick: 10, slot: 1}").getAsJsonObject());
+        this.host.glimpses.add(JsonParser.parseString("{game_tick: 13, slot: 4}").getAsJsonObject());
+        final JsonObject result = json(this.post(key, tool(WRITE, new JsonObject()))).getAsJsonObject("result");
+        final JsonObject found = result.getAsJsonObject("structuredContent");
+        assertEquals(13, found.get(McpChanges.TICK).getAsLong());
+        assertEquals(3, found.get(McpChanges.TICKS_TAKEN).getAsLong());
+        assertEquals(4, found.getAsJsonObject(McpChanges.CHANGED).getAsJsonObject("slot").get(McpChanges.TO)
+                .getAsInt());
+        assertEquals("acted", result.getAsJsonArray("content").get(0).getAsJsonObject().get("text").getAsString(),
+                "the tool's own words come first");
+    }
+
+    @Test
+    void toolsCall_isAnsweredWhenTheGameCannotBeGlimpsed() {
+        final String key = this.paired(McpPermission.ACT);
+        this.host.glimpseFails = true;
+        final JsonObject result = json(this.post(key, tool(WRITE, new JsonObject()))).getAsJsonObject("result");
+        assertFalse(result.has("isError"), result.toString());
+        assertFalse(result.has("structuredContent"), "nothing is told without a glimpse: " + result);
+    }
+
+    @Test
     void toolsCall_refusesAToolThereIsNot() {
         final String key = this.paired(McpPermission.ACT);
         final JsonObject answer = json(this.post(key, tool("no_such_tool", new JsonObject())));
@@ -224,13 +250,18 @@ class McpProtocolTest {
         return JsonParser.parseString(new String(response.body(), StandardCharsets.UTF_8)).getAsJsonObject();
     }
 
-    /** A game that answers pairings as the test says, and writes down the calls that act. */
+    /**
+     * A game that answers pairings as the test says, writes down the calls that act, and is glimpsed as the test
+     * lines up its glimpses, or not at all.
+     */
     private static final class Host implements IMcpHost {
 
         private Optional<McpPermission> answer = Optional.empty();
         private String asked;
         private boolean closed;
+        private boolean glimpseFails;
         private final List<String> began = new ArrayList<>();
+        private final Deque<JsonObject> glimpses = new ArrayDeque<>();
 
         @Override
         public McpSide side() {
@@ -262,6 +293,14 @@ class McpProtocolTest {
         @Override
         public void ended(final McpCall call) {
             // Nothing to show.
+        }
+
+        @Override
+        public JsonObject glimpse() {
+            if (this.glimpseFails) {
+                throw new IllegalStateException("no game to glimpse");
+            }
+            return this.glimpses.isEmpty() ? new JsonObject() : this.glimpses.poll();
         }
     }
 }

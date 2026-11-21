@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.developer.mcp;
 
+import com.google.gson.JsonObject;
 import dev.jstech.core.text.Text;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The game an MCP server runs in, as the server needs it: which side it is, the version it reports, why it answers
- * nothing now (its developer mode off), asking the player whether a client may come in, and being told when a call
- * that acts begins and ends, so the screen says so.
+ * nothing now (its developer mode off), asking the player whether a client may come in, being told when a call
+ * that acts begins and ends, so the screen says so, and a glimpse of the game round every call.
  */
 public interface IMcpHost {
 
@@ -40,6 +41,16 @@ public interface IMcpHost {
 
     /** A call that acts ended, however it ended. */
     void ended(McpCall call);
+
+    /**
+     * The game as a call may change it: a few readings by name, each one JSON value, and the game's tick under
+     * {@link McpChanges#TICK}, read on the game's own thread. Taken before and after every call, so the call's answer
+     * tells the tick and what changed ({@link McpChanges}). Empty when there is nothing to read, as with no world
+     * open, or when the game does not answer in time; a game that reads nothing need not say so.
+     */
+    default JsonObject glimpse() {
+        return new JsonObject();
+    }
 
     /**
      * What the player answered a pairing.

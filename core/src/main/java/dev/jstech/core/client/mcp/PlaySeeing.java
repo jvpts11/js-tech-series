@@ -8,7 +8,9 @@
 package dev.jstech.core.client.mcp;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.data.IDataScreen;
@@ -25,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -39,6 +42,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What an agent sees of the game, as the player does: where the player is and looks, what the crosshair is on, the
@@ -47,6 +51,10 @@ import net.minecraft.world.phys.EntityHitResult;
  */
 public final class PlaySeeing {
 
+    /* The names of what the crosshair is on and of the screen open, as player_state and a call's glimpse give them. */
+    static final String LOOKING_AT_BLOCK = "looking_at_block";
+    static final String LOOKING_AT_ENTITY = "looking_at_entity";
+    static final String SCREEN = "screen";
     private static final int MOST_RADIUS = 8;
     private static final int MOST_BLOCKS = 4_000;
     private static final int MOST_LINES = 300;
@@ -106,24 +114,46 @@ public final class PlaySeeing {
         if (!player.getMainHandItem().isEmpty()) {
             out.add("held", Play.stack(player.getMainHandItem()));
         }
-        if (game.hitResult instanceof BlockHitResult hit && hit.getType() == BlockHitResult.Type.BLOCK) {
-            final JsonObject looked = new JsonObject();
-            looked.add(Play.PLACE, Play.place(hit.getBlockPos()));
-            looked.addProperty("block", BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(
-                    hit.getBlockPos()).getBlock()).toString());
-            looked.addProperty("face", hit.getDirection().getSerializedName());
-            out.add("looking_at_block", looked);
-        } else if (game.hitResult instanceof EntityHitResult hit) {
-            out.add("looking_at_entity", entity(hit.getEntity()));
-        }
-        if (game.screen != null) {
-            final JsonObject screen = new JsonObject();
-            screen.addProperty("kind", game.screen.getClass().getSimpleName());
-            screen.addProperty("title", game.screen.getTitle().getString());
-            out.add("screen", screen);
-        }
+        lookedAtBlock(game, player).ifPresent(looked -> out.add(LOOKING_AT_BLOCK, looked));
+        lookedAtEntity(game).ifPresent(looked -> out.add(LOOKING_AT_ENTITY, looked));
+        screen(game.screen).ifPresent(screen -> out.add(SCREEN, screen));
         out.addProperty("time_of_day", player.level().getDayTime() % 24_000);
         return McpResult.json(out);
+    }
+
+    /** The block the crosshair is on: its place, its id and the face; none when it is on no block. */
+    static Optional<JsonObject> lookedAtBlock(final Minecraft game, final LocalPlayer player) {
+        if (!(game.hitResult instanceof BlockHitResult hit) || hit.getType() != BlockHitResult.Type.BLOCK) {
+            return Optional.empty();
+        }
+        final JsonObject looked = new JsonObject();
+        looked.add(Play.PLACE, Play.place(hit.getBlockPos()));
+        looked.addProperty("block", BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(hit.getBlockPos())
+                .getBlock()).toString());
+        looked.addProperty("face", hit.getDirection().getSerializedName());
+        return Optional.of(looked);
+    }
+
+    /** The entity the crosshair is on, or none. */
+    static Optional<JsonObject> lookedAtEntity(final Minecraft game) {
+        return game.hitResult instanceof EntityHitResult hit ? Optional.of(entity(hit.getEntity()))
+                : Optional.empty();
+    }
+
+    /** The screen open, its kind and its title, or none. */
+    static Optional<JsonObject> screen(@Nullable final Screen open) {
+        if (open == null) {
+            return Optional.empty();
+        }
+        final JsonObject screen = new JsonObject();
+        screen.addProperty("kind", open.getClass().getSimpleName());
+        screen.addProperty("title", open.getTitle().getString());
+        return Optional.of(screen);
+    }
+
+    /** A line of chat as the tools give it: its words, marked as a player's when a player wrote them. */
+    static JsonElement chatText(final ChatLines.Line line) {
+        return line.byPlayer() ? PlayerText.mark(line.text()) : new JsonPrimitive(line.text());
     }
 
     private static JsonObject entity(final Entity entity) {
@@ -270,11 +300,7 @@ public final class PlaySeeing {
         for (final ChatLines.Line line : lines.subList(Math.max(0, lines.size() - shown), lines.size())) {
             final JsonObject one = new JsonObject();
             one.addProperty("millis", line.millis());
-            if (line.byPlayer()) {
-                one.add("text", PlayerText.mark(line.text()));
-            } else {
-                one.addProperty("text", line.text());
-            }
+            one.add("text", chatText(line));
             out.add(one);
         }
         final JsonObject result = new JsonObject();

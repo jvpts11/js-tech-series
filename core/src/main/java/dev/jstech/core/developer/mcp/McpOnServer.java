@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.developer.mcp;
 
+import com.google.gson.JsonObject;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import dev.jstech.core.JsCore;
@@ -22,7 +23,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import net.minecraft.commands.CommandSourceStack;
@@ -60,6 +63,8 @@ public final class McpOnServer {
     public static final int ANSWER_SECONDS = 60;
     private static final double REACH = 20.0;
     private static final String VERSION = "1";
+    /** How long a call's glimpse waits for the server's own thread, in seconds; past it the call is told nothing. */
+    private static final long GLIMPSE_SECONDS = 2;
 
     private static final AtomicInteger NEXT = new AtomicInteger();
     private static final Map<Integer, CompletableFuture<IMcpHost.Pairing>> WAITING = new ConcurrentHashMap<>();
@@ -372,6 +377,24 @@ public final class McpOnServer {
         @Override
         public void ended(final McpCall call) {
             // As above.
+        }
+
+        /* The server has no player of its own to read: its glimpse is its time, and whether its ticking is frozen. */
+        @Override
+        public JsonObject glimpse() {
+            try {
+                return this.server.submit(() -> {
+                    final JsonObject out = new JsonObject();
+                    out.addProperty(McpChanges.TICK, this.server.overworld().getGameTime());
+                    out.addProperty("frozen", this.server.tickRateManager().isFrozen());
+                    return out;
+                }).get(GLIMPSE_SECONDS, TimeUnit.SECONDS);
+            } catch (final InterruptedException stopped) {
+                Thread.currentThread().interrupt();
+                return new JsonObject();
+            } catch (final ExecutionException | TimeoutException failed) {
+                return new JsonObject();
+            }
         }
     }
 }

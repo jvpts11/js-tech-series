@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.mcp;
 
+import com.google.gson.JsonObject;
 import com.mojang.brigadier.Command;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.input.KeyActionsClient;
@@ -345,6 +346,11 @@ public final class McpGame {
         @Override
         public void ended(final McpCall call) {
             ACTING.remove(call);
+        }
+
+        @Override
+        public JsonObject glimpse() {
+            return PlayChanges.glimpse();
         }
     }
 }

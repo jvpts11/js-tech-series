@@ -59,6 +59,39 @@ public record McpResult(JsonArray content, @Nullable JsonObject structured, bool
         return new McpResult(content, null, true, why);
     }
 
+    /**
+     * The result with {@code told} added to what it found, as the host tells of every call (the game's time, what an
+     * action changed): its fields beside the tool's own, which keep theirs, and in the words the agent reads; a
+     * result that found no object takes them as its own.
+     */
+    public McpResult with(final JsonObject told) {
+        if (told.isEmpty()) {
+            return this;
+        }
+        final JsonObject found = this.structured == null ? new JsonObject() : this.structured.deepCopy();
+        told.entrySet().forEach(entry -> {
+            if (!found.has(entry.getKey())) {
+                found.add(entry.getKey(), entry.getValue());
+            }
+        });
+        final JsonArray content = new JsonArray();
+        boolean written = false;
+        for (final JsonElement block : this.content) {
+            // The words that wrote what it found are written again with what was added to it.
+            if (!written && this.structured != null && block.isJsonObject() && block.getAsJsonObject().has("text")
+                    && this.structured.toString().equals(block.getAsJsonObject().get("text").getAsString())) {
+                content.add(block("text", found.toString()));
+                written = true;
+            } else {
+                content.add(block);
+            }
+        }
+        if (!written) {
+            content.add(block("text", told.toString()));
+        }
+        return new McpResult(content, found, this.error, this.why);
+    }
+
     /** The result as MCP writes it. */
     public JsonObject toJson() {
         final JsonObject out = new JsonObject();
