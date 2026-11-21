@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.plant.CduBlockEntity;
 import dev.jstech.computers.plant.CduPartBlock;
@@ -92,6 +93,18 @@ public final class CduGameTests {
             helper.assertTrue(racks == water && plant == water, "the racks' 128 mB went back cold and the plant's "
                     + "came out hot, a millibucket for a millibucket: " + racks + " and " + plant);
         });
+    }
+
+    /* Its pumps hum while they move the water, and are quiet before. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void cdu_humsWhileItsPumpsMoveTheWater(final GameTestHelper helper) {
+        final CduBlockEntity cdu = place(helper);
+        helper.assertTrue(cdu.loops().isEmpty(), "a CDU with no water is quiet");
+        final int water = 20 * CduBlockEntity.MOST_A_SECOND;
+        pour(port(helper, cdu, 1, 1), CoolingWater.HOT.get(), water);
+        pour(port(helper, cdu, 0, 0), CoolingWater.COLD.get(), water);
+        helper.succeedWhen(() -> helper.assertTrue(cdu.loops().stream().anyMatch(loop -> loop.sound()
+                .equals(ComputingSounds.CDU_PUMPS)), "moving the water, its pumps hum"));
     }
 
     /* The CDU, facing north, raised whole as a player's placing raises it. */

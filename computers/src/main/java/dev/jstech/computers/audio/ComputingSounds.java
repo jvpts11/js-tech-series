@@ -102,6 +102,10 @@ public final class ComputingSounds {
     public static final SoundKey SERVER_ROOM = CONTENT.sound("server/room").loop()
             .channel(AudioChannels.AMBIENCE).range(24).subtitle("Server room hums").register();
 
+    /** A CDU's pumps moving the racks' water through its plate exchanger. */
+    public static final SoundKey CDU_PUMPS = CONTENT.sound("machine/cdu").loop()
+            .range(16).subtitle("CDU pumps hum").register();
+
     /** A server's rails taking its weight as it goes into a rack's bay, and the knock at the end. */
     public static final SoundKey RACK_SLIDE_IN = CONTENT.sound("rack/slide_in")
             .channel(AudioChannels.DEVICES).subtitle("Server slides into a rack").register();

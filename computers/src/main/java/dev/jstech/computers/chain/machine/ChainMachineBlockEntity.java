@@ -9,6 +9,7 @@ package dev.jstech.computers.chain.machine;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.ChainSounds;
 import dev.jstech.computers.chain.machine.ChainMachines.Worked;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.blockentity.FieldFluidTank;
@@ -17,6 +18,7 @@ import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.machine.FaceSlot;
 import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineSounds;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.machine.ProcessingInput;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
@@ -160,6 +162,13 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     @Override
     public boolean takesEnergy() {
         return machine.takesEnergy() && ComputersServerConfig.drawEnergy();
+    }
+
+    /* Its running loop while it works, as the chain's sounds give it; silent for a machine given none. */
+    @Override
+    protected MachineSounds sounds() {
+        return ChainSounds.work(machine.id()).map(work -> new MachineSounds(null, work, null))
+                .orElse(MachineSounds.SILENT);
     }
 
     /*

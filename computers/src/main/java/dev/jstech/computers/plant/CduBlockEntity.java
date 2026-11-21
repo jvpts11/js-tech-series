@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.plant;
 
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.energy.EnergyStore;
@@ -18,6 +19,7 @@ import dev.jstech.core.inventory.ItemFilter;
 import dev.jstech.core.inventory.ProductFluidHandler;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineSounds;
 import dev.jstech.core.machine.ProcessingInput;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.util.Loaded;
@@ -51,6 +53,8 @@ public class CduBlockEntity extends ProcessingMachineBlockEntity {
     /** What its pumps draw at full load, in watts; an estimate. */
     public static final int PUMP_WATTS = 1_500;
     private static final int TANK = 4_000;
+    /* Its pumps' hum, a running loop while they move water. */
+    private static final MachineSounds SOUNDS = new MachineSounds(null, ComputingSounds.CDU_PUMPS, null);
     private static final int TICKS = 20;
     private static final int OUTPUTS = 2;
     private static final long STORE_SECONDS = 4;
@@ -115,6 +119,12 @@ public class CduBlockEntity extends ProcessingMachineBlockEntity {
     @Override
     public boolean takesEnergy() {
         return ComputersServerConfig.drawEnergy();
+    }
+
+    /* Its pumps humming while they move the racks' water. */
+    @Override
+    protected MachineSounds sounds() {
+        return SOUNDS;
     }
 
     /* A second's work, as far as the racks' hot water, the plant's cold water and both outlets' room allow. */

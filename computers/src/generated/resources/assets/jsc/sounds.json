@@ -59,6 +59,264 @@
     ],
     "subtitle": "subtitles.jsc.computer.vintage_startup"
   },
+  "machine/air_separation_unit": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/air_separation_unit"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.air_separation_unit"
+  },
+  "machine/assembly_line": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/assembly_line"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.assembly_line"
+  },
+  "machine/board_etcher": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/board_etcher"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.board_etcher"
+  },
+  "machine/cdu": {
+    "sounds": [
+      "jsc:machine/cdu"
+    ],
+    "subtitle": "subtitles.jsc.machine.cdu"
+  },
+  "machine/ceramic_kiln": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/ceramic_kiln"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.ceramic_kiln"
+  },
+  "machine/chemical_reactor": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/chemical_reactor"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.chemical_reactor"
+  },
+  "machine/chiller": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/chiller"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.chiller"
+  },
+  "machine/coil_winder": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/coil_winder"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.coil_winder"
+  },
+  "machine/coke_oven": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/coke_oven"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.coke_oven"
+  },
+  "machine/cooling_tower": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/cooling_tower"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.cooling_tower"
+  },
+  "machine/crusher": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/crusher"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.crusher"
+  },
+  "machine/crystal_puller": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/crystal_puller"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.crystal_puller"
+  },
+  "machine/deposition_chamber": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/deposition_chamber"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.deposition_chamber"
+  },
+  "machine/display_line": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/display_line"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.display_line"
+  },
+  "machine/electrolytic_cell": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/electrolytic_cell"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.electrolytic_cell"
+  },
+  "machine/grinder": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/grinder"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.grinder"
+  },
+  "machine/induction_furnace": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/induction_furnace"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.induction_furnace"
+  },
+  "machine/ion_implanter": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/ion_implanter"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.ion_implanter"
+  },
+  "machine/laminator": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/laminator"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.laminator"
+  },
+  "machine/large_scale_printer": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/large_scale_printer"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.large_scale_printer"
+  },
+  "machine/lithography": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/lithography"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.lithography"
+  },
+  "machine/optical_polisher": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/optical_polisher"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.optical_polisher"
+  },
+  "machine/packaging_line": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/packaging_line"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.packaging_line"
+  },
+  "machine/plasma_etcher": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/plasma_etcher"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.plasma_etcher"
+  },
+  "machine/preinstaller": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/preinstaller"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.preinstaller"
+  },
+  "machine/rolling_mill": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/rolling_mill"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.rolling_mill"
+  },
+  "machine/siemens_reactor": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/siemens_reactor"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.siemens_reactor"
+  },
+  "machine/wafer_saw": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/wafer_saw"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.wafer_saw"
+  },
+  "machine/wire_drawer": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/wire_drawer"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.wire_drawer"
+  },
   "mainframe/tape": {
     "sounds": [
       {

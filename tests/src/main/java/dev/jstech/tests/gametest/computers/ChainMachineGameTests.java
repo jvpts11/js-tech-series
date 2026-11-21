@@ -17,17 +17,20 @@ import static dev.jstech.tests.testkit.computers.ChainMachineSite.machineAt;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.place;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.stands;
 
+import dev.jstech.computers.audio.ChainSounds;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainFormedBlock;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachineTerminalBlock;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestComputerEnergy;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -67,6 +70,39 @@ public final class ChainMachineGameTests {
             clear(helper);
         }
         helper.succeed();
+    }
+
+    /* Every machine of the chain but the Prebuilder, whose sounds follow its own steps, runs a loop of its own. */
+    @GameTest(template = ARENA, timeoutTicks = 20)
+    public static void every_machineRunsALoopOfItsOwnWhileItWorks(final GameTestHelper helper) {
+        for (final ChainMachine machine : ChainMachines.all()) {
+            if (machine.id().equals("prebuilder")) {
+                continue;
+            }
+            final Optional<SoundKey> work = ChainSounds.work(machine.id());
+            helper.assertTrue(work.isPresent(), machine.id() + " has a loop to run while it works");
+            final String file = "/assets/jsc/sounds/" + work.get().id().getPath() + ".ogg";
+            helper.assertTrue(ChainSounds.class.getResource(file) != null, machine.id() + "'s loop is a file: " + file);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void crusher_runsItsLoopOnlyWhileItWorks(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("crusher"));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(machineAt(helper, terminal).formed(), "the crusher formed"))
+                .thenExecute(() -> {
+                    helper.assertTrue(machineAt(helper, terminal).loops().isEmpty(), "an idle crusher is quiet");
+                    machineAt(helper, terminal).getInventory().insertItem(0, new ItemStack(ChainParts.FERRITE.get()),
+                            false);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(machineAt(helper, terminal).loops().stream().anyMatch(loop
+                        -> loop.sound().equals(ChainSounds.work("crusher").orElseThrow())), "working, the crusher "
+                        + "runs its loop"))
+                .thenWaitUntil(() -> helper.assertTrue(holds(machineAt(helper, terminal), ChainParts.INDUCTOR.get(), 2)
+                        && machineAt(helper, terminal).loops().isEmpty(), "done, it falls quiet again"))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 100)

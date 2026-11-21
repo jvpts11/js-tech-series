@@ -11,6 +11,7 @@ import static dev.jstech.computers.registry.ComputingContent.shelf;
 
 import dev.jstech.computers.abandoned.AbandonedBuildings;
 import dev.jstech.computers.advancement.JscTriggers;
+import dev.jstech.computers.audio.ChainSounds;
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.backup.TapeFormat;
@@ -1406,6 +1407,7 @@ public final class ComputingModule {
         CoolingItems.init();
         MediaDevices.init();
         ComputingSounds.init();
+        ChainSounds.init();
         ComputingAudioDevices.init();
         CONTENT.register(modEventBus);
         ComputingComponents.register(modEventBus);
