@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest.core;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.jstech.core.agent.AgentReadings;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioPrefs;
 import dev.jstech.core.audio.SoundMixerTexts;
@@ -30,6 +31,7 @@ import dev.jstech.core.developer.mcp.McpProtocol;
 import dev.jstech.core.developer.studio.RecordedTest;
 import dev.jstech.core.text.GameText;
 import dev.jstech.testkit.client.ClientTestFailure;
+import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -115,12 +117,17 @@ public final class McpPlayClientTests {
     private static final String MACHINES = AudioChannels.MACHINES.id().toString();
     /* How long a held world is watched standing still between calls, in the client's ticks. */
     private static final int THINKS = 40;
+    /* What the test mod tells of its machine, and the mod whose reading fails. */
+    private static final String WORKING = "working";
+    private static final String BROKEN = "jstests_broken";
     /* A screen of the Core's kit made for the test, and its two tabs' titles. */
     private static final String KIT_TITLE = "Kit";
     private static final String[] KIT_TABS = {"Alpha", "Beta"};
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final String INITIALIZE = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":"
             + "{\"protocolVersion\":\"2025-11-25\",\"clientInfo\":{\"name\":\"Player test\",\"version\":\"1.0\"}}}";
+    /* Whether the test readings were declared, once for the game's run. */
+    private static boolean readingsDeclared;
 
     private McpPlayClientTests() {
     }
@@ -512,6 +519,33 @@ public final class McpPlayClientTests {
                 && level.getGameTime() - clock[1] >= THINKS / 2, "let go, it runs on its own again, as it did"));
     }
 
+    /*
+     * What a mod tells an agent of its block is in what the player looks at, under the mod's id; a mod's reading that
+     * fails is left out, the rest of the answer and the other mods' readings still given.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void readings_aModsWordsOfItsBlockAreInWhatThePlayerLooksAt(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final BlockPos machine = ctx.abs(MACHINE);
+        declareReadings();
+        ctx.afterTest(() -> McpGame.turn(false));
+        pair(ctx, sent, key, port);
+        run(ctx, sent, key, port, new Step("world_set_block", "{\"place\":" + place(machine) + ",\"block\":\""
+                + TestKitMachine.BLOCK.getId() + "\"}", result -> { }));
+        run(ctx, sent, key, port, new Step("player_look_at", "{\"place\":" + place(machine) + "}", result -> { }));
+        run(ctx, sent, key, port, new Step("player_state", "{}", result -> {
+            final JsonObject looked = result.getAsJsonObject("looking_at_block");
+            final JsonObject readings = looked == null || !looked.has("readings") ? new JsonObject()
+                    : looked.getAsJsonObject("readings");
+            ctx.assertTrue(readings.has(JsTests.MODID) && WORKING.equals(readings.getAsJsonObject(JsTests.MODID)
+                    .getAsJsonObject("machine").get("state").getAsString()), "the test mod's words of its machine "
+                    + "are in what the player looks at: " + looked);
+            ctx.assertTrue(!readings.has(BROKEN), "a reading that fails is left out: " + readings);
+        }));
+    }
+
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */
     @ClientTest(timeoutTicks = 1600)
     public static void off_takesTheKeysBackFromACallStillActing(final ClientTestContext ctx) {
@@ -543,6 +577,25 @@ public final class McpPlayClientTests {
                 })
                 .thenAssert(0, () -> !walking.isEmpty() && walking.stream().allMatch(McpCall::takenBack),
                         "turning the server off took the keys back from the walk under way");
+    }
+
+    /*
+     * The test mod's reading of its machine, and one of another mod that always fails, declared once however many
+     * times the test runs.
+     */
+    private static void declareReadings() {
+        if (readingsDeclared) {
+            return;
+        }
+        readingsDeclared = true;
+        AgentReadings.block(JsTests.MODID, (level, pos, report) -> {
+            if (level.getBlockState(pos).is(TestKitMachine.BLOCK.get())) {
+                report.part("machine").words("state", WORKING);
+            }
+        });
+        AgentReadings.block(BROKEN, (level, pos, report) -> {
+            throw new IllegalStateException("a reading that fails, for the test");
+        });
     }
 
     /* Turns the server on and lets a client in to read and act, keeping its port and its key. */

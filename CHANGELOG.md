@@ -694,6 +694,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- (Core) What a mod tells an agent: J's Core's API is at version 84, and `dev.jstech.core.agent` is promised.
+  `AgentReadings.block`, `entity` and `structure` declare what a mod tells an agent of its blocks, its entities and
+  the moving structures it flies, each an `IBlockReading`, `IEntityReading` or `IStructureReading` telling an
+  `AgentReport` named numbers, words, flags and parts. Experimental.
 - (Core) What a screen draws, named: J's Core's API is at version 83. A screen, or a widget it holds, that implements
   `IShownParts` gives the parts it draws now as `ShownPart`s, each with a name kept while the screen is open, its
   words, its box, the point a click on it lands at and whether it takes one, for an agent and the tests to find it
@@ -2171,6 +2175,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whether it is a helm, and the structure, or the structure the player stands on; how it stands, its heading, its
   pitch and its roll, in degrees; how fast it goes and which way, in blocks a second; and where the player looks in
   its own frame, ahead being nought, so a pilot aims along the ship rather than along a camera rolled with it.
+- (Core) An agent reads what a mod tells of its things: `player_state` gives the `readings` each mod adds, under its
+  id, of the block and the entity the player looks at, the vehicle ridden and the moving structure stood on. A
+  reading that fails is left out, and the rest of the answer given.
 - (Core) Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside
@@ -4160,6 +4167,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and its hung parts, each at a point of it that shows, the search line, the ship's name, the tools, the kinds' tabs,
   each card by its part, the Release or Take In button, each plan's Load and Delete, and, while a part is held, the
   joints it snaps to by their places along the spine; so a part is dragged from its card onto a joint by name.
+- (Space) A ship tells an agent its flight as its HUD shows it: its name, speed and climb, throttle, boost and
+  nozzles, what holds it up, its gear, whether it stalls or stands on the land, how high it flies, its autopilot, its
+  pulse jump, and the world it flies in or over.
 - (Space) The Ramp hold's ramp is a door: its tail opens from the deck to the roof between yellow and black stripes,
   and the ramp, shut across it, swings down over two and a half seconds when a crew member who may come aboard uses
   it, its toe unfolding past level, till its foot rests on the land and it is walked up, a step every quarter block. In

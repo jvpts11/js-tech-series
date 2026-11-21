@@ -8,6 +8,7 @@
 package dev.jstech.core.client.mcp;
 
 import com.google.gson.JsonObject;
+import dev.jstech.core.agent.AgentReadings;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.StructureFooting;
 import dev.jstech.core.moving.StructureFrame;
@@ -70,6 +71,7 @@ public final class PlayRiding {
             structure(out, body, player);
         } else {
             entity(out, vehicle, player);
+            PlayReadings.add(out, AgentReadings.ofEntity(vehicle));
         }
         return Optional.of(out);
     }
@@ -102,6 +104,8 @@ public final class PlayRiding {
         final Vec3 view = player.getViewVector(1.0F);
         look(out, new Vec3(now.unturnX(view.x, view.y, view.z), now.unturnY(view.x, view.y, view.z),
                 now.unturnZ(view.x, view.y, view.z)));
+        // What the mods flying it tell of it, as a ship's throttle, its autopilot and the world below.
+        PlayReadings.add(out, AgentReadings.ofStructure(body));
     }
 
     /* How an entity ridden stands and moves, and where {@code player} looks from its heading. */

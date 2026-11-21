@@ -968,6 +968,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   and its hung parts, each at a point of it that shows, the search line, the ship's name, the tools, the kinds' tabs,
   each card by its part, the Release or Take In button, each plan's Load and Delete, and, while a part is held, the
   joints it snaps to by their places along the spine; so a part is dragged from its card onto a joint by name.
+- A ship tells an agent its flight as its HUD shows it: its name, speed and climb, throttle, boost and
+  nozzles, what holds it up, its gear, whether it stalls or stands on the land, how high it flies, its autopilot, its
+  pulse jump, and the world it flies in or over.
 - The Ramp hold's ramp is a door: its tail opens from the deck to the roof between yellow and black stripes,
   and the ramp, shut across it, swings down over two and a half seconds when a crew member who may come aboard uses
   it, its toe unfolding past level, till its foot rests on the land and it is walked up, a step every quarter block. In

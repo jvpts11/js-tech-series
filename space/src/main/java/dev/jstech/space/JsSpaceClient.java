@@ -31,6 +31,7 @@ import dev.jstech.space.client.life.VisorTint;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.ship.FlightConsoleRenderer;
+import dev.jstech.space.client.ship.ShipAgentReadings;
 import dev.jstech.space.client.ship.ShipArt;
 import dev.jstech.space.client.ship.ShipAutopilotClient;
 import dev.jstech.space.client.ship.ShipChaseCamera;
@@ -105,6 +106,8 @@ public final class JsSpaceClient {
         // The HUD on its canopy, for the pilot at its helm, and the camera behind it in the third person.
         ShipHud.listen(modEventBus);
         ShipChaseCamera.listen();
+        // What the HUD shows of a ship's flight, told to an agent playing the game through the MCP server too.
+        ShipAgentReadings.declare();
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipDesigner.MENU.get(),
                 ShipDesignScreen::new));
         SpacePayloads.onShipyardSaid(ShipDesignScreen::said);

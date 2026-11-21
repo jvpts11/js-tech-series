@@ -5,6 +5,27 @@
 # it meets the bar docs/API.md sets for a stable part. Kept by the API surface test,
 # which writes to build/api-photo what this file would have to say when the API changes.
 stable 4
+84 dev.jstech.core.agent.AgentReadings  type final class
+84 dev.jstech.core.agent.AgentReadings  static AgentReport ofBlock(Level, BlockPos)
+84 dev.jstech.core.agent.AgentReadings  static AgentReport ofEntity(Entity)
+84 dev.jstech.core.agent.AgentReadings  static AgentReport ofStructure(IStructureBody)
+84 dev.jstech.core.agent.AgentReadings  static void block(String, IBlockReading)
+84 dev.jstech.core.agent.AgentReadings  static void entity(String, IEntityReading)
+84 dev.jstech.core.agent.AgentReadings  static void structure(String, IStructureReading)
+84 dev.jstech.core.agent.AgentReport  type final class
+84 dev.jstech.core.agent.AgentReport  AgentReport flag(String, boolean)
+84 dev.jstech.core.agent.AgentReport  AgentReport number(String, double)
+84 dev.jstech.core.agent.AgentReport  AgentReport part(String)
+84 dev.jstech.core.agent.AgentReport  AgentReport whole(String, long)
+84 dev.jstech.core.agent.AgentReport  AgentReport words(String, String)
+84 dev.jstech.core.agent.AgentReport  Map<String, Object> values()
+84 dev.jstech.core.agent.AgentReport  boolean isEmpty()
+84 dev.jstech.core.agent.IBlockReading  type interface
+84 dev.jstech.core.agent.IBlockReading  abstract void read(Level, BlockPos, AgentReport)
+84 dev.jstech.core.agent.IEntityReading  type interface
+84 dev.jstech.core.agent.IEntityReading  abstract void read(Entity, AgentReport)
+84 dev.jstech.core.agent.IStructureReading  type interface
+84 dev.jstech.core.agent.IStructureReading  abstract void read(IStructureBody, AgentReport)
 1 dev.jstech.core.api.JsCoreApi  type final class
 5 dev.jstech.core.api.JsCoreApi  static final List<String> PROMISED_PACKAGES
 1 dev.jstech.core.api.JsCoreApi  static final boolean SETTLED

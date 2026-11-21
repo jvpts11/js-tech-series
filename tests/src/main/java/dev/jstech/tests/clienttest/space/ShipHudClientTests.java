@@ -7,8 +7,10 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.client.mcp.PlayRiding;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.input.KeyAction;
 import dev.jstech.core.moving.MovingStructure;
@@ -18,6 +20,7 @@ import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.space.JsSpace;
 import dev.jstech.space.client.ship.ShipHud;
 import dev.jstech.space.landing.ShipLiftOffs;
 import dev.jstech.space.ship.AirReserveEntity;
@@ -225,6 +228,29 @@ public final class ShipHudClientTests {
                         && symbol(ctx, DIAMOND), ARRIVE, "LAND lit, ORBIT not, and the diamond on the spot it sets"
                         + " down on")
                 .thenScreenshot(SETTLE, "ship-hud-land");
+    }
+
+    /*
+     * What the HUD shows is told to an agent too: at the helm, what the player rides carries the ship's flight under
+     * J's Space's readings, its name, its throttle and the autopilot engaged, ORBIT once it is.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void readings_anAgentAtTheHelmReadsTheFlightTheHudShows(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        atTheHelm(ctx, ship)
+                .thenServer(0, level -> MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).engaged(
+                        Optional.of(ShipAutopilot.orbit()))))
+                .thenWaitUntil(() -> engaged(ctx).equals("orbit"), ARRIVE, "its console to show ORBIT on the"
+                        + " player's game")
+                .then(0, () -> {
+                    final JsonObject riding = PlayRiding.riding(ctx.player()).orElseThrow();
+                    final JsonObject flight = riding.has("readings") ? riding.getAsJsonObject("readings")
+                            .getAsJsonObject(JsSpace.MODID).getAsJsonObject("ship") : new JsonObject();
+                    ctx.assertTrue(flight.has("name") && flight.has("throttle_percent") && flight.has("speed_mps"),
+                            "the pilot's agent reads the ship's flight: " + riding);
+                    ctx.assertTrue("orbit".equals(flight.getAsJsonObject("autopilot").get("mode").getAsString()),
+                            "and ORBIT engaged: " + flight);
+                });
     }
 
     /*

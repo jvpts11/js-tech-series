@@ -561,6 +561,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- What a mod tells an agent: J's Core's API is at version 84, and `dev.jstech.core.agent` is promised.
+  `AgentReadings.block`, `entity` and `structure` declare what a mod tells an agent of its blocks, its entities and
+  the moving structures it flies, each an `IBlockReading`, `IEntityReading` or `IStructureReading` telling an
+  `AgentReport` named numbers, words, flags and parts. Experimental.
 - What a screen draws, named: J's Core's API is at version 83. A screen, or a widget it holds, that implements
   `IShownParts` gives the parts it draws now as `ShownPart`s, each with a name kept while the screen is open, its
   words, its box, the point a click on it lands at and whether it takes one, for an agent and the tests to find it
@@ -1938,6 +1942,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whether it is a helm, and the structure, or the structure the player stands on; how it stands, its heading, its
   pitch and its roll, in degrees; how fast it goes and which way, in blocks a second; and where the player looks in
   its own frame, ahead being nought, so a pilot aims along the ship rather than along a camera rolled with it.
+- An agent reads what a mod tells of its things: `player_state` gives the `readings` each mod adds, under its
+  id, of the block and the entity the player looks at, the vehicle ridden and the moving structure stood on. A
+  reading that fails is left out, and the rest of the answer given.
 - Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside

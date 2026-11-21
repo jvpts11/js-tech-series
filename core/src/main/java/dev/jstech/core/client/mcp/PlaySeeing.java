@@ -12,6 +12,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.blaze3d.platform.NativeImage;
+import dev.jstech.core.agent.AgentReadings;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.data.IDataScreen;
 import dev.jstech.core.client.gui.screen.ShownPart;
@@ -193,6 +194,8 @@ public final class PlaySeeing {
             piece.add("box", drawn);
             looked.add("piece", piece);
         });
+        // What the mods tell of it, a machine at work or a computer and its job, read where its block is kept.
+        PlayReadings.add(looked, AgentReadings.ofBlock(level, pos));
         return Optional.of(looked);
     }
 
@@ -207,8 +210,12 @@ public final class PlaySeeing {
 
     /** The entity the crosshair is on, or none. */
     static Optional<JsonObject> lookedAtEntity(final Minecraft game) {
-        return game.hitResult instanceof EntityHitResult hit ? Optional.of(entity(hit.getEntity()))
-                : Optional.empty();
+        if (!(game.hitResult instanceof EntityHitResult hit)) {
+            return Optional.empty();
+        }
+        final JsonObject looked = entity(hit.getEntity());
+        PlayReadings.add(looked, AgentReadings.ofEntity(hit.getEntity()));
+        return Optional.of(looked);
     }
 
     /** The screen open, its kind and its title, or none. */

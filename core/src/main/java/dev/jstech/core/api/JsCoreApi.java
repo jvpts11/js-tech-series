@@ -43,7 +43,7 @@ public final class JsCoreApi {
      * }
      * }</pre>
      */
-    public static final int VERSION = 83;
+    public static final int VERSION = 84;
 
     /**
      * The Core's packages that are part of the promise beside this one, each a kit a mod may build on.
@@ -55,7 +55,7 @@ public final class JsCoreApi {
      */
     @ApiStatus.Experimental
     public static final List<String> PROMISED_PACKAGES = List.of(
-            "dev.jstech.core.audio", "dev.jstech.core.audio.pcm", "dev.jstech.core.bigblock",
+            "dev.jstech.core.agent", "dev.jstech.core.audio", "dev.jstech.core.audio.pcm", "dev.jstech.core.bigblock",
             "dev.jstech.core.blockentity",
             "dev.jstech.core.cable", "dev.jstech.core.call", "dev.jstech.core.capability",
             "dev.jstech.core.client.config", "dev.jstech.core.client.gui.component",

@@ -296,6 +296,31 @@ as a step of the game, and `game_ticks_taken` says how many it ran. `on` false l
 held, frozen only if it was then; so do the MCP server stopping, every client cut off, and the player pressing a key.
 It holds only a world the game runs itself, the player's own or the server's.
 
+### What a mod tells an agent
+
+*Added 2026-11-21.*
+
+A mod's state drawn on a screen or a HUD, a machine's job or a ship's throttle, is only pixels to an agent unless the
+mod tells it. It does so with `dev.jstech.core.agent`: `AgentReadings.block`, `entity` and `structure` declare once
+what it tells of its blocks, its entities and the moving structures it flies, each reading telling an `AgentReport`
+its named numbers, words, flags and parts, and nothing of what is not its own. `player_state` gives what they tell as
+`readings`, under each mod's id, wherever the agent meets the thing: the block and the entity the player looks at,
+the vehicle ridden and the structure under them. Name a number by its unit, as `speed_mps`. A reading that fails is
+left out and said in the log.
+
+```java
+// From the client's setup: what only the player's game knows, as what a HUD shows.
+AgentReadings.structure(JsSpace.MODID, (structure, report) -> {
+    final AirReserveEntity console = ShipConsoles.of(structure.plot());
+    if (console != null) {
+        report.part("ship").whole("throttle_percent", console.flight().throttle());
+    }
+});
+```
+
+J's Space tells a ship's flight so, its speed, throttle, gear, altitude, autopilot, pulse jump and the world below
+(`space/src/main/java/dev/jstech/space/client/ship/ShipAgentReadings.java`).
+
 A dedicated server has an MCP server of its own, on the server's computer (`developer.server_mcp_port`, 25598): an
 operator in the game turns it on with `/jstech mcp server on`, never the console; a client that asks is asked about
 to the operators in the game, and its tools read and change the world for the operator who let it in, while they are
