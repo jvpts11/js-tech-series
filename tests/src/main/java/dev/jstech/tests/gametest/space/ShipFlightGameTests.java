@@ -743,6 +743,7 @@ public final class ShipFlightGameTests {
         final ServerLevel overworld = helper.getLevel();
         final ServerLevel space = SystemSpaces.spaceOf(overworld.getServer(), StarSystems.SOLAR_SYSTEM);
         final BlockPos home = helper.absolutePos(CORNER).east(HOME_EAST);
+        final int[] kept = new int[2];
         letGo(helper, ship).thenExecute(() -> {
             final BlockPos terminal = TestShipyards.terminalOf(helper.absolutePos(CORNER));
             helper.assertTrue(console(helper, ship[0]).dock().equals(Optional.of(GlobalPos.of(overworld.dimension(),
@@ -752,6 +753,10 @@ public final class ShipFlightGameTests {
             final double width = overworld.getWorldBorder().getSize();
             final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, SphereMap.longitude(ship[0].pose().x(),
                     width), SphereMap.latitude(ship[0].pose().z(), width));
+            // Nobody goes with it: its place in space is kept ticking, as a crew aboard would keep it.
+            kept[0] = SectionPos.blockToSectionCoord(spot[0]);
+            kept[1] = SectionPos.blockToSectionCoord(spot[1]);
+            space.setChunkForced(kept[0], kept[1], true);
             helper.assertTrue(MovingStructures.travel(ship[0], space, new Vec3(spot[0], SystemLayout.ORBIT_Y,
                     spot[1])).ok(), "it is taken up into the Solar System's space");
         }).thenWaitUntil(() -> {
@@ -792,6 +797,7 @@ public final class ShipFlightGameTests {
             helper.assertTrue(console(helper, ship[0]).destination().isEmpty(), "its choice spent");
             GameTestPlayers.leave(pilot[0]);
             MovingStructures.takeAway(ship[0]);
+            space.setChunkForced(kept[0], kept[1], false);
         }).thenSucceed();
     }
 
