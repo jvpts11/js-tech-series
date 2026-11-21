@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest.core;
 import com.google.gson.JsonObject;
 import dev.jstech.core.client.mcp.PlayRiding;
 import dev.jstech.core.client.moving.ClientMovingStructures;
+import dev.jstech.core.client.moving.SeatLookClient;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.client.moving.JointRenderer;
 import dev.jstech.core.client.moving.SleepersDrawn;
@@ -18,6 +19,7 @@ import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.LevelMovingStructures;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.SeatLook;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
@@ -99,6 +101,16 @@ public final class MovingStructureLifeClientTests {
     private static final double ROLLED = 30;
     private static final double SAILS = 40;
     private static final double SPEED = 4;
+    /*
+     * How far the pilot's craft pitches its nose up, in degrees; the mouse's turn down, in its steps, and how far a
+     * step turns, in degrees; one turn up far past the seat's straight up, which is ninety degrees.
+     */
+    private static final double PITCHED = 60;
+    private static final double PITCHING = 30;
+    private static final double MOUSE_DOWN = 200;
+    private static final double MOUSE_DEGREES = 0.15;
+    private static final double MOUSE_FAR = 2000;
+    private static final double STRAIGHT_UP = 90;
     private static final BlockPos SCENE_FROM = new BlockPos(-6, 2, -16);
     private static final BlockPos SCENE_TO = new BlockPos(6, 12, -4);
 
@@ -282,6 +294,72 @@ public final class MovingStructureLifeClientTests {
                     ctx.assertTrue(near(riding, PlayRiding.SPEED, SPEED) && riding.getAsJsonObject(
                             PlayRiding.VELOCITY).get("z").getAsDouble() < 0, "sent north at " + SPEED
                             + " blocks a second, it says so: " + riding);
+                });
+    }
+
+    /*
+     * The pilot's view goes with the craft: looking ahead along it, they still look ahead along it once its nose
+     * pitches up sixty degrees, the view not rolled; the mouse turns them in the seat's frame, thirty degrees down
+     * from the nose; and up as far as straight up from the seat, past the world's straight up, which the game would
+     * stop at.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void pilot_theViewPitchesWithTheShipAndTheMouseTurnsItInTheSeat(final ClientTestContext ctx) {
+        final MovingStructure[] craft = new MovingStructure[1];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            ctx.serverPlayer().stopRiding();
+            clear(ctx);
+        }));
+        ctx.thenServer(0, level -> {
+            clear(ctx);
+            calm(level);
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(0, 6, -10)), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(0, 6, -9)), TestAboard.HELM.get().defaultBlockState());
+            craft[0] = assembled(ctx, new BlockPos(0, 6, -10), new BlockPos(0, 6, -9));
+        })
+                .thenTeleport(0, STAND, Direction.NORTH)
+                .thenAwaitLandDrawn(WAIT)
+                .thenWaitUntil(() -> drawn(List.of(craft[0])), WAIT, "the craft to reach the player's game")
+                .thenServer(SETTLE, level -> ctx.assertTrue(MovingStructures.sit(ctx.serverPlayer(),
+                        find(level, craft[0], state -> state.is(TestAboard.HELM.get()))), "the player sits at the "
+                        + "helm"))
+                .thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity, WAIT,
+                        "the player to sit at the helm on their game")
+                .then(SETTLE, () -> {
+                    // Ahead along the craft, which faces south.
+                    ctx.player().setYRot(0);
+                    ctx.player().setXRot(0);
+                })
+                // Its nose pitched up as a ship's is, a little a tick: south turned up towards the sky, about the
+                // craft's east-west line.
+                .thenServer(1, level -> {
+                    final StructurePose at = craft[0].pose();
+                    craft[0].move(new TowardMotion(StructurePose.turned(at.x(), at.y(), at.z(), 1, 0, 0,
+                            -Math.toRadians(PITCHED)), SPEED, PITCHING));
+                })
+                .thenWaitUntil(() -> Math.abs(ctx.player().getXRot() + PITCHED) < 1, WAIT, "the pilot's look to "
+                        + "pitch up with the nose: " + ctx.player().getXRot())
+                .then(SETTLE, () -> {
+                    final JsonObject look = PlayRiding.riding(ctx.player()).orElseThrow().getAsJsonObject(
+                            PlayRiding.LOOK);
+                    ctx.assertTrue(near(look, PlayRiding.YAW, 0) && near(look, PlayRiding.PITCH, 0), "pitched up, "
+                            + "the pilot still looks ahead along the craft: " + look);
+                    final StructureFrame frame = ((StructureSeatEntity) ctx.player().getVehicle()).structure()
+                            .frame();
+                    ctx.assertTrue(Math.abs(SeatLook.roll(frame, ctx.player().getYRot(), ctx.player().getXRot()))
+                            < 1, "and the view is not rolled");
+                    SeatLookClient.turn(ctx.player(), 0, MOUSE_DOWN);
+                    final JsonObject down = PlayRiding.riding(ctx.player()).orElseThrow().getAsJsonObject(
+                            PlayRiding.LOOK);
+                    ctx.assertTrue(near(down, PlayRiding.PITCH, MOUSE_DOWN * MOUSE_DEGREES)
+                            && Math.abs(ctx.player().getXRot() + PITCHED - MOUSE_DOWN * MOUSE_DEGREES) < 1,
+                            "the mouse turns the look down from the nose in the seat's frame: " + down);
+                    SeatLookClient.turn(ctx.player(), 0, -MOUSE_FAR);
+                    final JsonObject up = PlayRiding.riding(ctx.player()).orElseThrow().getAsJsonObject(
+                            PlayRiding.LOOK);
+                    ctx.assertTrue(near(up, PlayRiding.PITCH, -STRAIGHT_UP) && ctx.player().getXRot() > -STRAIGHT_UP
+                            + 1, "and up as far as straight up from the seat, behind the world's straight up: " + up
+                            + ", the world's pitch " + ctx.player().getXRot());
                 });
     }
 

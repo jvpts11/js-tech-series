@@ -1476,6 +1476,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   how fast its engines can speed it up; an arrow loosed from a moving deck flies on with it; a bed aboard is slept
   in as one on the ground, its sleeper carried and drawn along it however the structure is turned, and is the place
   its sleeper comes back to; and a player takes hold of a rope and rides it down.
+- A seat's view goes with the structure: one sitting aboard looks round in their seat's frame, their look
+  turned with the structure about every axis, so a pilot looking ahead along a nose pitched up still looks ahead
+  along it; the mouse turns them about the seat's up and across its right, as far up and down as the seat has them,
+  past the world's straight up; and the view rolls to keep the seat's up at its top whichever way they look. What
+  they aim at and use is what they see.
 - What a moving structure shows going: its engines' flames, a rocket's or a jet's, as big as they push; its
   faces glowing hot from the air they head into, in the colour of their heat, wrapped in plasma on a re-entry; and
   white trails behind its engines and wingtips where the air is cold enough. An engine pushing keeps its structure

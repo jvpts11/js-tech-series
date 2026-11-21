@@ -52,10 +52,12 @@ import org.jetbrains.annotations.Nullable;
 public final class StructureSeatEntity extends Entity {
 
     /*
-     * On a player's game, how far the structure turned this tick that its own player sitting on it is still to be
-     * turned, in degrees: given them as they are set on the seat, after their tick began from where they faced.
+     * On a player's game, how the structure stood before it turned, and how it stands now, while its own player sitting
+     * on it is still to be turned with it, about any axis: given them as they are set on the seat, after their tick
+     * began from where they faced, so their look keeps its place in the seat's frame (SeatLook).
      */
-    private float toTurn;
+    private @Nullable StructureFrame turnedFrom;
+    private @Nullable StructureFrame turnedTo;
 
     private static final EntityDataAccessor<BlockPos> DATA_SEAT =
             SynchedEntityData.defineId(StructureSeatEntity.class, EntityDataSerializers.BLOCK_POS);
@@ -270,10 +272,10 @@ public final class StructureSeatEntity extends Entity {
      */
     @Override
     protected void positionRider(final Entity passenger, final MoveFunction move) {
-        if (this.toTurn != 0 && passenger.isControlledByLocalInstance()) {
-            passenger.setYRot(passenger.getYRot() + this.toTurn);
-            passenger.setYHeadRot(passenger.getYHeadRot() + this.toTurn);
-            this.toTurn = 0;
+        if (this.turnedFrom != null && this.turnedTo != null && passenger.isControlledByLocalInstance()) {
+            SeatLook.carry(passenger, this.turnedFrom, this.turnedTo);
+            this.turnedFrom = null;
+            this.turnedTo = null;
         }
         final Direction head = lyingHead();
         if (head == null) {
@@ -443,13 +445,15 @@ public final class StructureSeatEntity extends Entity {
         yOld = yo;
         zOld = zo;
         final float turn = (float) Mth.wrapDegrees(now.pose().yawDegrees() - before.pose().yawDegrees());
-        if (Math.abs(turn) > 1.0e-4F) {
+        final boolean turned = Math.abs(turn) > 1.0e-4F || SeatLook.tilted(now) || SeatLook.tilted(before);
+        if (turned) {
             for (final Entity sitter : getPassengers()) {
-                // A player's own game turns them as they are set on the seat after their tick, so their view turns
-                // from where it faced at its start, drawn frame by frame as the structure is; the server turns the
-                // rest.
+                // A player's own game turns them as they are set on the seat after their tick, about every axis the
+                // structure turned by, so their view turns from where it faced at its start, drawn frame by frame
+                // as the structure is; the server turns the rest by its heading.
                 if (level().isClientSide() && sitter.isControlledByLocalInstance()) {
-                    this.toTurn += turn;
+                    this.turnedFrom = this.turnedFrom == null ? before : this.turnedFrom;
+                    this.turnedTo = now;
                 } else if (!level().isClientSide() && !(sitter instanceof Player)) {
                     sitter.setYRot(sitter.getYRot() + turn);
                     sitter.setYHeadRot(sitter.getYHeadRot() + turn);
