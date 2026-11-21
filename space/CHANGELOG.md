@@ -767,8 +767,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   pilot's hand and the throttle slides forward.
 - The small ship's cabin is pressurised: every block of its kit holds a crew's air against the vacuum, and
   with no life support section its flight console keeps a small air reserve, two hours of one crew member's oxygen,
-  topping the cabin back up to the sea's air as the crew breathe and the hull leaks; an oxygen bottle used on the
-  console pours into it. Inside, the helmet comes off.
+  topping the cabin back up to the sea's air as the crew breathe and the hull leaks, and scrubbing the carbon dioxide
+  they breathe out, so the cabin's air never goes stale; an oxygen bottle used on the console pours into it. Inside,
+  the helmet comes off.
 - The Small Shipyard, the dry dock a small starship is built in: a pit sixteen blocks wide and twenty-four
   long dug three deep into the ground, its rim of hazard concrete and a cradle of hydraulic clamps rising from its floor
   at four stations; down both sides four lattice towers, eleven blocks to the rails of a gantry crane, with walkways at

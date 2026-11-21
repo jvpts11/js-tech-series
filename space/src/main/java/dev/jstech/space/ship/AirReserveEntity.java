@@ -42,8 +42,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A small ship's air reserve, kept by its cockpit's flight console: a small ship has no life support section, its
  * pressurised cabin topped up from this for its short trips, oxygen and nitrogen each back to the sea's pressure as
- * the crew breathe and the hull leaks, while the reserve lasts; it asks for its cabin to be found as a room, wherever
- * its ship goes. An oxygen bottle pours into it. Once the ship has left
+ * the crew breathe and the hull leaks, while the reserve lasts, and the carbon dioxide they breathe out scrubbed from
+ * it, so its air never goes stale; it asks for its cabin to be found as a room, wherever its ship goes. An oxygen
+ * bottle pours into it. Once the ship has left
  * its dock, the console keeps the ship too ({@link ShipAboard}), and draws its parts aboard; and watches its plan
  * there, so a block broken aboard leaves a hole its part holds round, the part doing only what the blocks still in it
  * can, and the right block put back mends it. It shows
@@ -290,8 +291,8 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
     }
 
     /**
-     * Once a second, on the server: tops up the cabin beside it from the reserve, and watches its ship's plan aboard
-     * once its ship is a structure.
+     * Once a second, on the server: tops up the cabin beside it from the reserve and scrubs its carbon dioxide, and
+     * watches its ship's plan aboard once its ship is a structure.
      */
     public void tick() {
         if (!(getLevel() instanceof ServerLevel level) || level.getGameTime() % TICKS_A_SECOND != 0) {
@@ -309,6 +310,8 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
         if (cabin.isEmpty()) {
             return;
         }
+        // What the crew breathe out is scrubbed, as a cabin's scrubbers do: its air never goes stale.
+        cabin.get().add(AirMix.CARBON_DIOXIDE, -cabin.get().moles(AirMix.CARBON_DIOXIDE));
         final double gaveOxygen = topUp(cabin.get(), AirMix.OXYGEN, OXYGEN_KPA, oxygen());
         final double gaveNitrogen = topUp(cabin.get(), AirMix.NITROGEN, NITROGEN_KPA, nitrogen());
         if (gaveOxygen > 0 || gaveNitrogen > 0) {

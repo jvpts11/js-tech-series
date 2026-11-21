@@ -8,6 +8,8 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.core.air.AirMix;
+import dev.jstech.core.dimension.DimensionEffects;
+import dev.jstech.core.dimension.DimensionHazardEvent;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.room.GasMath;
@@ -26,6 +28,7 @@ import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -66,6 +69,9 @@ public final class ShipCabinAirGameTests {
     private static final double BREATHED = 20;
     private static final double LEAKED = 10;
     private static final int SUIT_AIR = 600;
+    /* An hour of breathing, in seconds; and how long the console takes to scrub it, in ticks: a second and more. */
+    private static final int AN_HOUR = 3600;
+    private static final int SCRUBBED_WITHIN = 25;
 
     private ShipCabinAirGameTests() {
     }
@@ -149,6 +155,44 @@ public final class ShipCabinAirGameTests {
                     SealedRooms.untrack(level, helper.absolutePos(INSIDE));
                     helper.assertTrue(air == SUIT_AIR, "inside, the suited crew breathe the cabin's air, the suit's "
                             + "tanks spared: " + air);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * The cabin's air never goes stale: an hour of a crew member's breathing, its oxygen breathed out as carbon
+     * dioxide, three in a hundred of the cabin's air left be, is scrubbed and made good within a second, and the crew
+     * member in it is in no danger from its air.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void cabin_breathedForAnHourNeverGoesStale(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        hull(helper);
+        helper.setBlock(CONSOLE, ShipKitBlocks.FLIGHT_CONSOLE.get());
+        SealedRooms.track(level, helper.absolutePos(INSIDE));
+        final ServerPlayer[] crew = new ServerPlayer[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(room(helper) != null, "the ship's hull is a sealed cabin"))
+                .thenExecute(() -> {
+                    final double breath = AN_HOUR * RoomLiving.PLAYER_BREATH;
+                    room(helper).take(AirMix.OXYGEN, breath);
+                    room(helper).add(AirMix.CARBON_DIOXIDE, breath);
+                    crew[0] = GameTestPlayers.join(level, UUID.randomUUID(), "breather");
+                    crew[0].setPos(Vec3.atBottomCenterOf(helper.absolutePos(INSIDE)));
+                })
+                .thenIdle(SCRUBBED_WITHIN)
+                .thenExecute(() -> {
+                    final Room cabin = room(helper);
+                    final double all = cabin.air().moles().values().stream().mapToDouble(Double::doubleValue).sum();
+                    final double share = cabin.moles(AirMix.CARBON_DIOXIDE) / all;
+                    helper.assertTrue(share <= GasMath.CARBON_DIOXIDE_HEADACHE, "the crew's breath is scrubbed from "
+                            + "the cabin: " + share + " of carbon dioxide");
+                    final Set<DimensionHazardEvent.Hazard> hazards = DimensionEffects.weigh(crew[0]);
+                    GameTestPlayers.leave(crew[0]);
+                    SealedRooms.untrack(level, helper.absolutePos(INSIDE));
+                    helper.assertTrue(!hazards.contains(DimensionHazardEvent.Hazard.AIR)
+                            && !hazards.contains(DimensionHazardEvent.Hazard.CARBON_DIOXIDE), "and the crew member "
+                            + "in it is in no danger from its air: " + hazards);
                 })
                 .thenSucceed();
     }
