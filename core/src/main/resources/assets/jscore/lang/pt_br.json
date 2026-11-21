@@ -1258,6 +1258,7 @@
   "jscore.mcp.reads_and_acts": "lê e age",
   "jscore.mcp.sent": "Mandado ao servidor como comando do próprio jogador; o que ele responder vem no chat.",
   "jscore.mcp.unbreakable": "%s não pode ser quebrado.",
+  "jscore.mcp.walk_stopped": "A caminhada parou em %s: %s.",
   "jscore.mcp.wants.id": "um id, como minecraft:stone",
   "jscore.mcp.wants.number": "um número inteiro de %s a %s",
   "jscore.mcp.wants.one_of": "um de %s",

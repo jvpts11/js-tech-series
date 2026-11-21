@@ -2142,6 +2142,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the game's name for it, with a modifier held with it, for a number of ticks, then lets go, through the game's own
   input: a mapping waiting for Control, Control held over a screen, or a mod reading a key itself, finds it down, and
   no message is sent to the window. Any key the player presses takes it back, as with every tool that acts.
+- (Core) An agent walks as a player walks: the MCP tool `player_walk_to` finds a way along the ground, up a step, a
+  slab or a stair, up a block with a jump, down a drop of three at most and through a door, which it opens, the
+  player's box fitting every place on it, a moving structure's deck walked as the world's; it never jumps twice in a
+  row, so a player who may fly stays on the ground, and a flying one comes down to walk. A walk that cannot go on says
+  where it stopped and why: a wall, a step with no room for the head, a drop too deep, a door no hand opens, no way, or
+  the way blocked. It used to walk straight at the place, and climbed whatever stood in the way.
 - (Core) Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside

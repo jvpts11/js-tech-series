@@ -42,6 +42,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -54,6 +56,17 @@ import net.minecraft.world.phys.Vec3;
 public final class PlayActing {
 
     private static final double ARRIVED = 0.6;
+    /*
+     * A walk's ways: how near a place on the way counts as reached, the height a step is walked up without a jump,
+     * the ticks between two jumps (more than a double press, which takes a player who may fly into the air), how
+     * near a shut door is opened from, and how long the player may come no nearer before the way counts as blocked.
+     */
+    private static final double ARRIVED_SPOT = 0.35;
+    private static final double STEP = 0.6;
+    private static final int JUMP_GAP = 10;
+    private static final double DOOR_REACH = 2.0;
+    private static final double PROGRESS = 0.05;
+    private static final int STUCK_TICKS = 40;
     private static final int WALK_TICKS = 600;
     private static final int BREAK_TICKS = 400;
     private static final int OPEN_TICKS = 40;
@@ -87,8 +100,10 @@ public final class PlayActing {
     /** The tools. */
     public static List<McpTool> all() {
         return List.of(
-                new McpTool("player_walk_to", "Walks the player to a place as the movement keys do, jumping over a "
-                        + "block in the way, and answers once there; any key the player presses stops it.",
+                new McpTool("player_walk_to", "Walks the player to a place as the movement keys do, along a way a "
+                        + "player walks: up steps, slabs and stairs, a block up with a jump, down three at most, "
+                        + "through doors it opens; and answers once there, or where it stopped and why. Any key the "
+                        + "player presses stops it.",
                         McpSchema.object().place(Play.PLACE, "Where to walk.", true).flag("sprint",
                                 "Whether to sprint.").build(), McpPermission.ACT, PlayActing::walk),
                 new McpTool("player_jump", "Jumps, as the jump key does.", McpSchema.object().build(),
@@ -207,6 +222,13 @@ public final class PlayActing {
         }
         final boolean sprint = call.flag("sprint", false);
         final Vec3 goal = Vec3.atBottomCenterOf(target.get());
+        // The way found as the walk starts, the place on it walked to next, the tick of the last jump, and how near
+        // the place walked to the player came, and since when no nearer.
+        final PlayPaths.Way[] way = new PlayPaths.Way[1];
+        final int[] next = {0};
+        final int[] jumped = {-JUMP_GAP};
+        final double[] nearest = {Double.MAX_VALUE};
+        final int[] since = {0};
         return PlayTasks.run(call, WALK_TICKS, new PlayTasks.ITask() {
             @Override
             public Optional<McpResult> step(final Minecraft game, final int tick) {
@@ -214,21 +236,65 @@ public final class PlayActing {
                 if (player == null) {
                     return Optional.of(McpResult.failed(McpTexts.NO_WORLD.text()));
                 }
+                if (tick == 1) {
+                    if (player.getAbilities().flying) {
+                        // Walking, a flying player comes down first, as the jump key pressed twice brings them.
+                        player.getAbilities().flying = false;
+                        player.onUpdateAbilities();
+                    }
+                    way[0] = PlayPaths.find(player.level(), player, target.get());
+                }
+                final Options options = game.options;
                 final double dx = goal.x - player.getX();
                 final double dz = goal.z - player.getZ();
-                if (Math.sqrt(dx * dx + dz * dz) < ARRIVED) {
+                if (Math.sqrt(dx * dx + dz * dz) < ARRIVED && Math.abs(goal.y - player.getY()) < 1) {
                     final JsonObject out = new JsonObject();
                     out.add("arrived", Play.place(player.blockPosition()));
                     return Optional.of(McpResult.json(out));
                 }
-                final float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                final List<PlayPaths.Spot> spots = way[0].spots();
+                if (next[0] >= spots.size()) {
+                    return Optional.of(stopped(player, target.get(), way[0].reached() ? "blocked" : "no_way"));
+                }
+                final PlayPaths.Spot spot = spots.get(next[0]);
+                final double toSpot = Math.hypot(spot.at().x - player.getX(), spot.at().z - player.getZ());
+                if (spot.door() && player.level().getBlockState(spot.place()).getBlock() instanceof DoorBlock
+                        && !player.level().getBlockState(spot.place()).getValue(DoorBlock.OPEN)) {
+                    options.keyUp.setDown(false);
+                    if (toSpot < DOOR_REACH && tick - jumped[0] > JUMP_GAP) {
+                        // A shut door on the way is opened as a player opens it, with the use key, looking at it.
+                        Play.lookAt(player, Vec3.atCenterOf(spot.place()));
+                        KeyMapping.click(options.keyUse.getKey());
+                        jumped[0] = tick;
+                        return Optional.empty();
+                    }
+                }
+                if (toSpot < ARRIVED_SPOT && Math.abs(spot.at().y - player.getY()) < STEP) {
+                    next[0]++;
+                    nearest[0] = Double.MAX_VALUE;
+                    since[0] = 0;
+                    return Optional.empty();
+                }
+                if (toSpot < nearest[0] - PROGRESS) {
+                    nearest[0] = toSpot;
+                    since[0] = 0;
+                } else if (++since[0] > STUCK_TICKS) {
+                    return Optional.of(stopped(player, spot.place(), "blocked"));
+                }
+                final float yaw = (float) Math.toDegrees(Math.atan2(-(spot.at().x - player.getX()),
+                        spot.at().z - player.getZ()));
                 player.setYRot(yaw);
                 player.setYHeadRot(yaw);
-                final Options options = game.options;
                 options.keyUp.setDown(true);
                 options.keySprint.setDown(sprint);
-                // Into a block one high, the jump key carries the player over it, as a player would.
-                options.keyJump.setDown(player.horizontalCollision && player.onGround());
+                // Up a whole block the jump key carries the player, as a player's would; a step, a slab or a stair
+                // is walked up. Never twice in a row, so a player who may fly never takes to the air.
+                final boolean jump = spot.at().y - player.getY() > STEP && player.onGround()
+                        && tick - jumped[0] > JUMP_GAP;
+                if (jump) {
+                    jumped[0] = tick;
+                }
+                options.keyJump.setDown(jump);
                 return Optional.empty();
             }
 
@@ -239,6 +305,47 @@ public final class PlayActing {
                 game.options.keyJump.setDown(false);
             }
         });
+    }
+
+    /*
+     * A walk that cannot go on, where the player stands: why, as the blocks before them toward {@code toward} show it,
+     * a wall two blocks high or more, a step with no room over it for the head, a drop deeper than a player jumps
+     * down, a shut door no hand opens; else {@code otherwise}, no way found or the way blocked.
+     */
+    private static McpResult stopped(final LocalPlayer player, final BlockPos toward, final String otherwise) {
+        final Level level = player.level();
+        final BlockPos at = player.blockPosition();
+        final int dx = toward.getX() - at.getX();
+        final int dz = toward.getZ() - at.getZ();
+        final Direction side = Math.abs(dx) >= Math.abs(dz) ? dx >= 0 ? Direction.EAST : Direction.WEST
+                : dz >= 0 ? Direction.SOUTH : Direction.NORTH;
+        final BlockPos front = at.relative(side);
+        final String why;
+        if (level.getBlockState(front).getBlock() instanceof DoorBlock) {
+            why = "shut_door";
+        } else if (solid(level, front.above())) {
+            why = "wall";
+        } else if (solid(level, front) && solid(level, front.above(2))) {
+            why = "no_headroom";
+        } else if (!solid(level, front) && !solid(level, front.below()) && !solid(level, front.below(2))
+                && !solid(level, front.below(3)) && !solid(level, front.below(4))) {
+            why = "drop";
+        } else {
+            why = otherwise;
+        }
+        final JsonObject out = new JsonObject();
+        out.addProperty(PlayAim.FAILED, why);
+        out.add("stopped_at", Play.place(at));
+        final JsonObject ahead = new JsonObject();
+        ahead.addProperty("block", BuiltInRegistries.BLOCK.getKey(level.getBlockState(front).getBlock()).toString());
+        ahead.add(Play.PLACE, Play.place(front));
+        out.add("ahead", ahead);
+        return McpResult.failed(McpTexts.WALK_STOPPED.with(at.getX() + " " + at.getY() + " " + at.getZ(), why))
+                .with(out);
+    }
+
+    private static boolean solid(final Level level, final BlockPos pos) {
+        return !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
     }
 
     private static CompletableFuture<McpResult> fly(final McpCall call) {

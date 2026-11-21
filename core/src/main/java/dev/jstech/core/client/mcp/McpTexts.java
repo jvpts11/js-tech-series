@@ -77,6 +77,8 @@ public final class McpTexts {
     /* What was looked for, a piece's name or a type of entity, and how far round the player, in blocks. */
     public static final TextKey NONE_NEAR = TextKey.of("jscore.mcp.none_near", "No %s is within %s blocks.");
     /* The piece's name. */
+    /* Where the walk stopped, and why, in a word: wall, no_headroom, drop, shut_door, no_way, blocked. */
+    public static final TextKey WALK_STOPPED = TextKey.of("jscore.mcp.walk_stopped", "The walk stopped at %s: %s.");
     public static final TextKey OUT_OF_SIGHT = TextKey.of("jscore.mcp.out_of_sight",
             "No point of the nearest %s can be seen from here: something is in the way.");
     public static final TextKey OWN_WORLD_ONLY = TextKey.of("jscore.mcp.own_world_only",

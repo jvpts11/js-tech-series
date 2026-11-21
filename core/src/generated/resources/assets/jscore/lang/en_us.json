@@ -2599,6 +2599,7 @@
   "jscore.mcp.reads_and_acts": "reads and acts",
   "jscore.mcp.sent": "Sent to the server as the player's own command; what it answers comes in the chat.",
   "jscore.mcp.unbreakable": "%s cannot be broken.",
+  "jscore.mcp.walk_stopped": "The walk stopped at %s: %s.",
   "jscore.mcp.wants.id": "an id, such as minecraft:stone",
   "jscore.mcp.wants.number": "a whole number from %s to %s",
   "jscore.mcp.wants.one_of": "one of %s",

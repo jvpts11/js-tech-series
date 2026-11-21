@@ -50,7 +50,13 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -89,6 +95,15 @@ public final class McpPlayClientTests {
     private static final long HEARD_AFTER = 500;
     /* How long a key is held, in ticks. */
     private static final int HELD_TICKS = 20;
+    /*
+     * The walk test's course: a platform two blocks high from x 5 to 8, a stair of two steps up to it from the west, a
+     * wall across it at x 7 with a shut door in it, the place beyond the door, and the top of a pillar beside it.
+     */
+    private static final int PLATFORM_FROM = 5;
+    private static final int PLATFORM_TO = 8;
+    private static final BlockPos DOOR = new BlockPos(7, 4, 0);
+    private static final BlockPos BEYOND_THE_DOOR = new BlockPos(8, 4, 0);
+    private static final BlockPos PILLAR_TOP = new BlockPos(12, 7, 4);
     private static final String MACHINES = AudioChannels.MACHINES.id().toString();
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final String INITIALIZE = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":"
@@ -295,6 +310,77 @@ public final class McpPlayClientTests {
         ctx.thenAssert(SETTLE, () -> ctx.mc().hitResult instanceof BlockHitResult hit
                 && hit.getBlockPos().equals(wall) && hit.getLocation().distanceTo(aimed) < AIMED,
                 "the player looks at that point of the face, not at its middle");
+    }
+
+    /*
+     * A walk as a player walks: up a stair of two steps onto a platform two blocks high, through the shut door in the
+     * wall across it, and never in the air though the player may fly; and to the top of a pillar no way leads up, it
+     * stops beside it and says a wall is before it.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void walk_climbsAStairGoesThroughADoorAndSaysWhyItStops(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final boolean[] flew = new boolean[1];
+        final Consumer<ClientTickEvent.Post> watching = event -> flew[0] |= ctx.player() != null
+                && ctx.player().getAbilities().flying;
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, watching);
+        ctx.afterTest(() -> {
+            NeoForge.EVENT_BUS.unregister(watching);
+            McpGame.turn(false);
+            ctx.server().execute(() -> course(ctx, ctx.serverPlayer().serverLevel(), true));
+        });
+        pair(ctx, sent, key, port);
+        ctx.thenServer(0, level -> {
+            course(ctx, level, false);
+            ctx.serverPlayer().getAbilities().flying = false;
+            ctx.serverPlayer().onUpdateAbilities();
+        }).then(SETTLE, () -> flew[0] = false);
+        run(ctx, sent, key, port, new Step("player_walk_to", "{\"place\":" + place(ctx.abs(BEYOND_THE_DOOR)) + "}",
+                result -> ctx.assertTrue(result.has("arrived"), "the player walks up the stair, through the door and"
+                        + " beyond it: " + result)));
+        ctx.thenAssert(0, () -> ctx.player().blockPosition().equals(ctx.abs(BEYOND_THE_DOOR)), "the player stands "
+                + "beyond the door: " + ctx.player().blockPosition())
+                .thenAssert(0, () -> ctx.mc().level.getBlockState(ctx.abs(DOOR)).getValue(DoorBlock.OPEN),
+                        "the door was opened on the way")
+                .thenAssert(0, () -> !flew[0], "the player never took to the air on the way");
+        run(ctx, sent, key, port, Step.failing("player_walk_to", "{\"place\":" + place(ctx.abs(PILLAR_TOP)) + "}",
+                result -> ctx.assertTrue("wall".equals(text(result, "failed")) && result.has("stopped_at"),
+                        "a walk to the top of a pillar no way leads up stops beside it, a wall before it: " + result)));
+    }
+
+    /* The course the walk test walks, laid or, {@code clear}, taken away again. */
+    private static void course(final ClientTestContext ctx, final ServerLevel level, final boolean clear) {
+        final BlockState stone = clear ? Blocks.AIR.defaultBlockState() : Blocks.STONE.defaultBlockState();
+        for (int x = PLATFORM_FROM; x <= PLATFORM_TO; x++) {
+            for (int z = -1; z <= 1; z++) {
+                level.setBlockAndUpdate(ctx.abs(new BlockPos(x, 2, z)), stone);
+                level.setBlockAndUpdate(ctx.abs(new BlockPos(x, 3, z)), stone);
+            }
+        }
+        level.setBlockAndUpdate(ctx.abs(new BlockPos(PLATFORM_FROM - 1, 2, 0)), stone);
+        final BlockState stair = clear ? Blocks.AIR.defaultBlockState() : Blocks.OAK_STAIRS.defaultBlockState()
+                .setValue(StairBlock.FACING, Direction.EAST);
+        level.setBlockAndUpdate(ctx.abs(new BlockPos(PLATFORM_FROM - 2, 2, 0)), stair);
+        level.setBlockAndUpdate(ctx.abs(new BlockPos(PLATFORM_FROM - 1, 3, 0)), stair);
+        for (int z = -1; z <= 1; z += 2) {
+            level.setBlockAndUpdate(ctx.abs(DOOR.offset(0, 0, z)), stone);
+            level.setBlockAndUpdate(ctx.abs(DOOR.offset(0, 1, z)), stone);
+        }
+        level.setBlockAndUpdate(ctx.abs(DOOR.above(2)), stone);
+        if (clear) {
+            level.setBlockAndUpdate(ctx.abs(DOOR.above()), Blocks.AIR.defaultBlockState());
+            level.setBlockAndUpdate(ctx.abs(DOOR), Blocks.AIR.defaultBlockState());
+        } else {
+            final BlockState door = Blocks.OAK_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.WEST);
+            level.setBlock(ctx.abs(DOOR), door.setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER), Block.UPDATE_ALL);
+            level.setBlock(ctx.abs(DOOR.above()), door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER),
+                    Block.UPDATE_ALL);
+        }
+        for (int y = 2; y < PILLAR_TOP.getY(); y++) {
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(PILLAR_TOP.getX(), y, PILLAR_TOP.getZ())), stone);
+        }
     }
 
     /*
