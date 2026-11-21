@@ -54,6 +54,25 @@ public final class FormedPieceAim {
         return Optional.empty();
     }
 
+    /**
+     * The piece called {@code piece} of the formed model the block at {@code pos} is a block of, wherever in the
+     * model it stands; none for a model with no piece of that name, or a block of no formed model.
+     */
+    public static Optional<Aimed> named(final Level level, final BlockPos pos, final String piece) {
+        if (!(level.getBlockEntity(pos) instanceof IFormedPlaced placed)) {
+            return Optional.empty();
+        }
+        for (final FormedPlace place : placed.places()) {
+            final Optional<FormedShape> shape = FormedShapes.get(level, place.model());
+            final Optional<FormedPiece> found = shape.flatMap(each -> each.piece(piece));
+            if (found.isPresent()) {
+                return Optional.of(new Aimed(place.model(), piece, box(pos, place, shape.get().pieceBox(place,
+                        found.get()))));
+            }
+        }
+        return Optional.empty();
+    }
+
     /* The box {@code local} of the block at {@code pos}, as its model stands facing north, as the block stands. */
     private static AABB box(final BlockPos pos, final FormedPlace place, final double[] local) {
         final double[] low = new double[AXES];

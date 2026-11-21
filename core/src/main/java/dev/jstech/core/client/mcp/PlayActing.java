@@ -24,6 +24,9 @@ import dev.jstech.core.developer.mcp.McpTool;
 import dev.jstech.core.developer.mcp.McpWords;
 import dev.jstech.core.developer.mcp.WorldTools;
 import dev.jstech.core.developer.studio.RecordedTest;
+import dev.jstech.core.multiblock.shape.FormedPieceAim;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -38,6 +41,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -61,6 +66,11 @@ public final class PlayActing {
     /* The most a turn of the wheel may be asked to turn it, either way, in notches. */
     private static final int MOST_NOTCHES = 100;
     /* What the point a tool looks at is, for the tools that look at a block. */
+    /* What a look by name asks for, how far round the player it looks, in blocks, and how long it may take. */
+    private static final String PIECE = "piece";
+    private static final String ENTITY_TYPE = "entity_type";
+    private static final int SEARCH = 24;
+    private static final int LOOK_TICKS = 40;
     private static final String AT_ABOUT = "A point of the block to look at, in sixteenths of it from its lowest "
             + "corner, as a model's coordinates count (0 to 16 each): a port or a button on a face; with a face, the "
             + "point is on that face. Its middle, or the face's, when left out.";
@@ -89,11 +99,16 @@ public final class PlayActing {
                             return done("sneaking", call.flag("down", true));
                         })),
                 new McpTool("player_look_at", "Turns the player to look at a block, the middle of it, of one of its "
-                        + "faces or a point of it, or at an entity, as the mouse turns them.", McpSchema.object()
+                        + "faces or a point of it, at an entity, as the mouse turns them; or at the nearest piece of "
+                        + "a formed model by its name (a seat, a console, a door, as player_state names a piece), "
+                        + "at a point of it the look meets it at, or at the nearest entity of a type.",
+                        McpSchema.object()
                         .place(Play.PLACE, "The block.", false).oneOf("face", "Which face of it.", faces(), false)
                         .place(Play.AT, AT_ABOUT, false)
                         .whole("entity", "An entity's id, as player_state gives it.", 0, Integer.MAX_VALUE, false)
-                        .build(), McpPermission.ACT, call -> Play.withPlayer(player -> look(player, call))),
+                        .words(PIECE, "A piece of a formed model, by the name its model gives it.", false)
+                        .words(ENTITY_TYPE, "A type of entity, as minecraft:pig.", false)
+                        .build(), McpPermission.ACT, PlayActing::lookAt),
                 new McpTool("hotbar_select", "Picks a slot of the hotbar, as its number key does.", McpSchema.object()
                         .whole("slot", "The slot, from 0 at the left.", 0, SLOTS - 1, true).build(), McpPermission.ACT,
                         call -> Play.withPlayer(player -> select(call))),
@@ -267,6 +282,107 @@ public final class PlayActing {
                 game.options.keyJump.setDown(false);
             }
         });
+    }
+
+    /* A look at a piece by its name takes a few ticks, the game picking what is looked at after each turn. */
+    private static CompletableFuture<McpResult> lookAt(final McpCall call) {
+        final Optional<String> piece = call.text(PIECE);
+        if (piece.isPresent()) {
+            return lookAtPiece(call, piece.get());
+        }
+        final Optional<String> type = call.text(ENTITY_TYPE);
+        return Play.withPlayer(player -> type.isPresent() ? lookAtType(player, type.get()) : look(player, call));
+    }
+
+    /*
+     * Looks at the nearest piece called {@code name}: at its middle and then its faces' middles, a point a tick, until
+     * the game finds the look on the piece. One past the player's reach is looked at its middle, and said to be so.
+     */
+    private static CompletableFuture<McpResult> lookAtPiece(final McpCall call, final String name) {
+        final List<Vec3> points = new ArrayList<>();
+        final FormedPieceAim.Aimed[] target = new FormedPieceAim.Aimed[1];
+        return PlayTasks.run(call, LOOK_TICKS, (game, tick) -> {
+            final LocalPlayer player = game.player;
+            if (player == null) {
+                return Optional.of(McpResult.failed(McpTexts.NO_WORLD.text()));
+            }
+            if (tick == 1) {
+                final List<FormedPieceAim.Aimed> near = PlayPieces.near(player.level(), player.getEyePosition(), name,
+                        SEARCH);
+                if (near.isEmpty()) {
+                    final JsonObject out = new JsonObject();
+                    out.addProperty(PlayAim.FAILED, "none_near");
+                    return Optional.of(McpResult.failed(McpTexts.NONE_NEAR.with(name, SEARCH)).with(out));
+                }
+                target[0] = near.getFirst();
+                points.addAll(PlayPieces.points(target[0].box(), player.getEyePosition()));
+            }
+            final double distance = Math.sqrt(target[0].box().distanceToSqr(player.getEyePosition()));
+            if (distance > player.blockInteractionRange()) {
+                Play.lookAt(player, points.getFirst());
+                final JsonObject out = seen(target[0]);
+                out.addProperty("within_reach", false);
+                out.addProperty("distance", Math.round(distance * 10) / 10.0);
+                return Optional.of(McpResult.json(out));
+            }
+            final int point = (tick - 1) / 2;
+            if (tick % 2 == 1) {
+                if (point >= points.size()) {
+                    final JsonObject out = seen(target[0]);
+                    out.addProperty(PlayAim.FAILED, "out_of_sight");
+                    out.add("in_the_way", PlayAim.landedOn(game, player));
+                    return Optional.of(McpResult.failed(McpTexts.OUT_OF_SIGHT.with(name)).with(out));
+                }
+                Play.lookAt(player, points.get(point));
+                return Optional.empty();
+            }
+            // The view turned last tick: on the piece, the look is done; else the next point is tried.
+            final Optional<JsonObject> looked = PlaySeeing.lookedAtBlock(game, player);
+            final JsonObject found = looked.map(block -> block.getAsJsonObject("piece")).orElse(null);
+            if (found != null && name.equals(found.get("name").getAsString())
+                    && target[0].model().toString().equals(found.get("model").getAsString())) {
+                final JsonObject out = seen(target[0]);
+                out.addProperty("within_reach", true);
+                return Optional.of(McpResult.json(out));
+            }
+            return Optional.empty();
+        });
+    }
+
+    private static McpResult lookAtType(final LocalPlayer player, final String type) {
+        final Optional<EntityType<?>> kind = EntityType.byString(type);
+        if (kind.isEmpty()) {
+            return McpCall.wrong(ENTITY_TYPE, McpWords.AN_ID.text());
+        }
+        final Vec3 eye = player.getEyePosition();
+        final Optional<Entity> nearest = player.level().getEntities((Entity) player, new AABB(eye, eye).inflate(SEARCH),
+                entity -> entity.getType() == kind.get()).stream().min(Comparator.comparingDouble(entity ->
+                entity.distanceToSqr(eye)));
+        if (nearest.isEmpty()) {
+            final JsonObject out = new JsonObject();
+            out.addProperty(PlayAim.FAILED, "none_near");
+            return McpResult.failed(McpTexts.NONE_NEAR.with(type, SEARCH)).with(out);
+        }
+        Play.lookAt(player, nearest.get().getEyePosition());
+        final JsonObject out = new JsonObject();
+        out.addProperty("looking", true);
+        out.addProperty("entity", nearest.get().getId());
+        return McpResult.json(out);
+    }
+
+    /* The piece looked at, as an answer gives it: its model, its name and the box round it in the world. */
+    private static JsonObject seen(final FormedPieceAim.Aimed piece) {
+        final JsonObject out = new JsonObject();
+        out.addProperty("looking", true);
+        final JsonObject found = new JsonObject();
+        found.addProperty("model", piece.model().toString());
+        found.addProperty("name", piece.piece());
+        final JsonObject box = new JsonObject();
+        box.add("from", PlaySeeing.point(new Vec3(piece.box().minX, piece.box().minY, piece.box().minZ)));
+        box.add("to", PlaySeeing.point(new Vec3(piece.box().maxX, piece.box().maxY, piece.box().maxZ)));
+        found.add("box", box);
+        out.add(PIECE, found);
+        return out;
     }
 
     private static McpResult look(final LocalPlayer player, final McpCall call) {

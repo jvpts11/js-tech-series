@@ -188,7 +188,7 @@ public final class PlaySeeing {
     }
 
     /* A point as JSON, to a hundredth of a block. */
-    private static JsonObject point(final Vec3 at) {
+    static JsonObject point(final Vec3 at) {
         final JsonObject out = new JsonObject();
         out.addProperty("x", Math.round(at.x * 100) / 100.0);
         out.addProperty("y", Math.round(at.y * 100) / 100.0);

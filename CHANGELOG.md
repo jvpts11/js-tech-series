@@ -691,6 +691,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a formed model a point of a block is on, any mod's model in the world or aboard a moving structure: the model, the
   piece by the name its model gives it, and the box round the whole piece; `FormedShape.pieceBox` is that box in a
   block's own space. Experimental.
+- (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
+  of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
+  stands. Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -2131,6 +2134,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   piece of a formed model drawn there, a seat, a console or a door of any mod's model, with the model and the box
   round the whole piece in the world; and a block aboard a moving structure is told where it is in the world, the
   point aimed at, and the structure and the block's place aboard.
+- (Core) An agent looks at what is drawn by its name: the MCP tool `player_look_at` turns the player to the nearest
+  piece of a formed model of a given name, a seat, a console or a door, in the world or aboard a moving structure,
+  at a point of it the look meets it at, the piece's middle or a face of its box, and says so, or why no point of it
+  can be seen; and to the nearest entity of a given type.
 - (Core) Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside

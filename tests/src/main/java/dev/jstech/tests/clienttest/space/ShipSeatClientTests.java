@@ -8,7 +8,15 @@
 package dev.jstech.tests.clienttest.space;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import dev.jstech.core.client.mcp.PlaySeeing;
+import dev.jstech.core.developer.mcp.McpCall;
+import dev.jstech.core.developer.mcp.McpPermission;
+import dev.jstech.core.developer.mcp.McpResult;
+import dev.jstech.core.developer.mcp.McpSide;
+import dev.jstech.core.developer.mcp.McpTool;
+import dev.jstech.core.developer.mcp.McpTools;
+import dev.jstech.core.developer.mcp.PairedClients;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructure;
@@ -27,6 +35,7 @@ import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -75,6 +84,8 @@ public final class ShipSeatClientTests {
     private static final Vec3 SEAT_BACK = new Vec3(-0.1, 1.9, 4.4);
     /* The seat's half over the aisle, drawn beside the block it works by, over no block. */
     private static final Vec3 OVER_THE_AISLE = new Vec3(0.25, 1.4, 4.2);
+    /* Away from the seat, towards the back of the cockpit, where an agent's look starts. */
+    private static final Vec3 LOOK_AWAY = new Vec3(0.5, 2.2, 7.5);
     private static final double ROOM_X = 1.6;
     private static final double FLOOR = 0.3;
     private static final double ROOF = 2.9;
@@ -186,7 +197,32 @@ public final class ShipSeatClientTests {
                     + " the player aims at a block: " + ctx.mc().hitResult);
             ctx.mc().gameMode.useItemOn(ctx.player(), InteractionHand.MAIN_HAND, (BlockHitResult) ctx.mc().hitResult);
         }).thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity, ARRIVE,
-                "aimed at the seat's half over the aisle, the player to sit in it");
+                "aimed at the seat's half over the aisle, the player to sit in it")
+                .then(SETTLE, () -> crouch.setDown(true))
+                .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,
+                        "the pilot to get up again")
+                .then(SETTLE, () -> crouch.setDown(false));
+        // An agent sits in it by the piece's name alone: looking away from it, it looks at the seat, then uses it.
+        look(ctx, plan, BEHIND_THE_SEAT, LOOK_AWAY);
+        final CompletableFuture<?>[] called = new CompletableFuture<?>[1];
+        ctx.then(SETTLE, () -> called[0] = agent("player_look_at", "{\"piece\":\"seat\"}"))
+                .thenWaitUntil(() -> called[0].isDone(), ARRIVE, "the agent's look to end")
+                .then(0, () -> {
+                    final McpResult looked = (McpResult) called[0].join();
+                    ctx.assertTrue(!looked.error() && looked.structured().get("within_reach").getAsBoolean(),
+                            "the agent looks at the seat by its name: " + looked.content());
+                    called[0] = agent("player_use", "{}");
+                })
+                .thenWaitUntil(() -> called[0].isDone(), ARRIVE, "the agent's use to end")
+                .thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity, ARRIVE,
+                        "looked at by its name and used, the seat to sit the player");
+    }
+
+    /* Calls the MCP tool {@code name} of the player's game with {@code args}, in the game, as a client let act. */
+    private static CompletableFuture<McpResult> agent(final String name, final String args) {
+        final McpTool tool = McpTools.find(McpSide.GAME, name).orElseThrow().tool();
+        final PairedClients.PairedClient client = new PairedClients().pair("test", "1", McpPermission.ACT, null, 0);
+        return tool.handler().run(new McpCall(client, tool, JsonParser.parseString(args).getAsJsonObject()));
     }
 
     /* The player, flying, their eyes at {@code eye} of the cockpit's model, looking at {@code target} of it. */

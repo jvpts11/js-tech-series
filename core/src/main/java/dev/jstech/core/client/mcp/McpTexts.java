@@ -74,6 +74,11 @@ public final class McpTexts {
     public static final TextKey KEPT_FROM_BREAKING = TextKey.of("jscore.mcp.kept_from_breaking",
             "The game mode keeps the player from breaking %s here.");
     public static final TextKey UNBREAKABLE = TextKey.of("jscore.mcp.unbreakable", "%s cannot be broken.");
+    /* What was looked for, a piece's name or a type of entity, and how far round the player, in blocks. */
+    public static final TextKey NONE_NEAR = TextKey.of("jscore.mcp.none_near", "No %s is within %s blocks.");
+    /* The piece's name. */
+    public static final TextKey OUT_OF_SIGHT = TextKey.of("jscore.mcp.out_of_sight",
+            "No point of the nearest %s can be seen from here: something is in the way.");
     public static final TextKey OWN_WORLD_ONLY = TextKey.of("jscore.mcp.own_world_only",
             "Only a world of the player's own, which this game runs, is saved and opened again.");
     /* What the tests were asked by. */

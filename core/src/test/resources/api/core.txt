@@ -11618,6 +11618,7 @@ stable 4
 38 dev.jstech.core.multiblock.shape.FormedPiece  static final double MARGIN
 80 dev.jstech.core.multiblock.shape.FormedPieceAim  type final class
 80 dev.jstech.core.multiblock.shape.FormedPieceAim  static Optional<Aimed> at(Level, BlockPos, Vec3)
+81 dev.jstech.core.multiblock.shape.FormedPieceAim  static Optional<Aimed> named(Level, BlockPos, String)
 80 dev.jstech.core.multiblock.shape.FormedPieceAim.Aimed  type record(ResourceLocation model, String piece, AABB box)
 39 dev.jstech.core.multiblock.shape.FormedPieceUses  type final class
 39 dev.jstech.core.multiblock.shape.FormedPieceUses  static Optional<BlockPos> worksBy(Level, BlockPos, Vec3)
