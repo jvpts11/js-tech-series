@@ -2116,8 +2116,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Every MCP call tells the time and what it changed: each tool's answer carries the game's tick, how many ticks
   went by while it ran, and every reading of the game that changed meanwhile, with what it was and what it is. On the
   player's game: whether it is paused or its ticking frozen, the screen open, what the crosshair is on, what the
-  player rides, their world and block, the slot held and its item, their health and the newest line of chat; on a
-  server, whether its ticking is frozen. The game goes on between an agent's calls, and now it knows how much did.
+  player rides, their world and block, the slot held and its item and their health, with how far the player went
+  and the lines of chat that came; on a server, whether its ticking is frozen. The game goes on between an agent's
+  calls, and now it knows how much did.
 - (Core) Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside

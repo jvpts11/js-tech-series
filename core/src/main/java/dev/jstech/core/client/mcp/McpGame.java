@@ -352,5 +352,10 @@ public final class McpGame {
         public JsonObject glimpse() {
             return PlayChanges.glimpse();
         }
+
+        @Override
+        public JsonObject told(final JsonObject before, final JsonObject after) {
+            return PlayChanges.told(before, after);
+        }
     }
 }

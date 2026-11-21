@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -48,6 +49,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -79,6 +81,9 @@ public final class McpPlayClientTests {
     private static final float CLOSE = 0.03F;
     /* How near, in blocks, the point looked at must be to the one asked for. */
     private static final double AIMED = 0.02;
+    /* The line of chat an agent's wait hears, and how long after the call began it comes, in milliseconds. */
+    private static final String HEARD = "heard by the agent";
+    private static final long HEARD_AFTER = 500;
     private static final String MACHINES = AudioChannels.MACHINES.id().toString();
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final String INITIALIZE = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":"
@@ -127,7 +132,15 @@ public final class McpPlayClientTests {
                 && result.getAsJsonObject(McpChanges.CHANGED).getAsJsonObject("screen").get(McpChanges.TO)
                 .isJsonNull(), "the answer tells the game's tick and that the call closed the screen: " + result)));
         steps.add(new Step("player_walk_to", "{\"place\":" + place(walkTo) + "}", result -> ctx.assertTrue(
-                result.has("arrived"), "the player walks there: " + result)));
+                result.has("arrived") && result.has("moved") && result.get("moved").getAsDouble() > 0,
+                "the player walks there, and the answer says how far: " + result)));
+        // A line of chat that comes while the agent waits for it, well after the call began.
+        steps.add(new Step("wait_until", () -> {
+            CompletableFuture.delayedExecutor(HEARD_AFTER, TimeUnit.MILLISECONDS).execute(() -> ctx.server()
+                    .execute(() -> ctx.serverPlayer().sendSystemMessage(Component.literal(HEARD))));
+            return "{\"chat\":\"" + HEARD + "\",\"ticks\":200}";
+        }, result -> ctx.assertTrue(result.has("chat_new") && result.getAsJsonArray("chat_new").toString()
+                .contains(HEARD), "the answer gives the line of chat that came while the call ran: " + result)));
         steps.add(new Step("world_give", "{\"item\":\"minecraft:stone\",\"count\":4}", result -> { }));
         final int[] stone = {-1};
         steps.add(new Step("inventory_read", "{}", result -> {

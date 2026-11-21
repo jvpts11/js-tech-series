@@ -275,7 +275,7 @@ public final class McpProtocol {
         } else {
             this.log.finish(number, result.error() ? McpWords.FAILED : McpWords.DONE, result.why());
         }
-        return reply(200, JsonRpc.result(call.id(), result.with(McpChanges.told(before, this.glimpse())).toJson()));
+        return reply(200, JsonRpc.result(call.id(), result.with(this.told(before)).toJson()));
     }
 
     /* The game's glimpse, or none when reading it failed: a call is answered whatever became of its glimpse. */
@@ -284,6 +284,16 @@ public final class McpProtocol {
             return this.host.glimpse();
         } catch (final RuntimeException failed) {
             this.logger.warn("The game could not be glimpsed round an MCP call", failed);
+            return new JsonObject();
+        }
+    }
+
+    /* What a call's answer tells of the game since {@code before}, or nothing when telling it failed. */
+    private JsonObject told(final JsonObject before) {
+        try {
+            return this.host.told(before, this.glimpse());
+        } catch (final RuntimeException failed) {
+            this.logger.warn("The game could not tell what an MCP call changed", failed);
             return new JsonObject();
         }
     }

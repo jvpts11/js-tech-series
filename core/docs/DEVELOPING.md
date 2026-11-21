@@ -278,8 +278,10 @@ what changed: `game_tick` (the game's tick after the call), `game_ticks_taken` (
 `changed`, each reading of the game that is not what it was before the call, with its `from` and its `to`. The
 readings of the player's game are `paused`, `frozen` (its ticking frozen with `/tick freeze`), `screen`,
 `looking_at_block`, `looking_at_entity`, `riding`, `dimension`, `place` (the block the player stands in), `slot`,
-`held`, `health` and `chat_newest`, named as `player_state` names them; a server's is `frozen`. A tool's own fields
-come first and keep their values: these are added beside them, or are the whole object of a tool that found none.
+`held` and `health`, named as `player_state` names them; a server's is `frozen`. On the player's game the answer
+also gives `moved`, how many blocks the player went, and `chat_new`, the lines of chat that came while the call ran.
+A tool's own fields come first and keep their values: these are added beside them, or are the whole object of a tool
+that found none.
 
 A dedicated server has an MCP server of its own, on the server's computer (`developer.server_mcp_port`, 25598): an
 operator in the game turns it on with `/jstech mcp server on`, never the console; a client that asks is asked about

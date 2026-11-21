@@ -53,6 +53,15 @@ public interface IMcpHost {
     }
 
     /**
+     * What a call's answer tells from the glimpse {@code before} the call and the one {@code after} it: the tick and
+     * what changed ({@link McpChanges#told}), to which a game may add what only it can tell, as the lines of chat
+     * that came while the call ran.
+     */
+    default JsonObject told(final JsonObject before, final JsonObject after) {
+        return McpChanges.told(before, after);
+    }
+
+    /**
      * What the player answered a pairing.
      *
      * @param permission what the client may do, or none when it was refused
