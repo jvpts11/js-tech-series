@@ -5350,6 +5350,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) An airlock's boarding stair, and the Side Door hold's own, keep their climber between their rails, as they
   are drawn: the outer door's opening, a block wide, lets a player through only near its middle, and one who went up
   the stair along its edge, the rails nothing to the touch, stopped at the top against the door's frame.
+- (Space) ORBIT hands a ship back level and steady on the plane of the low orbits, not as its nose still swings up
+  to level: let go turning, the nose went on up to three degrees past it.
+- (Space) A ship waiting for the land ahead of it to load waits as it was, its turn, pitch and speed held: they went on
+  gathering while it stood, unseen, to swing it all at once as it went on.
 - (Core) Multiblock Builder: aimed at a multiblock standing formed, it is built: nothing to place or take out, BUILT,
   and no ghosts shown. A dock's floor, cradle and crane bridge, moved away as it opens, were taken for missing, and
   OK would have laid them back into the open dock.

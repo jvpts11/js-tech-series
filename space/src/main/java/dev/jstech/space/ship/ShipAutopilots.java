@@ -55,6 +55,11 @@ public final class ShipAutopilots {
     private static final double LEAST_SETTLE = 2 * PITCH_OFF;
     private static final double ON_THE_PLANE = 2;
     /*
+     * How fast its nose may still be going up or down as ORBIT hands the helm back, in degrees a second: what it goes
+     * on as that falls away, a quarter of a degree at most, keeps it level.
+     */
+    private static final double STEADY = 10;
+    /*
      * The fastest LAND closes on its spot or a runway's gate, in metres a second: the air's cruise, in every world.
      * The throttle it holds for a speed is that speed's share of the cruise in the air the ship flies in.
      */
@@ -246,11 +251,12 @@ public final class ShipAutopilots {
     }
 
     /**
-     * Whether ORBIT is done with a ship in its system's space, its nose at {@code pitch} degrees, {@code over} metres
-     * over the plane of the low orbits: level on the plane, where it hands the helm back.
+     * Whether ORBIT is done with a ship in its system's space, its nose at {@code pitch} degrees and going up at
+     * {@code pitchRate} degrees a second, {@code over} metres over the plane of the low orbits: level and steady on
+     * the plane, where it hands the helm back. Let go with its nose still swinging, the nose would go on past level.
      */
-    public static boolean settled(final double pitch, final double over) {
-        return Math.abs(over) <= ON_THE_PLANE && Math.abs(pitch) <= PITCH_OFF;
+    public static boolean settled(final double pitch, final double pitchRate, final double over) {
+        return Math.abs(over) <= ON_THE_PLANE && Math.abs(pitch) <= PITCH_OFF && Math.abs(pitchRate) <= STEADY;
     }
 
     /**

@@ -373,8 +373,10 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             holdAhead(level, now, way, ahead * AHEAD);
         }
         if (!SpaceAhead.ready(level, now.x() + way[0] * ahead, now.y(), now.z() + way[2] * ahead)) {
-            // Land not going yet would freeze it there: it waits on its way, as it flew, till the land goes.
-            return new Step(now, flying(next.state(), this.grounded));
+            // Land not going yet would freeze it there: it waits on its way, as it flew, till the land goes. Nothing of
+            // its flight goes on meanwhile: a turn or a pitch held while it waited would have gathered unseen, to
+            // swing it all at once as it went on.
+            return new Step(now, flying(this.state, this.grounded));
         }
         return flown(level, body, now, turned, way[0] * ahead, way[1] * ahead + up, way[2] * ahead, next.state(),
                 gentle);
@@ -518,7 +520,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                     .map(runway -> ShipAutopilots.onRunway(spot.x - now.x(), spot.z - now.z(), runway))
                     .orElse(Math.hypot(spot.x - now.x(), spot.z - now.z()) <= ARRIVED)).orElse(true);
             case ORBIT -> SystemSpaces.systemOf(level.dimension()).isPresent()
-                    && ShipAutopilots.settled(pitch, now.y() - SystemLayout.ORBIT_Y);
+                    && ShipAutopilots.settled(pitch, this.state.pitchRate(), now.y() - SystemLayout.ORBIT_Y);
             case DOCK -> false;
         };
     }

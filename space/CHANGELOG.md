@@ -1213,6 +1213,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - An airlock's boarding stair, and the Side Door hold's own, keep their climber between their rails, as they
   are drawn: the outer door's opening, a block wide, lets a player through only near its middle, and one who went up
   the stair along its edge, the rails nothing to the touch, stopped at the top against the door's frame.
+- ORBIT hands a ship back level and steady on the plane of the low orbits, not as its nose still swings up
+  to level: let go turning, the nose went on up to three degrees past it.
+- A ship waiting for the land ahead of it to load waits as it was, its turn, pitch and speed held: they went on
+  gathering while it stood, unseen, to swing it all at once as it went on.
 
 ## [0.5.3a] - 2026-11-04
 

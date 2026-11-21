@@ -37,6 +37,8 @@ class ShipAutopilotsTest {
     private static final ShipFlightModel.State CRUISING = new ShipFlightModel.State(30, 0, 0.75, 0, 0);
     /* The height of the plane of the low orbits in a system's space. */
     private static final double PLANE = 64;
+    /* A nose well down, in degrees, as a steep way down onto the plane leaves it. */
+    private static final double NOSE_WELL_DOWN = -5;
     private static final double[] UP = {0, 1, 0};
     private static final double[] STILL = {0, 0, 0};
     private static final int TICKS_A_SECOND = 20;
@@ -83,12 +85,8 @@ class ShipAutopilotsTest {
         // Just over the line in space, climbing at the climb's angle, at the speed it climbed at: no air, no pull.
         final Flight flight = new Flight(new ShipFlightModel.State(190, 0, 1, 0, 0), 0, 70, 0, 0,
                 ShipAutopilots.CLIMB_PITCH, false);
-        int ticks = 0;
-        while (!ShipAutopilots.settled(flight.pitch, flight.y - PLANE) && ticks < 120 * TICKS_A_SECOND) {
-            flight.flyInSpace(ShipAutopilots.settle(flight.pitch, flight.y - PLANE));
-            ticks++;
-        }
-        assertTrue(ShipAutopilots.settled(flight.pitch, flight.y - PLANE), "levels on the plane: " + flight);
+        final int ticks = settleOntoThePlane(flight);
+        assertTrue(settled(flight), "levels on the plane: " + flight);
         assertTrue(ticks < 60 * TICKS_A_SECOND, "within a minute: " + ticks / TICKS_A_SECOND + " s");
         assertTrue(flight.state.speed() > 100, "still flying on: " + flight);
     }
@@ -97,13 +95,37 @@ class ShipAutopilotsTest {
     void settle_flownFromLevelJustOverThePlaneComesDownOntoIt() {
         // Over the line already level, five metres over the plane, as a climb out of the Moon once left it.
         final Flight flight = new Flight(new ShipFlightModel.State(120, 0, 1, 0, 0), 0, PLANE + 5, 0, 0, 0, false);
+        final int ticks = settleOntoThePlane(flight);
+        assertTrue(settled(flight), "levels on the plane: " + flight);
+        assertTrue(ticks < 60 * TICKS_A_SECOND, "within a minute: " + ticks / TICKS_A_SECOND + " s");
+    }
+
+    @Test
+    void settled_handsTheHelmBackOnlyWithTheNoseSteadySoItStaysLevel() {
+        // Come onto the plane with its nose well down, as from a steep way down it does: ORBIT pitches it up hard.
+        final Flight flight = new Flight(new ShipFlightModel.State(120, 0, 1, 0, 0), 0, PLANE + 1, 0, 0,
+                NOSE_WELL_DOWN, false);
+        settleOntoThePlane(flight);
+        assertTrue(settled(flight), "levels on the plane: " + flight);
+        // The helm handed back, nobody holding anything: its nose goes on only what it was still turning.
+        for (int tick = 0; tick < 2 * TICKS_A_SECOND; tick++) {
+            flight.flyInSpace(ShipFlightModel.Held.NOBODY);
+        }
+        assertTrue(Math.abs(flight.pitch) <= LEVEL, "let go, its nose stays level: " + flight.pitch);
+    }
+
+    /* Flies {@code flight} in space as ORBIT does till it is settled on the plane, two minutes at most; the ticks. */
+    private static int settleOntoThePlane(final Flight flight) {
         int ticks = 0;
-        while (!ShipAutopilots.settled(flight.pitch, flight.y - PLANE) && ticks < 120 * TICKS_A_SECOND) {
+        while (!settled(flight) && ticks < 120 * TICKS_A_SECOND) {
             flight.flyInSpace(ShipAutopilots.settle(flight.pitch, flight.y - PLANE));
             ticks++;
         }
-        assertTrue(ShipAutopilots.settled(flight.pitch, flight.y - PLANE), "levels on the plane: " + flight);
-        assertTrue(ticks < 60 * TICKS_A_SECOND, "within a minute: " + ticks / TICKS_A_SECOND + " s");
+        return ticks;
+    }
+
+    private static boolean settled(final Flight flight) {
+        return ShipAutopilots.settled(flight.pitch, flight.state.pitchRate(), flight.y - PLANE);
     }
 
     @Test
