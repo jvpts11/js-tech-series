@@ -174,6 +174,25 @@ public final class FormedShape {
     }
 
     /**
+     * The box round {@code piece} in the space of the block {@code place}, as the model stands facing north: its
+     * lowest corner's three numbers, then its highest's, reaching out of the block where the piece does.
+     */
+    public double[] pieceBox(final FormedPlace place, final FormedPiece piece) {
+        final double[] box = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE,
+            -Double.MAX_VALUE, -Double.MAX_VALUE};
+        final double[] block = {this.origin[0] + MeshCells.x(place.cell()), this.origin[1]
+            + MeshCells.y(place.cell()), this.origin[2] + MeshCells.z(place.cell())};
+        for (final float[] solid : piece.solids()) {
+            for (int k = 0; k < solid.length; k++) {
+                final double value = solid[k] - block[k % 3];
+                box[k % 3] = Math.min(box[k % 3], value);
+                box[3 + k % 3] = Math.max(box[3 + k % 3], value);
+            }
+        }
+        return box;
+    }
+
+    /**
      * The piece the point {@code at} of the block {@code place} is on; none where no piece holds it.
      *
      * @param at a point of the block in its own space, as the model stands facing north, from 0 to 1 along each axis

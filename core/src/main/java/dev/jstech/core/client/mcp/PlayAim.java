@@ -18,7 +18,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -113,18 +112,14 @@ final class PlayAim {
         return Optional.empty();
     }
 
-    /** What the crosshair is on now: a block and its place, an entity, or nothing (null). */
+    /** What the crosshair is on now, as player_state tells it: a block, an entity, or nothing (null). */
     static JsonElement landedOn(final Minecraft game, final LocalPlayer player) {
-        if (game.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
-            return asked(hit.getBlockPos(), blockOf(player, hit.getBlockPos()));
+        final Optional<JsonObject> block = PlaySeeing.lookedAtBlock(game, player);
+        if (block.isPresent()) {
+            return block.get();
         }
-        if (game.hitResult instanceof EntityHitResult hit) {
-            final JsonObject out = new JsonObject();
-            out.addProperty("entity", BuiltInRegistries.ENTITY_TYPE.getKey(hit.getEntity().getType()).toString());
-            out.add(Play.PLACE, Play.place(hit.getEntity().blockPosition()));
-            return out;
-        }
-        return JsonNull.INSTANCE;
+        final Optional<JsonObject> entity = PlaySeeing.lookedAtEntity(game);
+        return entity.isPresent() ? entity.get() : JsonNull.INSTANCE;
     }
 
     private static JsonObject asked(final BlockPos pos, final String block) {

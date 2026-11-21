@@ -21,6 +21,10 @@ import dev.jstech.core.developer.mcp.McpSchema;
 import dev.jstech.core.developer.mcp.McpTool;
 import dev.jstech.core.developer.mcp.McpWords;
 import dev.jstech.core.developer.mcp.PlayerText;
+import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.LevelMovingStructures;
+import dev.jstech.core.moving.StructureFrame;
+import dev.jstech.core.multiblock.shape.FormedPieceAim;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
@@ -39,9 +43,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -56,6 +63,10 @@ public final class PlaySeeing {
     static final String LOOKING_AT_ENTITY = "looking_at_entity";
     static final String SCREEN = "screen";
     private static final int MOST_RADIUS = 8;
+    /* How far inside the face met a hit aboard a moving structure is read, for the world's block it stands in. */
+    private static final double INSIDE = 0.01;
+    /* Within this of its block's middle, squared, the point a hit met is in that block's own space. */
+    private static final double NEAR_ITS_PLACE = 4.0;
     private static final int MOST_BLOCKS = 4_000;
     private static final int MOST_LINES = 300;
     private static final int PICTURE_WIDTH = 960;
@@ -121,17 +132,68 @@ public final class PlaySeeing {
         return McpResult.json(out);
     }
 
-    /** The block the crosshair is on: its place, its id and the face; none when it is on no block. */
-    static Optional<JsonObject> lookedAtBlock(final Minecraft game, final LocalPlayer player) {
+    /**
+     * The block the crosshair is on: its place, its id and the face; the piece of a formed model drawn there, its
+     * model, its name and the box round it in the world; and for a block aboard a moving structure, its place in the
+     * world, the point aimed at, and the structure and its place aboard. None when it is on no block. Read on the
+     * game's own thread; public for the tests that check what an agent is told.
+     */
+    public static Optional<JsonObject> lookedAtBlock(final Minecraft game, final LocalPlayer player) {
         if (!(game.hitResult instanceof BlockHitResult hit) || hit.getType() != BlockHitResult.Type.BLOCK) {
             return Optional.empty();
         }
+        final Level level = player.level();
+        final BlockPos pos = hit.getBlockPos();
+        final IStructureBody body = LevelMovingStructures.anyLoaded() ? LevelMovingStructures.of(level)
+                .atYard(pos.getX(), pos.getZ()) : null;
+        final StructureFrame frame = body == null ? null : body.aimFrame();
+        // Aboard a moving structure the hit is the block's place in its yard, and the point met in the yard's space
+        // or the world's, as the aim found it: the one near the place is the yard's.
+        final Vec3 met = hit.getLocation();
+        final boolean metInYard = frame != null && met.distanceToSqr(Vec3.atCenterOf(pos)) < NEAR_ITS_PLACE;
+        final Vec3 yardAt = frame == null || metInYard ? met : new Vec3(frame.yardX(met.x, met.y, met.z),
+                frame.yardY(met.x, met.y, met.z), frame.yardZ(met.x, met.y, met.z));
         final JsonObject looked = new JsonObject();
-        looked.add(Play.PLACE, Play.place(hit.getBlockPos()));
-        looked.addProperty("block", BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(hit.getBlockPos())
-                .getBlock()).toString());
+        if (frame == null) {
+            looked.add(Play.PLACE, Play.place(pos));
+        } else {
+            final Vec3 at = metInYard ? new Vec3(frame.worldX(met.x, met.y, met.z), frame.worldY(met.x, met.y, met.z),
+                    frame.worldZ(met.x, met.y, met.z)) : met;
+            // A little inside the face met is the world's block it stands in now.
+            final Vec3 in = yardAt.subtract(Vec3.atLowerCornerOf(hit.getDirection().getNormal()).scale(INSIDE));
+            looked.add(Play.PLACE, Play.place(BlockPos.containing(frame.worldX(in.x, in.y, in.z), frame.worldY(in.x,
+                    in.y, in.z), frame.worldZ(in.x, in.y, in.z))));
+            looked.add("at", point(at));
+            final JsonObject aboard = new JsonObject();
+            aboard.addProperty("structure", body.id().value().toString());
+            aboard.add(Play.PLACE, Play.place(pos));
+            looked.add("aboard", aboard);
+        }
+        looked.addProperty("block", BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString());
         looked.addProperty("face", hit.getDirection().getSerializedName());
+        FormedPieceAim.at(level, pos, yardAt).ifPresent(aimed -> {
+            final JsonObject piece = new JsonObject();
+            piece.addProperty("model", aimed.model().toString());
+            piece.addProperty("name", aimed.piece());
+            final AABB box = aimed.box();
+            final double[] world = frame == null ? new double[] {box.minX, box.minY, box.minZ, box.maxX, box.maxY,
+                box.maxZ} : frame.worldBox(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ);
+            final JsonObject drawn = new JsonObject();
+            drawn.add("from", point(new Vec3(world[0], world[1], world[2])));
+            drawn.add("to", point(new Vec3(world[3], world[4], world[5])));
+            piece.add("box", drawn);
+            looked.add("piece", piece);
+        });
         return Optional.of(looked);
+    }
+
+    /* A point as JSON, to a hundredth of a block. */
+    private static JsonObject point(final Vec3 at) {
+        final JsonObject out = new JsonObject();
+        out.addProperty("x", Math.round(at.x * 100) / 100.0);
+        out.addProperty("y", Math.round(at.y * 100) / 100.0);
+        out.addProperty("z", Math.round(at.z * 100) / 100.0);
+        return out;
     }
 
     /** The entity the crosshair is on, or none. */

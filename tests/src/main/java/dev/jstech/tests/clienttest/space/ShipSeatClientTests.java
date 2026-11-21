@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import com.google.gson.JsonObject;
+import dev.jstech.core.client.mcp.PlaySeeing;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructure;
@@ -35,6 +37,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -59,6 +62,8 @@ public final class ShipSeatClientTests {
     private static final int SETTLE = 20;
     private static final double EYE = 1.62;
     private static final String COCKPIT = "small_orbiter_cockpit";
+    /* How far past the seat's box, as an agent is told it to a hundredth, the point aimed at may lie. */
+    private static final double BOX_SLACK = 0.05;
     /*
      * Where the player looks from, in the cockpit's model: over the canopy, outside; and standing behind the seat; and
      * at what: the seat's back. The ship's inside the pilot gets up in, from the cockpit's console to the end of the
@@ -142,6 +147,23 @@ public final class ShipSeatClientTests {
                     || FormedPieceUses.worksBy(ctx.mc().level, hit.getBlockPos(), hit.getLocation())
                     .filter(seat[0]::equals).isPresent()), "from the cockpit, the player aims at the seat: "
                     + ctx.mc().hitResult);
+            // What an agent is told of it: the cockpit's seat by name, the box round it, and the ship it is aboard.
+            final JsonObject looked = PlaySeeing.lookedAtBlock(ctx.mc(), ctx.player()).orElseThrow();
+            final JsonObject piece = looked.getAsJsonObject("piece");
+            ctx.assertTrue(piece != null && "seat".equals(piece.get("name").getAsString()) && piece.get("model")
+                    .getAsString().endsWith(COCKPIT) && looked.has("aboard") && looked.getAsJsonObject("aboard")
+                    .get("structure").getAsString().equals(ship[0].id().value().toString()), "the agent is told it "
+                    + "aims at "
+                    + "the cockpit's seat aboard the ship: " + looked);
+            final JsonObject box = piece.getAsJsonObject("box");
+            final Vec3 from = new Vec3(box.getAsJsonObject("from").get("x").getAsDouble(), box.getAsJsonObject("from")
+                    .get("y").getAsDouble(), box.getAsJsonObject("from").get("z").getAsDouble());
+            final Vec3 to = new Vec3(box.getAsJsonObject("to").get("x").getAsDouble(), box.getAsJsonObject("to")
+                    .get("y").getAsDouble(), box.getAsJsonObject("to").get("z").getAsDouble());
+            final JsonObject at = looked.getAsJsonObject("at");
+            ctx.assertTrue(new AABB(from, to).inflate(BOX_SLACK).contains(new Vec3(at.get("x").getAsDouble(),
+                    at.get("y").getAsDouble(), at.get("z").getAsDouble())), "the seat's box in the world holds the "
+                    + "point aimed at in the world: " + looked);
             ctx.mc().gameMode.useItemOn(ctx.player(), InteractionHand.MAIN_HAND, (BlockHitResult) ctx.mc().hitResult);
         }).thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity, ARRIVE,
                 "from the cockpit, the player to sit in the seat")

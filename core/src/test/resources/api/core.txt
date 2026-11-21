@@ -11616,6 +11616,9 @@ stable 4
 38 dev.jstech.core.multiblock.shape.FormedPiece  static FormedPiece at(List<FormedPiece>, double[])
 38 dev.jstech.core.multiblock.shape.FormedPiece  static final Codec<FormedPiece> CODEC
 38 dev.jstech.core.multiblock.shape.FormedPiece  static final double MARGIN
+80 dev.jstech.core.multiblock.shape.FormedPieceAim  type final class
+80 dev.jstech.core.multiblock.shape.FormedPieceAim  static Optional<Aimed> at(Level, BlockPos, Vec3)
+80 dev.jstech.core.multiblock.shape.FormedPieceAim.Aimed  type record(ResourceLocation model, String piece, AABB box)
 39 dev.jstech.core.multiblock.shape.FormedPieceUses  type final class
 39 dev.jstech.core.multiblock.shape.FormedPieceUses  static Optional<BlockPos> worksBy(Level, BlockPos, Vec3)
 19 dev.jstech.core.multiblock.shape.FormedPlace  type record(ResourceLocation model, int orientation, int x, int y, int z)
@@ -11637,6 +11640,7 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedShape  Set<Long> apart()
 19 dev.jstech.core.multiblock.shape.FormedShape  VoxelShape shape(FormedPlace)
 19 dev.jstech.core.multiblock.shape.FormedShape  double[] origin()
+80 dev.jstech.core.multiblock.shape.FormedShape  double[] pieceBox(FormedPlace, FormedPiece)
 19 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>)
 20 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>, Map<ResourceLocation, BlockAboard>)
 38 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>, Map<ResourceLocation, BlockAboard>, List<FormedPiece>)

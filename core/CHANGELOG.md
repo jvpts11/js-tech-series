@@ -554,6 +554,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Tabs of a machine's own on every machine's screen: J's Core's API is at version 77. A machine that counts tabs of its own (`MachineBlockEntity.ownTabs()`) has them on the standard screen after the five, each given its icon, name and face by `MachineFaces.registerTabs`; their buttons, `MachineMenu.FIRST_OWN` on, reach `MachineBlockEntity.pressed(int)` for a player who may set the machine up. A face that draws the plates itself says so (`IMachineFace.drawsPlates()`) and the screen draws none under them. Experimental.
 - The pieces of an ore over its veins: J's Core's API is at version 78. `OrePiecesBlock` is a few pieces of a mineral's ore lying on the ground, in one of `LAYOUTS` ways (`LAYOUT`) turned any way (`FACING`), one a material with an ore, `MaterialUses.pieces()` and `piecesOf(Material)` giving them, `pieceRock(Material)` the rock whose ore they are cut from; `OrePieces.lay` lays a vein's over it, as the world's generation does. `MaterialTexts.PIECES` names them. Experimental.
 - A machine face's glass of a liquid: J's Core's API is at version 79. `FacePicture.Glass` has a sixth component, `fluid`: a liquid's id (or a few joined by '|') the glass shows in whichever of the machine's liquid tanks holds it, among its tanks in or its tanks out as its `tank` says, for a machine whose ports fill whichever of its tanks is free. Experimental.
+- What a look at a formed model is on: J's Core's API is at version 80. `FormedPieceAim.at` gives the piece of
+  a formed model a point of a block is on, any mod's model in the world or aboard a moving structure: the model, the
+  piece by the name its model gives it, and the box round the whole piece; `FormedShape.pieceBox` is that box in a
+  block's own space. Experimental.
 - A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -1890,6 +1894,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   could not, the block out of reach (how far it is and how far the player reaches), the point looked at off the
   block's shape, a block nothing breaks or a game mode that keeps the player from breaking it; and a use that lands on
   something else says what took it, and whether it was in the way or behind the point looked at.
+- What an agent aims at is what is drawn there: the MCP's reading of the block under the crosshair names the
+  piece of a formed model drawn there, a seat, a console or a door of any mod's model, with the model and the box
+  round the whole piece in the world; and a block aboard a moving structure is told where it is in the world, the
+  point aimed at, and the structure and the block's place aboard.
 - Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside
