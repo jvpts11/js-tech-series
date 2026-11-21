@@ -485,6 +485,11 @@ public final class MovingStructurePhysicsGameTests {
                     final StructureResult made = MovingStructures.assemble(level, far.above(3), far.above(3));
                     helper.assertTrue(made.ok(), "the far structure is made: " + made.refusal());
                     away[0] = made.structure();
+                })
+                // A structure moves once its plot of the yard has loaded, at the disk's pace: let go before the far
+                // one's had, the near one could fall and come to rest alone, and alone it is worked in its turn.
+                .thenWaitUntil(() -> helper.assertTrue(near.ready() && away[0].ready(), "both have their plots"))
+                .thenExecute(() -> {
                     near.move(PhysicsMotion.AT_REST);
                     away[0].move(PhysicsMotion.AT_REST);
                 })
@@ -587,6 +592,10 @@ public final class MovingStructurePhysicsGameTests {
         final double start = falling.getFirst().worldBox().minY;
         final double was = StructureBalance.physicsMillis();
         helper.startSequence()
+                // Each moves once its plot of the yard has loaded, at the disk's pace: the twenty ticks measured
+                // start with every one of them able to fall, or one late to its plot looks starved.
+                .thenWaitUntil(() -> helper.assertTrue(falling.stream().allMatch(MovingStructure::ready),
+                        "every one has its plot"))
                 .thenExecute(() -> {
                     StructureBalance.physicsMillis(0.1);
                     for (final MovingStructure each : falling) {

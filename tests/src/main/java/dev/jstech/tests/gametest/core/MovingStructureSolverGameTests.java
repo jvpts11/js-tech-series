@@ -360,11 +360,17 @@ public final class MovingStructureSolverGameTests {
         final double budget = StructureBalance.physicsMillis();
         final Map<MovingStructure, double[]> before = new HashMap<>();
         final List<String> pushed = new ArrayList<>();
-        StructureBalance.physicsMillis(0);
-        stack.forEach(structure -> structure.move(PhysicsMotion.AT_REST));
         final List<MovingStructure> all = new ArrayList<>(stack);
         all.add(crate);
         helper.startSequence()
+                // Each moves once its plot of the yard has loaded, at the disk's pace: the ticks watched start with
+                // every one able to, or the crate late to its plot has not come down by their end.
+                .thenWaitUntil(() -> helper.assertTrue(all.stream().allMatch(MovingStructure::ready),
+                        "every one has its plot"))
+                .thenExecute(() -> {
+                    StructureBalance.physicsMillis(0);
+                    stack.forEach(structure -> structure.move(PhysicsMotion.AT_REST));
+                })
                 .thenIdle(1)
                 .thenExecute(() -> crate.move(PhysicsMotion.going(0, -WAITING_THROWN, 0)))
                 .thenExecuteFor(WAITING_WATCHED, () -> {
