@@ -2639,6 +2639,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   used right after a choice, it said it aimed at no multiblock it knew.
 - Multiblock Builder: stopped by a block it cannot move, it names the block and where it stands; and its
   reasons no longer open with "Stopped:" after STOPPED, which cut them short.
+- Structure Projector: its list of multiblocks goes a row for each notch the wheel turns, however many one turn
+  brings, where it went one row a turn; and a name too long for it ends in "..." where it was cut off short.
 
 ## [0.5.3a] - 2026-11-04
 

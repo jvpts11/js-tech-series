@@ -45,6 +45,8 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
 
     private final MultiblockPreview drawer = new MultiblockPreview();
     private int scroll;
+    /* What the mouse wheel turned the list short of a whole row, kept for the next turn, as a touchpad's are. */
+    private double wheel;
     private boolean dragging;
     private double lastX;
     private double lastY;
@@ -63,6 +65,8 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
     private static final double SHADE_LO = 0.45;
     private static final double DIM = 0.45;
     private static final double SCANLINE = 0.18;
+    /* What ends a multiblock's name cut to fit the list. */
+    private static final String CUT = "...";
 
     public StructureProjectorScreen(final StructureProjectorMenu menu, final Inventory inventory,
                                     final Component title) {
@@ -141,8 +145,12 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
     @Override
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX,
                                  final double scrollY) {
+        // A row a notch the wheel turns, however many notches one turn brings.
         final int most = Math.max(0, ids().size() - StructureProjectorLayout.ROWS);
-        this.scroll = Math.max(0, Math.min(most, this.scroll - (int) Math.signum(scrollY)));
+        this.wheel += scrollY;
+        final int rows = (int) this.wheel;
+        this.wheel -= rows;
+        this.scroll = Math.max(0, Math.min(most, this.scroll - rows));
         return true;
     }
 
@@ -218,7 +226,8 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
         final List<Row> rows = new ArrayList<>();
         for (int i = this.scroll; i < Math.min(ids.size(), this.scroll + StructureProjectorLayout.ROWS); i++) {
             final boolean shown = settings.chosen().filter(ids.get(i)::equals).isPresent();
-            rows.add(new Row((shown ? "> " : "  ") + GameText.resolve(Projectables.name(ids.get(i))), shown));
+            rows.add(new Row(cut((shown ? "> " : "  ") + GameText.resolve(Projectables.name(ids.get(i))),
+                    StructureProjectorLayout.LIST_WIDTH - 6), shown));
         }
         display(g, c, StructureProjectorLayout.LIST_X, StructureProjectorLayout.LIST_Y,
                 StructureProjectorLayout.LIST_WIDTH, StructureProjectorLayout.LIST_HEIGHT, rows);
@@ -327,6 +336,13 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
                     y + 3 + i * StructureProjectorLayout.ROW_HEIGHT, colour);
         }
         MachineArt.glassShine(g, x, y, x + w, y + h);
+    }
+
+    /* {@code text} as a display row {@code width} wide shows it: whole, or cut short with a mark that it is. */
+    private String cut(final String text, final int width) {
+        final String fitted = MachineArt.fit(this.font, text, width);
+        return fitted.length() == text.length() ? text
+                : MachineArt.fit(this.font, text, width - MachineArt.width(this.font, CUT)) + CUT;
     }
 
     private boolean onPreview(final double x, final double y) {
