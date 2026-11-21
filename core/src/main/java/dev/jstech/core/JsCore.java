@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.core.advancement.AdvancementIcons;
 import dev.jstech.core.advancement.Advancements;
 import dev.jstech.core.advancement.CoreTriggers;
+import dev.jstech.core.agent.AgentPlaces;
 import dev.jstech.core.audio.AudioNetwork;
 import dev.jstech.core.audio.AudioSettings;
 import dev.jstech.core.audio.acoustics.AcousticCues;
@@ -675,6 +676,8 @@ public final class JsCore {
         // The studio's logs kept from the start on both sides, and the MCP server of a dedicated server.
         StudioLogs.listen();
         McpOnServer.listen(modEventBus);
+        // The places an agent is told of that are the Core's: the player's respawn, the world's spawn, multiblocks.
+        AgentPlaces.declareCore();
         JsCoreDataGenerators.listen(modEventBus);
         JsTechTab.listen(modEventBus);
         KeyActions.listen(modEventBus);

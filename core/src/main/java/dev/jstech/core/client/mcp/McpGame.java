@@ -113,6 +113,7 @@ public final class McpGame {
         PlayActing.all().forEach(McpGame::declare);
         PlayWorld.all().forEach(McpGame::declare);
         PlayWaiting.all().forEach(McpGame::declare);
+        PlayPlaces.all().forEach(McpGame::declare);
     }
 
     /** The server running, or none. */

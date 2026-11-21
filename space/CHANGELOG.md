@@ -971,6 +971,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A ship tells an agent its flight as its HUD shows it: its name, speed and climb, throttle, boost and
   nozzles, what holds it up, its gear, whether it stalls or stands on the land, how high it flies, its autopilot, its
   pulse jump, and the world it flies in or over.
+- An agent is told where J's Space's places are: in the Solar System's space each world's low orbit, over its
+  middle on the space's floor, the floor under the player and how deep under it a ship goes down into the world below;
+  in a world the landing pads the player may use, the runways from their beacons and the shipyards round them.
 - The Ramp hold's ramp is a door: its tail opens from the deck to the roof between yellow and black stripes,
   and the ramp, shut across it, swings down over two and a half seconds when a crew member who may come aboard uses
   it, its toe unfolding past level, till its foot rests on the land and it is walked up, a step every quarter block. In

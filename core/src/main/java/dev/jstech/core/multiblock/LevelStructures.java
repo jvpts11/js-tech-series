@@ -9,9 +9,11 @@ package dev.jstech.core.multiblock;
 
 import dev.jstech.core.registry.CoreAttachments;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -121,6 +123,11 @@ public final class LevelStructures {
     /** How many terminals watch, for the diagnostics. */
     public int watching() {
         return this.byTerminal.size();
+    }
+
+    /** The places of the terminals filed, formed or not: every structure's terminal loaded in the dimension. */
+    public Set<BlockPos> terminals() {
+        return Collections.unmodifiableSet(this.byTerminal.keySet());
     }
 
     /* Takes {@code gone} off the chunks it is filed by. */

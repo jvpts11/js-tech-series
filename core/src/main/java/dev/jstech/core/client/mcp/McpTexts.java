@@ -81,6 +81,8 @@ public final class McpTexts {
     /* The piece's name. */
     public static final TextKey OUT_OF_SIGHT = TextKey.of("jscore.mcp.out_of_sight",
             "No point of the nearest %s can be seen from here: something is in the way.");
+    public static final TextKey PLACES_OWN_WORLD_ONLY = TextKey.of("jscore.mcp.places_own_world_only",
+            "Only a world of the player's own, which this game runs, tells an agent its places.");
     /* The name or the words looked for. */
     public static final TextKey NOT_ON_SCREEN = TextKey.of("jscore.mcp.not_on_screen",
             "Nothing on the screen open is called %s or reads so: screen_tree lists what it shows.");

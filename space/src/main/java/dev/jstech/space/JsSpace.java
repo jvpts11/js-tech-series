@@ -249,6 +249,8 @@ public final class JsSpace {
         ShipyardStructure.declare();
         ShipyardBlocks.declare();
         ShipyardSounds.declare();
+        // Where an agent playing the game is told the low orbits, the space's floor, pads, runways and docks are.
+        SpaceAgentPlaces.declare();
         ShipDesigner.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.

@@ -5,6 +5,11 @@
 # it meets the bar docs/API.md sets for a stable part. Kept by the API surface test,
 # which writes to build/api-photo what this file would have to say when the API changes.
 stable 4
+85 dev.jstech.core.agent.AgentPlace  type record(String kind, String name, Vec3 at)
+85 dev.jstech.core.agent.AgentPlaces  type final class
+85 dev.jstech.core.agent.AgentPlaces  static List<Found> of(ServerLevel, ServerPlayer)
+85 dev.jstech.core.agent.AgentPlaces  static void declare(String, IPlaceSource)
+85 dev.jstech.core.agent.AgentPlaces.Found  type record(String modid, AgentPlace place)
 84 dev.jstech.core.agent.AgentReadings  type final class
 84 dev.jstech.core.agent.AgentReadings  static AgentReport ofBlock(Level, BlockPos)
 84 dev.jstech.core.agent.AgentReadings  static AgentReport ofEntity(Entity)
@@ -24,6 +29,8 @@ stable 4
 84 dev.jstech.core.agent.IBlockReading  abstract void read(Level, BlockPos, AgentReport)
 84 dev.jstech.core.agent.IEntityReading  type interface
 84 dev.jstech.core.agent.IEntityReading  abstract void read(Entity, AgentReport)
+85 dev.jstech.core.agent.IPlaceSource  type interface
+85 dev.jstech.core.agent.IPlaceSource  abstract void places(ServerLevel, ServerPlayer, Consumer<AgentPlace>)
 84 dev.jstech.core.agent.IStructureReading  type interface
 84 dev.jstech.core.agent.IStructureReading  abstract void read(IStructureBody, AgentReport)
 1 dev.jstech.core.api.JsCoreApi  type final class
@@ -11007,6 +11014,7 @@ stable 4
 10 dev.jstech.core.multiblock.InsideRule  static InsideRule of(IBlockMatcher)
 10 dev.jstech.core.multiblock.LevelStructures  type final class
 12 dev.jstech.core.multiblock.LevelStructures  BlockPos terminalHolding(BlockPos)
+85 dev.jstech.core.multiblock.LevelStructures  Set<BlockPos> terminals()
 10 dev.jstech.core.multiblock.LevelStructures  int watching()
 10 dev.jstech.core.multiblock.LevelStructures  static LevelStructures of(ServerLevel)
 10 dev.jstech.core.multiblock.LevelStructures  void changed(BlockPos)

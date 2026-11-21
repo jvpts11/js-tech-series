@@ -10,6 +10,8 @@ package dev.jstech.tests.clienttest.core;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.jstech.core.agent.AgentPlace;
+import dev.jstech.core.agent.AgentPlaces;
 import dev.jstech.core.agent.AgentReadings;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioPrefs;
@@ -120,6 +122,9 @@ public final class McpPlayClientTests {
     /* What the test mod tells of its machine, and the mod whose reading fails. */
     private static final String WORKING = "working";
     private static final String BROKEN = "jstests_broken";
+    /* The kind of the test mod's place, and how far east of the player's eyes it is, in blocks. */
+    private static final String MARK = "test_mark";
+    private static final double MARK_EAST = 10;
     /* A screen of the Core's kit made for the test, and its two tabs' titles. */
     private static final String KIT_TITLE = "Kit";
     private static final String[] KIT_TABS = {"Alpha", "Beta"};
@@ -546,6 +551,40 @@ public final class McpPlayClientTests {
         }));
     }
 
+    /*
+     * Where things are: the player's respawn point, from the Core, and a place a mod tells of, ten blocks east of the
+     * player facing north, told ten blocks off, level, its bearing east and a quarter turn to the right; asked by
+     * kind, only places of that kind.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void places_tellTheRespawnAndAModsPlaceWithTheirWayFromThePlayer(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final BlockPos respawn = ctx.abs(WALK_TO);
+        declareReadings();
+        ctx.afterTest(() -> McpGame.turn(false));
+        pair(ctx, sent, key, port);
+        ctx.thenServer(0, level -> ctx.serverPlayer().setRespawnPosition(level.dimension(), respawn, 0, true, false));
+        run(ctx, sent, key, port, new Step("places_near", "{}", result -> {
+            final List<JsonObject> places = result.getAsJsonArray("places").asList().stream()
+                    .map(JsonElement::getAsJsonObject).toList();
+            ctx.assertTrue(places.stream().anyMatch(place -> "respawn".equals(text(place, "kind"))
+                    && place.get("x").getAsDouble() == respawn.getX() + 0.5 && place.get("z").getAsDouble()
+                    == respawn.getZ() + 0.5), "the respawn point is told where it is: " + places);
+            final JsonObject mark = places.stream().filter(place -> MARK.equals(text(place, "kind"))).findFirst()
+                    .orElseThrow(() -> new ClientTestFailure("the mod's place is told: " + places));
+            ctx.assertTrue(Math.abs(mark.get("distance").getAsDouble() - MARK_EAST) < 0.2
+                    && Math.abs(mark.get("bearing").getAsDouble() + 90) < 1
+                    && Math.abs(mark.get("turn").getAsDouble() - 90) < 1
+                    && Math.abs(mark.get("climb").getAsDouble()) < 1, "ten blocks off, east, a quarter turn to the "
+                    + "right and level: " + mark);
+        }));
+        run(ctx, sent, key, port, new Step("places_near", "{\"kind\":\"respawn\"}", result -> ctx.assertTrue(
+                result.getAsJsonArray("places").asList().stream().allMatch(place -> "respawn".equals(text(
+                        place.getAsJsonObject(), "kind"))), "asked by kind, only places of that kind: " + result)));
+    }
+
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */
     @ClientTest(timeoutTicks = 1600)
     public static void off_takesTheKeysBackFromACallStillActing(final ClientTestContext ctx) {
@@ -580,8 +619,8 @@ public final class McpPlayClientTests {
     }
 
     /*
-     * The test mod's reading of its machine, and one of another mod that always fails, declared once however many
-     * times the test runs.
+     * The test mod's reading of its machine, one of another mod that always fails, and a place of the test mod ten
+     * blocks east of the player's eyes, declared once however many times the tests run.
      */
     private static void declareReadings() {
         if (readingsDeclared) {
@@ -596,6 +635,8 @@ public final class McpPlayClientTests {
         AgentReadings.block(BROKEN, (level, pos, report) -> {
             throw new IllegalStateException("a reading that fails, for the test");
         });
+        AgentPlaces.declare(JsTests.MODID, (level, player, out) -> out.accept(new AgentPlace(MARK, "east",
+                player.getEyePosition().add(MARK_EAST, 0, 0))));
     }
 
     /* Turns the server on and lets a client in to read and act, keeping its port and its key. */

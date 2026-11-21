@@ -1256,6 +1256,7 @@
   "jscore.mcp.out_of_sight": "Nenhum ponto do %s mais perto pode ser visto daqui: alguma coisa está no caminho.",
   "jscore.mcp.own_world_only": "Só um mundo do próprio jogador, que este jogo roda, é salvo e aberto de novo.",
   "jscore.mcp.paired": "pareado: %s",
+  "jscore.mcp.places_own_world_only": "Só um mundo do próprio jogador, que este jogo roda, diz a um agente os seus lugares.",
   "jscore.mcp.reads": "lê",
   "jscore.mcp.reads_and_acts": "lê e age",
   "jscore.mcp.sent": "Mandado ao servidor como comando do próprio jogador; o que ele responder vem no chat.",
