@@ -472,6 +472,8 @@ public final class ShipyardDoorsGameTests {
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         final MovingStructure[] ship = new MovingStructure[1];
         final List<String> seen = new ArrayList<>();
+        // Why the dock, taking the ship back, could not close round it yet, for a failure to say.
+        final List<String> refused = new ArrayList<>();
         final GameTestSequence sequence = built(helper, terminal, WHEELS, new int[1])
                 .thenExecute(() -> dock(level, terminal).launch(null, why -> { }))
                 .thenWaitUntil(() -> {
@@ -484,13 +486,15 @@ public final class ShipyardDoorsGameTests {
                             || seen.equals(List.of("crane_back", "floor_up", "cradle_folds", "open")), "opening, the"
                             + " floor rises under the ship held, then the cradle folds: " + seen);
                     seen.clear();
-                    helper.assertTrue(dock(level, terminal).seat(ship[0]), "the ship taken back");
+                    helper.assertTrue(dock(level, terminal).seat(ship[0], why -> refused.add(why.english())),
+                            "the ship taken back");
                 });
         sequence.thenWaitUntil(() -> {
             note(seen, dock(level, terminal).doors().serializedName());
             helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED, "the dock closed: through "
                     + seen + ", the cradle back " + ShipyardStructure.cradlePlaces(terminal, Orientation.NORTH).stream()
-                    .noneMatch(level::isEmptyBlock));
+                    .noneMatch(level::isEmptyBlock) + ", refused " + refused + ", structures in the bay "
+                    + MovingStructures.near(level, ShipyardStructure.bay(terminal, Orientation.NORTH)).size());
         }).thenExecute(() -> helper.assertTrue(seen.equals(List.of("cradle_holds", "floor_down", "crane_in", "closed"))
                 || seen.equals(List.of("open", "cradle_holds", "floor_down", "crane_in", "closed")), "closing, the"
                 + " cradle holds the ship, then the floor goes down: " + seen)).thenSucceed();
