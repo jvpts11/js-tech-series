@@ -3732,7 +3732,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   take the model's shapes, the hull's floor and ceiling leaving room to walk inside; a block taken away undoes it. The
   terminal draws the parts formed, and breaking it gives their blocks back.
 - (Core) A plan's hologram can write its parts' words as name tags on the screen, each lifted over its part on a
-  leader at the first height where it meets no other tag, for parts laid side by side.
+  leader at the first height where it meets no other tag nor the line across the top of the screen, for parts laid
+  side by side; with none of its heights free, at the nearest free one over or under its part. Tags never stand over
+  one another: one with no room left on the screen is not drawn.
 - (Space) The Small Shipyard's robot arms build the ship sent to it: four orange arms, two on each side of the bay,
   each running on its rail along the bay's edge. What the ship wants goes in through the dock's item port, and no more;
   each arm takes a block from the feeder of its side, swings it over to its place, sets it down and welds it with

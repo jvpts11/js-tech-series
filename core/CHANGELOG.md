@@ -2138,7 +2138,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   formed parts hold when a block of theirs goes, holed, rather than come apart. A moving structure that strikes
   something hard is dented where they met, folded past a crash's speed; one touching down gently is not.
 - A plan's hologram can write its parts' words as name tags on the screen, each lifted over its part on a
-  leader at the first height where it meets no other tag, for parts laid side by side.
+  leader at the first height where it meets no other tag nor the line across the top of the screen, for parts laid
+  side by side; with none of its heights free, at the nearest free one over or under its part. Tags never stand over
+  one another: one with no room left on the screen is not drawn.
 - The arms a plan is laid by, drawn on the player's game, each with its own model's bones turned to put its
   grip on its block, the block it carries in its grip or waiting in its feeder, and the sparks of its weld.
 - A moving structure crossing to another dimension takes whoever sits on its seats along still sitting on

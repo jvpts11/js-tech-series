@@ -102,24 +102,17 @@ public final class PlanHologram {
     private static final double GROW = 0.004;
     private static final int BANNER_TOP = 6;
     private static final int BANNER_PAD = 3;
+    private static final int BANNER_TEXT = 8;
     private static final float CHANNEL = 255.0F;
     private static final ResourceLocation TAG_LAYER = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "plan_tags");
     /*
-     * A part's tag on the screen, as the approved drawings lay tags out on a screen 540 of their pixels high: the
-     * heights it is tried at over its part, the nearest first, then under it, and the other way round for a part in
-     * the screen's lower half; its padding, its size and state written smaller under its name, the room kept round it
-     * from other tags, and the gap kept from the screen's edges, in the screen's scaled pixels.
+     * A part's tag on the screen, laid out where {@link PlanTags} finds it room: its padding, and its size and state
+     * written smaller under its name, in the screen's scaled pixels.
      */
-    private static final int[] TAG_UPS = {150, 185, 220, 255, 115, 80, 45};
-    private static final int[] TAG_DOWNS = {-110, -145, -180, -75, -40};
-    private static final float TAG_SCREEN = 540F;
-    private static final float TAG_UPPER = 280F;
     private static final int TAG_PAD = 5;
     private static final int TAG_TOP = 2;
     private static final float TAG_SMALL = 0.75F;
-    private static final int TAG_ROOM = 3;
-    private static final int TAG_EDGE = 2;
     /*
      * How far from its middle a build tagged on the screen is told of, its tags and the line over the screen, in
      * blocks: about as far as a dock is worked from.
@@ -437,9 +430,9 @@ public final class PlanHologram {
     }
 
     /*
-     * The parts' tags on the screen, each lifted over its part, or hung under it, at the first height where it meets
-     * no tag laid before it and stays on the screen; its name over its size and state on a dark ground, a line along
-     * its top, a leader down to the top of its part's box.
+     * The parts' tags on the screen, where {@link PlanTags} lays them, clear of one another and of the line across
+     * the top: its name over its size and state on a dark ground, a line along its top, a leader down to the top of
+     * its part's box. A tag with no room on the screen is not drawn.
      */
     private static void drawTags(final GuiGraphics g, final DeltaTracker delta) {
         final List<Tag> now = tags;
@@ -449,55 +442,40 @@ public final class PlanHologram {
         }
         final Colours c = PALETTE.get();
         final Font font = minecraft.font;
-        final float scale = g.guiHeight() / TAG_SCREEN;
         final int high = TAG_TOP * 2 + font.lineHeight + Math.round(font.lineHeight * TAG_SMALL);
-        final List<int[]> laid = new ArrayList<>();
+        final List<String> names = new ArrayList<>();
+        final List<String> states = new ArrayList<>();
+        final List<PlanTags.Wanted> wanted = new ArrayList<>();
         for (final Tag tag : now) {
             final String name = GameText.resolve(tag.name()).toUpperCase(Locale.ROOT);
             final String state = GameText.resolve(tag.state());
-            final int wide = Math.max(font.width(name), Math.round(font.width(state) * TAG_SMALL)) + TAG_PAD * 2;
-            final int x = Math.round(tag.x());
-            final int y = Math.round(tag.y());
-            final boolean upper = tag.y() < TAG_UPPER * scale;
-            int top = Integer.MIN_VALUE;
-            for (final int[] heights : upper ? new int[][] {TAG_UPS, TAG_DOWNS} : new int[][] {TAG_DOWNS, TAG_UPS}) {
-                for (int k = 0; k < heights.length && top == Integer.MIN_VALUE; k++) {
-                    final int lift = Math.round(heights[k] * scale);
-                    final int tried = lift >= 0 ? y - lift - high : y - lift;
-                    if (clear(g, laid, x - wide / 2, tried, wide, high)) {
-                        top = tried;
-                    }
-                }
+            names.add(name);
+            states.add(state);
+            wanted.add(new PlanTags.Wanted(Math.round(tag.x()), Math.round(tag.y()), Math.max(font.width(name),
+                    Math.round(font.width(state) * TAG_SMALL)) + TAG_PAD * 2, high));
+        }
+        final Text line = banner;
+        final List<Optional<PlanTags.Box>> laid = PlanTags.lay(wanted, g.guiWidth(), g.guiHeight(),
+                Optional.ofNullable(line).map(shown -> bannerBox(font, GameText.resolve(shown), g.guiWidth())));
+        for (int k = 0; k < laid.size(); k++) {
+            if (laid.get(k).isEmpty()) {
+                continue;
             }
-            if (top == Integer.MIN_VALUE) {
-                final int lift = Math.round((upper ? TAG_UPS[0] : TAG_DOWNS[0]) * scale);
-                top = lift >= 0 ? y - lift - high : y - lift;
-            }
-            final int x0 = x - wide / 2;
-            laid.add(new int[] {x0 - TAG_ROOM, top - TAG_ROOM, x0 + wide + TAG_ROOM, top + high + TAG_ROOM});
-            g.fill(x0, top, x0 + wide, top + high, c.tagGround());
-            g.hLine(x0, x0 + wide - 1, top, c.tagLine());
-            if (top + high <= y) {
-                g.vLine(x, top + high - 1, y, c.tagLine());
+            final PlanTags.Box box = laid.get(k).get();
+            final int x = wanted.get(k).x();
+            final int y = wanted.get(k).y();
+            g.fill(box.x(), box.y(), box.x() + box.wide(), box.y() + high, c.tagGround());
+            g.hLine(box.x(), box.x() + box.wide() - 1, box.y(), c.tagLine());
+            if (box.y() + high <= y) {
+                g.vLine(x, box.y() + high - 1, y, c.tagLine());
             } else {
-                g.vLine(x, y, top, c.tagLine());
+                g.vLine(x, y, box.y(), c.tagLine());
             }
             g.fill(x - 1, y - 1, x + 2, y + 2, c.tagLine());
-            Draw.text(g, font, name, x0 + TAG_PAD, top + TAG_TOP, c.tagName(), c.tagGround());
-            Draw.textScaled(g, font, state, x0 + TAG_PAD, top + TAG_TOP + font.lineHeight, c.tagWords(), TAG_SMALL);
+            Draw.text(g, font, names.get(k), box.x() + TAG_PAD, box.y() + TAG_TOP, c.tagName(), c.tagGround());
+            Draw.textScaled(g, font, states.get(k), box.x() + TAG_PAD, box.y() + TAG_TOP + font.lineHeight,
+                    c.tagWords(), TAG_SMALL);
         }
-    }
-
-    /* Whether a tag at {@code x, y}, {@code wide} by {@code high}, stays on the screen and meets none laid. */
-    private static boolean clear(final GuiGraphics g, final List<int[]> laid, final int x, final int y,
-                                 final int wide, final int high) {
-        final int[] box = {x - TAG_ROOM, y - TAG_ROOM, x + wide + TAG_ROOM, y + high + TAG_ROOM};
-        if (box[0] < TAG_EDGE || box[2] > g.guiWidth() - TAG_EDGE || box[1] < TAG_EDGE
-                || box[3] > g.guiHeight() - TAG_EDGE) {
-            return false;
-        }
-        return laid.stream().allMatch(other -> box[2] <= other[0] || box[0] >= other[2] || box[3] <= other[1]
-                || box[1] >= other[3]);
     }
 
     /* The line across the top of the screen: what is being built now, of the nearest plan. */
@@ -509,11 +487,16 @@ public final class PlanHologram {
         }
         final Colours c = PALETTE.get();
         final String words = GameText.resolve(line);
-        final int width = minecraft.font.width(words);
-        final int x = (g.guiWidth() - width) / 2;
-        g.fill(x - BANNER_PAD, BANNER_TOP - BANNER_PAD, x + width + BANNER_PAD, BANNER_TOP + 8 + BANNER_PAD,
-                c.bannerGround());
-        Draw.text(g, minecraft.font, words, x, BANNER_TOP, c.banner(), c.bannerGround());
+        final PlanTags.Box box = bannerBox(minecraft.font, words, g.guiWidth());
+        g.fill(box.x(), box.y(), box.x() + box.wide(), box.y() + box.high(), c.bannerGround());
+        Draw.text(g, minecraft.font, words, box.x() + BANNER_PAD, BANNER_TOP, c.banner(), c.bannerGround());
+    }
+
+    /* The ground of the line across the top of a screen {@code width} wide, {@code words} written in its middle. */
+    private static PlanTags.Box bannerBox(final Font font, final String words, final int width) {
+        final int wide = font.width(words);
+        return new PlanTags.Box((width - wide) / 2 - BANNER_PAD, BANNER_TOP - BANNER_PAD, wide + BANNER_PAD * 2,
+                BANNER_TEXT + BANNER_PAD * 2);
     }
 
     private static void box(final PoseStack pose, final VertexConsumer lines, final AABB box, final int colour) {
