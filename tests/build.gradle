@@ -87,6 +87,11 @@ def withAeronautics = providers.gradleProperty('withAeronautics').isPresent()
  * under a shader pack run with the pack the run's shaderpacks folder holds; without them those tests say no pack draws.
  */
 def withIris = providers.gradleProperty('withIris').isPresent()
+/*
+ * -PwithIndustrialUpgrade runs the development mods with Industrial Upgrade and the three mods it needs, a mod the
+ * series has no bridge to, to play its ores in the series' recipes and its machines on the series' networks.
+ */
+def withIndustrialUpgrade = providers.gradleProperty('withIndustrialUpgrade').isPresent()
 def withSable = withAeronautics || providers.gradleProperty('withSable').isPresent()
 def withCreate = withSable || providers.gradleProperty('withCreate').isPresent()
 if (withoutComputerCraft) {
@@ -326,6 +331,12 @@ dependencies {
     if (withIris) {
         localRuntime("maven.modrinth:sodium:${sodium_version}") { transitive = false }
         localRuntime("maven.modrinth:iris:${iris_version}") { transitive = false }
+    }
+    if (withIndustrialUpgrade) {
+        localRuntime("maven.modrinth:industrialupgrade:${industrial_upgrade_version}") { transitive = false }
+        localRuntime("maven.modrinth:simply-quarries:${simply_quarries_version}") { transitive = false }
+        localRuntime("maven.modrinth:quantum-generators:${quantum_generators_version}") { transitive = false }
+        localRuntime("maven.modrinth:power-utilities:${power_utilities_version}") { transitive = false }
     }
 }
 
