@@ -4108,6 +4108,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) A 3D printer's stepper motors are heard while it prints, and stop while it is paused; and the series'
   villagers are heard at their work as the game's own are, the programmer typing at the Programmer's Desk and the IT
   technician's screwdriver at the Repair Bench.
+- (Computers) The Prebuilder is heard as it is seen at work: its press as the lift brings the empty case up and again
+  as the built computer sinks into the base, a servo as each arm sets off for a part and as it carries it over, and
+  each part clicking into its seat, all on the moments its drawn work reaches.
+- (Core) A sound of the world played on the player's game alone: `AudioEngine.playAt` plays a declared sound at a point
+  in its channel, for a moment only the player's game knows, as a machine's drawn moving parts reach a point of
+  their work.
   `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
   command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 - (Space) A starship's engines are seen running. The mouths of its bells glow, faintly in thick air, where the bells

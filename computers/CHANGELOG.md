@@ -902,8 +902,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A 3D printer's stepper motors are heard while it prints, and stop while it is paused; and the series'
   villagers are heard at their work as the game's own are, the programmer typing at the Programmer's Desk and the IT
   technician's screwdriver at the Repair Bench.
-  `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
-  command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
+- The Prebuilder is heard as it is seen at work: its press as the lift brings the empty case up and again
+  as the built computer sinks into the base, a servo as each arm sets off for a part and as it carries it over, and
+  each part clicking into its seat, all on the moments its drawn work reaches.
 
 ### Changed
 - Abandoned buildings of real blocks: every block of every building and of the villages' computer shops

@@ -605,6 +605,50 @@
     ],
     "subtitle": "subtitles.jsc.power.ups_switch"
   },
+  "prebuilder/arm": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:prebuilder/arm_1"
+      },
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:prebuilder/arm_2"
+      },
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:prebuilder/arm_3"
+      },
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:prebuilder/arm_4"
+      },
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:prebuilder/arm_5"
+      },
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:prebuilder/arm_6"
+      }
+    ],
+    "subtitle": "subtitles.jsc.prebuilder.arm"
+  },
+  "prebuilder/part": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:prebuilder/part"
+      }
+    ],
+    "subtitle": "subtitles.jsc.prebuilder.part"
+  },
+  "prebuilder/press": {
+    "sounds": [
+      "jsc:prebuilder/press"
+    ],
+    "subtitle": "subtitles.jsc.prebuilder.press"
+  },
   "printer/epsilon_ecotonk_et_2720": {
     "sounds": [
       {

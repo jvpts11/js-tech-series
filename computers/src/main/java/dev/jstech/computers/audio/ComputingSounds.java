@@ -118,6 +118,18 @@ public final class ComputingSounds {
     public static final SoundKey PRINTER_3D_PRINTING = CONTENT.sound("teracoin/printer_3d").loop()
             .channel(AudioChannels.DEVICES).range(12).subtitle("3D printer prints").register();
 
+    /** The Prebuilder's press, as its lift brings the empty case up and as the built computer sinks into its base. */
+    public static final SoundKey PREBUILDER_PRESS = CONTENT.sound("prebuilder/press")
+            .range(16).subtitle("Prebuilder press moves").register();
+
+    /** One of the Prebuilder's arms on the move, a servo's whine in six takes. */
+    public static final SoundKey PREBUILDER_ARM = CONTENT.sound("prebuilder/arm").variants(6)
+            .range(12).subtitle("Robot arm moves").register();
+
+    /** A part going into its seat in the computer the Prebuilder builds. */
+    public static final SoundKey PREBUILDER_PART = CONTENT.sound("prebuilder/part")
+            .range(12).subtitle("Part clicks into place").register();
+
     /** A scanner's head sweeping its glass, once a scan. */
     public static final SoundKey SCANNER_SCAN = CONTENT.sound("scanner/scan")
             .channel(AudioChannels.DEVICES).range(12).subtitle("Scanner scans").register();

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.chain.machine.ComputerKit;
+import dev.jstech.computers.chain.machine.PrebuilderCues;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -43,6 +44,7 @@ final class PrebuilderJob {
     private final Trip[] bySlot;
     private final float sinkAt;
     private final float length;
+    private final PrebuilderCues cues;
 
     /* How long the finished computer takes to sink, and the trays, in the mock's loops. */
     private static final float SINKING = 0.14F;
@@ -73,6 +75,16 @@ final class PrebuilderJob {
         }
         this.sinkAt = trips.isEmpty() ? rig.first() + rig.each() : end;
         this.length = sinkAt + SINKING;
+        final float[] starts = new float[trips.size()];
+        for (int k = 0; k < starts.length; k++) {
+            starts[k] = trips.get(k).t0();
+        }
+        this.cues = PrebuilderCues.of(starts, rig.each(), TAKEN, SEATED, sinkAt);
+    }
+
+    /** What is heard of it, each sound at its moment of the loop, as the drawn work reaches it. */
+    PrebuilderCues cues() {
+        return cues;
     }
 
     /**

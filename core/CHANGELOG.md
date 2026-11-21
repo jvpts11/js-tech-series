@@ -2163,6 +2163,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the rest of the block, its part of the model as before.
 - A formed model's piece is used from any block it stands in, through the block it works by: a seat whose back
   stands in the block over it is sat in from its back.
+- A sound of the world played on the player's game alone: `AudioEngine.playAt` plays a declared sound at a point
+  in its channel, for a moment only the player's game knows, as a machine's drawn moving parts reach a point of
+  their work.
+  `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
+  command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 - An emitter of an effect file can keep its particles `attached` to what emits them, moved along as far as it
   moves each tick, as an engine's jet keeps its shape behind a fast craft; and `ClientEffects.holdReaching` holds an
   effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.

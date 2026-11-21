@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.chain.machine;
 
+import dev.jstech.computers.client.PrebuilderSounds;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.machine.MachineStatus;
@@ -58,6 +59,23 @@ public final class PrebuilderBlockEntity extends ChainMachineBlockEntity {
     /** How far through the computer it is, from 0 to 1, as its players see it. */
     public float done() {
         return shown.getAsInt() / (float) WHOLE;
+    }
+
+    /* On the player's game it is heard as it is drawn at work, its press, its arms and its parts. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            PrebuilderSounds.track(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide()) {
+            PrebuilderSounds.untrack(this);
+        }
     }
 
     /* The case and every other part in its inputs, put together; the parts it cannot put together, why. */

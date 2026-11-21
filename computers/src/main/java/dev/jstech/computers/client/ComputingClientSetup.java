@@ -106,6 +106,7 @@ public final class ComputingClientSetup {
         ChainEmitters.listen(modBus);
         ChainRigs.listen(modBus);
         ChainMachineRenderer.listen();
+        PrebuilderSounds.listen();
         ChainFaceScreens.listen(modBus);
         modBus.addListener(RegisterMenuScreensEvent.class, ComputingClientSetup::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, ComputingClientSetup::registerRenderers);

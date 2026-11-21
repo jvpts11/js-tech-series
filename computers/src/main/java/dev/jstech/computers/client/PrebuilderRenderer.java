@@ -12,6 +12,7 @@ import dev.jstech.computers.block.AbstractSmallComputerBlock;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.PrebuilderBlockEntity;
+import dev.jstech.computers.chain.machine.PrebuilderCues;
 import dev.jstech.computers.client.chain.ChainMachineRenderer;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.client.model.kit.IKitDriver;
@@ -24,6 +25,7 @@ import dev.jstech.core.model.ModelAnimator;
 import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelPose;
 import java.util.Map;
+import java.util.Optional;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -118,6 +120,19 @@ public final class PrebuilderRenderer implements IKitDriver<ChainMachineBlockEnt
     @Override
     public boolean movesBones() {
         return true;
+    }
+
+    /**
+     * The moment of its job's loop {@code prebuilder} is at now, as it is drawn, and the job's sounds; none while it
+     * builds nothing, or before its rig is read.
+     */
+    static Optional<Heard> heard(final PrebuilderBlockEntity prebuilder) {
+        final PrebuilderRig rig = PrebuilderRig.of();
+        if (rig == null) {
+            return Optional.empty();
+        }
+        final Moment now = Moment.of(prebuilder, rig);
+        return now.working() ? Optional.of(new Heard(now.job().cues(), now.a())) : Optional.empty();
     }
 
     /* The case and what it has so far, the parts in the trays and the ones the arms carry. */
@@ -300,6 +315,15 @@ public final class PrebuilderRenderer implements IKitDriver<ChainMachineBlockEnt
     }
 
     /* A machine's job, kept for the computer it was worked out for while the models stay as they were read. */
+    /**
+     * Where a machine's drawn work is, for its sounds.
+     *
+     * @param cues the sounds of its job
+     * @param a    the moment of the job's loop it is at
+     */
+    record Heard(PrebuilderCues cues, float a) {
+    }
+
     private record Kept(ItemStack building, long models, PrebuilderRig rig, PrebuilderJob job) {
     }
 

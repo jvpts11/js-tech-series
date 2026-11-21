@@ -67,6 +67,21 @@ public final class AudioEngine {
         sink.play(SimpleSoundInstance.forUI(sound.event().get(), pitch, volume));
     }
 
+    /**
+     * Plays the declared sound of the world {@code sound} from the point {@code (x, y, z)} on this client alone, in its
+     * channel: for a moment only the player's game knows, as a machine's moving parts reach a point of their drawn
+     * work. What the server plays reaches every player near; this reaches the one whose game drew it.
+     */
+    public static void playAt(final SoundKey sound, final double x, final double y, final double z,
+                              final float volume, final float pitch) {
+        if (sound.spec().made()) {
+            throw new IllegalArgumentException(sound.id() + " is made as it plays, so it is played from samples");
+        }
+        requireSpace(sound, SoundSpace.WORLD);
+        sink.play(new SimpleSoundInstance(sound.event().get(), sound.spec().channel().source(), volume, pitch,
+                SoundInstance.createUnseededRandom(), x, y, z));
+    }
+
     /** Plays the declared sound of the interface with that id, as the server asked; an unknown id is ignored. */
     public static void playOnScreen(final ResourceLocation id, final float volume, final float pitch) {
         final SoundKey sound = SoundKeys.find(id);
