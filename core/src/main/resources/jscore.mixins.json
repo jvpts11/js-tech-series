@@ -44,6 +44,7 @@
     "ClientLevelMixin",
     "GameRendererMixin",
     "GuiGraphicsMixin",
+    "InputConstantsMixin",
     "LevelRendererMixin",
     "LivingEntityRendererMixin",
     "ParticleEngineMixin",

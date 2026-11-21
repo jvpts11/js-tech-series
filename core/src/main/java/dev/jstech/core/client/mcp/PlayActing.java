@@ -71,6 +71,12 @@ public final class PlayActing {
     private static final String ENTITY_TYPE = "entity_type";
     private static final int SEARCH = 24;
     private static final int LOOK_TICKS = 40;
+    /* What a hold of a key asks for, the most ticks it may last, four minutes, and the ticks it is given to let go. */
+    private static final String MAPPING = "mapping";
+    private static final String WITH = "with";
+    private static final String TICKS = "ticks";
+    private static final int MOST_HOLD = 4_800;
+    private static final int LET_GO_TICKS = 5;
     private static final String AT_ABOUT = "A point of the block to look at, in sixteenths of it from its lowest "
             + "corner, as a model's coordinates count (0 to 16 each): a port or a button on a face; with a face, the "
             + "point is on that face. Its middle, or the face's, when left out.";
@@ -162,6 +168,16 @@ public final class PlayActing {
                 new McpTool("key_press", "Presses a key, by its name (escape, enter, tab, e, f3...): on the screen "
                         + "open, or in the world, where the actions bound to it act.", McpSchema.object()
                         .words("key", "The key's name.", true).build(), McpPermission.ACT, PlayActing::key),
+                new McpTool("key_hold", "Holds a key or a key mapping down for a number of ticks, as a finger on it "
+                        + "does, then lets go: a key by its name (w, space, left.control...), or a mapping of the game "
+                        + "or of a mod by the game's name for it (key.jump, key.sneak), with a key held with it, a "
+                        + "modifier; through the game's own input, so a mapping that waits for Control, or a mod "
+                        + "reading a key itself, finds it down.", McpSchema.object()
+                        .words("key", "The key's name.", false)
+                        .words(MAPPING, "A key mapping, by the game's name for it.", false)
+                        .words(WITH, "A key held down with it, as left.control.", false)
+                        .whole(TICKS, "How long it is held, in ticks.", 1, MOST_HOLD, true).build(),
+                        McpPermission.ACT, PlayActing::hold),
                 new McpTool("screen_close", "Closes the screen open, as Escape does.", McpSchema.object().build(),
                         McpPermission.ACT, call -> onScreen(call, (screen, asked) -> {
                             screen.onClose();
@@ -594,17 +610,84 @@ public final class PlayActing {
         return done("typed", true);
     }
 
-    private static CompletableFuture<McpResult> key(final McpCall call) {
-        final Optional<String> name = call.text("key");
-        final InputConstants.Key key;
+    /*
+     * Holds a key, or a key mapping's key, and a key with it, down for the ticks asked, then lets go of them: pressed
+     * once as it goes down, kept down every tick, and told down to the game asking the window.
+     */
+    private static CompletableFuture<McpResult> hold(final McpCall call) {
+        final Optional<String> named = call.text(MAPPING);
+        final Optional<KeyMapping> mapping = named.flatMap(name -> List.of(Minecraft.getInstance().options.keyMappings)
+                .stream().filter(each -> each.getName().equals(name)).findFirst());
+        if (named.isPresent() && mapping.isEmpty()) {
+            return WorldTools.done(McpCall.wrong(MAPPING, McpWords.SOME_WORDS.text()));
+        }
+        final Optional<InputConstants.Key> key = mapping.isPresent() ? Optional.of(mapping.get().getKey())
+                : call.text("key").flatMap(PlayActing::keyNamed);
+        if (key.isEmpty()) {
+            return WorldTools.done(McpCall.wrong("key", McpWords.SOME_WORDS.text()));
+        }
+        final Optional<InputConstants.Key> with = call.text(WITH).flatMap(PlayActing::keyNamed);
+        if (call.text(WITH).isPresent() && with.isEmpty()) {
+            return WorldTools.done(McpCall.wrong(WITH, McpWords.SOME_WORDS.text()));
+        }
+        final int ticks = (int) (long) call.whole(TICKS).orElse(1L);
+        final List<InputConstants.Key> keys = new ArrayList<>();
+        with.ifPresent(keys::add);
+        keys.add(key.get());
+        return PlayTasks.run(call, ticks + LET_GO_TICKS, new PlayTasks.ITask() {
+            private boolean held;
+
+            @Override
+            public Optional<McpResult> step(final Minecraft game, final int tick) {
+                if (tick > ticks) {
+                    final JsonObject out = new JsonObject();
+                    out.addProperty("held", ticks);
+                    return Optional.of(McpResult.json(out));
+                }
+                if (tick == 1) {
+                    this.held = true;
+                    keys.stream().filter(each -> each.getType() == InputConstants.Type.KEYSYM)
+                            .forEach(each -> AgentKeys.hold(each.getValue()));
+                    if (game.screen == null) {
+                        KeyMapping.click(key.get());
+                    }
+                }
+                keys.forEach(each -> KeyMapping.set(each, true));
+                mapping.ifPresent(each -> each.setDown(true));
+                return Optional.empty();
+            }
+
+            @Override
+            public void release(final Minecraft game) {
+                if (!this.held) {
+                    return;
+                }
+                this.held = false;
+                keys.forEach(each -> KeyMapping.set(each, false));
+                mapping.ifPresent(each -> each.setDown(false));
+                keys.stream().filter(each -> each.getType() == InputConstants.Type.KEYSYM)
+                        .forEach(each -> AgentKeys.release(each.getValue()));
+            }
+        });
+    }
+
+    /* The keyboard's key of the name {@code name}, as the game names keys: e, space, left.control. */
+    private static Optional<InputConstants.Key> keyNamed(final String name) {
         try {
-            key = InputConstants.getKey("key.keyboard." + name.orElse("").strip().toLowerCase(Locale.ROOT));
+            final InputConstants.Key key = InputConstants.getKey("key.keyboard." + name.strip().toLowerCase(
+                    Locale.ROOT));
+            return key == InputConstants.UNKNOWN ? Optional.empty() : Optional.of(key);
         } catch (final IllegalArgumentException unknown) {
+            return Optional.empty();
+        }
+    }
+
+    private static CompletableFuture<McpResult> key(final McpCall call) {
+        final Optional<InputConstants.Key> named = call.text("key").flatMap(PlayActing::keyNamed);
+        if (named.isEmpty()) {
             return WorldTools.done(McpCall.wrong("key", McpWords.SOME_WORDS.text()));
         }
-        if (key == InputConstants.UNKNOWN) {
-            return WorldTools.done(McpCall.wrong("key", McpWords.SOME_WORDS.text()));
-        }
+        final InputConstants.Key key = named.get();
         final Minecraft game = Minecraft.getInstance();
         return game.submit(() -> {
             if (game.screen != null) {

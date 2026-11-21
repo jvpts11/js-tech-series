@@ -53,6 +53,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +87,8 @@ public final class McpPlayClientTests {
     /* The line of chat an agent's wait hears, and how long after the call began it comes, in milliseconds. */
     private static final String HEARD = "heard by the agent";
     private static final long HEARD_AFTER = 500;
+    /* How long a key is held, in ticks. */
+    private static final int HELD_TICKS = 20;
     private static final String MACHINES = AudioChannels.MACHINES.id().toString();
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final String INITIALIZE = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":"
@@ -292,6 +295,40 @@ public final class McpPlayClientTests {
         ctx.thenAssert(SETTLE, () -> ctx.mc().hitResult instanceof BlockHitResult hit
                 && hit.getBlockPos().equals(wall) && hit.getLocation().distanceTo(aimed) < AIMED,
                 "the player looks at that point of the face, not at its middle");
+    }
+
+    /*
+     * A key held as a finger holds it, through the game's own input: the jump mapping held twenty ticks is down twenty
+     * ticks and up after, and Control held with it is down to the game asking the window, as a modifier is asked.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void hold_keepsAMappingAndAModifierDownForTheTicksAsked(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final int[] down = new int[2];
+        final Consumer<ClientTickEvent.Post> counting = event -> {
+            down[0] += ctx.mc().options.keyJump.isDown() ? 1 : 0;
+            down[1] += Screen.hasControlDown() ? 1 : 0;
+        };
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, counting);
+        ctx.afterTest(() -> {
+            NeoForge.EVENT_BUS.unregister(counting);
+            McpGame.turn(false);
+        });
+        pair(ctx, sent, key, port);
+        ctx.then(0, () -> {
+            down[0] = 0;
+            down[1] = 0;
+        });
+        run(ctx, sent, key, port, new Step("key_hold", "{\"mapping\":\"key.jump\",\"with\":\"left.control\","
+                + "\"ticks\":" + HELD_TICKS + "}", result -> ctx.assertTrue(result.get("held").getAsInt()
+                == HELD_TICKS, "the hold ends once held: " + result)));
+        ctx.thenAssert(SETTLE, () -> down[0] == HELD_TICKS && down[1] == HELD_TICKS, "held " + HELD_TICKS
+                + " ticks, the jump mapping and Control with it are down that many ticks: " + down[0] + " and "
+                + down[1])
+                .thenAssert(0, () -> !ctx.mc().options.keyJump.isDown() && !Screen.hasControlDown(),
+                        "then both are let go");
     }
 
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */

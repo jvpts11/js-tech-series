@@ -2138,6 +2138,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   piece of a formed model of a given name, a seat, a console or a door, in the world or aboard a moving structure,
   at a point of it the look meets it at, the piece's middle or a face of its box, and says so, or why no point of it
   can be seen; and to the nearest entity of a given type.
+- (Core) An agent holds a key down: the MCP tool `key_hold` holds a key, or a key mapping of the game or of a mod by
+  the game's name for it, with a modifier held with it, for a number of ticks, then lets go, through the game's own
+  input: a mapping waiting for Control, Control held over a screen, or a mod reading a key itself, finds it down, and
+  no message is sent to the window. Any key the player presses takes it back, as with every tool that acts.
 - (Core) Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside
