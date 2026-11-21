@@ -14,6 +14,7 @@ import com.google.gson.JsonPrimitive;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.data.IDataScreen;
+import dev.jstech.core.client.gui.screen.ShownPart;
 import dev.jstech.core.developer.mcp.McpCall;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpResult;
@@ -88,8 +89,10 @@ public final class PlaySeeing {
                         + "how many, and a name a player gave it.", McpSchema.object().build(), McpPermission.READ,
                         call -> Play.withPlayer(PlaySeeing::inventory)),
                 new McpTool("screen_tree", "The screen open and its parts: on a screen declared in a file, every "
-                        + "named component with its place, size and words, which screen_click clicks by name; on "
-                        + "another, its buttons and fields; on a container's, its slots and what they hold.",
+                        + "named component with its place, size and words, which screen_click clicks by name; its "
+                        + "widgets, those in its lists and bars too, with their words; the parts a screen drawn in "
+                        + "code names, its tabs, cards and the like, with their words and where a click lands, "
+                        + "clicked and dragged by name; on a container's, its slots and what they hold.",
                         McpSchema.object().build(), McpPermission.READ, call -> Play.withPlayer(player -> tree())),
                 new McpTool("screen_picture", "A picture of the game's window as it was last drawn, at most 960 "
                         + "pixels wide.", McpSchema.object().build(), McpPermission.READ,
@@ -287,21 +290,37 @@ public final class PlaySeeing {
             }
             out.add("slots", slots);
         }
+        final PlayScreens.Seen seen = PlayScreens.seen(screen);
         final JsonArray widgets = new JsonArray();
-        for (final Object child : screen.children()) {
-            if (child instanceof AbstractWidget widget) {
-                final JsonObject one = new JsonObject();
-                one.addProperty("kind", widget.getClass().getSimpleName());
-                one.addProperty("x", widget.getX());
-                one.addProperty("y", widget.getY());
-                one.addProperty("width", widget.getWidth());
-                one.addProperty("height", widget.getHeight());
-                one.addProperty("words", widget.getMessage().getString());
-                one.addProperty("usable", widget.active);
-                widgets.add(one);
-            }
+        for (final AbstractWidget widget : seen.widgets()) {
+            final JsonObject one = new JsonObject();
+            one.addProperty("kind", widget.getClass().getSimpleName());
+            one.addProperty("x", widget.getX());
+            one.addProperty("y", widget.getY());
+            one.addProperty("width", widget.getWidth());
+            one.addProperty("height", widget.getHeight());
+            one.addProperty("words", widget.getMessage().getString());
+            one.addProperty("shown", widget.visible);
+            one.addProperty("usable", widget.active);
+            widgets.add(one);
         }
         out.add("widgets", widgets);
+        // What the screen draws itself and names, as its tabs, its cards and the places a thing held goes.
+        final JsonArray parts = new JsonArray();
+        for (final ShownPart part : seen.parts()) {
+            final JsonObject one = new JsonObject();
+            one.addProperty("name", part.name());
+            one.addProperty("words", part.words());
+            one.addProperty("x", part.x());
+            one.addProperty("y", part.y());
+            one.addProperty("width", part.width());
+            one.addProperty("height", part.height());
+            one.addProperty("click_x", part.pointX());
+            one.addProperty("click_y", part.pointY());
+            one.addProperty("usable", part.usable());
+            parts.add(one);
+        }
+        out.add("parts", parts);
         return McpResult.json(out);
     }
 

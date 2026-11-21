@@ -234,6 +234,38 @@ hands them. An example that compiles is J's Computers' Printer screen,
 `computers/src/main/java/dev/jstech/computers/client/PrinterScreen.java`, which draws from the layout its menu
 places its slots from.
 
+### Naming what a screen draws
+
+*Added 2026-11-21.*
+
+The game's widgets and a file's components are read by name from outside the screen: by an agent through the MCP
+server (`screen_tree`, `screen_click`, `screen_drag`, in [Developing](DEVELOPING.md)) and by the tests. What a screen
+draws itself in code, a tab, a card or a node of a graph, is only pixels to them unless the screen names it. A screen,
+or a widget it holds, does so by implementing `IShownParts`: `shownParts()` gives each part it draws now as a
+`ShownPart`, its name, the words a player reads on it, its box in the screen's pixels, the point a click on it lands
+at and whether it takes a click now.
+
+```java
+public final class KilnScreen extends CoreContainerScreen<KilnMenu> implements IShownParts {
+
+    @Override
+    public List<ShownPart> shownParts() {
+        // "empty" is clicked and dragged from by that name; its words are what the button reads.
+        return List.of(ShownPart.of("empty", "Empty", this.leftPos + 150, this.topPos + 6, 18, 12, true));
+    }
+}
+```
+
+- A **name** is the same for the same thing while the screen is open, as `tab:2` or `card:jsspace:small_airlock`,
+  so a recorded step or an agent finds it again.
+- The **point** is the box's middle with `ShownPart.of`; a part drawn behind others, as a section of a ship in 3D
+  behind its wings, gives with `new ShownPart(...)` a point of it that shows.
+- A part shown only **for a moment**, as the places a thing carried can be let go on, is named while it shows: a drag
+  by name looks its end up once the button is down.
+- A `TabbedScreen` names its tabs for you, `tab:0` first, each by its title. J's Space's Starship Design names all
+  it draws, its ship's parts, tabs, cards, tools and the joints a held part snaps to
+  (`space/src/main/java/dev/jstech/space/client/shipyard/ShipDesignScreen.java`).
+
 ## Layouts you can test
 
 *Added 2026-08-26.*

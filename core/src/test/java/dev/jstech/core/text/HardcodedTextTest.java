@@ -325,9 +325,9 @@ class HardcodedTextTest {
             data(CORE + "developer/mcp/WorldTools.java", 42, MCP_TOOLS),
             data(CORE + "developer/mcp/CoreTools.java", 39, MCP_TOOLS),
             data(CORE + "client/studio/StudioMcpTools.java", 18, MCP_TOOLS),
-            data(CORE + "client/mcp/PlaySeeing.java", 17, MCP_TOOLS),
+            data(CORE + "client/mcp/PlaySeeing.java", 19, MCP_TOOLS),
             data(CORE + "client/mcp/PlayScene.java", 6, MCP_TOOLS),
-            data(CORE + "client/mcp/PlayActing.java", 85, MCP_TOOLS),
+            data(CORE + "client/mcp/PlayActing.java", 90, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWorld.java", 22, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWaiting.java", 22, MCP_TOOLS));
 

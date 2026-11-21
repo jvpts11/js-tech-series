@@ -8,6 +8,8 @@
 package dev.jstech.tests.clienttest.space;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.client.developer.ScreenGestures;
+import dev.jstech.core.client.gui.screen.ShownPart;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
@@ -26,6 +28,7 @@ import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -137,6 +140,40 @@ public final class ShipDesignClientTests {
                         dock && dock.design().spine().contains(part("workshop")), ARRIVE,
                         "the shipyard to keep the design", level -> "the shipyard's design: "
                                 + ((ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0])).design());
+    }
+
+    /*
+     * Everything it draws is named to whoever reads the screen: its tabs, its cards by their parts' ids, its tools and
+     * the ship's parts along the spine, each clicked at a point it shows at; the joints only while a part is held. The
+     * workshop is dragged by name from its card onto the joint behind the quarters, found once it is held.
+     */
+    @ClientTest(timeoutTicks = 2000)
+    public static void named_whatItDrawsIsNamedAndTheWorkshopIsDraggedByName(final ClientTestContext ctx) {
+        final ShipDesign ship = ship();
+        open(ctx, ship);
+        ctx.then(SETTLE, () -> {
+            final List<ShownPart> parts = screen(ctx).shownParts();
+            for (final String name : List.of("tab:0", "tab:6", "card:" + part("workshop"), "tool:place", "search",
+                    "name")) {
+                ctx.assertTrue(shown(parts, name).isPresent(), "it names " + name + ": " + names(parts));
+            }
+            for (int i = 0; i < ship.spine().size(); i++) {
+                final Optional<ShownPart> section = shown(parts, "spine:" + i);
+                ctx.assertTrue(section.isPresent() && section.get().usable(), "the ship's section " + i
+                        + " is named, at a point it shows at: " + section);
+            }
+            ctx.assertTrue(parts.stream().noneMatch(each -> each.name().startsWith("joint:")), "with nothing held, "
+                    + "no joint is named: " + names(parts));
+            final ShownPart card = shown(parts, "card:" + part("workshop")).orElseThrow();
+            final Optional<double[]> to = ScreenGestures.drag(screen(ctx), card.pointX(), card.pointY(),
+                    () -> shown(screen(ctx).shownParts(), "joint:" + QUARTERS_BACK)
+                            .map(joint -> new double[] {joint.pointX(), joint.pointY()}),
+                    InputConstants.MOUSE_BUTTON_LEFT);
+            ctx.assertTrue(to.isPresent(), "the workshop held, the joint behind the quarters is named");
+        })
+                .thenAssert(SETTLE, () -> screen(ctx).design().spine().equals(List.of(part("orbiter_cockpit"),
+                        part("airlock"), part("quarters"), part("workshop"), part("reactor_flush"))),
+                        "dragged by name onto the joint, the workshop is set in the spine there");
     }
 
     @ClientTest(timeoutTicks = 2000)
@@ -391,6 +428,15 @@ public final class ShipDesignClientTests {
 
     private static ShipDesignScreen screen(final ClientTestContext ctx) {
         return ctx.screen(ShipDesignScreen.class);
+    }
+
+    /* The part of the screen named {@code name}, the first so named. */
+    private static Optional<ShownPart> shown(final List<ShownPart> parts, final String name) {
+        return parts.stream().filter(each -> each.name().equals(name)).findFirst();
+    }
+
+    private static List<String> names(final List<ShownPart> parts) {
+        return parts.stream().map(ShownPart::name).toList();
     }
 
     private static ResourceLocation part(final String path) {

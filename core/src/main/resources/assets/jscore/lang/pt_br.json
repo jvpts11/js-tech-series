@@ -1247,6 +1247,7 @@
   "jscore.mcp.no_tests": "Nenhum nome de GameTest contém %s, ou os GameTests não estão ligados nesta execução.",
   "jscore.mcp.no_world": "Nenhum mundo está aberto.",
   "jscore.mcp.none_near": "Nenhum %s está a menos de %s blocos.",
+  "jscore.mcp.not_on_screen": "Nada na tela aberta se chama %s ou diz isso: o screen_tree lista o que ela mostra.",
   "jscore.mcp.not_recording": "Nada está sendo gravado.",
   "jscore.mcp.nothing_opened": "Usar %s não abriu nenhuma tela.",
   "jscore.mcp.off_its_shape": "O ponto mirado está fora da forma de %s em %s, e a mira não acerta nada: mire outro ponto.",

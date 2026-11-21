@@ -13,6 +13,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.screen.IShownParts;
+import dev.jstech.core.client.gui.screen.ShownPart;
 import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
@@ -48,6 +50,7 @@ import dev.jstech.space.shipyard.ShipyardLayout;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -81,8 +84,14 @@ import org.lwjgl.glfw.GLFW;
  * left in its hull, its finish and what the dock needs; along the bottom the keys. The right mouse button turns the
  * view round the ship and the wheel brings it nearer. Every change is sent to the shipyard, which keeps the design;
  * E sends it to the dock to be built once it is ready.
+ *
+ * <p>All it draws is named to whoever reads the screen ({@link IShownParts}): the ship's parts, {@code spine:0} from
+ * the nose and {@code hung:0}, the search line, the ship's {@code name}, each {@code tool:}, {@code tab:} and
+ * {@code card:} by its part's id, the {@code release} or {@code take_in} button, each plan's {@code load:} and
+ * {@code delete:}, and, while a part is held, the nodes it snaps to, {@code joint:} by its place along the spine, or
+ * {@code hang}.
  */
-public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMenu> {
+public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMenu> implements IShownParts {
 
     private final ShipyardTerminalBlockEntity terminal;
     private final ShipDesignView view = new ShipDesignView();
@@ -139,6 +148,14 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     /* How near a node, in the frame's points, a part must be let go to snap to it, the snap on and off. */
     private static final double SNAP_REACH = 12;
     private static final double FREE_REACH = 4;
+    /*
+     * Where in a part's box, as shares across and down, a point is looked for that it shows at: a grid of seven by
+     * seven, its middle first and out from there, as the parts in front of it may hide most of it; and half a node's
+     * box, in the screen's pixels.
+     */
+    private static final int LOOK_GRID = 7;
+    private static final float[][] LOOK_AT = lookAt();
+    private static final int NODE_HALF = 4;
     /* The small letters' size against the game's; what ends a note cut short. */
     private static final float SMALL = 0.75F;
     private static final String MORE_DOTS = "...";
@@ -368,6 +385,52 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    /* Each thing it draws that takes a click, the ship's parts first, as the panels are drawn over the ship. */
+    @Override
+    public List<ShownPart> shownParts() {
+        final List<ShownPart> parts = new ArrayList<>();
+        // While the plans' list is open, it alone takes clicks.
+        final boolean free = !this.plansOpen;
+        shipParts(parts, free);
+        parts.add(framed("search", this.search.toString(), ShipDesignLayout.SEARCH_X0, ShipDesignLayout.SEARCH_Y0,
+                ShipDesignLayout.SEARCH_X1, ShipDesignLayout.SEARCH_Y1, free));
+        parts.add(framed("name", this.design.name(), ShipDesignLayout.NAME_X0, ShipDesignLayout.PANEL_Y0,
+                ShipDesignLayout.NAME_X1, ShipDesignLayout.TAG_Y1, free));
+        for (int i = 0; i < Tool.ORDER.size(); i++) {
+            final Tool each = Tool.ORDER.get(i);
+            parts.add(framed("tool:" + each.name().toLowerCase(Locale.ROOT), GameText.resolve(each.name),
+                    ShipDesignLayout.toolX(i), ShipDesignLayout.TOOLS_Y0, ShipDesignLayout.toolX(i)
+                            + ShipDesignLayout.TOOL_W, ShipDesignLayout.TOOLS_Y0 + ShipDesignLayout.TOOL_H, free));
+        }
+        for (int i = 0; i < ShipDesignLayout.TABS; i++) {
+            parts.add(framed("tab:" + i, GameText.resolve(KIND_NAMES[i]), ShipDesignLayout.tabX(i),
+                    ShipDesignLayout.TAB_Y0, ShipDesignLayout.tabX(i) + ShipDesignLayout.TAB_W,
+                    ShipDesignLayout.TAB_Y0 + ShipDesignLayout.TAB_SIZE, free && i != this.tab));
+        }
+        final List<ResourceLocation> shelf = shelf();
+        for (int i = 0; i < ShipDesignLayout.CARD_COLUMNS * ShipDesignLayout.CARD_ROWS; i++) {
+            final int index = this.scroll * ShipDesignLayout.CARD_COLUMNS + i;
+            if (index < shelf.size()) {
+                parts.add(framed("card:" + shelf.get(index), spoken(shelf.get(index)), ShipDesignLayout.cardX(i),
+                        ShipDesignLayout.cardY(i), ShipDesignLayout.cardX(i) + ShipDesignLayout.CARD_W,
+                        ShipDesignLayout.cardY(i) + ShipDesignLayout.CARD_H, free));
+            }
+        }
+        if (releasable() || takeable()) {
+            parts.add(framed(releasable() ? "release" : "take_in", GameText.resolve(releasable()
+                            ? ShipDesignTexts.RELEASE : ShipDesignTexts.TAKE_IN), ShipDesignLayout.INNER_X0,
+                    ShipDesignLayout.RELEASE_Y0, ShipDesignLayout.INNER_X1, ShipDesignLayout.RELEASE_Y0
+                            + ShipDesignLayout.RELEASE_H, free));
+        }
+        if (this.plansOpen) {
+            planParts(parts);
+        }
+        if (this.held != null) {
+            nodeParts(this.held, parts);
+        }
+        return parts;
     }
 
     @Override
@@ -1794,6 +1857,105 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         final double room = Math.min(width / (double) ShipDesignLayout.WIDTH,
                 height / (double) ShipDesignLayout.HEIGHT);
         return (float) (room >= 1 ? Math.floor(room) : room);
+    }
+
+    /*
+     * The ship's parts as drawn now, {@code spine:} from the nose then {@code hung:}: each the box round its outline as
+     * the camera sees it, clicked at a point of it that shows, over no panel and in front of the others; a part hidden
+     * whole takes no click.
+     */
+    private void shipParts(final List<ShownPart> out, final boolean free) {
+        final List<ShipPartModels.Placed> drawn = drawnModels();
+        final ShipDesignMesh faces = ShipDesignMesh.of(this.terminal, drawn, this.mesh);
+        this.mesh = faces;
+        final int sections = this.design.spine().size();
+        for (int part = 0; part < sections + this.design.hung().size(); part++) {
+            final boolean hung = part >= sections;
+            final ResourceLocation id = hung ? this.design.hung().get(part - sections) : this.design.spine().get(part);
+            final float[] box = {Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+            for (final float[] edge : faces.outline(part, this.view.eye())) {
+                for (int end = 0; end + 2 < edge.length; end += 3) {
+                    this.view.project(edge[end], edge[end + 1], edge[end + 2], this.width, this.height)
+                            .ifPresent(at -> {
+                                box[0] = Math.min(box[0], at[0]);
+                                box[1] = Math.min(box[1], at[1]);
+                                box[2] = Math.max(box[2], at[0]);
+                                box[3] = Math.max(box[3], at[1]);
+                            });
+                }
+            }
+            if (box[0] > box[2]) {
+                continue;
+            }
+            final int left = (int) Math.floor(box[0]);
+            final int top = (int) Math.floor(box[1]);
+            final int width = (int) Math.ceil(box[2]) - left;
+            final int height = (int) Math.ceil(box[3]) - top;
+            final String name = hung ? "hung:" + (part - sections) : "spine:" + part;
+            final Optional<int[]> point = showing(drawn, part, left, top, width, height);
+            out.add(point.isPresent() ? new ShownPart(name, spoken(id), left, top, width, height, point.get()[0],
+                    point.get()[1], free) : ShownPart.of(name, spoken(id), left, top, width, height, false));
+        }
+    }
+
+    /* A point of the box the part numbered {@code part} shows at, the mouse over it; none where it is all hidden. */
+    private Optional<int[]> showing(final List<ShipPartModels.Placed> drawn, final int part, final int left,
+                                    final int top, final int width, final int height) {
+        for (final float[] at : LOOK_AT) {
+            final int x = left + Math.round(at[0] * width);
+            final int y = top + Math.round(at[1] * height);
+            if (partAt(drawn, x, y) == part) {
+                return Optional.of(new int[] {x, y});
+            }
+        }
+        return Optional.empty();
+    }
+
+    /* The grid's points, as shares of a box, nearest its middle first. */
+    private static float[][] lookAt() {
+        final List<float[]> points = new ArrayList<>();
+        for (int across = 0; across < LOOK_GRID; across++) {
+            for (int down = 0; down < LOOK_GRID; down++) {
+                points.add(new float[] {(across + 0.5F) / LOOK_GRID, (down + 0.5F) / LOOK_GRID});
+            }
+        }
+        points.sort(Comparator.comparingDouble(point -> Math.hypot(point[0] - 0.5, point[1] - 0.5)));
+        return points.toArray(new float[0][]);
+    }
+
+    /* Each plan's two buttons in the plans' list, by the plan's place among them, its name their words. */
+    private void planParts(final List<ShownPart> out) {
+        final List<ShipDesign> plans = this.terminal.plans();
+        for (int i = 0; i < Math.min(ShipDesignLayout.PLAN_ROWS, plans.size() - this.plansScroll); i++) {
+            final int place = this.plansScroll + i;
+            final int top = ShipDesignLayout.planY(i) + ShipDesignLayout.PLAN_BUTTON_DY;
+            final int bottom = top + ShipDesignLayout.PLAN_BUTTON_H;
+            out.add(framed("load:" + place, plans.get(place).name(), ShipDesignLayout.PLAN_LOAD_X, top,
+                    ShipDesignLayout.PLAN_LOAD_X + ShipDesignLayout.PLAN_BUTTON_W, bottom, true));
+            out.add(framed("delete:" + place, plans.get(place).name(), ShipDesignLayout.PLAN_DELETE_X, top,
+                    ShipDesignLayout.PLAN_DELETE_X + ShipDesignLayout.PLAN_BUTTON_W, bottom, true));
+        }
+    }
+
+    /* The nodes the part {@code h} held snaps to, where drawn: {@code joint:} by its place, or {@code hang}. */
+    private void nodeParts(final Held h, final List<ShownPart> out) {
+        for (final Node node : targets(h)) {
+            final Optional<float[]> at = this.view.project(node.x(), node.y(), node.z(), this.width, this.height);
+            if (at.isPresent()) {
+                final int x = Math.round(at.get()[0]);
+                final int y = Math.round(at.get()[1]);
+                out.add(new ShownPart(node.target().hung() ? "hang" : "joint:" + node.target().at(), "",
+                        x - NODE_HALF, y - NODE_HALF, 2 * NODE_HALF, 2 * NODE_HALF, x, y, true));
+            }
+        }
+    }
+
+    /* What is drawn in the frame from ({@code x0}, {@code y0}) to ({@code x1}, {@code y1}), in the screen's pixels. */
+    private ShownPart framed(final String name, final String words, final double x0, final double y0, final double x1,
+                             final double y1, final boolean usable) {
+        final int left = Math.round(guiX(x0));
+        final int top = Math.round(guiY(y0));
+        return ShownPart.of(name, words, left, top, Math.round(guiX(x1)) - left, Math.round(guiY(y1)) - top, usable);
     }
 
     private double frameX(final double mouseX) {

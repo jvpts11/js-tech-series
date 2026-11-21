@@ -2269,13 +2269,18 @@ stable 4
 10 dev.jstech.core.client.gui.screen.IGuiTab  abstract void renderContent(GuiGraphics, int, int, int, int, int, int, float)
 10 dev.jstech.core.client.gui.screen.IGuiTab  default void onDeselected()
 10 dev.jstech.core.client.gui.screen.IGuiTab  default void onSelected()
+83 dev.jstech.core.client.gui.screen.IShownParts  type interface
+83 dev.jstech.core.client.gui.screen.IShownParts  abstract List<ShownPart> shownParts()
 10 dev.jstech.core.client.gui.screen.ModalDialog  type final class extends Screen
 10 dev.jstech.core.client.gui.screen.ModalDialog  boolean isPauseScreen()
 10 dev.jstech.core.client.gui.screen.ModalDialog  new(Screen, Component, Component, Consumer<Boolean>)
 10 dev.jstech.core.client.gui.screen.ModalDialog  void onClose()
 10 dev.jstech.core.client.gui.screen.ModalDialog  void render(GuiGraphics, int, int, float)
 58 dev.jstech.core.client.gui.screen.ModalDialog  void renderBackground(GuiGraphics, int, int, float)
-10 dev.jstech.core.client.gui.screen.TabbedScreen  type abstract class extends CoreScreen
+83 dev.jstech.core.client.gui.screen.ShownPart  type record(String name, String words, int x, int y, int width, int height, int pointX, int pointY, boolean usable)
+83 dev.jstech.core.client.gui.screen.ShownPart  static ShownPart of(String, String, int, int, int, int, boolean)
+83 dev.jstech.core.client.gui.screen.TabbedScreen  type abstract class extends CoreScreen implements IShownParts
+83 dev.jstech.core.client.gui.screen.TabbedScreen  List<ShownPart> shownParts()
 10 dev.jstech.core.client.gui.screen.TabbedScreen  boolean mouseClicked(double, double, int)
 10 dev.jstech.core.client.gui.screen.TabbedScreen  int activeTabIndex()
 10 dev.jstech.core.client.gui.screen.TabbedScreen  int tabCount()

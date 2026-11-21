@@ -16,9 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A {@link CoreScreen} that hosts a row of {@link IGuiTab}s with a content area below the tab bar.
+ * A {@link CoreScreen} that hosts a row of {@link IGuiTab}s with a content area below the tab bar. Its tabs are named
+ * to whoever reads the screen ({@link IShownParts}), {@code tab:0} first, each by its title.
  */
-public abstract class TabbedScreen extends CoreScreen {
+public abstract class TabbedScreen extends CoreScreen implements IShownParts {
 
     private final List<IGuiTab> tabs = new ArrayList<>();
     private int activeTabIndex = 0;
@@ -95,6 +96,23 @@ public abstract class TabbedScreen extends CoreScreen {
             Draw.textCentered(graphics, this.font, tabs.get(i).title(), (tabX + tabEnd) / 2,
                     (tabBarHeight - this.font.lineHeight) / 2, ScreenPalette.get().tabText());
         }
+    }
+
+    /** Its tabs, along its tab bar. */
+    @Override
+    public List<ShownPart> shownParts() {
+        final List<ShownPart> parts = new ArrayList<>();
+        if (tabs.isEmpty()) {
+            return parts;
+        }
+        final int tabWidth = this.width / tabs.size();
+        for (int i = 0; i < tabs.size(); i++) {
+            final int tabX = i * tabWidth;
+            final int tabEnd = i == tabs.size() - 1 ? this.width : tabX + tabWidth;
+            parts.add(ShownPart.of("tab:" + i, tabs.get(i).title().getString(), tabX, 0, tabEnd - tabX,
+                    tabBarHeight, i != activeTabIndex));
+        }
+        return parts;
     }
 
     @Override

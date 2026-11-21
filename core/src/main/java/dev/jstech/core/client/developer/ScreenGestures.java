@@ -7,6 +7,10 @@
  */
 package dev.jstech.core.client.developer;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.client.event.ScreenEvent;
@@ -53,11 +57,28 @@ public final class ScreenGestures {
      */
     public static void drag(final Screen screen, final double x, final double y, final double toX, final double toY,
                             final int button) {
+        drag(screen, x, y, () -> Optional.of(new double[] {toX, toY}), button);
+    }
+
+    /**
+     * Presses {@code button} at the screen's point ({@code x}, {@code y}), then asks {@code to} where it goes, as the
+     * screen stands with the button down, so a place shown only while a thing is held is found; moves it there in
+     * steps and lets it go. With nowhere to go, it lets go where it pressed.
+     *
+     * @return where it was let go: none when {@code to} gave nowhere
+     */
+    public static Optional<double[]> drag(final Screen screen, final double x, final double y,
+                                          final Supplier<Optional<double[]>> to, final int button) {
+        final List<Optional<double[]>> went = new ArrayList<>();
         make(() -> {
             press(screen, x, y, button);
+            final Optional<double[]> end = to.get();
+            went.add(end);
+            final double toX = end.map(at -> at[0]).orElse(x);
+            final double toY = end.map(at -> at[1]).orElse(y);
             double lastX = x;
             double lastY = y;
-            for (int move = 1; move <= DRAG_MOVES; move++) {
+            for (int move = 1; end.isPresent() && move <= DRAG_MOVES; move++) {
                 final double atX = x + (toX - x) * move / DRAG_MOVES;
                 final double atY = y + (toY - y) * move / DRAG_MOVES;
                 final double dx = atX - lastX;
@@ -71,6 +92,7 @@ public final class ScreenGestures {
             }
             release(screen, toX, toY, button);
         });
+        return went.getFirst();
     }
 
     /** Turns the wheel {@code notches} at the screen's point ({@code x}, {@code y}): up when more than nought. */

@@ -7,13 +7,17 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioPrefs;
+import dev.jstech.core.audio.SoundMixerTexts;
 import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.client.audio.mixer.SoundMixerScreen;
+import dev.jstech.core.client.gui.screen.IGuiTab;
+import dev.jstech.core.client.gui.screen.TabbedScreen;
 import dev.jstech.core.client.mcp.McpGame;
 import dev.jstech.core.client.mcp.McpPairingScreen;
 import dev.jstech.core.client.studio.TestRecorder;
@@ -23,6 +27,7 @@ import dev.jstech.core.developer.mcp.McpGuard;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
 import dev.jstech.core.developer.studio.RecordedTest;
+import dev.jstech.core.text.GameText;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -36,6 +41,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -45,6 +51,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -105,6 +112,9 @@ public final class McpPlayClientTests {
     private static final BlockPos BEYOND_THE_DOOR = new BlockPos(8, 4, 0);
     private static final BlockPos PILLAR_TOP = new BlockPos(12, 7, 4);
     private static final String MACHINES = AudioChannels.MACHINES.id().toString();
+    /* A screen of the Core's kit made for the test, and its two tabs' titles. */
+    private static final String KIT_TITLE = "Kit";
+    private static final String[] KIT_TABS = {"Alpha", "Beta"};
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final String INITIALIZE = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":"
             + "{\"protocolVersion\":\"2025-11-25\",\"clientInfo\":{\"name\":\"Player test\",\"version\":\"1.0\"}}}";
@@ -417,6 +427,49 @@ public final class McpPlayClientTests {
                         "then both are let go");
     }
 
+    /*
+     * What a screen draws itself is named, and the game's own widgets are found where they nest: a screen of the
+     * Core's kit names its tabs, clicked by name and by their words; the sound mixer's tabs, buttons of the game's tab
+     * bar held in it, are listed with their words and clicked by them; a name nothing on the screen has is refused.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void screens_nameWhatTheyDrawAndListTheWidgetsTheirBarsHold(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final TabbedScreen kit = new TabbedScreen(Component.literal(KIT_TITLE)) {
+            {
+                addTab(new KitTab(KIT_TABS[0]));
+                addTab(new KitTab(KIT_TABS[1]));
+            }
+        };
+        ctx.afterTest(() -> {
+            McpGame.turn(false);
+            ctx.mc().setScreen(null);
+        });
+        pair(ctx, sent, key, port);
+        ctx.then(SETTLE, () -> ctx.mc().setScreen(kit));
+        run(ctx, sent, key, port, new Step("screen_tree", "{}", result -> ctx.assertTrue(named(result, "tab:0",
+                KIT_TABS[0]) && named(result, "tab:1", KIT_TABS[1]), "the kit's screen names its tabs by their "
+                + "titles: " + result)));
+        run(ctx, sent, key, port, new Step("screen_click", "{\"name\":\"tab:1\"}", result -> { }));
+        ctx.thenAssert(SETTLE, () -> kit.activeTabIndex() == 1, "clicked by its name, the second tab is chosen");
+        run(ctx, sent, key, port, new Step("screen_click", "{\"words\":\"" + KIT_TABS[0].toLowerCase(Locale.ROOT)
+                + "\"}", result -> { }));
+        ctx.thenAssert(SETTLE, () -> kit.activeTabIndex() == 0, "clicked by its words, whatever their case, the "
+                + "first tab is chosen again");
+        run(ctx, sent, key, port, Step.failing("screen_click", "{\"name\":\"tab:9\"}", result -> { }));
+        ctx.then(SETTLE, () -> ctx.mc().setScreen(new SoundMixerScreen(null)))
+                .thenAwaitScreen(SoundMixerScreen.class, WAIT);
+        final String sounds = GameText.resolve(SoundMixerTexts.TAB_SOUNDS);
+        run(ctx, sent, key, port, new Step("screen_tree", "{}", result -> ctx.assertTrue(worded(result, sounds),
+                "the sound mixer's tab bar holds its tabs' buttons, listed with their words: " + result)));
+        run(ctx, sent, key, port, new Step("screen_click", "{\"words\":\"" + sounds + "\"}", result -> { }));
+        ctx.thenAssert(SETTLE, () -> ctx.screen(SoundMixerScreen.class).currentTab() != null
+                && ctx.screen(SoundMixerScreen.class).currentTab().getTabTitle().getString().equals(sounds),
+                "clicked by its words, the sounds' tab shows");
+    }
+
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */
     @ClientTest(timeoutTicks = 1600)
     public static void off_takesTheKeysBackFromACallStillActing(final ClientTestContext ctx) {
@@ -501,6 +554,18 @@ public final class McpPlayClientTests {
         return "{\"x\":" + pos.getX() + ",\"y\":" + pos.getY() + ",\"z\":" + pos.getZ() + "}";
     }
 
+    /* Whether a screen's tree names a part {@code name} that reads {@code words}. */
+    private static boolean named(final JsonObject tree, final String name, final String words) {
+        return tree.has("parts") && tree.getAsJsonArray("parts").asList().stream().map(JsonElement::getAsJsonObject)
+                .anyMatch(part -> name.equals(text(part, "name")) && words.equals(text(part, "words")));
+    }
+
+    /* Whether a screen's tree has a widget that reads {@code words}. */
+    private static boolean worded(final JsonObject tree, final String words) {
+        return tree.has("widgets") && tree.getAsJsonArray("widgets").asList().stream()
+                .map(JsonElement::getAsJsonObject).anyMatch(widget -> words.equals(text(widget, "words")));
+    }
+
     /* The words under {@code name} in an answer, or none. */
     private static @Nullable String text(final JsonObject result, final String name) {
         return result.has(name) && result.get(name).isJsonPrimitive() ? result.get(name).getAsString() : null;
@@ -554,6 +619,22 @@ public final class McpPlayClientTests {
         /* A step whose tool is to fail, and say why. */
         static Step failing(final String tool, final String arguments, final Consumer<JsonObject> check) {
             return new Step(tool, () -> arguments, check, true);
+        }
+    }
+
+    /* A tab of the kit's screen that draws nothing, known by its title. */
+    private record KitTab(String name) implements IGuiTab {
+
+        @Override
+        public Component title() {
+            return Component.literal(this.name);
+        }
+
+        @Override
+        public void renderContent(final GuiGraphics graphics, final int contentX, final int contentY,
+                                  final int contentWidth, final int contentHeight, final int mouseX, final int mouseY,
+                                  final float partialTick) {
+            // Nothing is drawn in it: the test reads its tab.
         }
     }
 }

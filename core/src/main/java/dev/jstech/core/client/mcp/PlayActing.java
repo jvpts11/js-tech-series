@@ -13,7 +13,6 @@ import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.client.developer.ScreenGestures;
 import dev.jstech.core.client.developer.ScreenPoints;
-import dev.jstech.core.client.gui.data.BuiltNode;
 import dev.jstech.core.client.gui.data.IDataScreen;
 import dev.jstech.core.client.studio.TestRecorder;
 import dev.jstech.core.developer.mcp.McpCall;
@@ -46,6 +45,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What an agent does as the player, through the input the player uses: the movement keys held, the view turned as
@@ -78,7 +78,10 @@ public final class PlayActing {
     private static final int MAX_HEIGHT = 30_000;
     /* The most a turn of the wheel may be asked to turn it, either way, in notches. */
     private static final int MOST_NOTCHES = 100;
-    /* What the point a tool looks at is, for the tools that look at a block. */
+    /* What a click or a drag on a screen names its point by. */
+    private static final String NAME = "name";
+    private static final String WORDS = "words";
+    private static final String TO_NAME = "to_name";
     /* What a look by name asks for, how far round the player it looks, in blocks, and how long it may take. */
     private static final String PIECE = "piece";
     private static final String ENTITY_TYPE = "entity_type";
@@ -154,20 +157,26 @@ public final class PlayActing {
                         + "gone; or why it cannot: out of reach, a block nothing breaks, or the game mode keeping the "
                         + "player from it.", McpSchema.object().place(Play.PLACE, "The block.", true).build(),
                         McpPermission.ACT, PlayActing::breakBlock),
-                new McpTool("screen_click", "Clicks the screen open as the mouse does: a component by its name (as "
-                        + "screen_tree names it), or a point of the screen.", McpSchema.object()
-                        .words("name", "The component's name.", false)
+                new McpTool("screen_click", "Clicks the screen open as the mouse does: a component or a part by its "
+                        + "name (as screen_tree names it), the first thing that takes a click and reads the words "
+                        + "given, or a point of the screen.", McpSchema.object()
+                        .words(NAME, "The component's or the part's name.", false)
+                        .words(WORDS, "What the thing clicked reads, whatever its case.", false)
                         .whole("x", "The point's x, in the screen's pixels.", 0, 10_000, false)
                         .whole("y", "The point's y.", 0, 10_000, false)
                         .whole("button", "0 for the left button, 1 for the right.", 0, 1, false).build(),
                         McpPermission.ACT, call -> onScreen(call, PlayActing::click)),
                 new McpTool("screen_drag", "Drags the mouse across the screen open, its button pressed at one point, "
-                        + "moved in steps and let go at another: a slider, a slide to unlock, a thing carried.",
+                        + "moved in steps and let go at another: a slider, a slide to unlock, a thing carried. Each "
+                        + "end by a name as screen_tree gives it or by its point; the end's name is looked for once "
+                        + "the button is down, so a place that shows only while a thing is held is found.",
                         McpSchema.object()
-                        .whole("x", "Where the drag starts, its x in the screen's pixels.", 0, 10_000, true)
-                        .whole("y", "Where it starts, its y.", 0, 10_000, true)
-                        .whole("to_x", "Where it ends, its x.", 0, 10_000, true)
-                        .whole("to_y", "Where it ends, its y.", 0, 10_000, true)
+                        .words(NAME, "What the drag starts at, by its name.", false)
+                        .whole("x", "Where the drag starts, its x in the screen's pixels.", 0, 10_000, false)
+                        .whole("y", "Where it starts, its y.", 0, 10_000, false)
+                        .words(TO_NAME, "What it ends at, by its name.", false)
+                        .whole("to_x", "Where it ends, its x.", 0, 10_000, false)
+                        .whole("to_y", "Where it ends, its y.", 0, 10_000, false)
                         .whole("button", "0 for the left button, 1 for the right.", 0, 1, false).build(),
                         McpPermission.ACT, call -> onScreen(call, PlayActing::drag)),
                 new McpTool("screen_scroll", "Turns the mouse's wheel over a point of the screen open, as the wheel "
@@ -641,55 +650,70 @@ public final class PlayActing {
 
     private static McpResult click(final Screen screen, final McpCall call) {
         final int button = (int) (long) call.whole("button").orElse(0L);
-        final Optional<String> name = call.text("name");
-        final double x;
-        final double y;
-        if (name.isPresent()) {
-            if (!(screen instanceof IDataScreen data)) {
-                return McpCall.wrong("name", McpWords.SOME_WORDS.text());
-            }
-            final Optional<BuiltNode> node = data.find(name.get());
-            if (node.isEmpty() || node.get().component() == null) {
-                return McpCall.wrong("name", McpWords.SOME_WORDS.text());
-            }
-            final int[] center = node.get().component().center();
-            x = center[0];
-            y = center[1];
-        } else {
-            final Optional<Long> atX = call.whole("x");
-            final Optional<Long> atY = call.whole("y");
-            if (atX.isEmpty() || atY.isEmpty()) {
-                return McpCall.wrong("x", McpWords.A_NUMBER.with(0, screen.width));
-            }
-            x = atX.get();
-            y = atY.get();
+        final Optional<double[]> at = pointed(screen, call, NAME, WORDS, "x", "y");
+        if (at.isEmpty()) {
+            return notPointed(screen, call, NAME, WORDS, "x");
         }
+        final double x = at.get()[0];
+        final double y = at.get()[1];
         ScreenGestures.click(screen, x, y, button);
-        final Optional<String> named = name.isPresent() ? name : screen instanceof IDataScreen data
-                ? ScreenPoints.nameAt(data, x, y) : Optional.empty();
+        // A component of a file is kept by its name; anything else by its point, a recorded test's screen drawn alike.
+        final Optional<String> named = screen instanceof IDataScreen data ? ScreenPoints.nameAt(data, x, y)
+                : Optional.empty();
         TestRecorder.agentDid(named.<RecordedTest.Step>map(RecordedTest.Click::new).orElseGet(() ->
                 new RecordedTest.ClickAt((int) Math.round(x - screen.width / 2.0), (int) Math.round(y
                         - screen.height / 2.0))));
         return done("clicked", true);
     }
 
+    /* A drag from the point named, and to one named once its button is down, as what is held shows where it goes. */
     private static McpResult drag(final Screen screen, final McpCall call) {
-        final Optional<Long> x = call.whole("x");
-        final Optional<Long> y = call.whole("y");
-        final Optional<Long> toX = call.whole("to_x");
-        final Optional<Long> toY = call.whole("to_y");
-        if (x.isEmpty() || y.isEmpty() || toX.isEmpty() || toY.isEmpty()) {
-            return McpCall.wrong("x", McpWords.A_NUMBER.with(0, screen.width));
+        final Optional<double[]> from = pointed(screen, call, NAME, null, "x", "y");
+        if (from.isEmpty()) {
+            return notPointed(screen, call, NAME, null, "x");
         }
         final int button = (int) (long) call.whole("button").orElse(0L);
-        ScreenGestures.drag(screen, x.get(), y.get(), toX.get(), toY.get(), button);
+        final Optional<double[]> to = ScreenGestures.drag(screen, from.get()[0], from.get()[1],
+                () -> pointed(screen, call, TO_NAME, null, "to_x", "to_y"), button);
+        if (to.isEmpty()) {
+            return notPointed(screen, call, TO_NAME, null, "to_x");
+        }
         // A recorded test drags with the left button, as the player's own drags are kept.
         if (button == 0) {
-            TestRecorder.agentDid(new RecordedTest.Drag((int) Math.round(x.get() - screen.width / 2.0),
-                    (int) Math.round(y.get() - screen.height / 2.0), (int) Math.round(toX.get() - screen.width / 2.0),
-                    (int) Math.round(toY.get() - screen.height / 2.0)));
+            TestRecorder.agentDid(new RecordedTest.Drag((int) Math.round(from.get()[0] - screen.width / 2.0),
+                    (int) Math.round(from.get()[1] - screen.height / 2.0),
+                    (int) Math.round(to.get()[0] - screen.width / 2.0),
+                    (int) Math.round(to.get()[1] - screen.height / 2.0)));
         }
         return done("dragged", true);
+    }
+
+    /*
+     * The point of the screen the call gives by the name {@code name}, by the words {@code words} or by {@code x} and
+     * {@code y}, the first of them it gives; none for one that names nothing shown, or no point.
+     */
+    private static Optional<double[]> pointed(final Screen screen, final McpCall call, final String name,
+                                              @Nullable final String words, final String x, final String y) {
+        final Optional<String> named = call.text(name);
+        if (named.isPresent()) {
+            return PlayScreens.named(screen, named.get());
+        }
+        final Optional<String> worded = words == null ? Optional.empty() : call.text(words);
+        if (worded.isPresent()) {
+            return PlayScreens.worded(screen, worded.get());
+        }
+        final Optional<Long> atX = call.whole(x);
+        final Optional<Long> atY = call.whole(y);
+        return atX.isPresent() && atY.isPresent() ? Optional.of(new double[] {atX.get(), atY.get()})
+                : Optional.empty();
+    }
+
+    /* Why {@link #pointed} found no point: what it named is not shown, or it gave none. */
+    private static McpResult notPointed(final Screen screen, final McpCall call, final String name,
+                                        @Nullable final String words, final String x) {
+        final Optional<String> asked = call.text(name).or(() -> words == null ? Optional.empty() : call.text(words));
+        return asked.isPresent() ? McpCall.wrong(call.text(name).isPresent() ? name : words,
+                McpTexts.NOT_ON_SCREEN.with(asked.get())) : McpCall.wrong(x, McpWords.A_NUMBER.with(0, screen.width));
     }
 
     private static McpResult scroll(final Screen screen, final McpCall call) {

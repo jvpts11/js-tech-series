@@ -964,6 +964,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   forgets it and leaves the ship in the dock as it is; the list scrolls past six.
 - The Starship Design undoes and redoes its changes, a plan loaded too, with Ctrl and Z and Ctrl and Y (Shift
   with Z redoes too), sixty-four changes back, as the Rocket Design does.
+- The Starship Design names all it draws to an agent reading the screen: the ship's sections along the spine
+  and its hung parts, each at a point of it that shows, the search line, the ship's name, the tools, the kinds' tabs,
+  each card by its part, the Release or Take In button, each plan's Load and Delete, and, while a part is held, the
+  joints it snaps to by their places along the spine; so a part is dragged from its card onto a joint by name.
 - The Ramp hold's ramp is a door: its tail opens from the deck to the roof between yellow and black stripes,
   and the ramp, shut across it, swings down over two and a half seconds when a crew member who may come aboard uses
   it, its toe unfolding past level, till its foot rests on the land and it is walked up, a step every quarter block. In

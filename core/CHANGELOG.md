@@ -561,6 +561,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- What a screen draws, named: J's Core's API is at version 83. A screen, or a widget it holds, that implements
+  `IShownParts` gives the parts it draws now as `ShownPart`s, each with a name kept while the screen is open, its
+  words, its box, the point a click on it lands at and whether it takes one, for an agent and the tests to find it
+  by; `TabbedScreen` names its tabs. Experimental.
 - A plan's robot arms heard at work: J's Core's API is at version 82. `PlanAssembler.armSounds` gives the
   sounds an assembler's arms are heard by: one at an arm each time it sets off, for a block, swinging it over and
   folding back to rest, and one at each block an arm sets down, in place of the block's own sound of being placed.
@@ -1919,6 +1923,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   row, so a player who may fly stays on the ground, and a flying one comes down to walk. A walk that cannot go on says
   where it stopped and why: a wall, a step with no room for the head, a drop too deep, a door no hand opens, no way, or
   the way blocked. It used to walk straight at the place, and climbed whatever stood in the way.
+- An agent reads and points at what a screen draws: the MCP tool `screen_tree` lists the widgets held in the
+  lists and bars that hold them, the buttons of the game's tab bars among them, and the parts a screen drawn in code
+  names, its tabs, cards and the like, each with its words and where a click on it lands. `screen_click` clicks one by
+  its name or the first thing that reads the words given, whatever their case, and `screen_drag` starts and ends at
+  names too, the end looked up once the button is down, so a place shown only while a thing is held is found. A name
+  nothing on the screen has is refused, saying so. A screen drawn in code was only pixels to it.
 - Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside
