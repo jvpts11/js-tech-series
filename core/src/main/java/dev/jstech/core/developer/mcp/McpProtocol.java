@@ -251,6 +251,8 @@ public final class McpProtocol {
         if (acts) {
             this.host.began(running);
         }
+        // A world held for its agent runs while a call does, and stands frozen again once it has answered.
+        McpHold.running(true);
         CompletableFuture<McpResult> handled = null;
         try {
             handled = tool.handler().run(running);
@@ -265,6 +267,7 @@ public final class McpProtocol {
             result = McpResult.failed(McpWords.WENT_WRONG.with(String.valueOf(cause == null ? failed.getMessage()
                     : cause.getMessage())));
         } finally {
+            McpHold.running(false);
             if (acts) {
                 this.host.ended(running);
             }

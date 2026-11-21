@@ -2162,6 +2162,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its name or the first thing that reads the words given, whatever their case, and `screen_drag` starts and ends at
   names too, the end looked up once the button is down, so a place shown only while a thing is held is found. A name
   nothing on the screen has is refused, saying so. A screen drawn in code was only pixels to it.
+- (Core) The game waits for its agent: the MCP tool `game_hold` has the world stand frozen between an agent's calls,
+  by the game's own tick freeze, and run only while a call runs, so nothing goes on while the agent thinks, a ship
+  flying on or a machine working, and a wait of some ticks runs the world as many. Let go, as asked, as the MCP
+  server stops, as every client is cut off or as the player presses a key, it runs as it did, frozen only if it was
+  before. It holds the player's own world, and a server's from the server's own MCP server.
 - (Core) Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside

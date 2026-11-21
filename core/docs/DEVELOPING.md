@@ -267,7 +267,7 @@ wheel, typing and keys):
 | Seeing | `player_state` (where the player is and looks, what the crosshair is on, the screen open; on a formed model, the `piece` drawn there, a seat, a console or a door, with its model and the `box` round it in the world; on a block aboard a moving structure, its place in the world, the point aimed `at`, and the structure and its place `aboard`), `scene_describe` (the scene seen, in numbers: the way the player faces, the time, weather, light and biome, the kinds of block across the view with the nearest of each and where it lies, how much of the view is open, and the creatures, players and items in sight; read along lines of sight across the field of view, so a block behind a wall is not in it), `inventory_read`, `screen_tree` (a screen declared in a file by its components' names; its widgets, those its lists and bars hold too, with their words; the `parts` a screen drawn in code names, as its tabs and cards, with their words and where a click lands; a container's slots), `screen_picture`, `blocks_around`, `chat_read`, `game_log_read` |
 | Acting | `player_walk_to` (along a way a player walks: up steps, slabs and stairs, a block up with a jump, down three at most, through doors it opens, on a moving structure's deck too; stopped, it says where and why under `failed`: `wall`, `no_headroom`, `drop`, `shut_door`, `no_way` or `blocked`), `player_jump`, `player_fly`, `player_sneak`, `player_look_at` (at a block, a point of it, an entity by its id, the nearest `entity_type`, or the nearest `piece` of a formed model by its name, at a point the look meets it at), `hotbar_select`, `player_use`, `player_place`, `player_break`, `block_open` (looking at, using, placing and opening at a block's middle, a face's middle, or `at` a point of it in sixteenths, as a button on a machine's front), `screen_click` (a component or a part by its `name`, the first thing that reads the `words` given, or a point), `screen_drag` (from a point or a `name` to another with a button held, as a slider or a swipe; a `to_name` is looked up once the button is down, so a place shown only while a thing is held is found), `screen_scroll` (the mouse wheel turned at a point, in notches), `screen_type`, `key_press`, `key_hold` (a key, or a key mapping by the game's name for it, held for a number of ticks with a modifier `with` it, through the game's own input), `screen_close` |
 | The test world | `world_give`, `world_set_block`, `world_save_and_reload`, `gametests_run` (by words of their names, each test's result), `client_test_run` (a test kept as a file, played in the world open, its pictures compared with their references) |
-| Waiting | `wait_ticks`, `wait_until` (a screen open, a block of an id, a component's words, a line of chat) |
+| Waiting | `wait_ticks`, `wait_until` (a screen open, a block of an id, a component's words, a line of chat), `game_hold` (the game waits for the agent: see below) |
 | Recording | `recording_start` and `recording_stop`, which keeps what the agent and the player did as a client test, as Record a test does |
 
 A tool that acts over many ticks, walking or breaking a block, stops at once when the player presses a key, and lets go
@@ -288,6 +288,13 @@ readings of the player's game are `paused`, `frozen` (its ticking frozen with `/
 also gives `moved`, how many blocks the player went, and `chat_new`, the lines of chat that came while the call ran.
 A tool's own fields come first and keep their values: these are added beside them, or are the whole object of a tool
 that found none.
+
+An agent that reads slowly, while a ship flies on or a machine works, has the game wait for it with `game_hold`
+(`on`: true): the world then stands frozen between its calls, by the game's own tick freeze, and runs only while a
+call runs, reading or acting. A call that waits or acts for some ticks has the world run them with it, `wait_ticks`
+as a step of the game, and `game_ticks_taken` says how many it ran. `on` false lets it run as it did before it was
+held, frozen only if it was then; so do the MCP server stopping, every client cut off, and the player pressing a key.
+It holds only a world the game runs itself, the player's own or the server's.
 
 A dedicated server has an MCP server of its own, on the server's computer (`developer.server_mcp_port`, 25598): an
 operator in the game turns it on with `/jstech mcp server on`, never the console; a client that asks is asked about

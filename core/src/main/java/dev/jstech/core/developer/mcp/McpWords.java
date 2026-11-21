@@ -98,6 +98,8 @@ public final class McpWords {
             "The MCP server could not listen at port %s: %s");
     public static final TextKey FROM_THE_GAME = TextKey.of("commands.jscore.mcp.from_the_game",
             "Only a player in the game turns an MCP server on.");
+    public static final TextKey HOLD_OWN_WORLD_ONLY = TextKey.of("jscore.mcp.hold_own_world_only",
+            "Only a world of the player's own, which this game runs, waits for its agent.");
 
     private McpWords() {
     }

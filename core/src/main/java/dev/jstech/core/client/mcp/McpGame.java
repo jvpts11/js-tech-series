@@ -20,6 +20,7 @@ import dev.jstech.core.developer.mcp.IMcpHost;
 import dev.jstech.core.developer.mcp.McpCall;
 import dev.jstech.core.developer.mcp.McpCallLog;
 import dev.jstech.core.developer.mcp.McpFolders;
+import dev.jstech.core.developer.mcp.McpHold;
 import dev.jstech.core.developer.mcp.McpOnServer;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
@@ -105,6 +106,7 @@ public final class McpGame {
         CoreTools.of(() -> McpFolders.of(Minecraft.getInstance().getSingleplayerServer(),
                 Minecraft.getInstance().gameDirectory.toPath()), McpGame::command).forEach(McpGame::declare);
         studioTools.forEach(McpGame::declare);
+        declare(McpHold.tool(() -> Minecraft.getInstance().getSingleplayerServer()));
         // The tools to play the game as the player, for automated tests: seeing, acting, the test world, waiting.
         PlaySeeing.all().forEach(McpGame::declare);
         PlayScene.all().forEach(McpGame::declare);
@@ -123,8 +125,10 @@ public final class McpGame {
         if (!on) {
             final McpServer server = running;
             running = null;
-            // A call still acting lets go of the player's keys, as when every client is cut off.
+            // A call still acting lets go of the player's keys, as when every client is cut off, and a world held
+            // for the agents runs on its own again.
             ACTING.forEach(McpCall::takeBack);
+            McpHold.letGo();
             if (server != null) {
                 server.protocol().revokeAll();
                 server.stop();
@@ -159,6 +163,7 @@ public final class McpGame {
     /** Takes back every client's key, and says how many there were. */
     public static int cutAll() {
         ACTING.forEach(McpCall::takeBack);
+        McpHold.letGo();
         final McpServer server = running;
         return server == null ? 0 : server.protocol().revokeAll();
     }
@@ -228,8 +233,9 @@ public final class McpGame {
             }
             return;
         }
-        // Any other key the player presses while an agent acts takes the controls back.
+        // Any other key the player presses while an agent acts takes the controls back, the game's clock with them.
         ACTING.forEach(McpCall::takeBack);
+        McpHold.letGo();
     }
 
     private static void mark(final GuiGraphics g) {

@@ -24,6 +24,7 @@ import dev.jstech.core.client.studio.TestRecorder;
 import dev.jstech.core.developer.mcp.McpCall;
 import dev.jstech.core.developer.mcp.McpChanges;
 import dev.jstech.core.developer.mcp.McpGuard;
+import dev.jstech.core.developer.mcp.McpHold;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
 import dev.jstech.core.developer.studio.RecordedTest;
@@ -112,6 +113,8 @@ public final class McpPlayClientTests {
     private static final BlockPos BEYOND_THE_DOOR = new BlockPos(8, 4, 0);
     private static final BlockPos PILLAR_TOP = new BlockPos(12, 7, 4);
     private static final String MACHINES = AudioChannels.MACHINES.id().toString();
+    /* How long a held world is watched standing still between calls, in the client's ticks. */
+    private static final int THINKS = 40;
     /* A screen of the Core's kit made for the test, and its two tabs' titles. */
     private static final String KIT_TITLE = "Kit";
     private static final String[] KIT_TABS = {"Alpha", "Beta"};
@@ -468,6 +471,45 @@ public final class McpPlayClientTests {
         ctx.thenAssert(SETTLE, () -> ctx.screen(SoundMixerScreen.class).currentTab() != null
                 && ctx.screen(SoundMixerScreen.class).currentTab().getTabTitle().getString().equals(sounds),
                 "clicked by its words, the sounds' tab shows");
+    }
+
+    /*
+     * A game held for its agent stands still between its calls and runs only while one runs: the world's clock stays
+     * where it is while the agent thinks, goes on about as many ticks as a wait asks, then stands again; let go, it
+     * runs on its own, unfrozen as it was before it was held.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void hold_standsTheWorldStillBetweenCallsAndRunsItWhileOneWaits(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final long[] clock = new long[2];
+        ctx.afterTest(() -> {
+            McpHold.letGo();
+            McpGame.turn(false);
+        });
+        pair(ctx, sent, key, port);
+        run(ctx, sent, key, port, new Step("game_hold", "{\"on\":true}", result -> ctx.assertTrue(result.has("held")
+                && result.get("held").getAsBoolean(), "the game is held for the agent: " + result)));
+        ctx.thenServer(SETTLE, level -> {
+            ctx.assertTrue(level.tickRateManager().isFrozen(), "between calls the world stands frozen");
+            clock[0] = level.getGameTime();
+        })
+                .thenServer(THINKS, level -> ctx.assertTrue(level.getGameTime() == clock[0], "while the agent "
+                        + "thinks, the world's clock stands: " + clock[0] + " then " + level.getGameTime()));
+        run(ctx, sent, key, port, new Step("wait_ticks", "{\"ticks\":" + HELD_TICKS + "}", result -> { }));
+        ctx.thenServer(SETTLE, level -> {
+            clock[1] = level.getGameTime();
+            final long ran = clock[1] - clock[0];
+            ctx.assertTrue(ran >= HELD_TICKS - SETTLE && ran <= HELD_TICKS + THINKS, "a wait of " + HELD_TICKS
+                    + " ticks runs the world about as many: " + ran);
+        })
+                .thenServer(THINKS, level -> ctx.assertTrue(level.getGameTime() == clock[1]
+                        && level.tickRateManager().isFrozen(), "and once it has answered, the world stands again"));
+        run(ctx, sent, key, port, new Step("game_hold", "{\"on\":false}", result -> ctx.assertTrue(
+                !result.get("held").getAsBoolean(), "the game is let go: " + result)));
+        ctx.thenServer(THINKS, level -> ctx.assertTrue(!level.tickRateManager().isFrozen()
+                && level.getGameTime() - clock[1] >= THINKS / 2, "let go, it runs on its own again, as it did"));
     }
 
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */

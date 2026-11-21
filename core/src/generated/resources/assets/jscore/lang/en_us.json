@@ -2581,6 +2581,7 @@
   "jscore.mcp.answer.failed": "failed",
   "jscore.mcp.answer.refused": "refused",
   "jscore.mcp.answer.taken_back": "taken back",
+  "jscore.mcp.hold_own_world_only": "Only a world of the player's own, which this game runs, waits for its agent.",
   "jscore.mcp.kept_from_breaking": "The game mode keeps the player from breaking %s here.",
   "jscore.mcp.key_taken": "its key taken back",
   "jscore.mcp.no_recorded_test": "There is no client test %s kept as a file.",

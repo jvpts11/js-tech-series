@@ -95,6 +95,7 @@ public final class McpOnServer {
                 tool));
         CoreTools.of(() -> McpFolders.of(ServerLifecycleHooks.getCurrentServer(), null), McpOnServer::command)
                 .forEach(tool -> McpTools.declare(McpSide.SERVER, JsCore.MODID, tool));
+        McpTools.declare(McpSide.SERVER, JsCore.MODID, McpHold.tool(ServerLifecycleHooks::getCurrentServer));
     }
 
     /** Hands in what asks the player on a player's game whether a client of a server may come in. */
@@ -198,6 +199,7 @@ public final class McpOnServer {
         }
         final McpServer server = running;
         final int count = server == null ? 0 : server.protocol().revokeAll();
+        McpHold.letGo();
         context.getSource().sendSuccess(() -> GameText.component(McpWords.SERVER_CUT.with(count)), true);
         return Command.SINGLE_SUCCESS;
     }
@@ -215,6 +217,8 @@ public final class McpOnServer {
     private static void stop() {
         final McpServer server = running;
         running = null;
+        // A world held for the agents runs on its own again once none may call.
+        McpHold.letGo();
         if (server != null) {
             server.protocol().revokeAll();
             server.stop();
