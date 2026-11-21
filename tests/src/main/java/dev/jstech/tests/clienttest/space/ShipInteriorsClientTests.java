@@ -16,6 +16,7 @@ import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.GameType;
@@ -45,6 +46,13 @@ public final class ShipInteriorsClientTests {
     private static final Vec3 HOLD_WALL = new Vec3(1.84, HULL + 1.05, 9);
     private static final Vec3 DOCKING_EYES = new Vec3(0, HULL + 1.65, 6.5);
     private static final Vec3 DOCKING_WALL = new Vec3(1.84, HULL + 2.3, 6.5);
+    /*
+     * Every section's ceiling has a light: the caged lamp over the light panels of the Hauler's reactor room, and the
+     * Courier's docking module's domes beside its hatch.
+     */
+    private static final Vec3 HAULER_LAMP = new Vec3(0, HULL + 2.75, 9.5);
+    private static final Vec3 AISLE_EYES = new Vec3(-1.0, HULL + 1.65, 10.8);
+    private static final Vec3 DOCKING_DOME = new Vec3(1.5, HULL + 2.8, 7.5);
     /* The red wall outside the airlock's door, west of the ship. */
     private static final int WALL_X = -6;
     private static final int PATCH = 1;
@@ -54,6 +62,8 @@ public final class ShipInteriorsClientTests {
     private static final int TURQUOISE = 20;
     private static final int ARRIVE = 600;
     private static final int SETTLE = 10;
+    /* How little the patch round the crosshair may change, all three channels together, for the view to be settled. */
+    private static final int STEADY = 3;
     private static final int CHANNEL = 0xFF;
     /*
      * Inside the Orbiter's airlock, beside its doorway into the cockpit, and the face of the doorway's frame toward
@@ -95,10 +105,12 @@ public final class ShipInteriorsClientTests {
                 List.of("twin_bells", "side_intakes", "blended_delta", "twin_canted_fins", "blisters", "wheels")));
         stand(ctx, AIRLOCK_EYES);
         ctx.then(2, () -> ctx.lookAt(corner(ctx).add(AIRLOCK_WALL)))
-                .then(SETTLE, () -> seen[0] = mean(ctx))
+                .thenWaitUntil(steady(ctx), ARRIVE, "the light aboard to settle")
+                .then(0, () -> seen[0] = mean(ctx))
                 .thenScreenshot(0, "ship-interior-meridian")
                 .then(2, () -> ctx.lookAt(corner(ctx).add(OUTER_DOOR)))
-                .then(SETTLE, () -> seen[1] = mean(ctx))
+                .thenWaitUntil(steady(ctx), ARRIVE, "the light aboard to settle")
+                .then(0, () -> seen[1] = mean(ctx))
                 .thenScreenshot(0, "ship-interior-outer-door");
         stand(ctx, PILOT_EYES);
         ctx.then(2, () -> ctx.lookAt(corner(ctx).add(AHEAD)))
@@ -107,14 +119,21 @@ public final class ShipInteriorsClientTests {
                 List.of("magnetic_nozzle", "nacelle_intake", "stub_wings", "quads", "legs")));
         stand(ctx, HOLD_EYES);
         ctx.then(2, () -> ctx.lookAt(corner(ctx).add(HOLD_WALL)))
-                .then(SETTLE, () -> seen[2] = mean(ctx))
+                .thenWaitUntil(steady(ctx), ARRIVE, "the light aboard to settle")
+                .then(0, () -> seen[2] = mean(ctx))
                 .thenScreenshot(0, "ship-interior-ironside");
+        stand(ctx, AISLE_EYES);
+        ctx.then(2, () -> ctx.lookAt(corner(ctx).add(HAULER_LAMP)))
+                .thenScreenshot(SETTLE, "ship-interior-ironside-lamp");
         show(ctx, ship("COURIER", List.of("greenhouse_cockpit", "docking", "side_door", "reactor_fins"),
                 List.of("cluster", "side_intakes", "swept_wings", "single_fin", "quads", "wheels")));
         stand(ctx, DOCKING_EYES);
         ctx.then(2, () -> ctx.lookAt(corner(ctx).add(DOCKING_WALL)))
-                .then(SETTLE, () -> seen[3] = mean(ctx))
+                .thenWaitUntil(steady(ctx), ARRIVE, "the light aboard to settle")
+                .then(0, () -> seen[3] = mean(ctx))
                 .thenScreenshot(0, "ship-interior-kosmozavod")
+                .then(2, () -> ctx.lookAt(corner(ctx).add(DOCKING_DOME)))
+                .thenScreenshot(SETTLE, "ship-interior-docking-domes")
                 .then(0, () -> {
                     final int[] meridian = seen[0];
                     final int[] door = seen[1];
@@ -199,6 +218,26 @@ public final class ShipInteriorsClientTests {
     /* The stand's north-west corner, where the ship's nose meets its centre line at the stand's floor. */
     private static Vec3 corner(final ClientTestContext ctx) {
         return Vec3.atLowerCornerOf(ctx.abs(STAND));
+    }
+
+    /*
+     * Whether what the camera sees has settled, asked once a tick: the patch round the crosshair the same as SETTLE
+     * ticks before, the light of the ship's panels spread through its blocks and its meshes built in it, however long
+     * the light takes on this machine.
+     */
+    private static BooleanSupplier steady(final ClientTestContext ctx) {
+        final int[][] before = new int[1][];
+        final int[] asked = new int[1];
+        return () -> {
+            if (++asked[0] % SETTLE != 0) {
+                return false;
+            }
+            final int[] now = mean(ctx);
+            final boolean same = before[0] != null && Math.abs(now[0] - before[0][0])
+                    + Math.abs(now[1] - before[0][1]) + Math.abs(now[2] - before[0][2]) < STEADY;
+            before[0] = now;
+            return same;
+        };
     }
 
     /* The mean colour, red, green and blue, of a patch at the middle of the screen, round the crosshair. */

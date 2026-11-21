@@ -66,8 +66,9 @@ public final class SmallShipKits {
                 entry("U", ShipKitBlocks.DOCKING_GUIDE));
         section("airlock", airlock, List.of("TDDT", "TGGT", "TDDT"), List.of("QPBA", "O  K", "O  X"),
                 List.of("FCYF", "VIIH", "FCYF"));
+        // Every section's ceiling has a light: the docking module's either side of its collar's hatch.
         section("docking", airlock, List.of("TDDT", "TGGT", "TDDT"), List.of("QPBA", "V  V", "V  V"),
-                List.of("FCYF", "HNNH", "FUUF"));
+                List.of("FCYF", "INNI", "FUUF"));
         section("corridor", hull, List.of("TDDT", "TGGT"), List.of("APBA", "V  V"), List.of("FCYF", "HIIH"));
         // The holds keep their cargo in barrels along both walls, a barrel on a barrel every other row, the walkway
         // between them clear; the manifest's screen hangs over the first barrel on the right, and the side door's
@@ -77,7 +78,7 @@ public final class SmallShipKits {
                 entry("b", ShipKitBlocks.SHIP_BARREL));
         section("bay", hold, List.of("TWWT", "TWWT", "TWWT", "TWWT", "TWWT"),
                 List.of("bPBb", "b  b", "b  b", "b  b", "b  b"),
-                List.of("bHHF", "HHHH", "bHHb", "HHHH", "bHHb"));
+                List.of("bHHF", "HHHH", "bIIb", "HHHH", "bIIb"));
         section("ramp", hold, List.of("TWWT", "TWWT", "TWWT", "TWWT", "TJJT"),
                 List.of("bPBb", "b  b", "b  b", "b  b", "bMMb"),
                 List.of("bCYF", "HIIH", "bCYb", "HCYH", "bMMb"));
@@ -104,9 +105,10 @@ public final class SmallShipKits {
                 entry("Z", ShipKitBlocks.MAGNETIC_COIL), entry("S", ShipKitBlocks.REACTOR_SHIELD),
                 entry("Q", ShipKitBlocks.COOLANT_PUMP), entry("R", ShipKitBlocks.RADIATOR_PANEL));
         // The reactors keep their drum against the right wall, the hull its shield there, and an aisle on the left from
-        // door to door; the left shield is a cabinet against the left wall.
-        section("reactor_flush", reactor, List.of("TDDT", "TDQT"), List.of("S EE", "S ZZ"), List.of("FRRF", "HRRH"));
-        section("reactor_fins", reactor, List.of("TDDT", "TDQT"), List.of("S EE", "S ZZ"), List.of("RRRR", "RRRR"));
+        // door to door; the left shield is a cabinet against the left wall. Two of the front radiators give their
+        // place to light panels.
+        section("reactor_flush", reactor, List.of("TDDT", "TDQT"), List.of("S EE", "S ZZ"), List.of("FIIF", "HRRH"));
+        section("reactor_fins", reactor, List.of("TDDT", "TDQT"), List.of("S EE", "S ZZ"), List.of("RIIR", "RRRR"));
         final Map<String, ResourceLocation> tail = keys(entry("T", ShipKitBlocks.THERMAL_PLATING),
                 entry("M", ShipKitBlocks.ENGINE_MOUNT), entry("F", ShipKitBlocks.PROPELLANT_FEED),
                 entry("U", ShipKitBlocks.FUEL_TANK), entry("V", ShipKitBlocks.VALVE_PACK),

@@ -737,7 +737,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   engines' 5, the wings' and fins' 5, the thrusters' and landing gear's 6, and the modules' 13. Every part of the
   catalogue is built of its kit: the sections of the spine as rings of the hull four blocks wide and three high, the
   other parts set from their places on the ship, wings, nacelles, intakes and gear on both sides. The light panel is
-  a ceiling light at a lamp's full light, lighting the ship's inside on the ground and in flight.
+  a ceiling light at a lamp's full light, lighting the ship's inside on the ground and in flight, and every section's
+  ceiling has one: the docking module's either side of its collar's hatch, the hold's under its caged lamps, and the
+  reactors' in place of two radiators of the front row. Ironside's caged lamp hangs over the light panels of its
+  sections, and the docking module's two domes are drawn either side of its hatch.
 - The starship parts' formed models, as the approved catalogue drew them, the joints drawn on the hull where a
   section meets the next: the cockpits with their windows, the airlock's door, the docking collar, the holds' doors and
   the ramp lowered at the tail, the reactors' radiators, the tail engines' bells, the nacelles with their swivelling

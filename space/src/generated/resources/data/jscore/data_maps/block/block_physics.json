@@ -145,7 +145,7 @@
       "mass": 130.86928503595172
     },
     "jsspace:hull_plating": {
-      "mass": 129.7231921175001
+      "mass": 130.76880068122185
     },
     "jsspace:instrument_wall": {
       "mass": 60.65359477124183
@@ -181,7 +181,7 @@
       "mass": 75.0
     },
     "jsspace:light_panel": {
-      "mass": 103.6032767579814
+      "mass": 145.96265209521655
     },
     "jsspace:livery_plating": {
       "mass": 171.33774522676737
@@ -223,7 +223,7 @@
       "mass": 84.61538461538461
     },
     "jsspace:radiator_panel": {
-      "mass": 460.6060606060607
+      "mass": 463.6363636363636
     },
     "jsspace:ramp_hinge": {
       "mass": 120.37037037037037
