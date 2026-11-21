@@ -47,11 +47,17 @@ public final class MovingStructureArrivalGameTests {
 
     private static final String ARENA = "empty";
     private static final String CORE = "dev.jstech.core.";
+    /*
+     * How long a test waits for a plot not loaded to load, in ticks. The plot loads at the disk's pace while a batch
+     * of one test runs its ticks as fast as the server may, hundreds a second on a quiet machine, so a few hundred
+     * ticks can be a fraction of a second on a slow one: the wait is given room, and ends as soon as the plot loads.
+     */
+    private static final int PLOT_LOADS = 4000;
 
     private MovingStructureArrivalGameTests() {
     }
 
-    @GameTest(template = ARENA, batch = "jscore_moving_arrival_cold", timeoutTicks = 400)
+    @GameTest(template = ARENA, batch = "jscore_moving_arrival_cold", timeoutTicks = PLOT_LOADS)
     public static void yard_madeWhereThePlotIsNotLoadedWaitsForIt(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final List<MovingStructure> before = coldPlot(helper);
@@ -79,7 +85,7 @@ public final class MovingStructureArrivalGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = "jscore_moving_arrival_saved", timeoutTicks = 400)
+    @GameTest(template = ARENA, batch = "jscore_moving_arrival_saved", timeoutTicks = PLOT_LOADS)
     public static void save_keepsAStructureStillComing(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final List<MovingStructure> before = coldPlot(helper);
