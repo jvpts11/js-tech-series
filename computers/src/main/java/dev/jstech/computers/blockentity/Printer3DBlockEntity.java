@@ -12,7 +12,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.Printer3DBlock;
+import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.machine.FileService;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.printer.Printers;
@@ -20,6 +22,8 @@ import dev.jstech.computers.teracoin.Printer3DModel;
 import dev.jstech.computers.teracoin.TeracoinSettings;
 import dev.jstech.computers.teracoin.TeracoinState;
 import dev.jstech.computers.teracoin.WalletFiles;
+import dev.jstech.core.audio.IAudible;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.IntField;
@@ -55,7 +59,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>What the players who see it draw (the item rising on the bed, the head on its row, the bed or the belt putting it
  * out) is worked out on their side from the phase it is in and the tick that phase began at, sent only as they change.
  */
-public class Printer3DBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint {
+public class Printer3DBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible {
 
     /* The output only gives: the printer puts its items there, a player, a hopper or a bus takes them. */
     private final FieldItemHandler output = fields().items("Output", OUTPUT_SLOTS).save().toClient().exposed()
@@ -148,6 +152,45 @@ public class Printer3DBlockEntity extends SyncedBlockEntity implements IPeripher
 
     public boolean paused() {
         return paused.get();
+    }
+
+    /* On the player's game its stepper motors are heard while it prints. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.track(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.untrack(this);
+        }
+    }
+
+    @Override
+    public double audioX() {
+        return worldPosition.getX() + 0.5;
+    }
+
+    @Override
+    public double audioY() {
+        return worldPosition.getY() + 0.5;
+    }
+
+    @Override
+    public double audioZ() {
+        return worldPosition.getZ() + 0.5;
+    }
+
+    /** Its stepper motors going to and fro while it prints, and not while it is paused. */
+    @Override
+    public List<LoopRequest> loops() {
+        return phase() == PRINTING && !paused() ? List.of(LoopRequest.of(ComputingSounds.PRINTER_3D_PRINTING))
+                : List.of();
     }
 
     public void togglePaused() {

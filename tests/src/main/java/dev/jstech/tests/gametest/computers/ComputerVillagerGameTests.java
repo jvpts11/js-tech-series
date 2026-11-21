@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.abandoned.AbandonedBuilding;
 import dev.jstech.computers.abandoned.AbandonedLoadouts;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.abandoned.AbandonedMachines;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
@@ -83,6 +84,9 @@ public final class ComputerVillagerGameTests {
         helper.assertTrue(bench.isPresent() && bench.get().is(ComputerVillagers.IT_TECHNICIAN_POI.getKey()),
                 "the Repair Bench is the IT Technician's");
         final VillagerProfession programmer = ComputerVillagers.PROGRAMMER.get();
+        helper.assertTrue(programmer.workSound() == ComputingSounds.PROGRAMMERS_DESK_WORK.event().get()
+                && ComputerVillagers.IT_TECHNICIAN.get().workSound() == ComputingSounds.REPAIR_BENCH_WORK.event()
+                .get(), "each is heard at its work, typing at the desk and with a screwdriver at the bench");
         helper.assertTrue(programmer.acquirableJobSite().test(desk.get()), "a villager takes the desk");
         helper.assertTrue(!programmer.acquirableJobSite().test(bench.get()), "and not the bench");
         try {

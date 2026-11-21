@@ -12594,5 +12594,8 @@
   "subtitles.jsc.server.room": "Server room hums",
   "subtitles.jsc.teracoin.asic_fans": "ASIC fans scream",
   "subtitles.jsc.teracoin.mining_rig_fans": "Mining rig fans whir",
+  "subtitles.jsc.teracoin.printer_3d": "3D printer prints",
+  "subtitles.jsc.villager.programmers_desk": "Programmer types",
+  "subtitles.jsc.villager.repair_bench": "IT technician works",
   "subtitles.jsc.workbench.assemble": "Workbench assembles"
 }

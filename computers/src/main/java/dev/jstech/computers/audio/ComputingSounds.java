@@ -114,6 +114,10 @@ public final class ComputingSounds {
     public static final SoundKey MINING_RIG_FANS = CONTENT.sound("teracoin/mining_rig_fans").loop()
             .range(16).subtitle("Mining rig fans whir").register();
 
+    /** A 3D printer's stepper motors going to and fro while it prints. */
+    public static final SoundKey PRINTER_3D_PRINTING = CONTENT.sound("teracoin/printer_3d").loop()
+            .channel(AudioChannels.DEVICES).range(12).subtitle("3D printer prints").register();
+
     /** A scanner's head sweeping its glass, once a scan. */
     public static final SoundKey SCANNER_SCAN = CONTENT.sound("scanner/scan")
             .channel(AudioChannels.DEVICES).range(12).subtitle("Scanner scans").register();
@@ -137,6 +141,14 @@ public final class ComputingSounds {
     /** A portable set down in a Charging Dock, and its beep. */
     public static final SoundKey DOCK_PLACE = CONTENT.sound("portable/dock")
             .channel(AudioChannels.DEVICES).range(8).subtitle("Device docks").register();
+
+    /** An IT technician's cordless screwdriver at the Repair Bench, as the game plays a villager's work. */
+    public static final SoundKey REPAIR_BENCH_WORK = CONTENT.sound("villager/repair_bench")
+            .range(12).subtitle("IT technician works").register();
+
+    /** A programmer typing at the Programmer's Desk, as the game plays a villager's work. */
+    public static final SoundKey PROGRAMMERS_DESK_WORK = CONTENT.sound("villager/programmers_desk")
+            .range(12).subtitle("Programmer types").register();
 
     /** A server's rails taking its weight as it goes into a rack's bay, and the knock at the end. */
     public static final SoundKey RACK_SLIDE_IN = CONTENT.sound("rack/slide_in")

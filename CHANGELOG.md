@@ -4105,6 +4105,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Electronics Workbench is heard putting a part together; a Pattern Encoder's drive turns while its head is on the
   disc; a Redstone Interface's relay clicks as its output goes on or off; and a portable set down in a Charging Dock
   clicks into it and the dock beeps. All from real recordings, each with its subtitle.
+- (Computers) A 3D printer's stepper motors are heard while it prints, and stop while it is paused; and the series'
+  villagers are heard at their work as the game's own are, the programmer typing at the Programmer's Desk and the IT
+  technician's screwdriver at the Repair Bench.
   `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
   command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 - (Space) A starship's engines are seen running. The mouths of its bells glow, faintly in thick air, where the bells

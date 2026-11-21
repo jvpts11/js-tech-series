@@ -12,8 +12,10 @@ import static dev.jstech.computers.registry.ComputingContent.shelf;
 
 import com.google.common.collect.ImmutableSet;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.FacingShapes;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
+import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IBlockLook;
@@ -78,10 +80,11 @@ public final class ComputerVillagers {
             () -> new PoiType(ImmutableSet.copyOf(REPAIR_BENCH.get().getStateDefinition().getPossibleStates()), 1,
                     1));
     public static final DeferredHolder<VillagerProfession, VillagerProfession> PROGRAMMER = PROFESSIONS.register(
-            "programmer", () -> profession("programmer", PROGRAMMER_POI.getKey(), VillagerSettings::programmer));
+            "programmer", () -> profession("programmer", PROGRAMMER_POI.getKey(), VillagerSettings::programmer,
+                    ComputingSounds.PROGRAMMERS_DESK_WORK));
     public static final DeferredHolder<VillagerProfession, VillagerProfession> IT_TECHNICIAN = PROFESSIONS.register(
             "it_technician", () -> profession("it_technician", IT_TECHNICIAN_POI.getKey(),
-                    VillagerSettings::itTechnician));
+                    VillagerSettings::itTechnician, ComputingSounds.REPAIR_BENCH_WORK));
 
     private ComputerVillagers() {
     }
@@ -97,14 +100,14 @@ public final class ComputerVillagers {
 
     /*
      * A profession whose villagers take {@code site} as their work while the server lets them: off, no villager takes
-     * it, and one that had it keeps it no longer.
+     * it, and one that had it keeps it no longer. The game plays {@code work} now and then as a villager works at it.
      */
     private static VillagerProfession profession(final String name, final ResourceKey<PoiType> site,
-                                                 final BooleanSupplier allowed) {
+                                                 final BooleanSupplier allowed, final SoundKey work) {
         return new VillagerProfession(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, name).toString(),
                 (Holder<PoiType> poi) -> allowed.getAsBoolean() && poi.is(site),
                 (Holder<PoiType> poi) -> allowed.getAsBoolean() && poi.is(site), ImmutableSet.of(), ImmutableSet.of(),
-                null);
+                work.event().get());
     }
 
     private static BlockBuilder<JobSiteBlock> jobSite(final String id, final Map<Direction, VoxelShape> shapes) {

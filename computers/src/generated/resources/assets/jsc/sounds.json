@@ -725,6 +725,33 @@
     ],
     "subtitle": "subtitles.jsc.teracoin.mining_rig_fans"
   },
+  "teracoin/printer_3d": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:teracoin/printer_3d"
+      }
+    ],
+    "subtitle": "subtitles.jsc.teracoin.printer_3d"
+  },
+  "villager/programmers_desk": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:villager/programmers_desk"
+      }
+    ],
+    "subtitle": "subtitles.jsc.villager.programmers_desk"
+  },
+  "villager/repair_bench": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:villager/repair_bench"
+      }
+    ],
+    "subtitle": "subtitles.jsc.villager.repair_bench"
+  },
   "workbench/assemble": {
     "sounds": [
       {

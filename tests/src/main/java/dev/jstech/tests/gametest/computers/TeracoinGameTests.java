@@ -169,6 +169,8 @@ public final class TeracoinGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(printer.phase() == Printer3DBlockEntity.PRINTING,
                         "it starts printing; its phase is " + printer.phase()))
                 .thenExecute(() -> {
+                    helper.assertTrue(printer.loops().stream().anyMatch(loop -> loop.sound()
+                            .equals(ComputingSounds.PRINTER_3D_PRINTING)), "printing, its motors are heard");
                     final TeracoinChain chain = TeracoinState.of(helper.getLevel().getServer()).chain();
                     helper.assertTrue(chain.balance(wallet[1]) == Trc.of(3),
                             "the item is paid the moment it starts; left " + chain.balance(wallet[1]));
