@@ -75,6 +75,8 @@ public final class McpPlayClientTests {
     private static final BlockPos FAR = new BlockPos(0, 2, 40);
     /* A block a little right of the machine, whose south face looks at the player standing at STAND. */
     private static final BlockPos WALL = new BlockPos(1, 2, -3);
+    /* The block between the player standing at STAND and the machine, on the line from the eye to its middle. */
+    private static final BlockPos BETWEEN = new BlockPos(0, 2, -2);
     private static final int HOTBAR = 9;
     /* How far along its track the slider is dragged, and how near the volume it sets must come. */
     private static final float QUARTER = 0.25F;
@@ -131,6 +133,29 @@ public final class McpPlayClientTests {
                 && result.has(McpChanges.CHANGED) && result.getAsJsonObject(McpChanges.CHANGED).has("screen")
                 && result.getAsJsonObject(McpChanges.CHANGED).getAsJsonObject("screen").get(McpChanges.TO)
                 .isJsonNull(), "the answer tells the game's tick and that the call closed the screen: " + result)));
+        // Why an action fails, or lands elsewhere: a block forty blocks off is out of reach, one between is in the way.
+        final BlockPos far = ctx.abs(FAR);
+        final BlockPos between = ctx.abs(BETWEEN);
+        steps.add(new Step("world_set_block", "{\"place\":" + place(far) + ",\"block\":\"minecraft:stone\"}",
+                result -> { }));
+        steps.add(Step.failing("block_open", "{\"place\":" + place(far) + "}", result -> ctx.assertTrue(
+                "out_of_reach".equals(text(result, "failed")) && result.get("distance").getAsDouble()
+                        > result.get("reach").getAsDouble(), "opening a block out of reach says so: " + result)));
+        steps.add(Step.failing("player_break", "{\"place\":" + place(far) + "}", result -> ctx.assertTrue(
+                "out_of_reach".equals(text(result, "failed")), "breaking it says so too: " + result)));
+        steps.add(new Step("world_set_block", "{\"place\":" + place(far) + ",\"block\":\"minecraft:air\"}",
+                result -> { }));
+        steps.add(new Step("world_set_block", "{\"place\":" + place(between) + ",\"block\":\"minecraft:stone\"}",
+                result -> { }));
+        steps.add(new Step("player_use", "{\"place\":" + place(machine) + "}", result -> ctx.assertTrue(
+                "in_the_way".equals(text(result, "instead")) && result.getAsJsonObject("used_on").get("block")
+                        .getAsString().equals("minecraft:stone"), "a use stopped by a block between says what took "
+                        + "it: " + result)));
+        // Taken away again, and what the use may have placed on it with it.
+        steps.add(new Step("world_set_block", "{\"place\":" + place(between) + ",\"block\":\"minecraft:air\"}",
+                result -> { }));
+        steps.add(new Step("world_set_block", "{\"place\":" + place(between.above()) + ",\"block\":"
+                + "\"minecraft:air\"}", result -> { }));
         steps.add(new Step("player_walk_to", "{\"place\":" + place(walkTo) + "}", result -> ctx.assertTrue(
                 result.has("arrived") && result.has("moved") && result.get("moved").getAsDouble() > 0,
                 "the player walks there, and the answer says how far: " + result)));
@@ -327,7 +352,8 @@ public final class McpPlayClientTests {
                 .then(0, () -> {
                     final JsonObject answer = JsonParser.parseString(sent.get().join().body()).getAsJsonObject();
                     final JsonObject result = answer.getAsJsonObject("result");
-                    ctx.assertTrue(result != null && !result.has("isError"), step.tool() + " answers: " + answer);
+                    ctx.assertTrue(result != null && result.has("isError") == step.fails(), step.tool() + " answers"
+                            + (step.fails() ? ", failing: " : ": ") + answer);
                     step.check().accept(result.has("structuredContent") ? result.getAsJsonObject(
                             "structuredContent") : new JsonObject());
                 });
@@ -350,6 +376,11 @@ public final class McpPlayClientTests {
 
     private static String place(final BlockPos pos) {
         return "{\"x\":" + pos.getX() + ",\"y\":" + pos.getY() + ",\"z\":" + pos.getZ() + "}";
+    }
+
+    /* The words under {@code name} in an answer, or none. */
+    private static @Nullable String text(final JsonObject result, final String name) {
+        return result.has(name) && result.get(name).isJsonPrimitive() ? result.get(name).getAsString() : null;
     }
 
     /* What a message sent came back with: the server's answer, or why none came. */
@@ -387,10 +418,19 @@ public final class McpPlayClientTests {
      * @param arguments its arguments, as JSON, written as the call is made
      * @param check     what is checked of what it found
      */
-    private record Step(String tool, Supplier<String> arguments, Consumer<JsonObject> check) {
+    private record Step(String tool, Supplier<String> arguments, Consumer<JsonObject> check, boolean fails) {
+
+        Step(final String tool, final Supplier<String> arguments, final Consumer<JsonObject> check) {
+            this(tool, arguments, check, false);
+        }
 
         Step(final String tool, final String arguments, final Consumer<JsonObject> check) {
-            this(tool, () -> arguments, check);
+            this(tool, () -> arguments, check, false);
+        }
+
+        /* A step whose tool is to fail, and say why. */
+        static Step failing(final String tool, final String arguments, final Consumer<JsonObject> check) {
+            return new Step(tool, () -> arguments, check, true);
         }
     }
 }

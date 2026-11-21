@@ -64,6 +64,16 @@ public final class McpTexts {
     /* The block used. */
     public static final TextKey NOTHING_OPENED = TextKey.of("jscore.mcp.nothing_opened",
             "Using %s opened no screen.");
+    /* The block, its place, how far it is from the eye and how far the player reaches, in blocks. */
+    public static final TextKey OUT_OF_REACH = TextKey.of("jscore.mcp.out_of_reach",
+            "%s at %s is %s blocks from the eye, past the reach of %s.");
+    /* The block and its place. */
+    public static final TextKey OFF_ITS_SHAPE = TextKey.of("jscore.mcp.off_its_shape",
+            "The point looked at is off the shape of %s at %s, and the look meets nothing: look at another point.");
+    /* The block. */
+    public static final TextKey KEPT_FROM_BREAKING = TextKey.of("jscore.mcp.kept_from_breaking",
+            "The game mode keeps the player from breaking %s here.");
+    public static final TextKey UNBREAKABLE = TextKey.of("jscore.mcp.unbreakable", "%s cannot be broken.");
     public static final TextKey OWN_WORLD_ONLY = TextKey.of("jscore.mcp.own_world_only",
             "Only a world of the player's own, which this game runs, is saved and opened again.");
     /* What the tests were asked by. */

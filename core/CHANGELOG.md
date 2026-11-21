@@ -1886,6 +1886,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   player rides, their world and block, the slot held and its item and their health, with how far the player went
   and the lines of chat that came; on a server, whether its ticking is frozen. The game goes on between an agent's
   calls, and now it knows how much did.
+- Why an action failed, told to an agent: the MCP tools that use, place on, open and break a block say why they
+  could not, the block out of reach (how far it is and how far the player reaches), the point looked at off the
+  block's shape, a block nothing breaks or a game mode that keeps the player from breaking it; and a use that lands on
+  something else says what took it, and whether it was in the way or behind the point looked at.
 - Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside

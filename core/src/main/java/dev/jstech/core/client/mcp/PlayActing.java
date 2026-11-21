@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.client.mcp;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.client.developer.ScreenGestures;
@@ -97,7 +99,11 @@ public final class PlayActing {
                         call -> Play.withPlayer(player -> select(call))),
                 new McpTool("player_use", "Uses what the player holds on what they look at, as the use key does; "
                         + "with a place, looks at it first: a point of it, such as a port or a button on a face, "
-                        + "uses that part.", McpSchema.object().place(Play.PLACE, "What to look at first.", false)
+                        + "uses that part. The answer says what the use landed on; with a place, why it landed on "
+                        + "something else (in the way, or behind a point off the block's shape), and why nothing is "
+                        + "used when the look lands on nothing (out of reach, off the block's shape). The same holds "
+                        + "for player_place and block_open.", McpSchema.object().place(Play.PLACE,
+                        "What to look at first.", false)
                         .oneOf("face", "Which face of it.", faces(), false).place(Play.AT, AT_ABOUT, false)
                         .build(), McpPermission.ACT, call -> use(call, false)),
                 new McpTool("player_place", "Places the block the player holds against a face of a block, as the use "
@@ -109,7 +115,8 @@ public final class PlayActing {
                         faces(), false).place(Play.AT, AT_ABOUT, false).build(), McpPermission.ACT,
                         call -> use(call, true)),
                 new McpTool("player_break", "Breaks a block as the attack key held on it does, and answers once it is "
-                        + "gone.", McpSchema.object().place(Play.PLACE, "The block.", true).build(),
+                        + "gone; or why it cannot: out of reach, a block nothing breaks, or the game mode keeping the "
+                        + "player from it.", McpSchema.object().place(Play.PLACE, "The block.", true).build(),
                         McpPermission.ACT, PlayActing::breakBlock),
                 new McpTool("screen_click", "Clicks the screen open as the mouse does: a component by its name (as "
                         + "screen_tree names it), or a point of the screen.", McpSchema.object()
@@ -293,7 +300,11 @@ public final class PlayActing {
         return done("selected", true);
     }
 
-    /* Looks at the place given, if any, then presses the use key; opening, it waits for the screen it opens. */
+    /*
+     * Looks at the place given, if any, then presses the use key; opening, it waits for the screen it opens. A look
+     * that lands on nothing is not used: the answer says why (the block out of reach, the point off its shape); one
+     * that lands on something else is used as the player's would be, and the answer says what took it and why.
+     */
     private static CompletableFuture<McpResult> use(final McpCall call, final boolean opening) {
         final Optional<BlockPos> pos = Play.place(call, Play.PLACE);
         if (opening && pos.isEmpty()) {
@@ -303,6 +314,9 @@ public final class PlayActing {
         if (pos.isPresent() && point.isEmpty()) {
             return WorldTools.done(McpCall.wrong(Play.AT, McpWords.A_NUMBER.with(0, Play.SIXTEENTHS)));
         }
+        // What the use landed on, and what took it in place of the block asked, as the tick of the use read them.
+        final JsonElement[] usedOn = {JsonNull.INSTANCE};
+        final JsonObject[] instead = {new JsonObject()};
         return PlayTasks.run(call, OPEN_TICKS + 10, (game, tick) -> {
             final LocalPlayer player = game.player;
             if (player == null) {
@@ -314,11 +328,19 @@ public final class PlayActing {
             }
             if (tick == 2) {
                 // The view turned last tick, so the game has picked what is looked at since.
+                if (pos.isPresent()) {
+                    final Optional<McpResult> missed = PlayAim.missed(game, player, pos.get(), point.get());
+                    if (missed.isPresent()) {
+                        return missed;
+                    }
+                    instead[0] = PlayAim.instead(game, player, pos.get(), point.get()).orElseGet(JsonObject::new);
+                }
+                usedOn[0] = PlayAim.landedOn(game, player);
                 KeyMapping.click(game.options.keyUse.getKey());
                 return Optional.empty();
             }
             if (!opening) {
-                return tick >= 4 ? Optional.of(done("used", true)) : Optional.empty();
+                return tick >= 4 ? Optional.of(used(usedOn[0], instead[0])) : Optional.empty();
             }
             if (game.screen != null) {
                 final JsonObject out = new JsonObject();
@@ -327,9 +349,18 @@ public final class PlayActing {
                 return Optional.of(McpResult.json(out));
             }
             return tick >= OPEN_TICKS ? Optional.of(McpResult.failed(McpTexts.NOTHING_OPENED.with(
-                    BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(pos.get()).getBlock())))) : Optional
-                    .empty();
+                    BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(pos.get()).getBlock())))
+                    .with(instead[0])) : Optional.empty();
         });
+    }
+
+    /* A use done: what it landed on, a block, an entity or nothing, and what took it in place of the block asked. */
+    private static McpResult used(final JsonElement usedOn, final JsonObject instead) {
+        final JsonObject out = new JsonObject();
+        out.addProperty("used", true);
+        out.add(PlayAim.USED_ON, usedOn);
+        instead.entrySet().forEach(entry -> out.add(entry.getKey(), entry.getValue()));
+        return McpResult.json(out);
     }
 
     /* Breaks the block as holding the attack key on it does: the game mode's own digging, tick by tick. */
@@ -350,6 +381,10 @@ public final class PlayActing {
             final Direction side = Direction.getNearest(player.getEyePosition().subtract(Vec3.atCenterOf(
                     pos.get())));
             if (tick == 1) {
+                final Optional<McpResult> refused = PlayAim.unbreakable(game, player, pos.get());
+                if (refused.isPresent()) {
+                    return refused;
+                }
                 game.gameMode.startDestroyBlock(pos.get(), side);
             } else {
                 game.gameMode.continueDestroyBlock(pos.get(), side);

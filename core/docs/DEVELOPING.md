@@ -273,6 +273,12 @@ wheel, typing and keys):
 A tool that acts over many ticks, walking or breaking a block, stops at once when the player presses a key, and lets go
 of every key it held.
 
+A tool that acts on a block says why it could not, under `failed`, beside the block asked: `out_of_reach` (with the
+`distance` from the eye and the player's `reach`), `off_its_shape` (the point looked at is not on the block, and the
+look meets nothing), and for `player_break` also `unbreakable` and `game_mode`. A use that lands on something else is
+made, as the player's would be, and the answer says what took it, `used_on`, and why, `instead`: `in_the_way`
+(nearer than the block) or `passed_through_it` (the point looked at was off its shape, and the look went on).
+
 The game goes on between an agent's calls, so every call's answer, whatever the tool, also says how much went by and
 what changed: `game_tick` (the game's tick after the call), `game_ticks_taken` (how many went by while it ran) and
 `changed`, each reading of the game that is not what it was before the call, with its `from` and its `to`. The
