@@ -271,13 +271,14 @@ public final class MovingStructurePhysicsGameTests {
                     helper.assertTrue(lever != null, "the lever is aboard");
                     level.setBlock(lever, level.getBlockState(lever).setValue(LeverBlock.POWERED, true), 3);
                 })
-                .thenExecuteAfter(8, () -> {
+                // Waited for, not counted in ticks: its physics waits out a tick its dimension's budget is spent in.
+                .thenWaitUntil(() -> {
                     helper.assertTrue(rocket.worldBox().minY > start + 1, "lit, it climbs: " + rocket.worldBox());
                     final StructurePhysics physics = rocket.physics();
                     helper.assertTrue(physics != null && physics.body().velocity().y > 1,
                             "and goes up faster and faster");
-                    MovingStructures.takeAway(rocket);
                 })
+                .thenExecute(() -> MovingStructures.takeAway(rocket))
                 .thenSucceed();
     }
 
@@ -342,11 +343,10 @@ public final class MovingStructurePhysicsGameTests {
                         level.setBlock(lever, level.getBlockState(lever).setValue(LeverBlock.POWERED, true), 3);
                     }
                 })
-                .thenExecuteAfter(12, () -> {
-                    helper.assertTrue(cart.worldBox().minX > parked[0] + 0.2,
-                            "driven, it rolls east: " + cart.worldBox().minX + " from " + parked[0]);
-                    MovingStructures.takeAway(cart);
-                })
+                // Waited for, not counted in ticks: its physics waits out a tick its dimension's budget is spent in.
+                .thenWaitUntil(() -> helper.assertTrue(cart.worldBox().minX > parked[0] + 0.2,
+                        "driven, it rolls east: " + cart.worldBox().minX + " from " + parked[0]))
+                .thenExecute(() -> MovingStructures.takeAway(cart))
                 .thenSucceed();
     }
 
@@ -383,13 +383,16 @@ public final class MovingStructurePhysicsGameTests {
                     start[0] = balloon.worldBox().minY;
                     balloon.move(PhysicsMotion.AT_REST);
                 })
-                .thenExecuteAfter(30, () -> {
+                // Waited for, not counted in ticks: its physics waits out a tick its dimension's budget is spent in.
+                .thenWaitUntil(() -> {
                     final Room now = SealedRooms.roomAt(level, inside).orElse(null);
                     helper.assertTrue(balloon.worldBox().minY > start[0] + 0.5,
                             "filled with hydrogen, it rises: " + balloon.worldBox().minY + " from " + start[0]
                                     + forcesOf(balloon) + "; its room " + (now == null ? "none" : now.id() + " volume "
                                     + now.volume() + " breached " + now.breached() + " leaks " + now.leaks().size()
                                     + " gases " + now.gases() + " bounds " + now.bounds()) + "; " + seen);
+                })
+                .thenExecute(() -> {
                     SHELTERED.remove(sheltered);
                     MovingStructures.takeAway(balloon);
                 })

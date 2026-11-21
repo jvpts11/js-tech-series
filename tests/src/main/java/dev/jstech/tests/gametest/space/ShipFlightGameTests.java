@@ -290,18 +290,15 @@ public final class ShipFlightGameTests {
             aloft(ship[0], HIGH);
             from[0] = ship[0].pose();
         });
-        hold(helper, sequence, ship, StructureControls.ControlAxis.FORWARD).thenExecute(() -> {
+        holdTill(helper, sequence, ship, StructureControls.ControlAxis.FORWARD, () -> {
             final StructurePose now = ship[0].pose();
             helper.assertTrue(from[0].z() - now.z() > FLOWN && Math.abs(now.x() - from[0].x()) < 1, "it flies"
                     + " north along its nose: " + (from[0].z() - now.z()) + " blocks");
-            from[0] = now;
-        });
-        hold(helper, sequence, ship, StructureControls.ControlAxis.LEFT).thenExecute(() -> {
-            helper.assertTrue(Math.abs(ship[0].pose().yawDegrees() - from[0].yawDegrees()) > 1, "it turns as its"
-                    + " pilot holds left");
-            from[0] = ship[0].pose();
-        });
-        hold(helper, sequence, ship, StructureControls.ControlAxis.UP).thenExecute(() -> helper.assertTrue(
+        }).thenExecute(() -> from[0] = ship[0].pose());
+        holdTill(helper, sequence, ship, StructureControls.ControlAxis.LEFT, () -> helper.assertTrue(
+                Math.abs(ship[0].pose().yawDegrees() - from[0].yawDegrees()) > 1, "it turns as its pilot holds left"))
+                .thenExecute(() -> from[0] = ship[0].pose());
+        holdTill(helper, sequence, ship, StructureControls.ControlAxis.UP, () -> helper.assertTrue(
                 ship[0].pose().y() > from[0].y() + 1, "it pitches its nose up and climbs as its pilot holds up"))
                 .thenExecute(() -> {
                     MovingStructures.takeAway(ship[0]);
@@ -404,7 +401,7 @@ public final class ShipFlightGameTests {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[2];
         final GameTestSequence sequence = letGo(helper, ship, SHIP).thenExecute(() -> from[0] = ship[0].pose());
-        hold(helper, sequence, ship, StructureControls.ControlAxis.UP, RISING).thenExecute(() -> {
+        holdTill(helper, sequence, ship, StructureControls.ControlAxis.UP, () -> {
             final StructurePose now = ship[0].pose();
             helper.assertTrue(now.y() > from[0].y() + 1 && Math.abs(now.x() - from[0].x()) < STILL
                     && Math.abs(now.z() - from[0].z()) < STILL && now.angleTo(from[0]) < STILL, "held up, it rises"
@@ -448,18 +445,21 @@ public final class ShipFlightGameTests {
                             "the pilot has taken off from nowhere in this world yet");
                     standing[0] = ship[0].worldBox();
                 });
-        hold(helper, sequence, ship, StructureControls.ControlAxis.UP, RISING).thenExecute(() -> {
-            final BlockPos place = ShipLiftOffs.of(pilot[0], helper.getLevel().dimension()).orElse(null);
-            helper.assertTrue(!((ShipFlight) ship[0].motion()).grounded() && place != null, "lifted off its"
-                    + " cradle, the place its pilot took off from is noted: " + place);
-            final Vec3 middle = standing[0].getCenter();
-            helper.assertTrue(Math.abs(place.getX() + HALF - middle.x) <= 1 && Math.abs(place.getZ() + HALF
-                    - middle.z) <= 1 && Math.abs(place.getY() - standing[0].minY) <= 1, "it is the place under the"
-                    + " ship's middle where it stood: " + place + " under " + standing[0]);
-        }).thenExecute(() -> {
-            GameTestPlayers.leave(pilot[0]);
-            MovingStructures.takeAway(ship[0]);
-        }).thenSucceed();
+        holdTill(helper, sequence, ship, StructureControls.ControlAxis.UP, () -> helper.assertTrue(
+                !((ShipFlight) ship[0].motion()).grounded() && ShipLiftOffs.of(pilot[0], helper.getLevel()
+                        .dimension()).isPresent(), "lifted off its cradle, the place its pilot took off from is noted"))
+                .thenExecute(() -> {
+                    final BlockPos place = ShipLiftOffs.of(pilot[0], helper.getLevel().dimension()).orElseThrow();
+                    final Vec3 middle = standing[0].getCenter();
+                    helper.assertTrue(Math.abs(place.getX() + HALF - middle.x) <= 1 && Math.abs(place.getZ() + HALF
+                            - middle.z) <= 1 && Math.abs(place.getY() - standing[0].minY) <= 1, "it is the place"
+                            + " under the ship's middle where it stood: " + place + " under " + standing[0]);
+                })
+                .thenExecute(() -> {
+                    GameTestPlayers.leave(pilot[0]);
+                    MovingStructures.takeAway(ship[0]);
+                })
+                .thenSucceed();
     }
 
     /*
@@ -1055,6 +1055,21 @@ public final class ShipFlightGameTests {
     private static GameTestSequence hold(final GameTestHelper helper, final GameTestSequence sequence,
                                          final MovingStructure[] ship, final StructureControls.ControlAxis axis) {
         return hold(helper, sequence, ship, axis, HELD);
+    }
+
+    /*
+     * Its pilot holds {@code axis}, as their helm tells the structure each tick, till {@code done} holds, which says
+     * why not yet: waited for, not counted in ticks, as a ship waits out a tick the land ahead of it is not going in.
+     */
+    private static GameTestSequence holdTill(final GameTestHelper helper, final GameTestSequence sequence,
+                                             final MovingStructure[] ship, final StructureControls.ControlAxis axis,
+                                             final Runnable done) {
+        return sequence.thenWaitUntil(() -> {
+            final Map<StructureControls.ControlAxis, Float> held = new EnumMap<>(StructureControls.ControlAxis.class);
+            held.put(axis, 1F);
+            pilot(helper, ship[0], held);
+            done.run();
+        });
     }
 
     /* Its pilot holds {@code axis} {@code ticks} ticks, as their helm tells the structure each tick, then lets go. */

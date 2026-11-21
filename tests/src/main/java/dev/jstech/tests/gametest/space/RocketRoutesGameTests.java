@@ -387,17 +387,22 @@ public final class RocketRoutesGameTests {
                         "it comes down on the Moon's ground"))
                 .thenExecuteFor(WATCHED, () -> whole(helper, computerOf(moon, at(moon, id)), MOON_AND_BACK,
                         "landed on the Moon's ground"))
+                // A stage let go parts once its own plot of the yard has loaded, at the disk's pace and not in so many
+                // ticks: on a loaded machine it still stands under the lander as it touches down, and is waited for.
+                .thenWaitUntil(() -> {
+                    final Box box = at(moon, id).bounds();
+                    final FlightComputerBlockEntity aboard = computerOf(moon, at(moon, id));
+                    helper.assertTrue(box.maxY() - box.minY() + 1 <= LANDER_TALL, "the lander stands on its own legs,"
+                            + " no spent stage under it: " + (box.maxY() - box.minY() + 1) + " blocks tall, "
+                            + aboard.separated() + " stages let go, the descent stage kept " + aboard.landerDescent());
+                })
                 .thenExecute(() -> {
                     final MovingStructure lander = at(moon, id);
                     // Nobody aboard: the chunk it came down in, not the one it came into the sky over, is kept going
                     // in its crew's stead, or its ascent stage freezes on its climb once the descent's hold lapses.
                     moon.setChunkForced(down[0], down[1], false);
                     made(moon, lander, down);
-                    final Box box = lander.bounds();
                     final FlightComputerBlockEntity aboard = computerOf(moon, lander);
-                    helper.assertTrue(box.maxY() - box.minY() + 1 <= LANDER_TALL, "the lander stands on its own legs,"
-                            + " no spent stage under it: " + (box.maxY() - box.minY() + 1) + " blocks tall, "
-                            + aboard.separated() + " stages let go, the descent stage kept " + aboard.landerDescent());
                     aboard.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
                     aboard.press(FlightComputerBlockEntity.LEFT + aboard.destinations().indexOf(
                             SolarSystemWorlds.OVERWORLD));
