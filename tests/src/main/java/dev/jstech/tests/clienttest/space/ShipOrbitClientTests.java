@@ -21,12 +21,19 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.client.rocket.FlightComputerFace;
+import dev.jstech.space.client.ship.ShipConsoleFace;
+import dev.jstech.space.client.ship.ShipConsoleScreen;
 import dev.jstech.space.client.ship.ShipEngineSounds;
 import dev.jstech.space.client.ship.ShipHud;
 import dev.jstech.space.client.ship.ShipPulseClient;
+import dev.jstech.space.crew.CrewRole;
+import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.PulseCourse;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipDestination;
+import dev.jstech.space.ship.ShipDestinations;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipKitBlocks;
@@ -89,6 +96,13 @@ public final class ShipOrbitClientTests {
     private static final int UNDER_THE_LINE = 40;
     private static final double CLIMBING_PITCH = 60;
     private static final double CRUISE = 40;
+    /*
+     * The console's screen as it lays its face out: how far the face keeps from the window's edges, and the least it
+     * shrinks to; and how far into a key a click lands, in the face's pixels.
+     */
+    private static final int FACE_MARGIN = 10;
+    private static final float MOST_SHRUNK = 0.5F;
+    private static final int TO_THE_KEY = 12;
     /*
      * How far under the floor of space the ship is sent over the Moon, in blocks; and how fast it flies on there, in
      * metres a second, and how far.
@@ -160,6 +174,66 @@ public final class ShipOrbitClientTests {
                         && breath[1] == 0, "its pilot breathed its cockpit's air all the way up and across, never short"
                         + " of it, never cold: least air " + breath[0] + ", most cold " + breath[1]))
                 .thenScreenshot(0, "ship-orbit");
+    }
+
+    /*
+     * Climbed into orbit over the Overworld and stopped there, its pilot opens the console at the helm and its
+     * destination page, as the approved page draws it: the world below named, the dock the ship left and where its
+     * pilot last took off from offered, each how far off; the dock chosen by its left key, boxed, and the line at the
+     * foot saying the ship comes down to it.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void console_inOrbitItsDestinationPageOffersThePlacesOfTheWorldBelow(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final AirReserveEntity[] console = new AirReserveEntity[1];
+        final int[] plot = new int[1];
+        final boolean[] screen = new boolean[1];
+        ctx.afterTest(() -> ctx.mc().setScreen(null));
+        atTheHelm(ctx, ship)
+                .thenServer(0, level -> {
+                    ship[0].teleport(ship[0].pose().turnedBy(1, 0, 0, Math.toRadians(CLIMBING_PITCH)));
+                    MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(
+                            CRUISE, 0, 1, 0, 0)));
+                })
+                .thenWaitUntil(() -> arrived(ctx, screen), ARRIVE, "the ship and its pilot to cross into space")
+                .thenServer(0, level -> plot[0] = MovingStructures.byId(space(ctx), ship[0].id()).plot())
+                .thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity && drawn(plot[0]),
+                        ARRIVE, "the player to sit at its helm still, the ship drawn round them in space")
+                .thenServer(0, level -> {
+                    // Stopped over the Overworld, its console opened by its pilot at the helm.
+                    final MovingStructure there = MovingStructures.byId(space(ctx), ship[0].id());
+                    MovingStructures.move(there, ((ShipFlight) there.motion()).with(ShipFlightModel.State.RESTING));
+                    console[0] = (AirReserveEntity) space(ctx).getBlockEntity(((ShipFlight) there.motion())
+                            .consoleIn(there).orElseThrow());
+                    ShipConsole.open(ctx.serverPlayer(), console[0], CrewRole.PILOT);
+                })
+                .thenWaitUntil(() -> ctx.mc().screen instanceof ShipConsoleScreen, ARRIVE,
+                        "its console's screen to open")
+                .then(SETTLE, () -> {
+                    final ShipDestinations.Offer offer = ((ShipConsoleScreen) ctx.mc().screen).getMenu().offer();
+                    ctx.assertTrue(offer.body().equals(SolarBody.OVERWORLD.name()) && offer.places().stream()
+                            .anyMatch(place -> place.kind() == ShipDestination.Kind.DOCK) && offer.places().stream()
+                            .anyMatch(place -> place.kind() == ShipDestination.Kind.LIFT_OFF), "over the Overworld,"
+                            + " it offers the dock the ship left and where its pilot last took off from: " + offer);
+                    click(ctx, FlightComputerFace.topKeyX(ShipConsoleFace.DEST_KEY, ShipConsoleFace.TOP_KEYS)
+                            + TO_THE_KEY, FlightComputerFace.SY0 + TO_THE_KEY / 2);
+                })
+                .then(SETTLE, () -> click(ctx, FlightComputerFace.SX0 - TO_THE_KEY, FlightComputerFace.sideKeyY(0)
+                        + TO_THE_KEY / 2))
+                .thenWaitUntil(() -> ((ShipConsoleScreen) ctx.mc().screen).getMenu().console().destination()
+                        .filter(place -> place.kind() == ShipDestination.Kind.DOCK).isPresent(), ARRIVE,
+                        "the dock chosen by its left key, as the player's game hears of it")
+                .thenScreenshot(SETTLE, "ship-console-dest");
+    }
+
+    /* A click on the console's screen open at {@code (x, y)} of its face, as its screen lays the face out. */
+    private static void click(final ClientTestContext ctx, final double x, final double y) {
+        final ShipConsoleScreen open = (ShipConsoleScreen) ctx.mc().screen;
+        final float scale = Math.max(MOST_SHRUNK, Math.min((open.width - 2F * FACE_MARGIN) / FlightComputerFace.WIDTH,
+                (open.height - 2F * FACE_MARGIN) / FlightComputerFace.HEIGHT));
+        final int left = (open.width - Math.round(FlightComputerFace.WIDTH * scale)) / 2;
+        final int top = (open.height - Math.round(FlightComputerFace.HEIGHT * scale)) / 2;
+        open.mouseClicked(left + x * scale, top + y * scale, 0);
     }
 
     /*

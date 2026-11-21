@@ -63,6 +63,7 @@ import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -506,6 +507,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         final AirReserveEntity helm = server.isLoaded(keeps) && server.getBlockEntity(keeps)
                 instanceof AirReserveEntity aboard ? aboard : keeper;
         helm.carry(new ShipAboard(design, at.subtract(seat.get()), this.planTurn.get(), formed));
+        // The dock it leaves is one its pilot may choose to come back down onto.
+        helm.dock(GlobalPos.of(server.dimension(), getBlockPos()));
         // Its pilot who started it owns it, their team its crew; a ship back from a dock keeps its crew.
         if (by != null && helm.crew().isEmpty()) {
             helm.crew(ShipCrew.of(by, CoreTeams.nameOf(server.getServer(), by).orElse("")));

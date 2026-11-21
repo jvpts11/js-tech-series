@@ -31,8 +31,12 @@ import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.crew.CrewRole;
+import dev.jstech.space.crew.ShipConsoleMenu;
 import dev.jstech.space.landing.ShipLiftOffs;
 import dev.jstech.space.ship.AirReserveEntity;
+import dev.jstech.space.ship.ShipDestination;
+import dev.jstech.space.ship.ShipDestinations;
 import dev.jstech.space.ship.ShipBoost;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
@@ -48,9 +52,12 @@ import dev.jstech.space.shipyard.ShipyardLayout;
 import dev.jstech.space.shipyard.ShipyardPlans;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
+import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SpaceClimbs;
+import dev.jstech.space.universe.SphereMap;
 import dev.jstech.space.universe.StarSystems;
+import dev.jstech.space.universe.SystemLayout;
 import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
@@ -61,11 +68,13 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -222,6 +231,13 @@ public final class ShipFlightGameTests {
      * how long it is watched across the line, in ticks; how far open its throttle stays, its pilot's hold carried.
      */
     private static final int UNDER_THE_LINE = 80;
+    /*
+     * How far east of the dock its pilot last took off from, in blocks; how far north of it a place stands that the
+     * console does not offer; and how far under the floor of the low orbits the ship is set, to come down.
+     */
+    private static final int HOME_EAST = 200;
+    private static final int UNOFFERED = 7;
+    private static final int UNDER_THE_FLOOR = 2;
     /* How long a ship hovers burning its reactor's deuterium, in ticks: past a thousandth of a load, the least told. */
     private static final int BURNING = 320;
     private static final double CLIMBING_PITCH = 60;
@@ -711,6 +727,72 @@ public final class ShipFlightGameTests {
                     GameTestPlayers.leave(pilot[0]);
                     MovingStructures.takeAway(MovingStructures.byId(space, ship[0].id()));
                 }).thenSucceed();
+    }
+
+    /*
+     * Let go from its dock, its console keeps the dock it left; taken up into the Solar System's space over the
+     * Overworld, its console offers that dock and where its pilot last took off from, a way east of it; only a pilot
+     * chooses, and only a place offered; chosen, the ship set under the floor of the low orbits comes down into the
+     * Overworld's sky over that place, the choice spent.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    public static void destination_aShipComesDownOverThePlaceItsPilotChose(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerPlayer[] pilot = new ServerPlayer[1];
+        final ShipDestination[] chosen = new ShipDestination[1];
+        final ServerLevel overworld = helper.getLevel();
+        final ServerLevel space = SystemSpaces.spaceOf(overworld.getServer(), StarSystems.SOLAR_SYSTEM);
+        final BlockPos home = helper.absolutePos(CORNER).east(HOME_EAST);
+        letGo(helper, ship).thenExecute(() -> {
+            final BlockPos terminal = TestShipyards.terminalOf(helper.absolutePos(CORNER));
+            helper.assertTrue(console(helper, ship[0]).dock().equals(Optional.of(GlobalPos.of(overworld.dimension(),
+                    terminal))), "let go, its console keeps the dock it left: " + console(helper, ship[0]).dock());
+            pilot[0] = GameTestPlayers.connected(helper, "jst-dest-pilot");
+            ShipLiftOffs.note(pilot[0], overworld, home);
+            final double width = overworld.getWorldBorder().getSize();
+            final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, SphereMap.longitude(ship[0].pose().x(),
+                    width), SphereMap.latitude(ship[0].pose().z(), width));
+            helper.assertTrue(MovingStructures.travel(ship[0], space, new Vec3(spot[0], SystemLayout.ORBIT_Y,
+                    spot[1])).ok(), "it is taken up into the Solar System's space");
+        }).thenWaitUntil(() -> {
+            final MovingStructure there = MovingStructures.byId(space, ship[0].id());
+            helper.assertTrue(there != null && there.ready(), "it comes into the Solar System's space");
+            ship[0] = there;
+        }).thenExecute(() -> {
+            final AirReserveEntity console = console(helper, ship[0]);
+            final ShipDestinations.Offer offer = ShipDestinations.offeredTo(pilot[0], console);
+            chosen[0] = offer.places().stream().filter(place -> place.kind() == ShipDestination.Kind.LIFT_OFF)
+                    .findFirst().orElse(null);
+            helper.assertTrue(offer.body().equals(SolarBody.OVERWORLD.name()) && chosen[0] != null
+                    && chosen[0].at().equals(home) && offer.places().stream().anyMatch(place -> place.kind()
+                    == ShipDestination.Kind.DOCK), "over the Overworld, its console offers the dock it left and"
+                    + " where its pilot last took off from: " + offer);
+            new ShipConsoleMenu(0, pilot[0].getInventory(), console, CrewRole.CREW, false, "", offer)
+                    .choose(pilot[0], chosen[0]);
+            helper.assertTrue(console.destination().isEmpty(), "one of its crew who is no pilot chooses nothing");
+            final ShipConsoleMenu menu = new ShipConsoleMenu(0, pilot[0].getInventory(), console, CrewRole.PILOT,
+                    true, "", offer);
+            menu.choose(pilot[0], new ShipDestination(ShipDestination.Kind.BED, 0, overworld.dimension(),
+                    home.north(UNOFFERED)));
+            helper.assertTrue(console.destination().isEmpty(), "a place it does not offer is not chosen");
+            menu.choose(pilot[0], chosen[0]);
+            helper.assertTrue(console.destination().equals(Optional.of(chosen[0])), "its pilot chooses where they"
+                    + " last took off from");
+            final StructurePose now = ship[0].pose();
+            ship[0].teleport(now.movedTo(now.x(), SpaceClimbs.floor() - UNDER_THE_FLOOR, now.z()));
+        }).thenWaitUntil(() -> {
+            final MovingStructure there = MovingStructures.byId(overworld, ship[0].id());
+            helper.assertTrue(there != null && there.ready(), "under the floor of the low orbits it comes down into"
+                    + " the Overworld");
+            ship[0] = there;
+        }).thenExecute(() -> {
+            final StructurePose now = ship[0].pose();
+            helper.assertTrue(Math.abs(now.x() - (home.getX() + HALF)) < 1 && Math.abs(now.z() - (home.getZ()
+                    + HALF)) < 1, "it comes down over the place its pilot chose: at " + now + ", the place " + home);
+            helper.assertTrue(console(helper, ship[0]).destination().isEmpty(), "its choice spent");
+            GameTestPlayers.leave(pilot[0]);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)

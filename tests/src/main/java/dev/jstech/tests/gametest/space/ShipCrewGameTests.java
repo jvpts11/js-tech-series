@@ -27,6 +27,7 @@ import dev.jstech.space.crew.ShipHatches;
 import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipDestinations;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.SmallShipParts;
@@ -182,7 +183,7 @@ public final class ShipCrewGameTests {
                     helper.assertTrue(TeamProgress.reached(level.getServer(), CoreTeams.teamOf(level.getServer(),
                             owner.getUUID()), SpaceMilestones.STARSHIP), "and their team has its first starship");
                     final ShipConsoleMenu menu = new ShipConsoleMenu(0, owner.getInventory(), console,
-                            CrewRole.PILOT, true, "");
+                            CrewRole.PILOT, true, "", ShipDestinations.Offer.NONE);
                     menu.add(stranger, rider.getScoreboardName());
                     helper.assertTrue(console.crew().orElseThrow().named().isEmpty(), "only its owner names a"
                             + " player");

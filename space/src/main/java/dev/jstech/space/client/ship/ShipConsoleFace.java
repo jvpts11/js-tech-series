@@ -39,6 +39,9 @@ public final class ShipConsoleFace {
     /** The right keys' roles, from the top; the fifth names a player. */
     public static final List<CrewRole> ROLES = List.of(CrewRole.PILOT, CrewRole.CREW, CrewRole.PASSENGER,
             CrewRole.NONE);
+    /** The keys along the top that open the crew page and the destination page. */
+    public static final int CREW_KEY = 0;
+    public static final int DEST_KEY = 1;
     /** The keys along the top that turn the pages back and on. */
     public static final int PREVIOUS_KEY = 3;
     public static final int NEXT_KEY = 4;
@@ -75,7 +78,7 @@ public final class ShipConsoleFace {
         final int sy0 = FlightComputerFace.SY0;
         final int sx1 = FlightComputerFace.SX1;
         g.fill(sx0, sy0, sx1, FlightComputerFace.SY1, c.screen());
-        top(g, font, view, c);
+        top(g, font, false, view.pageIndex(), view.pages(), c);
         // The ship, and its seats and bunks, the real bound of its crew.
         final String ship = GameText.resolve(CrewTexts.SHIP);
         FlightComputerFace.text(g, font, ship, WHO_X, sy0 + HEADER, c.cyan(), false);
@@ -143,18 +146,27 @@ public final class ShipConsoleFace {
         };
     }
 
-    /* The page's name boxed on the first key along the top, and the pages turned on the last two. */
-    private static void top(final GuiGraphics g, final Font font, final View view, final FlightComputerFace.Colours c) {
-        final String page = GameText.resolve(CrewTexts.PAGE_CREW);
-        final int x = FlightComputerFace.topKeyX(0, TOP_KEYS) + 12;
+    /*
+     * The pages' names on the first keys along the top, the one open, the destination page's ({@code destinations})
+     * or the crew page's, boxed; and on the last two, its rows' pages turned back and on.
+     */
+    static void top(final GuiGraphics g, final Font font, final boolean destinations, final int pageIndex,
+                    final int pages, final FlightComputerFace.Colours c) {
         final int y = FlightComputerFace.SY0 + 2;
-        FlightComputerFace.frame(g, x - font.width(page) / 2 - 2, y - 1, x + (font.width(page) + 1) / 2 + 2, y + 9,
-                c.white());
-        FlightComputerFace.text(g, font, page, x, y, c.white(), true);
+        for (final int key : new int[] {CREW_KEY, DEST_KEY}) {
+            final String page = GameText.resolve(key == DEST_KEY ? CrewTexts.PAGE_DEST : CrewTexts.PAGE_CREW);
+            final int x = FlightComputerFace.topKeyX(key, TOP_KEYS) + 12;
+            final boolean open = (key == DEST_KEY) == destinations;
+            if (open) {
+                FlightComputerFace.frame(g, x - font.width(page) / 2 - 2, y - 1, x + (font.width(page) + 1) / 2 + 2,
+                        y + 9, c.white());
+            }
+            FlightComputerFace.text(g, font, page, x, y, open ? c.white() : c.cyan(), true);
+        }
         FlightComputerFace.text(g, font, GameText.resolve(CrewTexts.PREVIOUS), FlightComputerFace.topKeyX(
-                PREVIOUS_KEY, TOP_KEYS) + 12, y, view.pageIndex() > 0 ? c.cyan() : c.legendOff(), true);
+                PREVIOUS_KEY, TOP_KEYS) + 12, y, pageIndex > 0 ? c.cyan() : c.legendOff(), true);
         FlightComputerFace.text(g, font, GameText.resolve(CrewTexts.NEXT), FlightComputerFace.topKeyX(NEXT_KEY,
-                TOP_KEYS) + 12, y, view.pageIndex() + 1 < view.pages() ? c.cyan() : c.legendOff(), true);
+                TOP_KEYS) + 12, y, pageIndex + 1 < pages ? c.cyan() : c.legendOff(), true);
     }
 
     /* Row {@code i} beside its left key: who, the name, the role in its colour; the owner's padlocked. */

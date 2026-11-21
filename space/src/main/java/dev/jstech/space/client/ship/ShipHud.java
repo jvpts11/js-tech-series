@@ -379,7 +379,8 @@ public final class ShipHud {
                 final SolarBody body = ShipPulse.Drop.bodyOf(pulse.near());
                 if (world != null && body != null && box.holds(world)) {
                     bracket((int) world.x, (int) world.y, GameText.resolve(ShipHudTexts.PULSE_WORLD.with(
-                            Text.literal(GameText.resolve(nameOf(body))), Text.literal(thousands(pulse.range())),
+                            Text.literal(GameText.resolve(ShipHudTexts.worldName(body))),
+                            Text.literal(thousands(pulse.range())),
                             Text.literal(clock(pulse.seconds())))));
                 }
             } else if (!pulse.dropped().isEmpty()) {
@@ -414,7 +415,8 @@ public final class ShipHud {
         private static String why(final String dropped) {
             final SolarBody body = ShipPulse.Drop.bodyOf(dropped);
             if (body != null) {
-                return GameText.resolve(ShipHudTexts.PULSE_NEAR.with(Text.literal(GameText.resolve(nameOf(body)))));
+                return GameText.resolve(ShipHudTexts.PULSE_NEAR.with(Text.literal(GameText.resolve(
+                        ShipHudTexts.worldName(body)))));
             }
             return switch (dropped) {
                 case ShipPulse.Drop.SUN -> GameText.resolve(ShipHudTexts.PULSE_SUN);
@@ -422,14 +424,6 @@ public final class ShipHud {
                 case ShipPulse.Drop.DOCKED -> GameText.resolve(ShipHudTexts.PULSE_DOCKED);
                 case ShipPulse.Drop.FUEL -> GameText.resolve(ShipHudTexts.PULSE_SPENT);
                 default -> "";
-            };
-        }
-
-        private static TextKey nameOf(final SolarBody body) {
-            return switch (body) {
-                case OVERWORLD -> ShipHudTexts.OVERWORLD;
-                case MOON -> ShipHudTexts.MOON;
-                case MARS -> ShipHudTexts.MARS;
             };
         }
 

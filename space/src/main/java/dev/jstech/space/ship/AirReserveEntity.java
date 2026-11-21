@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
@@ -58,6 +59,8 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
     private final ValueField<ShipReadings> flight;
     private final ValueField<Double> deuterium;
     private final ValueField<ShipCrew> crew;
+    private final ValueField<GlobalPos> dock;
+    private final ValueField<ShipDestination> destination;
     /* The block of its cockpit's formed model the console stands for, as it stands, collides and is outlined. */
     private final FixturePlace place;
     /* The ship's plan, watched aboard once the ship is a structure; on the server. */
@@ -94,6 +97,9 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
         this.deuterium = fields().value("Deuterium", Codec.DOUBLE, 1.0).save().toClient();
         // Who may do what aboard its ship, kept with the ship through docks and restarts.
         this.crew = fields().nullable("Crew", ShipCrew.CODEC).save().toClient();
+        // The dock its ship last left, and the place its pilot chose to come down onto, kept with the ship.
+        this.dock = fields().nullable("Dock", GlobalPos.CODEC).save();
+        this.destination = fields().nullable("Destination", ShipDestination.CODEC).save().toClient();
         // What it burnt since its load was last told goes with its save, so a restart does not refill that much.
         fields().part("Burnt", IFieldPart.of((tag, registries) -> tag.putDouble("Burnt", this.burnt),
                 (tag, registries) -> this.burnt = tag.getDouble("Burnt"))).save();
@@ -113,6 +119,28 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
     /** Keeps {@code next} as who may do what aboard its ship. */
     public void crew(final ShipCrew next) {
         this.crew.set(next);
+        setChanged();
+    }
+
+    /** The dock its ship last left, if it ever left one. */
+    public Optional<GlobalPos> dock() {
+        return Optional.ofNullable(this.dock.get());
+    }
+
+    /** Keeps {@code left} as the dock its ship last left. */
+    public void dock(final GlobalPos left) {
+        this.dock.set(left);
+        setChanged();
+    }
+
+    /** The place its pilot chose for its ship to come down onto, if any: its next descent comes down over it. */
+    public Optional<ShipDestination> destination() {
+        return Optional.ofNullable(this.destination.get());
+    }
+
+    /** Keeps {@code chosen} as the place its ship comes down onto next, or none for under where it is. */
+    public void destination(final @Nullable ShipDestination chosen) {
+        this.destination.set(chosen);
         setChanged();
     }
 

@@ -15,7 +15,10 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
 import dev.jstech.space.ship.AirReserveEntity;
+import dev.jstech.space.ship.ShipDestination;
+import dev.jstech.space.ship.ShipDestinations;
 import io.netty.buffer.ByteBuf;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -30,12 +33,19 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 /**
  * A small ship's flight console's screen, the display of the ship's console in the style of the flight computer's:
  * its crew page, where the ship's owner says who flies it, who works aboard and who only rides, and everyone else
- * aboard sees who is what. Opened with an empty hand on the console, aboard the ship.
+ * aboard sees who is what; and its destination page, where in orbit over a world a pilot chooses a place of it to
+ * come down onto ({@link ShipDestinations}). Opened with an empty hand on the console, aboard the ship.
  */
 public final class ShipConsole {
 
     /** The longest name of a team the page shows. */
     public static final int LONGEST_TEAM = 32;
+    /** The longest name of the sphere of the world below, and the most places the destination page is sent. */
+    public static final int LONGEST_BODY = 32;
+    public static final int MOST_PLACES = 32;
+    /** The places the destination page is sent. */
+    public static final StreamCodec<ByteBuf, List<ShipDestination>> PLACES = ShipDestination.STREAM_CODEC.apply(
+            ByteBufCodecs.list(MOST_PLACES));
     /** Its screen's menu. */
     public static final DeferredHolder<MenuType<?>, MenuType<ShipConsoleMenu>> MENU =
             SpaceContent.CONTENT.menu("ship_console", ShipConsoleMenu::new);
@@ -53,6 +63,20 @@ public final class ShipConsole {
                     menu.add(adding, name);
                 }
             });
+    /** A place of the world below chosen on the destination page, for the ship to come down onto. */
+    public static final MenuCall<ShipConsoleMenu, ShipDestination> CHOOSE = MenuCalls.declare(
+            id("ship_console_choose"), ShipConsoleMenu.class, ShipDestination.STREAM_CODEC, (menu, player, place) -> {
+                if (player instanceof ServerPlayer choosing) {
+                    menu.choose(choosing, place);
+                }
+            });
+    /** The place chosen on the destination page let go: the ship comes down under where it is. */
+    public static final MenuCall<ShipConsoleMenu, Boolean> CLEAR = MenuCalls.declare(id("ship_console_clear"),
+            ShipConsoleMenu.class, ByteBufCodecs.BOOL, (menu, player, any) -> {
+                if (player instanceof ServerPlayer clearing) {
+                    menu.clear(clearing);
+                }
+            });
 
     private ShipConsole() {
     }
@@ -64,17 +88,20 @@ public final class ShipConsole {
 
     /**
      * Opens the screen of {@code console} for {@code player}, who is told their own role aboard, whether they set the
-     * roles, and the name of the owner's team.
+     * roles, the name of the owner's team, and the places of the world below they may come down onto.
      */
     public static void open(final ServerPlayer player, final AirReserveEntity console, final CrewRole role) {
         final boolean setsRoles = console.crew().map(crew -> crew.maySetRoles(player)).orElse(false);
         final String team = console.crew().map(crew -> teamName(player.server, crew)).orElse("");
+        final ShipDestinations.Offer offer = ShipDestinations.offeredTo(player, console);
         player.openMenu(new SimpleMenuProvider((id, inventory, opener) -> new ShipConsoleMenu(id, inventory, console,
-                role, setsRoles, team), GameText.component(CrewTexts.TITLE)), buf -> {
+                role, setsRoles, team, offer), GameText.component(CrewTexts.TITLE)), buf -> {
                     buf.writeBlockPos(console.getBlockPos());
                     StableCodecs.byId(CrewRole.class, CrewRole.NONE).encode(buf, role);
                     buf.writeBoolean(setsRoles);
                     buf.writeUtf(team, LONGEST_TEAM);
+                    buf.writeUtf(offer.body(), LONGEST_BODY);
+                    PLACES.encode(buf, offer.places().subList(0, Math.min(MOST_PLACES, offer.places().size())));
                 });
     }
 

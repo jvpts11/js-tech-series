@@ -1002,6 +1002,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over the place itself; in the system's space over a world, BELOW and the place of the map under the ship, where it
   comes down if it goes down now, then LIFT-OFF with how far the place is from there in kilometres, its mark over the
   spot of the orbit to come down from. Only the ship's HUD shows it, never on foot.
+- Choosing where a ship comes down: the ship console's DEST page, beside CREW, lists in orbit over a world the
+  places of it its pilot may come down onto (the dock the ship last left, the landing pads they may use, their bed and
+  where they last took off from), each with how far it is from where the ship comes down now. A pilot chooses one by
+  its left key; the ship's next way down into that world comes out over it, at the height every way down arrives at,
+  and the choice is spent. CLEAR, or choosing under the ship, lets it go; away from a world's low orbit the page says
+  a place is picked there.
 
 ### Changed
 - A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and

@@ -14,6 +14,8 @@ import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.text.GameText;
 import dev.jstech.space.ship.AirReserveEntity;
+import dev.jstech.space.ship.ShipDestination;
+import dev.jstech.space.ship.ShipDestinations;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -23,7 +25,8 @@ import net.minecraft.world.entity.player.Inventory;
 /**
  * The ship console's menu: no slots, since a console holds nothing here; its screen reads the console's crew, which is
  * sent to the players who see it, sets a role through {@link ShipConsole#SET} and names a player through
- * {@link ShipConsole#ADD}, both the owner's alone to do.
+ * {@link ShipConsole#ADD}, both the owner's alone to do; and chooses a place of the world below to come down onto
+ * through {@link ShipConsole#CHOOSE}, or lets it go through {@link ShipConsole#CLEAR}, a pilot's to do.
  */
 public final class ShipConsoleMenu extends CoreMenu {
 
@@ -31,24 +34,28 @@ public final class ShipConsoleMenu extends CoreMenu {
     private final CrewRole viewer;
     private final boolean setsRoles;
     private final String teamName;
+    private final ShipDestinations.Offer offer;
 
     public ShipConsoleMenu(final int containerId, final Inventory inventory, final AirReserveEntity console,
-                           final CrewRole viewer, final boolean setsRoles, final String teamName) {
+                           final CrewRole viewer, final boolean setsRoles, final String teamName,
+                           final ShipDestinations.Offer offer) {
         super(ShipConsole.MENU.get(), containerId, inventory, MenuValidity.blockEntity(console));
         this.console = console;
         this.viewer = viewer;
         this.setsRoles = setsRoles;
         this.teamName = teamName;
+        this.offer = offer;
     }
 
     /**
      * The menu on the player's side, for the console whose place the server wrote, their role aboard, whether they
-     * set the roles, and the name of the owner's team.
+     * set the roles, the name of the owner's team, and the places of the world below they may come down onto.
      */
     public ShipConsoleMenu(final int containerId, final Inventory inventory, final RegistryFriendlyByteBuf buf) {
         this(containerId, inventory, MenuOpening.blockEntity(inventory, buf, AirReserveEntity.class),
                 StableCodecs.byId(CrewRole.class, CrewRole.NONE).decode(buf), buf.readBoolean(),
-                buf.readUtf(ShipConsole.LONGEST_TEAM));
+                buf.readUtf(ShipConsole.LONGEST_TEAM), new ShipDestinations.Offer(
+                        buf.readUtf(ShipConsole.LONGEST_BODY), ShipConsole.PLACES.decode(buf)));
     }
 
     /** The console. */
@@ -69,6 +76,28 @@ public final class ShipConsoleMenu extends CoreMenu {
     /** The name the owner's team is shown by; empty for an owner on a team of their own. */
     public String teamName() {
         return this.teamName;
+    }
+
+    /** The places of the world below the player may come down onto, as the server found them as it opened. */
+    public ShipDestinations.Offer offer() {
+        return this.offer;
+    }
+
+    /**
+     * {@code player} chooses {@code place} for the ship to come down onto: a pilot's to do, of the places the server
+     * offers them now.
+     */
+    public void choose(final ServerPlayer player, final ShipDestination place) {
+        if (pilots(player) && ShipDestinations.offeredTo(player, this.console).places().contains(place)) {
+            this.console.destination(place);
+        }
+    }
+
+    /** {@code player} lets the place chosen go, the ship to come down under where it is: a pilot's to do. */
+    public void clear(final ServerPlayer player) {
+        if (pilots(player)) {
+            this.console.destination(null);
+        }
     }
 
     /** {@code player} sets a role on the crew page: the owner's to do, the others told so. */
@@ -114,6 +143,15 @@ public final class ShipConsoleMenu extends CoreMenu {
             return;
         }
         this.console.crew(crew.get().withNamed(id, found.get().getName(), CrewRole.PASSENGER));
+    }
+
+    /* Whether the player who opened it flies the ship; else {@code player} is told it is a pilot's to do. */
+    private boolean pilots(final ServerPlayer player) {
+        if (!this.viewer.holds(CrewRole.PILOT)) {
+            player.displayClientMessage(GameText.component(CrewTexts.PILOTS_ONLY), true);
+            return false;
+        }
+        return true;
     }
 
     /* The console's crew, when {@code player} may set its roles; else they are told whose it is to do. */

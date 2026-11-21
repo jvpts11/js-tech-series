@@ -229,6 +229,12 @@ kit for its vehicles.
   kilometres, and the home mark over the spot of the orbit to come down from; a block of space is thousands of the
   map's, so a descent by hand lands some way off and the pilot flies the rest to the mark. Only the ship's HUD shows
   it; on foot there is none.
+- **Choosing where to come down.** It is optional: the console's DEST page, beside CREW, lists in orbit over a world
+  the places of it the pilot may come down onto (the dock the ship last left, the landing pads they may use, their bed
+  and where they last took off from), each with how far it is from where the ship comes down now. A pilot chooses one
+  by its key; the ship's next way down into that world then comes out over it, at the height every way down arrives
+  at, and the choice is spent. CLEAR, or choosing UNDER THE SHIP, lets it go. Away from a world's low orbit the page
+  says a place is picked there.
 
 ### Autopilots
 

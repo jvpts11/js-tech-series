@@ -48,6 +48,20 @@ public final class CrewTexts {
     public static final TextKey OWNER_SETS = TextKey.of("jsspace.ship_console.owner_sets",
             "ONLY THE OWNER SETS ROLES");
     public static final TextKey TITLE = TextKey.of("jsspace.ship_console.title", "Ship Console");
+    public static final TextKey PAGE_DEST = TextKey.of("jsspace.ship_console.page.dest", "DEST");
+    public static final TextKey OVER = TextKey.of("jsspace.ship_console.over", "OVER");
+    public static final TextKey NO_WORLD = TextKey.of("jsspace.ship_console.no_world", "NO WORLD");
+    public static final TextKey NONE = TextKey.of("jsspace.ship_console.none", "NONE");
+    public static final TextKey UNDER_THE_SHIP = TextKey.of("jsspace.ship_console.under_the_ship", "UNDER THE SHIP");
+    public static final TextKey KM = TextKey.of("jsspace.ship_console.km", "%s KM");
+    public static final TextKey GOING_DOWN = TextKey.of("jsspace.ship_console.going_down",
+            "GOING DOWN NOW COMES DOWN OVER THE PLACE CHOSEN");
+    public static final TextKey DOWN_TO = TextKey.of("jsspace.ship_console.down_to", "DOWN TO: %s");
+    public static final TextKey AT = TextKey.of("jsspace.ship_console.at", "X %s  Z %s");
+    public static final TextKey PICKED_IN = TextKey.of("jsspace.ship_console.picked_in", "A PLACE TO COME DOWN ONTO");
+    public static final TextKey PICKED_OVER = TextKey.of("jsspace.ship_console.picked_over",
+            "IS PICKED IN ORBIT OVER A WORLD");
+    public static final TextKey CLEAR = TextKey.of("jsspace.ship_console.clear", "CLEAR");
 
     private CrewTexts() {
     }

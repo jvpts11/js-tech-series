@@ -19,6 +19,7 @@ import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.cruise.OrbitRoom;
 import dev.jstech.space.network.ClimbWorldsPayload;
 import dev.jstech.space.orbit.OrbitObjects;
+import dev.jstech.space.ship.ShipDestinations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -169,9 +170,13 @@ public final class SpaceClimbs {
             final Below below = below(space, structure.pose().x(), structure.pose().z());
             if (below != null) {
                 final List<ServerPlayer> told = announceAboard(entity);
-                if (MovingStructures.travel(structure, below.level(), below.at()).ok()) {
+                // A ship whose pilot chose a place of the world to come down onto comes down over it.
+                final ShipDestinations.Arrival arrival = ShipDestinations.arrival(space, structure, below.level(),
+                        below.at());
+                if (MovingStructures.travel(structure, below.level(), arrival.at()).ok()) {
                     OrbitObjects.forget(space.getServer(), structure.id().value());
                 } else {
+                    arrival.stayedUp();
                     told.forEach(DimensionTravel::withdraw);
                 }
                 PASSED.put(entity, space.getGameTime());
@@ -188,18 +193,23 @@ public final class SpaceClimbs {
         }
     }
 
+    /** The world whose low orbit the spot ({@code x}, {@code z}) of the space {@code space} is over, if any. */
+    public static Optional<ServerLevel> worldBelow(final ServerLevel space, final double x, final double z) {
+        final SolarBody body = SystemLayout.over(x, z);
+        if (body == null) {
+            return Optional.empty();
+        }
+        return SpaceWorlds.get(space, SolarSystemWorlds.worldOf(body)).map(found -> space.getServer()
+                .getLevel(found.dimension()));
+    }
+
     /* The world under a spot of a system's space, and where in it one coming down there arrives; none over none. */
     private static @Nullable Below below(final ServerLevel space, final double x, final double z) {
         final SolarBody body = SystemLayout.over(x, z);
-        if (body == null) {
+        final ServerLevel level = worldBelow(space, x, z).orElse(null);
+        if (body == null || level == null) {
             return null;
         }
-        final Optional<ServerLevel> world = SpaceWorlds.get(space, SolarSystemWorlds.worldOf(body))
-                .map(found -> space.getServer().getLevel(found.dimension()));
-        if (world.isEmpty() || world.get() == null) {
-            return null;
-        }
-        final ServerLevel level = world.get();
         final double width = Math.max(1, level.getWorldBorder().getSize());
         final double[] place = SystemLayout.placeUnder(body, x, z);
         return new Below(level, new Vec3(SphereMap.x(place[0], width), ceiling(level) - ARRIVE_UNDER,

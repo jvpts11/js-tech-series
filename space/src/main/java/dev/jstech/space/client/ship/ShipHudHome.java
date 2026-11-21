@@ -97,8 +97,8 @@ final class ShipHudHome {
                 Locale.ROOT, "%03d", Math.floorMod(Math.round(bearing), ROUND)))));
     }
 
-    /* A whole number with its thousands set apart, as the HUD writes distances and places. */
-    private static String grouped(final double value) {
+    /* A whole number with its thousands set apart, as the HUD and the console write distances and places. */
+    static String grouped(final double value) {
         return String.format(Locale.ROOT, "%,d", Math.round(value));
     }
 

@@ -9,6 +9,7 @@ package dev.jstech.space.ship;
 
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.space.universe.SolarBody;
 
 /** What a ship's HUD reads, projected on its canopy for its pilot: short, as a HUD's labels are. */
 @TextHolder
@@ -58,5 +59,14 @@ public final class ShipHudTexts {
     public static final TextKey BEARING = TextKey.of("jsspace.ship_hud.bearing", "%s  BRG %s");
 
     private ShipHudTexts() {
+    }
+
+    /** What the ship's HUD and its console call the world whose sphere is {@code body}. */
+    public static TextKey worldName(final SolarBody body) {
+        return switch (body) {
+            case OVERWORLD -> OVERWORLD;
+            case MOON -> MOON;
+            case MARS -> MARS;
+        };
     }
 }
