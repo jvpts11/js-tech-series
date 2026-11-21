@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import dev.jstech.core.client.mcp.PlayRiding;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.SeatLookClient;
+import dev.jstech.core.client.moving.StructureRoofs;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.client.moving.JointRenderer;
 import dev.jstech.core.client.moving.SleepersDrawn;
@@ -50,6 +51,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -58,6 +60,7 @@ import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -105,6 +108,14 @@ public final class MovingStructureLifeClientTests {
      * How far the pilot's craft pitches its nose up, in degrees; the mouse's turn down, in its steps, and how far a
      * step turns, in degrees; one turn up far past the seat's straight up, which is ninety degrees.
      */
+    /*
+     * A hut's floor and roof, in the test's blocks up; how far east of its middle a column is open to the sky; how long
+     * the rain lasts, in ticks.
+     */
+    private static final int HUT_FLOOR = 6;
+    private static final int HUT_ROOF = 9;
+    private static final int BESIDE_THE_HUT = 4;
+    private static final int RAINS = 6000;
     private static final double PITCHED = 60;
     private static final double PITCHING = 30;
     private static final double MOUSE_DOWN = 200;
@@ -361,6 +372,55 @@ public final class MovingStructureLifeClientTests {
                             + 1, "and up as far as straight up from the seat, behind the world's straight up: " + up
                             + ", the world's pitch " + ctx.player().getXRot());
                 });
+    }
+
+    /*
+     * Rain on a hut made a moving structure, a floor and a roof on four posts: in the column under its roof it stops
+     * on the roof's top, falling on nothing inside it or under it; beside it, it falls to the world's ground.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void rain_stopsOnTheRoofOfAStructureNeverInsideIt(final ClientTestContext ctx) {
+        final MovingStructure[] hut = new MovingStructure[1];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            calm(ctx.serverLevel());
+            clear(ctx);
+        }));
+        ctx.thenServer(0, level -> {
+            clear(ctx);
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -11; z <= -9; z++) {
+                    level.setBlockAndUpdate(ctx.abs(new BlockPos(x, HUT_FLOOR, z)), Blocks.STONE.defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(new BlockPos(x, HUT_ROOF, z)), Blocks.STONE.defaultBlockState());
+                }
+            }
+            for (int y = HUT_FLOOR + 1; y < HUT_ROOF; y++) {
+                for (final int[] post : new int[][] {{-1, -11}, {1, -11}, {-1, -9}, {1, -9}}) {
+                    level.setBlockAndUpdate(ctx.abs(new BlockPos(post[0], y, post[1])),
+                            Blocks.OAK_FENCE.defaultBlockState());
+                }
+            }
+            hut[0] = assembled(ctx, new BlockPos(-1, HUT_FLOOR, -11), new BlockPos(1, HUT_ROOF, -9));
+            level.setWeatherParameters(0, RAINS, true, false);
+        })
+                .thenTeleport(0, STAND, Direction.NORTH)
+                .thenAwaitLandDrawn(WAIT)
+                .thenWaitUntil(() -> drawn(List.of(hut[0])), WAIT, "the hut to reach the player's game")
+                .thenWaitUntil(() -> ctx.mc().level.isRaining(), WAIT, "the rain to reach the player's game")
+                .then(SETTLE, () -> {
+                    final Level level = ctx.mc().level;
+                    final BlockPos under = ctx.abs(new BlockPos(0, HUT_FLOOR, -10));
+                    final int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, under.getX(), under.getZ());
+                    ctx.assertTrue(ground < under.getY(), "the hut's blocks are not the world's: its ground is under "
+                            + "it, at " + ground);
+                    final int stops = StructureRoofs.rainStopsAt(level, under.getX(), under.getZ(), ground);
+                    ctx.assertTrue(stops == ctx.abs(new BlockPos(0, HUT_ROOF + 1, 0)).getY(), "rain under the roof "
+                            + "stops on its top: at " + stops);
+                    final BlockPos beside = ctx.abs(new BlockPos(BESIDE_THE_HUT, HUT_FLOOR, -10));
+                    final int open = level.getHeight(Heightmap.Types.MOTION_BLOCKING, beside.getX(), beside.getZ());
+                    ctx.assertTrue(StructureRoofs.rainStopsAt(level, beside.getX(), beside.getZ(), open) == open,
+                            "beside it, rain falls to the ground");
+                })
+                .thenScreenshot(0, "life_rain_on_the_hut");
     }
 
     @ClientTest(timeoutTicks = 2400)
@@ -649,12 +709,12 @@ public final class MovingStructureLifeClientTests {
         return MovingStructures.assemble(ctx.serverLevel(), ctx.abs(from), ctx.abs(to)).structure();
     }
 
-    /* Whether each of the structures has reached the player's game and been built. */
     /* Whether the reading {@code name} of {@code reading} is {@code value}, to within a degree or a block a second. */
     private static boolean near(final JsonObject reading, final String name, final double value) {
         return reading.has(name) && Math.abs(reading.get(name).getAsDouble() - value) < 1;
     }
 
+    /* Whether each of the structures has reached the player's game and been built. */
     private static boolean drawn(final List<MovingStructure> structures) {
         for (final MovingStructure structure : structures) {
             final ClientStructure seen = structure == null ? null : ClientMovingStructures.byPlot(structure.plot());

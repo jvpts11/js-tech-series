@@ -15,6 +15,7 @@ import com.mojang.blaze3d.vertex.VertexBuffer;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.client.moving.StructureMeshes;
+import dev.jstech.core.client.moving.StructureRoofs;
 import dev.jstech.core.client.sky.GroundCovers;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.YardLayout;
@@ -22,6 +23,9 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -93,6 +97,24 @@ public abstract class LevelRendererMixin {
         if (!GroundCovers.covered()) {
             original.call(section);
         }
+    }
+
+    @WrapOperation(method = "renderSnowAndRain", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;"
+                    + "getHeight(Lnet/minecraft/world/level/levelgen/Heightmap$Types;II)I"))
+    private int jscore$rainStopsOnStructures(final Level level, final Heightmap.Types type, final int x, final int z,
+                                             final Operation<Integer> original) {
+        return StructureRoofs.rainStopsAt(level, x, z, original.call(level, type, x, z));
+    }
+
+    @WrapOperation(method = "tickRain", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/level/LevelReader;getHeightmapPos("
+                    + "Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/core/BlockPos;)"
+                    + "Lnet/minecraft/core/BlockPos;"))
+    private BlockPos jscore$rainSplashesOnStructures(final LevelReader level, final Heightmap.Types type,
+                                                     final BlockPos pos, final Operation<BlockPos> original) {
+        final BlockPos ground = original.call(level, type, pos);
+        return level instanceof Level world ? StructureRoofs.rainStopsAt(world, ground) : ground;
     }
 
     @Inject(method = "renderClouds", at = @At("HEAD"), cancellable = true)

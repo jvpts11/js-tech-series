@@ -1414,7 +1414,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   face a direction, running on the game's rails. Entities collide with it however it is turned, stand on it and are
   carried as it moves; a player walks a moving deck as the ground, on a server too; arrows and every ray hit it, and
   its blocks are opened, used, broken and built on as blocks of the ground. Its sounds, particles (a torch's flame,
-  a block's pieces), drops and news go where its blocks are, and the rain falls on it where it is. It is drawn as
+  a block's pieces), drops and news go where its blocks are, and the rain and snow fall on it where it is, stopping
+  on its roof, never inside its hull or under it, their splashes landing on it. It is drawn as
   cached meshes in the light of the world where it is, as the server lights it, each face shaded as it faces however
   the structure is turned, with the glow and the coloured light of its lamps, the same under a shader pack; its lamps
   light the world round it as it goes, and its blocks change hands with the world's in a single frame as it is made
