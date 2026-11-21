@@ -81,8 +81,10 @@ public final class ShipAutopilotControl {
             final Optional<ShipAutopilot> offered = switch (ORDER.get(i)) {
                 case LAND -> ship.motion() instanceof ShipFlight flight ? landing(pilot, level, ship, flight)
                         : Optional.empty();
-                // Only from a world whose sky goes up into its space: from any other it would climb into its roof.
-                case ORBIT -> SpaceClimbs.climbsOut(level) ? Optional.of(ShipAutopilot.orbit()) : Optional.empty();
+                // From a world whose sky goes up into its space, it climbs there; in a system's space, it takes the
+                // ship back level onto the plane of the low orbits; from any other it would climb into its roof.
+                case ORBIT -> SpaceClimbs.climbsOut(level) || SystemSpaces.systemOf(level.dimension()).isPresent()
+                        ? Optional.of(ShipAutopilot.orbit()) : Optional.empty();
                 case DOCK -> docking(pilot, level, ship);
             };
             if (offered.isPresent()) {

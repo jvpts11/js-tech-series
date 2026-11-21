@@ -878,7 +878,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A ship's autopilots, changed at its helm by their key, J: LAND flies it to the nearest ship landing pad its
   pilot may use and sets it down on it, high enough on its way, slowing as it nears and coming down hovering over it,
   and lets go once it stands there; ORBIT opens its throttle, pitches its nose up to the climb's 55 degrees and boosts,
-  up and over the line into its system's space, and lets go there; DOCK, in space, turns it to face the nearest ship
+  up and over the line into its system's space, and lets go there, and in space takes the ship back level onto the
+  plane of the low orbits, whatever its height and pitch, and lets go there; DOCK, in space, turns it to face the
+  nearest ship
   with a docking collar, collar to collar and nose by nose, slows it, and drifts it on its thrusters till its collar
   stands off the other's, in line with it, then closes slowly till they touch, and holds there. Its pilot taking the
   helm, holding any of its keys, lets the autopilot go, and a ship docking rolled over rights itself as it flies on.
@@ -1156,8 +1158,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   little later the crossing was asked for again, refused as under way, and everyone aboard was told it was off while it
   went on. Climbing out, it is counted in orbit, and its crew get the advancement, only once its crossing is accepted;
   coming down, it is forgotten from its orbit only then.
-- ORBIT is offered only over a world whose sky goes up into its space: in the Nether or the End a ship climbed
-  into the roof.
+- ORBIT is offered only over a world whose sky goes up into its space, and in a system's space: in the Nether
+  or the End a ship climbed into the roof.
 - A starship whose flight console is broken has no deuterium left: it went on boosting and jumping as if its
   reactor were full.
 - A crawlerway is measured to its end however far it runs: one longer than the land loaded round its engine

@@ -393,7 +393,7 @@ public final class ShipAutopilotGameTests {
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
-    public static void autopilot_orbitIsOfferedOnlyWhereTheSkyGoesUpIntoSpace(final GameTestHelper helper) {
+    public static void autopilot_orbitIsOfferedWhereTheSkyGoesUpIntoSpaceAndInSpace(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final ServerLevel nether = level.getServer().getLevel(Level.NETHER);
         final ServerLevel end = level.getServer().getLevel(Level.END);
@@ -410,6 +410,10 @@ public final class ShipAutopilotGameTests {
                         + other.dimension().location() + ", whose sky goes up into no space, ORBIT is not offered:"
                         + " it would climb into its roof");
             }
+            final ServerLevel space = SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM);
+            helper.assertTrue(ShipAutopilotControl.next(pilot, space, ship[0], Optional.empty()).map(
+                    ShipAutopilot::mode).filter(ShipAutopilot.Mode.ORBIT::equals).isPresent(), "in the Solar "
+                    + "System's space ORBIT is offered, to take the ship back level onto the low orbits");
             GameTestPlayers.leave(pilot);
             MovingStructures.takeAway(ship[0]);
         }).thenSucceed();
@@ -572,14 +576,20 @@ public final class ShipAutopilotGameTests {
             // A ship whose owner lets nobody else aboard is not one DOCK takes; let in as passengers, it is.
             final AirReserveEntity other = console(theirs[0]);
             other.crew(ShipCrew.of(UUID.randomUUID(), "STRANGER"));
-            helper.assertTrue(ShipAutopilotControl.next(pilot[0], space, ours[0], Optional.empty()).isEmpty(),
+            // In space its key goes to ORBIT first, then to DOCK.
+            final Optional<ShipAutopilot> orbit = Optional.of(ShipAutopilot.orbit());
+            helper.assertTrue(ShipAutopilotControl.next(pilot[0], space, ours[0], orbit).isEmpty(),
                     "DOCK takes no ship that would not let its pilot aboard");
             other.crew(other.crew().orElseThrow().withOthers(CrewRole.PASSENGER));
             ShipAutopilotControl.pressed(pilot[0]);
+            helper.assertTrue(flight(ours[0]).autopilot().map(ShipAutopilot::mode).filter(
+                    ShipAutopilot.Mode.ORBIT::equals).isPresent(), "in space its key engages ORBIT first: "
+                    + flight(ours[0]).autopilot());
+            ShipAutopilotControl.pressed(pilot[0]);
             final Optional<ShipAutopilot> engaged = flight(ours[0]).autopilot();
             helper.assertTrue(engaged.isPresent() && engaged.get().mode() == ShipAutopilot.Mode.DOCK
-                    && engaged.get().other().orElseThrow().equals(theirs[0].id()), "in space its key engages DOCK"
-                    + " with the ship beside it: " + engaged);
+                    && engaged.get().other().orElseThrow().equals(theirs[0].id()), "then DOCK with the ship beside "
+                    + "it: " + engaged);
         }).thenWaitUntil(() -> {
             final Vec3 a = ShipCollars.mouth(space, ours[0]).orElseThrow();
             final Vec3 b = ShipCollars.mouth(space, theirs[0]).orElseThrow();
