@@ -23,6 +23,7 @@ import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.cruise.CouchSleep;
+import dev.jstech.space.cruise.CruiseFlight;
 import dev.jstech.space.descent.DescentPhase;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
@@ -500,9 +501,12 @@ public final class RocketRoutesGameTests {
                     CouchSleep.pressed(crew);
                     helper.assertTrue(CouchSleep.asleep(crew), "its crew falls asleep in the capsule's seat");
                 })
-                .thenWaitUntil(() -> helper.assertTrue(!computerOf(space, at(space, id)).cruising()
-                        && at(space, id).motion() == null, "the crew asleep, the cruise passes and it rests in Mars'"
-                        + " orbit"))
+                .thenWaitUntil(() -> {
+                    if (computerOf(space, at(space, id)).cruising() || at(space, id).motion() != null) {
+                        helper.fail("the crew asleep, the cruise passes and it rests in Mars' orbit: "
+                                + cruiseOf(space, id, crew));
+                    }
+                })
                 .thenExecute(() -> {
                     final FlightComputerBlockEntity aboard = computerOf(space, at(space, id));
                     helper.assertTrue(aboard.wideOrbit().isEmpty(), "braking in Mars' air, it is captured");
@@ -673,6 +677,27 @@ public final class RocketRoutesGameTests {
             lost.append(section).append('=').append(computer.lost(section)).append(' ');
         }
         return "stages let go " + computer.separated() + ", blocks lost by part " + lost + "tanks " + computer.tanks();
+    }
+
+    /*
+     * Where the cruise of the rocket {@code id} in {@code space} stands, for a failure to say: its motion, its flight
+     * computer's, whether its plot and the space it stands in tick, and its crew's sleep, seat and place.
+     */
+    private static String cruiseOf(final ServerLevel space, final StructureUuid id, final ServerPlayer crew) {
+        final MovingStructure rocket = at(space, id);
+        if (rocket == null) {
+            return "the rocket gone from space";
+        }
+        final FlightComputerBlockEntity computer = computerAboard(space, rocket);
+        final String flight = computer == null ? "no flight computer in its plot" : "cruising " + computer.cruising()
+                + ", stages let go " + computer.separated() + ", its plot ticking "
+                + space.shouldTickBlocksAt(computer.getBlockPos());
+        return "motion " + rocket.motion() + " at " + rocket.pose() + ", its space ticking "
+                + space.isPositionEntityTicking(BlockPos.containing(rocket.pose().x(), rocket.pose().y(),
+                rocket.pose().z())) + "; " + flight + "; its crew asleep " + CouchSleep.asleep(crew) + ", long enough "
+                + CouchSleep.longEnough(crew) + ", aboard " + CruiseFlight.aboard(space, rocket).contains(crew)
+                + ", riding " + crew.getVehicle() + " in " + crew.level().dimension().location() + " at "
+                + crew.position();
     }
 
     /*
