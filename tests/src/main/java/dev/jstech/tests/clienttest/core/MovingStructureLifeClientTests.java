@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import com.google.gson.JsonObject;
+import dev.jstech.core.client.mcp.PlayRiding;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.client.moving.JointRenderer;
@@ -93,6 +95,10 @@ public final class MovingStructureLifeClientTests {
     private static final double STILL = 1.0e-4;
     private static final double MOST_TICK_STEP = 2.5;
     /* The scene: from here to there, cleared before and after. */
+    /* How far the craft at the helm is rolled, in degrees; how far and how fast it is sent, in blocks and a second. */
+    private static final double ROLLED = 30;
+    private static final double SAILS = 40;
+    private static final double SPEED = 4;
     private static final BlockPos SCENE_FROM = new BlockPos(-6, 2, -16);
     private static final BlockPos SCENE_TO = new BlockPos(6, 12, -4);
 
@@ -218,6 +224,64 @@ public final class MovingStructureLifeClientTests {
                             + northmost[0] + " from " + parked[0]);
                     sitting[0].stop();
                     sitting[0].assertSteady(ctx, "the player at the helm", STEADY);
+                });
+    }
+
+    /*
+     * What an agent reads of the player at a helm: the seat, a helm, on the craft; the craft rolled a twelfth of a
+     * turn to its right, heading south and level; the player looking ahead along it; and, sent north at four blocks a
+     * second, its speed and its way.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void riding_tellsTheSeatTheCraftsPoseItsSpeedAndTheLookAlongIt(final ClientTestContext ctx) {
+        final MovingStructure[] craft = new MovingStructure[1];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            ctx.serverPlayer().stopRiding();
+            clear(ctx);
+        }));
+        ctx.thenServer(0, level -> {
+            clear(ctx);
+            calm(level);
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(0, 6, -10)), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(0, 6, -9)), TestAboard.HELM.get().defaultBlockState());
+            craft[0] = assembled(ctx, new BlockPos(0, 6, -10), new BlockPos(0, 6, -9));
+            final StructurePose at = craft[0].pose();
+            craft[0].teleport(StructurePose.turned(at.x(), at.y(), at.z(), 0, 0, 1, Math.toRadians(ROLLED)));
+        })
+                .thenTeleport(0, STAND, Direction.NORTH)
+                .thenAwaitLandDrawn(WAIT)
+                .thenWaitUntil(() -> drawn(List.of(craft[0])), WAIT, "the craft to reach the player's game")
+                .thenServer(SETTLE, level -> ctx.assertTrue(MovingStructures.sit(ctx.serverPlayer(),
+                        find(level, craft[0], state -> state.is(TestAboard.HELM.get()))), "the player sits at the "
+                        + "helm"))
+                .thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity, WAIT,
+                        "the player to sit at the helm on their game")
+                .then(SETTLE, () -> {
+                    // Ahead along the craft, which rolls about its length: south and level in the world too.
+                    ctx.player().setYRot(0);
+                    ctx.player().setXRot(0);
+                })
+                .then(1, () -> {
+                    final JsonObject riding = PlayRiding.riding(ctx.player()).orElseThrow();
+                    ctx.assertTrue(riding.getAsJsonObject("seat").get("helm").getAsBoolean() && riding.get(
+                            PlayRiding.STRUCTURE).getAsString().equals(craft[0].id().value().toString()), "the "
+                            + "player rides the helm of the craft: " + riding);
+                    ctx.assertTrue(near(riding, PlayRiding.ROLL, ROLLED) && near(riding, PlayRiding.PITCH, 0)
+                            && near(riding, PlayRiding.HEADING, 0), "rolled a twelfth of a turn to its right, "
+                            + "level and heading south: " + riding);
+                    final JsonObject look = riding.getAsJsonObject(PlayRiding.LOOK);
+                    ctx.assertTrue(near(look, PlayRiding.YAW, 0) && near(look, PlayRiding.PITCH, 0), "the player "
+                            + "looks ahead along it: " + look);
+                })
+                .thenServer(0, level -> {
+                    final StructurePose at = craft[0].pose();
+                    craft[0].move(new TowardMotion(at.movedTo(at.x(), at.y(), at.z() - SAILS), SPEED, 0));
+                })
+                .then(SETTLE, () -> {
+                    final JsonObject riding = PlayRiding.riding(ctx.player()).orElseThrow();
+                    ctx.assertTrue(near(riding, PlayRiding.SPEED, SPEED) && riding.getAsJsonObject(
+                            PlayRiding.VELOCITY).get("z").getAsDouble() < 0, "sent north at " + SPEED
+                            + " blocks a second, it says so: " + riding);
                 });
     }
 
@@ -508,6 +572,11 @@ public final class MovingStructureLifeClientTests {
     }
 
     /* Whether each of the structures has reached the player's game and been built. */
+    /* Whether the reading {@code name} of {@code reading} is {@code value}, to within a degree or a block a second. */
+    private static boolean near(final JsonObject reading, final String name, final double value) {
+        return reading.has(name) && Math.abs(reading.get(name).getAsDouble() - value) < 1;
+    }
+
     private static boolean drawn(final List<MovingStructure> structures) {
         for (final MovingStructure structure : structures) {
             final ClientStructure seen = structure == null ? null : ClientMovingStructures.byPlot(structure.plot());

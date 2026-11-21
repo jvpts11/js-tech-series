@@ -83,7 +83,11 @@ public final class PlaySeeing {
         return List.of(
                 new McpTool("player_state", "Where the player is and looks, their health, food, game mode and the "
                         + "slot held, what the crosshair is on (a block and its face, or an entity), the screen open, "
-                        + "and the time of day.", McpSchema.object().build(), McpPermission.READ,
+                        + "what they ride (the entity, a moving structure's seat and whether it steers, the "
+                        + "structure) or the structure they stand on, how it stands (heading, pitch down, roll its "
+                        + "right side down, in degrees), its speed and velocity in blocks a second and where the "
+                        + "player looks in its frame, ahead being nought; and the time of day.",
+                        McpSchema.object().build(), McpPermission.READ,
                         call -> Play.withPlayer(PlaySeeing::state)),
                 new McpTool("inventory_read", "Every slot of the player's inventory that holds something: its item, "
                         + "how many, and a name a player gave it.", McpSchema.object().build(), McpPermission.READ,
@@ -131,6 +135,8 @@ public final class PlaySeeing {
         lookedAtBlock(game, player).ifPresent(looked -> out.add(LOOKING_AT_BLOCK, looked));
         lookedAtEntity(game).ifPresent(looked -> out.add(LOOKING_AT_ENTITY, looked));
         screen(game.screen).ifPresent(screen -> out.add(SCREEN, screen));
+        PlayRiding.riding(player).ifPresent(riding -> out.add(PlayRiding.RIDING, riding));
+        PlayRiding.aboard(player).ifPresent(aboard -> out.add(PlayRiding.ABOARD, aboard));
         out.addProperty("time_of_day", player.level().getDayTime() % 24_000);
         return McpResult.json(out);
     }

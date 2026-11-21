@@ -1934,6 +1934,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   flying on or a machine working, and a wait of some ticks runs the world as many. Let go, as asked, as the MCP
   server stops, as every client is cut off or as the player presses a key, it runs as it did, frozen only if it was
   before. It holds the player's own world, and a server's from the server's own MCP server.
+- An agent knows what the player rides: `player_state` tells the entity ridden, a moving structure's seat and
+  whether it is a helm, and the structure, or the structure the player stands on; how it stands, its heading, its
+  pitch and its roll, in degrees; how fast it goes and which way, in blocks a second; and where the player looks in
+  its own frame, ahead being nought, so a pilot aims along the ship rather than along a camera rolled with it.
 - Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
   harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
   without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside
