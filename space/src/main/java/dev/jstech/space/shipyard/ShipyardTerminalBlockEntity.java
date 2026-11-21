@@ -8,6 +8,7 @@
 package dev.jstech.space.shipyard;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.machine.MachineBlockEntity;
@@ -156,7 +157,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         // Told only once it is built, after the field it changes is declared.
         this.arms = new PlanArms(this::armsChanged);
         this.armsField = fields().part("Arms", this.arms).save().toClient();
-        this.assembler = new PlanAssembler(pos, this::setChanged).arms(this.arms);
+        this.assembler = new PlanAssembler(pos, this::setChanged).arms(this.arms)
+                .armSounds(ShipyardSounds.ARM, ShipyardSounds.WELD);
         fields().part(PlanAssembler.KEY, this.assembler).save();
         this.doorsField = fields().part("Doors", this.doors).save().toClient();
         this.sendOnClose = fields().value("SendOnClose", Codec.BOOL, false).save();
@@ -250,6 +252,34 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     /** How far its moving part has gone at the game's tick {@code now}, from 0 to 1, as the players' games draw it. */
     public double doorsProgress(final double now) {
         return this.doors.progress(now);
+    }
+
+    /** Its floor heard running while it rises under the ship or goes down from under it. */
+    @Override
+    public List<LoopRequest> loops() {
+        final List<LoopRequest> loops = super.loops();
+        if (this.level == null || !this.doors.floorMoving(this.level.getGameTime())) {
+            return loops;
+        }
+        final List<LoopRequest> all = new ArrayList<>(loops);
+        all.add(LoopRequest.of(ShipyardSounds.DECK));
+        return all;
+    }
+
+    /* Its dock is heard from the middle of its bay's floor, where its floor moves; from itself while unformed. */
+    @Override
+    public double audioX() {
+        return heardFrom().x;
+    }
+
+    @Override
+    public double audioY() {
+        return heardFrom().y;
+    }
+
+    @Override
+    public double audioZ() {
+        return heardFrom().z;
     }
 
     /** How its dock stands, once formed. */
@@ -869,5 +899,12 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         this.missingParts.set(List.copyOf(missing));
         this.holes.set(ShipyardPlans.holesIn(now));
         setChanged();
+    }
+
+    /* The middle of its bay's floor, closed, once its dock is formed; else the middle of itself. */
+    private Vec3 heardFrom() {
+        return turn().map(dock -> ShipyardStructure.bay(this.worldPosition, dock))
+                .map(bay -> new Vec3(bay.getCenter().x, bay.minY, bay.getCenter().z))
+                .orElseGet(() -> Vec3.atCenterOf(this.worldPosition));
     }
 }

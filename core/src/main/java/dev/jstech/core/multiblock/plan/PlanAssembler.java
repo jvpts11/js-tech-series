@@ -8,6 +8,8 @@
 package dev.jstech.core.multiblock.plan;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.core.audio.Audio;
+import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.multiblock.BuildBalance;
 import dev.jstech.core.protection.Actor;
@@ -67,6 +69,11 @@ public final class PlanAssembler implements IFieldPart {
     private final Inbox inbox = new Inbox();
     private @Nullable PlannedBuild build;
     private @Nullable PlanArms arms;
+    /* What its arms are heard by, as they move and as they weld; none for arms that set their blocks down unheard. */
+    private @Nullable SoundKey armMove;
+    private @Nullable SoundKey armWeld;
+    /* The game's tick its arms were last heard up to; none yet since it loaded. */
+    private long heardUpTo = -1;
     private int credit;
     private int sleep;
     private boolean waiting;
@@ -110,6 +117,19 @@ public final class PlanAssembler implements IFieldPart {
      */
     public PlanAssembler arms(final PlanArms hands) {
         this.arms = Objects.requireNonNull(hands, "hands");
+        return this;
+    }
+
+    /**
+     * Its robot arms heard at work: {@code move} at an arm's shoulder each time it sets off, for a block, swinging it
+     * over, and folding back to rest after; {@code weld} at the block as the arm sets it down and welds it, in place
+     * of the block's own sound of being placed. While an arm welds, only the weld is heard of it.
+     *
+     * @return this
+     */
+    public PlanAssembler armSounds(final SoundKey move, final SoundKey weld) {
+        this.armMove = Objects.requireNonNull(move, "move");
+        this.armWeld = Objects.requireNonNull(weld, "weld");
         return this;
     }
 
@@ -174,6 +194,7 @@ public final class PlanAssembler implements IFieldPart {
         final PlannedBuild now = this.build;
         final long time = level.getGameTime();
         if (this.arms != null) {
+            heardSwinging(level, time);
             this.arms.tick(time, job -> setDown(level, job));
         }
         if (now == null || now.complete()) {
@@ -208,7 +229,9 @@ public final class PlanAssembler implements IFieldPart {
             } else {
                 final BlockPos at = now.where(next.get());
                 take(BuiltInRegistries.BLOCK.get(next.get().block()).asItem());
-                hands.start(hands.free(at, time).orElseThrow(), at, next.get().block(), time);
+                final int arm = hands.free(at, time).orElseThrow();
+                hands.start(arm, at, next.get().block(), time);
+                heardMoving(level, arm, time);
             }
             laid++;
         }
@@ -286,7 +309,49 @@ public final class PlanAssembler implements IFieldPart {
             wake();
             return;
         }
-        place(level, job.at(), block);
+        if (this.armWeld == null) {
+            place(level, job.at(), block);
+        } else {
+            // Welded on, it is heard welded and nothing else.
+            setBlock(level, job.at(), block);
+            Audio.at(level, job.at(), this.armWeld);
+        }
+    }
+
+    /*
+     * Each arm that set off again since it was last ticked, up to {@code time}, heard moving: swinging the block it
+     * gripped over to its place, or folding back to rest once its weld cooled.
+     */
+    private void heardSwinging(final ServerLevel level, final long time) {
+        final long since = this.heardUpTo < 0 ? time - 1 : this.heardUpTo;
+        this.heardUpTo = time;
+        if (this.armMove == null || this.arms == null) {
+            return;
+        }
+        for (int arm = 0; arm < this.arms.arms().size(); arm++) {
+            final Optional<PlanArms.Job> job = this.arms.job(arm);
+            if (job.isEmpty()) {
+                continue;
+            }
+            final long swings = job.get().start() + ArmMotion.FETCH + ArmMotion.GRIP;
+            final long folds = job.get().start() + ArmMotion.END + ArmMotion.REST;
+            if (since < swings && swings <= time || since < folds && folds <= time) {
+                heardMoving(level, arm, time);
+            }
+        }
+    }
+
+    /*
+     * The arm {@code arm} heard on the move from its shoulder, where its servos are, as it stands along its rail at
+     * {@code time}: two arms sharing a feeder set off from it apart, each heard.
+     */
+    private void heardMoving(final ServerLevel level, final int arm, final long time) {
+        if (this.armMove == null || this.arms == null) {
+            return;
+        }
+        final double rail = this.arms.state(arm, time).rail();
+        final double[] shoulder = this.arms.arms().get(arm).rig().shoulder(rail);
+        Audio.at(level, shoulder[0], shoulder[1], shoulder[2], this.armMove, 1.0F, 1.0F);
     }
 
     /* How many of {@code item} it holds that its build does not want: all of them, without a build. */
@@ -331,13 +396,19 @@ public final class PlanAssembler implements IFieldPart {
 
     /* Sets {@code block} down at {@code at}, as a player placing it would be heard. */
     private void place(final ServerLevel level, final BlockPos at, final Block block) {
-        final BlockState placing = block.defaultBlockState();
-        // Its neighbours told, the world's index of structures tells the build its place is filled.
-        level.setBlock(at, placing, Block.UPDATE_ALL);
+        final BlockState placing = setBlock(level, at, block);
         final SoundType sound = placing.getSoundType(level, at, null);
         level.playSound(null, at, sound.getPlaceSound(), SoundSource.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F,
                 sound.getPitch() * 0.8F);
+    }
+
+    /* Sets {@code block} down at {@code at}, unheard; the block set. */
+    private static BlockState setBlock(final ServerLevel level, final BlockPos at, final Block block) {
+        final BlockState placing = block.defaultBlockState();
+        // Its neighbours told, the world's index of structures tells the build its place is filled.
+        level.setBlock(at, placing, Block.UPDATE_ALL);
         level.gameEvent(GameEvent.BLOCK_PLACE, at, GameEvent.Context.of(placing));
+        return placing;
     }
 
     /* Holds {@code count} more of {@code item}. */

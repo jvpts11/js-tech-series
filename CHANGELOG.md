@@ -694,6 +694,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- (Core) A plan's robot arms heard at work: J's Core's API is at version 82. `PlanAssembler.armSounds` gives the
+  sounds an assembler's arms are heard by: one at an arm each time it sets off, for a block, swinging it over and
+  folding back to rest, and one at each block an arm sets down, in place of the block's own sound of being placed.
+  Experimental.
 - (Core) A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -4090,6 +4094,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the network, the federation and Wi-Fi, a tick for each hop, and the channels a program hears are kept when the
   world is saved. `System.Navigation` flies the J's Core moving structure a computer stands on (go to a place, hold a
   height, follow a route, dock to another structure's clamp) and reads its altitude, speed, tilt and heading.
+  `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
+  command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 - (Computers) The chain's machines are heard as they work: each runs a loop of its own while it works, from real
   recordings, the Crusher's jaws on the ore, the Grinder's drum, the Induction Furnace's hum, the Electrolytic Cell
   bubbling over its current's hum, the Rolling Mill, the Wire Drawer, the Coke Oven's fire, the Chemical Reactor's
@@ -4114,8 +4120,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A sound of the world played on the player's game alone: `AudioEngine.playAt` plays a declared sound at a point
   in its channel, for a moment only the player's game knows, as a machine's drawn moving parts reach a point of
   their work.
-  `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
-  command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
+- (Space) The Small Shipyard is heard at work: a servo each time one of its robot arms sets off, for a block, swinging
+  it over and folding back to rest, a burst of arc welding at each block an arm sets down on the ship, heard welded
+  on rather than placed, and nothing else of that arm while it welds; and its floor's hydraulic lift running from the
+  middle of the bay while the floor rises under the ship or goes down from under it.
 - (Space) A starship's engines are seen running. The mouths of its bells glow, faintly in thick air, where the bells
   are cold, and brightly where they push, in the thin air of the climb and in space; there a jet grows out of each
   with the throttle, longer and hotter boosting, leaving a heat trail in thin air and clean and blue in space. Its air

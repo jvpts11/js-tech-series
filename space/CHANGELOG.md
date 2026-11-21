@@ -950,6 +950,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   block they stand in, and used from any part of them; and the ship's fixtures, the suit locker, the flight console, the oxygen panel and the bunk,
   once their part is formed, stand, are aimed at and are outlined as the ship's model draws them there, no longer as
   whole blocks.
+- The Small Shipyard is heard at work: a servo each time one of its robot arms sets off, for a block, swinging
+  it over and folding back to rest, a burst of arc welding at each block an arm sets down on the ship, heard welded
+  on rather than placed, and nothing else of that arm while it welds; and its floor's hydraulic lift running from the
+  middle of the bay while the floor rises under the ship or goes down from under it.
 - A starship's engines are seen running. The mouths of its bells glow, faintly in thick air, where the bells
   are cold, and brightly where they push, in the thin air of the climb and in space; there a jet grows out of each
   with the throttle, longer and hotter boosting, leaving a heat trail in thin air and clean and blue in space. Its air

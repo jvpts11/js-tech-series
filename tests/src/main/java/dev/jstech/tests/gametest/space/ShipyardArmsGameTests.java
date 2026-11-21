@@ -20,6 +20,7 @@ import dev.jstech.space.hangar.ItemPortBlockEntity;
 import dev.jstech.space.hangar.ItemPortView;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.SmallShipParts;
+import dev.jstech.space.shipyard.ShipyardSounds;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
@@ -29,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -39,7 +41,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -70,6 +75,9 @@ public final class ShipyardArmsGameTests {
     private static final BlockPos MAINFRAME = dock(10, 4, 11);
     private static final int SETTLE = 40;
     private static final int ARMS = 4;
+    /* How near a block's middle, squared, a sound heard there comes from; and how near the dock's terminal, its own. */
+    private static final double NEAR = 0.01;
+    private static final double AROUND = 40 * 40;
     /* A small ship ready to fly that fits the dock. */
     private static final ShipDesign SHIP = new ShipDesign("ARMS", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
@@ -84,6 +92,22 @@ public final class ShipyardArmsGameTests {
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         final BlockPos[] first = new BlockPos[1];
         final int[] put = new int[1];
+        // What is heard of the arms: each moving, each block welded, and what else at the first block they lay.
+        final int[] heard = new int[3];
+        final Consumer<PlayLevelSoundEvent.AtPosition> hearing = event -> {
+            final ResourceLocation sound = event.getSound() == null ? null : event.getSound().value().getLocation();
+            if (event.getLevel() != level || event.getPosition().distanceToSqr(Vec3.atCenterOf(terminal)) > AROUND) {
+                return;
+            }
+            if (ShipyardSounds.ARM.id().equals(sound)) {
+                heard[0]++;
+            } else if (ShipyardSounds.WELD.id().equals(sound)) {
+                heard[1]++;
+            } else if (first[0] != null && event.getPosition().distanceToSqr(Vec3.atCenterOf(first[0])) < NEAR) {
+                heard[2]++;
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(hearing);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"))
                 .thenExecute(() -> {
@@ -165,6 +189,13 @@ public final class ShipyardArmsGameTests {
                     helper.assertTrue(dock.built(), "every part formed as its last block went down: "
                             + dock.formedParts());
                     helper.assertTrue(dock.assembler().held().isEmpty(), "and the arms hold nothing left over");
+                    NeoForge.EVENT_BUS.unregister(hearing);
+                    final int blocks = dock.build().orElseThrow().plan().spots().size();
+                    helper.assertTrue(heard[1] == blocks, "each block is heard welded on: " + heard[1] + " of "
+                            + blocks);
+                    helper.assertTrue(heard[0] >= 2 * blocks, "an arm is heard moving as it sets off for each block"
+                            + " and as it swings it over: " + heard[0] + " for " + blocks);
+                    helper.assertTrue(heard[2] == 0, "a block welded on is heard welded, not placed: " + heard[2]);
                 })
                 .thenSucceed();
     }

@@ -1140,5 +1140,8 @@
   "subtitles.jsspace.ship.pulse_end": "Pulse drive drops out",
   "subtitles.jsspace.ship.pulse_loop": "Pulse drive roars",
   "subtitles.jsspace.ship.pulse_spool": "Pulse drive spools up",
-  "subtitles.jsspace.ship.stair": "Boarding stair moves"
+  "subtitles.jsspace.ship.stair": "Boarding stair moves",
+  "subtitles.jsspace.shipyard.arm": "Robot arm moves",
+  "subtitles.jsspace.shipyard.deck": "Dock floor moves",
+  "subtitles.jsspace.shipyard.weld": "Arc welder crackles"
 }

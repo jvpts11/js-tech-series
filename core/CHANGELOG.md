@@ -561,6 +561,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- A plan's robot arms heard at work: J's Core's API is at version 82. `PlanAssembler.armSounds` gives the
+  sounds an assembler's arms are heard by: one at an arm each time it sets off, for a block, swinging it over and
+  folding back to rest, and one at each block an arm sets down, in place of the block's own sound of being placed.
+  Experimental.
 - A running sound heard all round: J's Core's API is at version 68. `LoopRequest` has a fifth component,
   `around`: a loop asked for so is heard all round its listener from no one place, as a craft's crew hear its
   engines through the hull. `new LoopRequest(SoundKey, float, float, ResourceLocation)` still asks for one heard from
@@ -2166,8 +2170,6 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A sound of the world played on the player's game alone: `AudioEngine.playAt` plays a declared sound at a point
   in its channel, for a moment only the player's game knows, as a machine's drawn moving parts reach a point of
   their work.
-  `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
-  command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 - An emitter of an effect file can keep its particles `attached` to what emits them, moved along as far as it
   moves each tick, as an engine's jet keeps its shape behind a fast craft; and `ClientEffects.holdReaching` holds an
   effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.

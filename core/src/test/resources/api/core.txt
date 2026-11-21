@@ -11535,6 +11535,7 @@ stable 4
 22 dev.jstech.core.multiblock.plan.PlanAssembler  Map<Item, Integer> held()
 22 dev.jstech.core.multiblock.plan.PlanAssembler  Map<Item, Integer> needs()
 22 dev.jstech.core.multiblock.plan.PlanAssembler  Optional<PlannedBuild> build()
+82 dev.jstech.core.multiblock.plan.PlanAssembler  PlanAssembler armSounds(SoundKey, SoundKey)
 28 dev.jstech.core.multiblock.plan.PlanAssembler  PlanAssembler arms(PlanArms)
 22 dev.jstech.core.multiblock.plan.PlanAssembler  boolean waiting()
 22 dev.jstech.core.multiblock.plan.PlanAssembler  int held(Item)

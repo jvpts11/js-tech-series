@@ -884,6 +884,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the network, the federation and Wi-Fi, a tick for each hop, and the channels a program hears are kept when the
   world is saved. `System.Navigation` flies the J's Core moving structure a computer stands on (go to a place, hold a
   height, follow a route, dock to another structure's clamp) and reads its altitude, speed, tilt and heading.
+  `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
+  command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 - The chain's machines are heard as they work: each runs a loop of its own while it works, from real
   recordings, the Crusher's jaws on the ore, the Grinder's drum, the Induction Furnace's hum, the Electrolytic Cell
   bubbling over its current's hum, the Rolling Mill, the Wire Drawer, the Coke Oven's fire, the Chemical Reactor's

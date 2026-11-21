@@ -80,6 +80,7 @@ import dev.jstech.space.ship.SmallShipMakers;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipDesigner;
 import dev.jstech.space.shipyard.ShipyardBlocks;
+import dev.jstech.space.shipyard.ShipyardSounds;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.spacecraft.SkeletonSpacecraft;
 import dev.jstech.space.universe.FarMaps;
@@ -247,6 +248,7 @@ public final class JsSpace {
         // The Small Shipyard, the dry dock a small starship is built in: its shape, its blocks and its formed model.
         ShipyardStructure.declare();
         ShipyardBlocks.declare();
+        ShipyardSounds.declare();
         ShipDesigner.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.

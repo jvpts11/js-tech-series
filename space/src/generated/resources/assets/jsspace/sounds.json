@@ -109,5 +109,42 @@
       "jsspace:ship/stair"
     ],
     "subtitle": "subtitles.jsspace.ship.stair"
+  },
+  "shipyard/arm": {
+    "sounds": [
+      "jsspace:shipyard/arm_1",
+      "jsspace:shipyard/arm_2",
+      "jsspace:shipyard/arm_3",
+      "jsspace:shipyard/arm_4",
+      "jsspace:shipyard/arm_5",
+      "jsspace:shipyard/arm_6"
+    ],
+    "subtitle": "subtitles.jsspace.shipyard.arm"
+  },
+  "shipyard/deck": {
+    "sounds": [
+      {
+        "attenuation_distance": 24,
+        "name": "jsspace:shipyard/deck"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.shipyard.deck"
+  },
+  "shipyard/weld": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsspace:shipyard/weld_1"
+      },
+      {
+        "attenuation_distance": 20,
+        "name": "jsspace:shipyard/weld_2"
+      },
+      {
+        "attenuation_distance": 20,
+        "name": "jsspace:shipyard/weld_3"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.shipyard.weld"
   }
 }

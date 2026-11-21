@@ -31,6 +31,7 @@ import dev.jstech.space.shipyard.ShipDesigner;
 import dev.jstech.space.shipyard.ShipyardBlocks;
 import dev.jstech.space.shipyard.ShipyardDoorTexts;
 import dev.jstech.space.shipyard.ShipyardDoors;
+import dev.jstech.space.shipyard.ShipyardSounds;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.testkit.gametest.GameTestPlayers;
@@ -124,18 +125,27 @@ public final class ShipyardDoorsGameTests {
         final int[] blocks = new int[1];
         final long[] began = new long[1];
         final MovingStructure[] ship = new MovingStructure[1];
+        // Whether its floor's running is heard while the floor rises, and while anything else of it moves.
+        final boolean[] heard = new boolean[2];
         built(helper, terminal, WHEELS, blocks)
                 .thenExecute(() -> {
                     helper.assertTrue(dock(level, terminal).launch(null, why -> { }), "started from its console, the"
                             + " dock begins to open");
                     began[0] = level.getGameTime();
                 })
-                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.OPEN
-                        && dock(level, terminal).open(), "the dock stands open: " + dock(level, terminal).doors()))
+                .thenWaitUntil(() -> {
+                    final ShipyardTerminalBlockEntity dock = dock(level, terminal);
+                    heard[dock.doors() == ShipyardDoors.State.FLOOR_UP ? 0 : 1] |= dock.loops().stream()
+                            .anyMatch(loop -> loop.sound() == ShipyardSounds.DECK);
+                    helper.assertTrue(dock.doors() == ShipyardDoors.State.OPEN && dock.open(), "the dock stands open: "
+                            + dock.doors());
+                })
                 .thenExecute(() -> {
                     final long took = level.getGameTime() - began[0];
                     helper.assertTrue(took >= OPENS_IN, "its crane rolls back in three seconds, then its floor rises in"
                             + " five: " + took + " ticks");
+                    helper.assertTrue(heard[0] && !heard[1], "its floor is heard running as it rises, and only then: "
+                            + heard[0] + ", " + heard[1]);
                 })
                 .thenWaitUntil(() -> {
                     ship[0] = shipIn(level, terminal);

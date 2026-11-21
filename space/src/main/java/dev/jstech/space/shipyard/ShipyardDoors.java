@@ -134,6 +134,11 @@ public final class ShipyardDoors implements IFieldPart {
         return this.state != State.CLOSED && this.state != State.OPEN;
     }
 
+    /** Whether its floor is on its way at the game's tick {@code now}, rising under the ship or going down from it. */
+    public boolean floorMoving(final double now) {
+        return (this.state == State.FLOOR_UP || this.state == State.FLOOR_DOWN) && this.sent && progress(now) < 1;
+    }
+
     /**
      * How far its moving part has gone, from 0 as it sets off to 1 where it stands, at the game's tick {@code now};
      * the floor's share is the cradle's too. Nought before it sets off; 1 standing still.

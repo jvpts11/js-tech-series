@@ -810,6 +810,16 @@ PlanArmsRenderer.draw(entity, entity.arms(), ARM_MODEL, poses, buffers, overlay,
 - **Drawn** (`PlanArmsRenderer`): the arm's model stands straight up at rest; its bones turn to put its tool's grip on
   the block, elbow up (`ArmReach`), the block carried in its grip or waiting in its feeder, the weld throwing the
   Core's sparks.
+- **Heard** (`armSounds(move, weld)`, *added 2026-11-21*): given two declared sounds of the world, the assembler plays
+  `move` at an arm's shoulder, where its servos are, each time the arm sets off (for a block, swinging it over, and
+  folding back to rest) and `weld` at each block an arm sets down, in place of the block's own sound of being placed;
+  while an arm welds, only the weld is heard of it. Without them its arms set their blocks down as a player placing
+  them would be heard.
+
+```java
+private final PlanAssembler assembler = new PlanAssembler(pos, this::setChanged).arms(this.arms)
+        .armSounds(MySounds.ARM, MySounds.WELD);
+```
 
 ## Showing a multiblock before it is built
 
