@@ -19,6 +19,7 @@ import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
+import dev.jstech.core.moving.TowardMotion;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
@@ -238,6 +239,11 @@ public final class ShipFlightGameTests {
     private static final int HOME_EAST = 200;
     private static final int UNOFFERED = 7;
     private static final int UNDER_THE_FLOOR = 2;
+    /* How far off the Moon's middle, in blocks, a ship comes down over it: as the one seen to dive on through it. */
+    private static final double OFF_THE_MOONS_MIDDLE = 538;
+    /* How far it dives under the floor at most, in blocks, and how fast, in blocks a second. */
+    private static final double DIVES = 20_000;
+    private static final double DIVING = 200;
     /* How long a ship hovers burning its reactor's deuterium, in ticks: past a thousandth of a load, the least told. */
     private static final int BURNING = 320;
     private static final double CLIMBING_PITCH = 60;
@@ -796,6 +802,45 @@ public final class ShipFlightGameTests {
                     + HALF)) < 1, "it comes down over the place its pilot chose: at " + now + ", the place " + home);
             helper.assertTrue(console(helper, ship[0]).destination().isEmpty(), "its choice spent");
             GameTestPlayers.leave(pilot[0]);
+            MovingStructures.takeAway(ship[0]);
+            space.setChunkForced(kept[0], kept[1], false);
+        }).thenSucceed();
+    }
+
+    /*
+     * Over the Moon, inside the reach of its low orbit but well off its middle, where a pilot flies to it, a ship under
+     * the floor of the low orbits comes down into the Moon. One was seen to dive on through the floor there and never
+     * pass down.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WITH_ITS_YARD_LOADING * 2)
+    public static void descent_overTheMoonOffItsMiddleAShipComesDownIntoIt(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerLevel space = SystemSpaces.spaceOf(helper.getLevel().getServer(), StarSystems.SOLAR_SYSTEM);
+        final ServerLevel moon = world(helper, SolarSystemWorlds.MOON);
+        final double[] middle = SystemLayout.centre(SolarBody.MOON);
+        final double[] spot = {middle[0] + OFF_THE_MOONS_MIDDLE, middle[2]};
+        final int[] kept = {SectionPos.blockToSectionCoord(spot[0]), SectionPos.blockToSectionCoord(spot[1])};
+        letGo(helper, ship).thenExecute(() -> {
+            // Nobody goes with it: its place in space is kept ticking, as a crew aboard would keep it.
+            space.setChunkForced(kept[0], kept[1], true);
+            helper.assertTrue(MovingStructures.travel(ship[0], space, new Vec3(spot[0], SystemLayout.ORBIT_Y,
+                    spot[1])).ok(), "it is taken up over the Moon, off its middle");
+        }).thenWaitUntil(() -> {
+            final MovingStructure there = MovingStructures.byId(space, ship[0].id());
+            helper.assertTrue(there != null && there.ready(), "it comes into the Solar System's space");
+            ship[0] = there;
+        }).thenExecute(() -> {
+            helper.assertTrue(SystemLayout.over(spot[0], spot[1]) == SolarBody.MOON, "the spot lies over the Moon");
+            // Diving, as a pilot flies it down: through the floor of the low orbits and on, fast.
+            final StructurePose now = ship[0].pose();
+            MovingStructures.move(ship[0], new TowardMotion(now.movedTo(now.x(), SpaceClimbs.floor() - DIVES,
+                    now.z()), DIVING, 0));
+        }).thenWaitUntil(() -> {
+            final MovingStructure there = MovingStructures.byId(moon, ship[0].id());
+            helper.assertTrue(there != null && there.ready(), "under the floor of the low orbits it comes down into"
+                    + " the Moon; it stands at " + ship[0].pose() + (ship[0].departing() ? ", departing" : ""));
+            ship[0] = there;
+        }).thenExecute(() -> {
             MovingStructures.takeAway(ship[0]);
             space.setChunkForced(kept[0], kept[1], false);
         }).thenSucceed();
