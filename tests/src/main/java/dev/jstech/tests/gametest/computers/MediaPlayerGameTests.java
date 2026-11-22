@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.audio.MediaLibrary;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.operation.payload.MediaLibraryPayload;
 import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -18,12 +19,14 @@ import dev.jstech.computers.os.fs.PixImage;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.NetworkFixtures;
+import io.netty.buffer.Unpooled;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -31,8 +34,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Media Player's side on the computer: which systems come with it, the image sequences it finds, each a folder of
- * pictures in the order of their names, and a picture travelling to it as a small PNG (computers/docs/design/
- * programs.md). Its songs play through the computer's player, which Soundfoundry's tests cover.
+ * pictures in the order of their names, a picture travelling to it as a small PNG, and what it is told travelling
+ * whole (computers/docs/design/programs.md). Its songs play through the computer's player, which Soundfoundry's tests
+ * cover.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -85,6 +89,22 @@ public final class MediaPlayerGameTests {
                 "a picture asked for again is the one made before, not made a second time");
         helper.assertTrue(MediaLibrary.frame(helper.getLevel(), pc, SUNRISE + "/missing.pix") == null,
                 "and a file that is not there is no picture");
+        helper.succeed();
+    }
+
+    /* What the Media Player is told travels whole: its songs, its sequences, the one asked about and the sound card. */
+    @GameTest(template = ARENA)
+    public static void library_travelsWholeToThePlayer(final GameTestHelper helper) {
+        final MediaLibraryPayload sent = new MediaLibraryPayload(PC, List.of(new MediaLibrary.Song("Music/a.ogg",
+                "A", 61_000L)), List.of(new MediaLibrary.Sequence(SUNRISE, List.of(SUNRISE + "/frame01.pix",
+                SUNRISE + "/frame02.pix"))), new MediaLibrary.Sequence(SUNRISE, List.of(SUNRISE + "/frame01.pix")),
+                true);
+        final RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess());
+        MediaLibraryPayload.STREAM_CODEC.encode(buffer, sent);
+        final MediaLibraryPayload received = MediaLibraryPayload.STREAM_CODEC.decode(buffer);
+        helper.assertTrue(sent.equals(received) && buffer.readableBytes() == 0, "the library comes back as sent: "
+                + received);
         helper.succeed();
     }
 
