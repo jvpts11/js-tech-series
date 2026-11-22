@@ -263,6 +263,11 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         return player instanceof LocalPlayer local && DeckWalk.travel(local, travel);
     }
 
+    @Override
+    public @Nullable Vec3 eye(final Entity entity, final float partialTick) {
+        return entity instanceof LocalPlayer local ? DeckWalk.eye(local, partialTick, local.getEyeHeight()) : null;
+    }
+
     /*
      * The structure's entity has left: it no longer collides, carries or answers for its plot; its drawing is let go
      * too, unless it is kept drawn where it landed until the land is drawn with its blocks.
@@ -426,13 +431,20 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
      * structures near; a player who is a spectator, goes through blocks or walks in a structure's frame is not pushed.
      */
     private static void carried(final Entity mover) {
+        final float yaw = mover.getYRot();
+        final float pitch = mover.getXRot();
         final IStructureBody standing = StructureFooting.standingOn(mover);
         if (standing instanceof ClientStructure structure && structure.ready()) {
             StructureFooting.carry(mover, structure);
         }
-        // One walking in a structure's frame steps against its blocks as they stand there: the world's box of a player
-        // upright on a turned floor reaches into it, and pushed out of it they would be pushed off their own floor.
-        if (mover.noPhysics || mover.isSpectator() || mover instanceof LocalPlayer local && DeckWalk.walks(local)) {
+        // One walking in a structure's frame looks in it, carried round as it turns about any axis; and steps against
+        // its blocks as they stand there: the world's box of a player upright on a turned floor reaches into it, and
+        // pushed out of it they would be pushed off their own floor.
+        if (mover instanceof LocalPlayer local && DeckWalk.walks(local)) {
+            DeckWalk.carryLook(local, yaw, pitch);
+            return;
+        }
+        if (mover.noPhysics || mover.isSpectator()) {
             return;
         }
         for (final IStructureBody body : new ArrayList<>(LevelMovingStructures.of(mover.level())

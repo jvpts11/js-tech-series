@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.moving;
 
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +82,15 @@ public final class StructureClientHooks {
         @ApiStatus.Internal
         default boolean walk(final Player player, final Runnable travel) {
             return false;
+        }
+
+        /**
+         * Where the eyes of {@code entity} are, {@code partialTick} of the way through the tick, when it walks on the
+         * floor of a structure in its frame: over its feet along the floor's up, not the world's; null otherwise.
+         */
+        @ApiStatus.Internal
+        default @Nullable Vec3 eye(final Entity entity, final float partialTick) {
+            return null;
         }
     }
 }

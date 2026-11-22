@@ -15,8 +15,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
- * The mouse turns a player sitting on a seat of a moving structure that leans or pitches in the seat's own frame,
- * about its up and across its right, as far up and down as the seat has it; anyone else, as the game turns them.
+ * The mouse turns a player sitting on a seat of a moving structure that leans or pitches, or walking on its floor in
+ * its frame, in the structure's own frame, about its up and across its right, as far up and down as its floor has
+ * it; anyone else, as the game turns them.
  */
 @Mixin(MouseHandler.class)
 public abstract class MouseHandlerMixin {

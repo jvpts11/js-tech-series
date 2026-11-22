@@ -9,6 +9,7 @@ package dev.jstech.core.client.camera;
 
 import dev.jstech.core.camera.CameraSettings;
 import dev.jstech.core.client.moving.ClientStructure;
+import dev.jstech.core.client.moving.DeckWalk;
 import dev.jstech.core.moving.SeatLook;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureSeatEntity;
@@ -69,6 +70,10 @@ final class ChaseCamera {
         } else if (player.getVehicle() instanceof StructureSeatEntity seat
                 && seat.structure() instanceof ClientStructure structure) {
             // The seat's up at the top of the view, whichever way it looks: the view pitches and rolls with the deck.
+            roll = SeatLook.roll(new StructureFrame(structure.drawnAt((float) event.getPartialTick()), 0, 0, 0),
+                    event.getYaw(), event.getPitch());
+        } else if (DeckWalk.walkingIn(player) instanceof ClientStructure structure) {
+            // Walking on its floor in its frame, the floor's up at the top of the view, as in its seats.
             roll = SeatLook.roll(new StructureFrame(structure.drawnAt((float) event.getPartialTick()), 0, 0, 0),
                     event.getYaw(), event.getPitch());
         } else {

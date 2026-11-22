@@ -39,6 +39,7 @@
   "client": [
     "AdvancementTabMixin",
     "AdvancementWidgetMixin",
+    "CameraMixin",
     "ClientChunkCacheMixin",
     "ClientLevelMixin",
     "CreativeModeInventoryScreenMixin",

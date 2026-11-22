@@ -8,6 +8,7 @@
 package dev.jstech.core.mixin;
 
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.moving.StructureClientHooks;
 import dev.jstech.core.moving.StructureCollisions;
 import dev.jstech.core.moving.StructureFooting;
 import net.minecraft.core.BlockPos;
@@ -47,6 +48,32 @@ public abstract class EntityMixin {
         final BlockPos support = StructureFooting.support((Entity) (Object) this);
         if (support != null) {
             info.setReturnValue(support);
+        }
+    }
+
+    /*
+     * On the player's game, one walking on a structure's floor in its frame, turned, has their eyes over their feet
+     * along the floor's up: what they aim at and see from is there, not up the world from their feet.
+     */
+    @Inject(method = "getEyePosition(F)Lnet/minecraft/world/phys/Vec3;", at = @At("HEAD"), cancellable = true)
+    private void jscore$eyesAlongTheFloorsUp(final float partialTick, final CallbackInfoReturnable<Vec3> info) {
+        final Entity entity = (Entity) (Object) this;
+        if (entity.level().isClientSide()) {
+            final Vec3 eye = StructureClientHooks.get().eye(entity, partialTick);
+            if (eye != null) {
+                info.setReturnValue(eye);
+            }
+        }
+    }
+
+    @Inject(method = "getEyePosition()Lnet/minecraft/world/phys/Vec3;", at = @At("HEAD"), cancellable = true)
+    private void jscore$eyesAlongTheFloorsUpNow(final CallbackInfoReturnable<Vec3> info) {
+        final Entity entity = (Entity) (Object) this;
+        if (entity.level().isClientSide()) {
+            final Vec3 eye = StructureClientHooks.get().eye(entity, 1.0F);
+            if (eye != null) {
+                info.setReturnValue(eye);
+            }
         }
     }
 

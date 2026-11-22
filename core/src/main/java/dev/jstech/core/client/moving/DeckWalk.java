@@ -9,6 +9,7 @@ package dev.jstech.core.client.moving;
 
 import dev.jstech.core.moving.DeckGravity;
 import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.SeatLook;
 import dev.jstech.core.moving.StructureFooting;
 import dev.jstech.core.moving.StructureFrame;
 import net.minecraft.client.player.LocalPlayer;
@@ -50,6 +51,43 @@ public final class DeckWalk {
     /** Whether {@code player} walks in the frame of a structure whose floor pulls them, rather than the world's. */
     public static boolean walks(final LocalPlayer player) {
         return body(player) != null;
+    }
+
+    /** The structure in whose frame {@code player} walks, or null where the world's walking holds. */
+    public static @Nullable IStructureBody walkingIn(final LocalPlayer player) {
+        return body(player);
+    }
+
+    /**
+     * Where {@code player}'s eyes are, {@code partialTick} of the way through the tick, {@code height} over their feet
+     * along the floor's up of the structure in whose frame they walk, as it is drawn then; null where the world's
+     * walking holds, the eyes over the feet up the world.
+     */
+    public static @Nullable Vec3 eye(final LocalPlayer player, final float partialTick, final double height) {
+        if (!(body(player) instanceof ClientStructure structure)) {
+            return null;
+        }
+        final StructureFrame drawn = new StructureFrame(structure.drawnAt(partialTick), structure.pivotX(),
+                structure.pivotY(), structure.pivotZ());
+        final double x = player.xo + (player.getX() - player.xo) * partialTick;
+        final double y = player.yo + (player.getY() - player.yo) * partialTick;
+        final double z = player.zo + (player.getZ() - player.zo) * partialTick;
+        return new Vec3(x + drawn.turnX(0, height, 0), y + drawn.turnY(0, height, 0), z + drawn.turnZ(0, height, 0));
+    }
+
+    /**
+     * Turns {@code player}'s look with the structure in whose frame they walk, from how it stood a tick ago to how it
+     * stands now, keeping where they looked in its frame, as a sitter's is kept ({@link SeatLook#carry}); the deck
+     * turned them about its yaw already as it carried them, and that is taken back first.
+     */
+    public static void carryLook(final LocalPlayer player, final float yaw, final float pitch) {
+        final IStructureBody body = body(player);
+        if (body == null) {
+            return;
+        }
+        player.setYRot(yaw);
+        player.setXRot(pitch);
+        SeatLook.carry(player, body.previousFrame(), body.frame());
     }
 
     /**
