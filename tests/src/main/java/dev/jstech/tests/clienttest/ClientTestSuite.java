@@ -153,6 +153,7 @@ import dev.jstech.tests.clienttest.computers.TransitionDesktopsClientTests;
 import dev.jstech.tests.clienttest.computers.TrashClientTests;
 import dev.jstech.tests.clienttest.computers.UiSweepClientTests;
 import dev.jstech.tests.clienttest.computers.UnixClientTests;
+import dev.jstech.tests.clienttest.computers.UsbStickClientTests;
 import dev.jstech.tests.clienttest.computers.UnixFreeBsdEditorsClientTests;
 import dev.jstech.tests.clienttest.computers.UpdateBadgeClientTests;
 import dev.jstech.tests.clienttest.computers.UpdateClientTests;
@@ -589,6 +590,7 @@ public final class ClientTestSuite {
             TerminalWidthClientTests.class,
             TrashClientTests.class,
             UiSweepClientTests.class,
+            UsbStickClientTests.class,
             VolumeClientTests.class,
             WreckedMachineClientTests.class,
             UnixClientTests.class,

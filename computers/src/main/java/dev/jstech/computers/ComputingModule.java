@@ -1874,10 +1874,13 @@ public final class ComputingModule {
                 .tab(shelf(Shelf.PROGRAMS, format.era()));
     }
 
-    /* A blank USB stick of {@code model}, shown before the installers of the era it was sold in. */
+    /*
+     * A blank USB stick of {@code model}, shown before the installers of the era it was sold in: its body and plug in
+     * three dimensions in a port, in the hand and on the ground, its flat icon in a slot.
+     */
     private static ItemBuilder<FormattedMediaItem> stick(final String id, final UsbStick model) {
         return CONTENT.item(id, properties -> new FormattedMediaItem(properties, MediaFormat.USB, true, model))
-                .tab(shelf(Shelf.PROGRAMS, model.era()));
+                .look(IItemLook.HELD).tab(shelf(Shelf.PROGRAMS, model.era()));
     }
 
     /*

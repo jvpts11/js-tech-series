@@ -4030,7 +4030,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Blu-ray discs, DVDs and CDs.
 - (Computers) USB sticks by model: the Vaultis Pocket 8G and 16G (USB 2.0) and 32G (USB 3.0) of the Standard, made at
   the Standard bench, and the 64G (USB-C) of the Advanced, made at the Advanced bench. The USB Flash Drive of before is
-  the 32G, and every stick has a flat icon of its own.
+  the 32G, and every stick has a flat icon of its own in a slot; in a USB port, in the hand and on the ground each is
+  drawn in three dimensions, its body and its plug in its own colours, the 64G's a slimmer USB-C.
 - (Computers) Power in the system monitors: the Task Manager's Power tab on Frames XP and 7 and its Power page on
   Frames 10 and 11, and the System Monitor's Power and Temperature, show what a machine's parts draw against its
   supply, what the line gives in watts and FE a tick, its processor's temperature and its surroundings', each with its
