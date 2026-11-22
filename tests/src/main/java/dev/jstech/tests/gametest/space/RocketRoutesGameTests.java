@@ -36,6 +36,7 @@ import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
+import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.rocket.TankLoad;
@@ -92,12 +93,6 @@ public final class RocketRoutesGameTests {
     private static final String MARS_HOME_BATCH = "jsspace_routes_mars_home";
     private static final String MOON_TO_MARS_BATCH = "jsspace_routes_moon_mars";
     private static final String MARS_TO_MOON_BATCH = "jsspace_routes_mars_moon";
-    /*
-     * As long as a whole trip may take: the land each world is set down on, and the plots its spent stages part into,
-     * are made and loaded in real time while the test server's ticks run unbounded, three or four hundred a second,
-     * so on a slower machine a trip of sixty thousand ran out waiting for its lander's spent stage to part.
-     */
-    private static final int WHOLE_TRIP = 120_000;
     /* Where a site built on another world stands, its place across and along, and the room round a rocket's foot. */
     private static final int SITE = 96;
     private static final int SITE_ROOM = 7;
@@ -338,7 +333,7 @@ public final class RocketRoutesGameTests {
      * its legs; on the ground XFER and EXEC send it home, the ascent stage lifting off and leaving the descent stage;
      * it comes home braking in the Overworld's air on its heat shield and lands under its parachutes.
      */
-    @GameTest(template = "bench", batch = MOON_BATCH, timeoutTicks = WHOLE_TRIP)
+    @GameTest(template = "bench", batch = MOON_BATCH, timeoutTicks = 60_000)
     public static void route_toTheMoonsGroundAndHomeInOneLaunch(final GameTestHelper helper) {
         // The cruise's events come by chance, a micrometeoroid breaching the heat shield a crew must patch: they have
         // their tests of their own, and the trip here is flown without them.
@@ -365,6 +360,12 @@ public final class RocketRoutesGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(at(space, id) != null && at(space, id).ready()
                         && at(space, id).motion() == null, "it climbs into the Overworld's orbit"))
+                .thenWaitUntil(() -> {
+                    final int[] standing = standingCounts(space, computerOf(space, at(space, id)), MOON_AND_BACK);
+                    helper.assertTrue(standing[0] == 0 && standing[1] == 0, "in orbit its boosters and its first"
+                            + " stage, let go in the climb, are no part of it: " + standing(space,
+                            computerOf(space, at(space, id)), MOON_AND_BACK));
+                })
                 .thenExecute(() -> {
                     final FlightComputerBlockEntity aboard = computerOf(space, at(space, id));
                     aboard.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
@@ -400,8 +401,9 @@ public final class RocketRoutesGameTests {
                     final Box box = at(moon, id).bounds();
                     final FlightComputerBlockEntity aboard = computerOf(moon, at(moon, id));
                     helper.assertTrue(box.maxY() - box.minY() + 1 <= LANDER_TALL, "the lander stands on its own legs,"
-                            + " no spent stage under it: " + (box.maxY() - box.minY() + 1) + " blocks tall, "
-                            + aboard.separated() + " stages let go, the descent stage kept " + aboard.landerDescent());
+                            + " no spent stage under it: " + (box.maxY() - box.minY() + 1) + " blocks tall, the"
+                            + " descent stage kept " + aboard.landerDescent() + "; " + standing(moon, aboard,
+                            MOON_AND_BACK));
                 })
                 .thenExecute(() -> {
                     final MovingStructure lander = at(moon, id);
@@ -460,7 +462,7 @@ public final class RocketRoutesGameTests {
      * shield into the low orbit, its second stage, spent, gone; LAND and SET bring it down through Mars' thin air on
      * its parachutes and its engine to its legs. Coming back from Mars is a launch from a site built there.
      */
-    @GameTest(template = "bench", batch = MARS_BATCH, timeoutTicks = WHOLE_TRIP)
+    @GameTest(template = "bench", batch = MARS_BATCH, timeoutTicks = 60_000)
     public static void route_toTheGroundOfMarsInOneLaunch(final GameTestHelper helper) {
         SpaceServerConfig.FILE.set(SpaceServerConfig.CRUISE_EVENTS, false);
         final ServerLevel level = helper.getLevel();
@@ -548,7 +550,7 @@ public final class RocketRoutesGameTests {
      * Overworld; its crew sleeps and the cruise passes; it brakes in the Overworld's air on its heat shield and lands
      * under its parachutes.
      */
-    @GameTest(template = "bench", batch = MARS_HOME_BATCH, timeoutTicks = WHOLE_TRIP)
+    @GameTest(template = "bench", batch = MARS_HOME_BATCH, timeoutTicks = 60_000)
     public static void route_homeFromASiteBuiltOnMars(final GameTestHelper helper) {
         fromASite(helper, SolarBody.MARS, SolarBody.OVERWORLD, MARS_HOME, 1, "mars_home_crew");
     }
@@ -557,7 +559,7 @@ public final class RocketRoutesGameTests {
      * From a site built on the Moon to Mars' ground: a rocket of one stage with legs, a crew aboard, climbs off the
      * Moon, sets out in Mars' window, brakes in Mars' air and comes down on its legs.
      */
-    @GameTest(template = "bench", batch = MOON_TO_MARS_BATCH, timeoutTicks = WHOLE_TRIP)
+    @GameTest(template = "bench", batch = MOON_TO_MARS_BATCH, timeoutTicks = 60_000)
     public static void route_toMarsFromASiteBuiltOnTheMoon(final GameTestHelper helper) {
         fromASite(helper, SolarBody.MOON, SolarBody.MARS, MOON_TO_MARS, 0, "moon_mars_crew");
     }
@@ -566,7 +568,7 @@ public final class RocketRoutesGameTests {
      * From a site built on Mars to the Moon's ground: a rocket of two stages, its second with legs, a crew aboard,
      * climbs off Mars, sets out in its window, comes to rest in the Moon's orbit and brakes down to its legs.
      */
-    @GameTest(template = "bench", batch = MARS_TO_MOON_BATCH, timeoutTicks = WHOLE_TRIP)
+    @GameTest(template = "bench", batch = MARS_TO_MOON_BATCH, timeoutTicks = 60_000)
     public static void route_toTheMoonFromASiteBuiltOnMars(final GameTestHelper helper) {
         fromASite(helper, SolarBody.MARS, SolarBody.MOON, MARS_TO_MOON, 1, "mars_moon_crew");
     }
@@ -762,6 +764,43 @@ public final class RocketRoutesGameTests {
             }
         }
         return out.toString();
+    }
+
+    /*
+     * How many blocks of its boosters, first, and of each stage of {@code stack} after, numbered from one at the
+     * bottom, stand in the rocket {@code computer} keeps.
+     */
+    private static int[] standingCounts(final ServerLevel level, final FlightComputerBlockEntity computer,
+                                        final RocketStack stack) {
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
+        final BlockPos base = computer.getBlockPos().offset(computer.foot().orElse(BlockPos.ZERO));
+        final int stages = RocketStages.stages(parts, stack).size();
+        final int[] standing = new int[stages + 1];
+        for (final PlanSpot spot : RocketPlans.of(level, stack).spots()) {
+            if (level.getBlockState(base.offset(spot.at())).isAir()) {
+                continue;
+            }
+            // A booster's blocks are numbered after the stack's own parts, in no stage.
+            int of = 0;
+            for (int stage = 1; stage <= stages; stage++) {
+                if (RocketStages.stage(parts, stack, stage).contains(spot.part())) {
+                    of = stage;
+                }
+            }
+            standing[of]++;
+        }
+        return standing;
+    }
+
+    /* The blocks of each stage still standing in the rocket {@code computer} keeps, for a failure to say. */
+    private static String standing(final ServerLevel level, final FlightComputerBlockEntity computer,
+                                   final RocketStack stack) {
+        final int[] standing = standingCounts(level, computer, stack);
+        final StringBuilder out = new StringBuilder("standing: boosters ").append(standing[0]);
+        for (int stage = 1; stage < standing.length; stage++) {
+            out.append(", stage ").append(stage).append(' ').append(standing[stage]);
+        }
+        return out.append(", ").append(computer.separated()).append(" stages let go").toString();
     }
 
     /*

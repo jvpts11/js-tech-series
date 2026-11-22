@@ -765,6 +765,47 @@ public final class MovingStructureGameTests {
     }
 
     /*
+     * A piece let go of a structure, as a rocket lets a spent stage go, takes its blocks from the structure once its
+     * own plot has loaded; a structure sent to another dimension meanwhile goes once the piece has parted, without it,
+     * not carrying the piece's blocks along still counted as let go.
+     */
+    @GameTest(template = ARENA, batch = "jscore_moving_travel_parting", timeoutTicks = 6000)
+    public static void travel_goesOnceAPiecePartingOffItHasParted(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final ServerLevel nether = level.getServer().getLevel(Level.NETHER);
+        helper.assertTrue(nether != null, "there is a Nether");
+        final MovingStructure floor = floor(helper);
+        final Vec3 there = new Vec3(helper.absolutePos(BlockPos.ZERO).getX() + 0.5, 180,
+                helper.absolutePos(BlockPos.ZERO).getZ() + 0.5);
+        loadLand(nether, there);
+        final StructureUuid[] piece = new StructureUuid[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(floor.ready(), "the floor is made"))
+                .thenExecute(() -> {
+                    final Box box = floor.bounds();
+                    piece[0] = floor.partOff(level, List.of(new BlockPos(box.minX(), box.minY(), box.minZ())),
+                            Direction.DOWN, 0).orElseThrow();
+                    final StructureResult sent = MovingStructures.travel(floor, nether, there);
+                    helper.assertTrue(sent.ok() && floor.departing(), "with a corner parting off it, the floor is"
+                            + " sent to the Nether: " + refusal(sent));
+                })
+                .thenWaitUntil(() -> {
+                    final MovingStructure arrived = MovingStructures.byId(nether, floor.id());
+                    helper.assertTrue(arrived != null && arrived.ready(), "the floor arrives in the Nether");
+                })
+                .thenExecute(() -> {
+                    final MovingStructure arrived = MovingStructures.byId(nether, floor.id());
+                    final MovingStructure corner = MovingStructures.byId(level, piece[0]);
+                    helper.assertTrue(arrived.blocks() == 8 && corner != null && corner.blocks() == 1, "the floor"
+                            + " arrives without its corner, " + arrived.blocks() + " blocks, and the corner stays"
+                            + " here, " + (corner == null ? "none" : corner.blocks()));
+                    MovingStructures.takeAway(arrived);
+                    MovingStructures.takeAway(corner);
+                })
+                .thenSucceed();
+    }
+
+    /*
      * What a structure holds by one of its blocks, as a ship docked at another's clamp is held, crosses with it and
      * arrives held by the same block: the blocks leaving for another dimension are not blocks lost.
      */
