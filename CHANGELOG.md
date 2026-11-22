@@ -748,9 +748,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   most first, making the chunks never made as walking there would; for an agent finding where ores and other blocks
   lie.
 - (Core) The MCP reads the recipes the game holds: `recipes_read` answers, as a recipe viewer shows them, what each
-  recipe takes, what it needs and does not use up and what it makes, items and fluids, and the stations that work
-  each kind of the mods on J's Core; of a mod, of a kind, or making a thing, for an agent following what a thing is
-  made of down to what the world gives.
+  recipe takes, what it needs and does not use up and what it makes, items, fluids and a machine's gases, and the
+  stations that work each kind of the mods on J's Core; of a mod, of a kind, or making a thing, for an agent
+  following what a thing is made of down to what the world gives.
 - (Space) A ship's floor pulls its crew, however it is turned and out in space too: got up from the helm in flight,
   pitched, rolled or at 120 metres a second in deep space, its crew stands and walks its deck to its helm and its
   doors, carried with it, where they floated weightless and were left behind.

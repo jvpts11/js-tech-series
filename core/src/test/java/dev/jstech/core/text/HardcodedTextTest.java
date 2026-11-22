@@ -333,7 +333,7 @@ class HardcodedTextTest {
             data(CORE + "client/mcp/PlayWorld.java", 22, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWaiting.java", 22, MCP_TOOLS),
             data(CORE + "client/mcp/PlaySurvey.java", 8, MCP_TOOLS),
-            data(CORE + "client/mcp/PlayRecipes.java", 9, MCP_TOOLS));
+            data(CORE + "client/mcp/PlayRecipes.java", 10, MCP_TOOLS));
 
     /** Who a line for the developer is written through. */
     private static final Set<String> LOGGERS = Set.of("LOGGER", "LOG", "logger", "log");

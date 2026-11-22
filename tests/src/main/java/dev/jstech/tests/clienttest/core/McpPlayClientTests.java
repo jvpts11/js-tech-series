@@ -623,8 +623,8 @@ public final class McpPlayClientTests {
 
     /*
      * The recipes the game holds: the furnace's, a crafting table's, takes eight slots any of cobblestone does; a test
-     * machine's pressing takes two iron ingots, coal and water and makes an iron block, charcoal and lava; and a kind
-     * is listed with the machine that works it.
+     * machine's pressing takes two iron ingots, coal and water and makes an iron block, charcoal and lava; a refining,
+     * making oxygen, takes hydrogen and needs a blaze rod; and a kind is listed with the machine that works it.
      */
     @ClientTest(timeoutTicks = 1600)
     public static void recipes_tellWhatEachTakesAndMakes(final ClientTestContext ctx) {
@@ -655,11 +655,18 @@ public final class McpPlayClientTests {
                             && makes.stream().anyMatch(slot -> holds(slot, "fluids", "minecraft:lava")),
                             "the pressing makes an iron block, charcoal and lava: " + pressing);
                 }));
-        run(ctx, sent, key, port, new Step("recipes_read", "{\"kind\":\"test_refining\",\"most\":1}",
-                result -> ctx.assertTrue(result.getAsJsonArray("kinds").asList().stream()
-                        .map(JsonElement::getAsJsonObject).anyMatch(kind -> "jstests:test_refining".equals(text(kind,
-                                "id")) && holds(kind, "stations", "jstests:test_kit_machine")),
-                        "the refining kind is listed with the kit machine that works it: " + result.get("kinds"))));
+        run(ctx, sent, key, port, new Step("recipes_read", "{\"kind\":\"test_refining\","
+                + "\"makes\":\"jscore:oxygen\"}", result -> {
+                    ctx.assertTrue(result.getAsJsonArray("kinds").asList().stream().map(JsonElement::getAsJsonObject)
+                            .anyMatch(kind -> "jstests:test_refining".equals(text(kind, "id"))
+                                    && holds(kind, "stations", "jstests:test_kit_machine")),
+                            "the refining kind is listed with the kit machine that works it: " + result.get("kinds"));
+                    final JsonObject refining = recipe(result, "jstests:test_refining/nuggets");
+                    ctx.assertTrue(refining.getAsJsonArray("takes").asList().stream().anyMatch(slot -> holds(slot,
+                            "matter", "jscore:hydrogen")) && refining.getAsJsonArray("needs").asList().stream()
+                            .anyMatch(slot -> holds(slot, "items", "minecraft:blaze_rod")),
+                            "the refining takes hydrogen and needs a blaze rod it does not use up: " + refining);
+                }));
     }
 
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */
@@ -786,7 +793,7 @@ public final class McpPlayClientTests {
                 .orElseThrow(() -> new ClientTestFailure("the recipe " + id + " is read: " + result));
     }
 
-    /* Whether a recipe's slot, or a kind, holds {@code id} among its {@code what}: items, fluids or stations. */
+    /* Whether a recipe's slot, or a kind, holds {@code id} among its {@code what}: items, fluids, matter, stations. */
     private static boolean holds(final JsonElement slot, final String what, final String id) {
         final JsonObject one = slot.getAsJsonObject();
         return one.has(what) && one.getAsJsonArray(what).asList().stream()

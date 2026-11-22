@@ -17,6 +17,7 @@ import dev.jstech.core.developer.mcp.McpResult;
 import dev.jstech.core.developer.mcp.McpSchema;
 import dev.jstech.core.developer.mcp.McpTool;
 import dev.jstech.core.machine.ProcessingRecipe;
+import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.recipeview.RecipeView;
 import dev.jstech.core.recipeview.RecipeViewKind;
 import java.util.List;
@@ -48,6 +49,7 @@ final class PlayRecipes {
     private static final String MOST = "most";
     private static final String ITEMS = "items";
     private static final String FLUIDS = "fluids";
+    private static final String MATTER = "matter";
     private static final int MOST_RECIPES = 10_000;
     private static final int SOME_RECIPES = 100;
 
@@ -58,7 +60,8 @@ final class PlayRecipes {
     static List<McpTool> all() {
         return List.of(new McpTool("recipes_read", "The recipes the game holds, as a recipe viewer shows them: each "
                 + "with its id, its kind, what it takes, what it needs and does not use up, and what it makes, a slot "
-                + "being the items or fluids any one of which does; and the kinds the mods on J's Core declared, each "
+                + "being the items, fluids or matter (a machine's gas, by its material) any one of which does; and "
+                + "the kinds the mods on J's Core declared, each "
                 + "with the stations that work it. Of a mod, of a kind, or making an item or a fluid. For following "
                 + "what a thing is made of down to what the world gives.",
                 McpSchema.object()
@@ -116,9 +119,16 @@ final class PlayRecipes {
         for (final T recipe : kind.recipes(level)) {
             final RecipeView view = kind.view(recipe);
             final JsonObject one = recipe(kind.idOf(recipe), kindId);
-            one.add("takes", slots(view, RecipeView.Role.INPUT));
+            final JsonArray takes = slots(view, RecipeView.Role.INPUT);
+            final JsonArray makes = slots(view, RecipeView.Role.OUTPUT);
+            // A machine's gases and other matter are lines of its page, not slots: read from the recipe itself.
+            if (recipe instanceof RecipeHolder<?> holder && holder.value() instanceof ProcessingRecipe processing) {
+                processing.matterInputs().forEach(matter -> takes.add(matter(matter)));
+                processing.matterOutputs().forEach(matter -> makes.add(matter(matter)));
+            }
+            one.add("takes", takes);
             one.add("needs", slots(view, RecipeView.Role.CATALYST));
-            one.add("makes", slots(view, RecipeView.Role.OUTPUT));
+            one.add("makes", makes);
             if (asked.wants(one)) {
                 recipes.add(one);
             }
@@ -183,6 +193,16 @@ final class PlayRecipes {
         return out;
     }
 
+    /* A machine's matter, a gas or another state, by its material's id, in millibuckets at the open air's pressure. */
+    private static JsonObject matter(final MatterStack stack) {
+        final JsonObject one = new JsonObject();
+        final JsonArray matter = new JsonArray();
+        matter.add(stack.material().id().toString());
+        one.add(MATTER, matter);
+        one.addProperty("amount", stack.amount());
+        return one;
+    }
+
     /* A slot of items any one of which does, by their ids, with how many the first is. */
     private static JsonObject items(final List<ItemStack> stacks) {
         final JsonObject one = new JsonObject();
@@ -211,7 +231,8 @@ final class PlayRecipes {
                 return false;
             }
             return this.makes.isEmpty() || recipe.getAsJsonArray("makes").asList().stream()
-                    .map(JsonElement::getAsJsonObject).anyMatch(slot -> holds(slot, ITEMS) || holds(slot, FLUIDS));
+                    .map(JsonElement::getAsJsonObject).anyMatch(slot -> holds(slot, ITEMS) || holds(slot, FLUIDS)
+                            || holds(slot, MATTER));
         }
 
         private boolean holds(final JsonObject slot, final String what) {
