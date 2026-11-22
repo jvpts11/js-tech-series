@@ -22,19 +22,20 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * One recipe's page in a recipe viewer, as a kind's layout lays it ({@link RecipeViewKind}): its slots, each an input,
- * an output or a catalyst at a place, holding items or fluids; its lines of text; its sprites; and its arrow. JEI, EMI
- * and REI each draw it the way they draw their own pages, so a mod lays its page once for all three. Places are in
- * pixels from the page's top left, a slot's being the top left of its frame of 18 pixels. A page may be laid on a
- * machine's own face, drawn behind its slots, which then stand in the face's own ports and sight glasses.
+ * an output or a catalyst at a place, holding items or fluids; its lines of text; its sprites; its rules; and its
+ * arrow. JEI, EMI and REI each draw it the way they draw their own pages, so a mod lays its page once for all three.
+ * Places are in pixels from the page's top left, a slot's being the top left of its frame of 18 pixels. A page may be
+ * laid on a machine's own face, drawn behind its slots, which then stand in the face's own ports and sight glasses.
  *
  * @param slots   its slots, in the order they were laid
  * @param lines   its lines of text
  * @param sprites the sprites drawn on it
+ * @param rules   the bars of colour drawn on it, as a rule under a heading
  * @param arrow   its arrow, if it has one
  * @param face    the machine's face it is laid on, if it is
  */
-public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprites, Optional<Arrow> arrow,
-                         Optional<Face> face) {
+public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprites, List<Rule> rules,
+                         Optional<Arrow> arrow, Optional<Face> face) {
 
     /** A slot's frame, in pixels. */
     public static final int SLOT = 18;
@@ -45,6 +46,7 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
         slots = List.copyOf(slots);
         lines = List.copyOf(lines);
         sprites = List.copyOf(sprites);
+        rules = List.copyOf(rules);
         Objects.requireNonNull(arrow, "arrow");
         Objects.requireNonNull(face, "face");
     }
@@ -77,9 +79,10 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
      * @param tooltip  the lines its tooltip adds to what it holds
      * @param width    how wide what it shows is, a pixel in from its frame's left: an item's 16, a sight glass's own
      * @param height   how tall what it shows is
+     * @param framed   whether the viewer draws its slot's frame behind it; one shown as an icon beside a line is not
      */
     public record Slot(Role role, int x, int y, List<ItemStack> items, List<FluidStack> fluids, int capacity,
-                       float chance, List<Component> tooltip, int width, int height) {
+                       float chance, List<Component> tooltip, int width, int height, boolean framed) {
 
         public Slot {
             Objects.requireNonNull(role, "role");
@@ -91,7 +94,7 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
         /** The same slot, showing {@code width} by {@code height} a pixel in from its frame's top left. */
         public Slot sized(final int width, final int height) {
             return new Slot(this.role, this.x, this.y, this.items, this.fluids, this.capacity, this.chance,
-                    this.tooltip, width, height);
+                    this.tooltip, width, height, this.framed);
         }
 
         /** Whether it shows fluids rather than items. */
@@ -122,6 +125,18 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
      * @param height its height
      */
     public record Sprite(ResourceLocation sprite, int x, int y, int width, int height) {
+    }
+
+    /**
+     * A bar of colour drawn on the page, as the rule under a heading.
+     *
+     * @param x      its left
+     * @param y      its top
+     * @param width  its width
+     * @param height its height
+     * @param colour its colour, {@code 0xAARRGGBB}
+     */
+    public record Rule(int x, int y, int width, int height, int colour) {
     }
 
     /**
@@ -162,12 +177,13 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
         private final List<Slot> slots = new ArrayList<>();
         private final List<Line> lines = new ArrayList<>();
         private final List<Sprite> sprites = new ArrayList<>();
+        private final List<Rule> rules = new ArrayList<>();
         private @Nullable Arrow arrow;
         private @Nullable Face face;
 
         /** A slot of what the recipe takes, holding any of {@code items}, its frame's top left at {@code x, y}. */
         public Builder input(final int x, final int y, final List<ItemStack> items) {
-            return slot(new Slot(Role.INPUT, x, y, items, List.of(), 0, 1.0f, List.of(), SHOWN, SHOWN));
+            return slot(new Slot(Role.INPUT, x, y, items, List.of(), 0, 1.0f, List.of(), SHOWN, SHOWN, true));
         }
 
         /** A slot of what the recipe takes, holding what {@code ingredient} takes. */
@@ -177,12 +193,13 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
 
         /** A slot of a fluid the recipe takes, any of {@code fluids}, drawn full at {@code capacity}. */
         public Builder fluidInput(final int x, final int y, final List<FluidStack> fluids, final int capacity) {
-            return slot(new Slot(Role.INPUT, x, y, List.of(), fluids, capacity, 1.0f, List.of(), SHOWN, SHOWN));
+            return slot(new Slot(Role.INPUT, x, y, List.of(), fluids, capacity, 1.0f, List.of(), SHOWN, SHOWN,
+                    true));
         }
 
         /** A slot of what the recipe needs but does not use up. */
         public Builder catalyst(final int x, final int y, final List<ItemStack> items) {
-            return slot(new Slot(Role.CATALYST, x, y, items, List.of(), 0, 1.0f, List.of(), SHOWN, SHOWN));
+            return slot(new Slot(Role.CATALYST, x, y, items, List.of(), 0, 1.0f, List.of(), SHOWN, SHOWN, true));
         }
 
         /** A slot of what the recipe makes. */
@@ -192,13 +209,13 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
 
         /** A slot of what the recipe makes, any of {@code items}. */
         public Builder output(final int x, final int y, final List<ItemStack> items) {
-            return slot(new Slot(Role.OUTPUT, x, y, items, List.of(), 0, 1.0f, List.of(), SHOWN, SHOWN));
+            return slot(new Slot(Role.OUTPUT, x, y, items, List.of(), 0, 1.0f, List.of(), SHOWN, SHOWN, true));
         }
 
         /** A slot of a fluid the recipe makes, drawn full at {@code capacity}. */
         public Builder fluidOutput(final int x, final int y, final FluidStack fluid, final int capacity) {
             return slot(new Slot(Role.OUTPUT, x, y, List.of(), List.of(fluid), capacity, 1.0f, List.of(), SHOWN,
-                    SHOWN));
+                    SHOWN, true));
         }
 
         /** Makes the last slot's output come by {@code chance}, from 0 to 1. */
@@ -206,7 +223,7 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
             final Slot last = last();
             this.slots.set(this.slots.size() - 1, new Slot(last.role(), last.x(), last.y(), last.items(),
                     last.fluids(), last.capacity(), Math.clamp(chance, 0.0f, 1.0f), last.tooltip(), last.width(),
-                    last.height()));
+                    last.height(), last.framed()));
             return this;
         }
 
@@ -216,7 +233,17 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
             final List<Component> lines = new ArrayList<>(last.tooltip());
             lines.add(line);
             this.slots.set(this.slots.size() - 1, new Slot(last.role(), last.x(), last.y(), last.items(),
-                    last.fluids(), last.capacity(), last.chance(), lines, last.width(), last.height()));
+                    last.fluids(), last.capacity(), last.chance(), lines, last.width(), last.height(),
+                    last.framed()));
+            return this;
+        }
+
+        /** Makes the last slot an icon with no frame behind it, as one beside a line of what the recipe needs. */
+        public Builder unframed() {
+            final Slot last = last();
+            this.slots.set(this.slots.size() - 1, new Slot(last.role(), last.x(), last.y(), last.items(),
+                    last.fluids(), last.capacity(), last.chance(), last.tooltip(), last.width(), last.height(),
+                    false));
             return this;
         }
 
@@ -245,6 +272,12 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
             return this;
         }
 
+        /** A bar of {@code colour}, its top left at {@code x, y}, {@code width} by {@code height}. */
+        public Builder rule(final int x, final int y, final int width, final int height, final int colour) {
+            this.rules.add(new Rule(x, y, width, height, colour));
+            return this;
+        }
+
         /** The arrow, filling in {@code ticks}. */
         public Builder arrow(final int x, final int y, final int ticks) {
             this.arrow = new Arrow(x, y, Math.max(0, ticks));
@@ -253,7 +286,7 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
 
         /** The page as laid. */
         public RecipeView build() {
-            return new RecipeView(this.slots, this.lines, this.sprites, Optional.ofNullable(this.arrow),
+            return new RecipeView(this.slots, this.lines, this.sprites, this.rules, Optional.ofNullable(this.arrow),
                     Optional.ofNullable(this.face));
         }
 
@@ -264,7 +297,7 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
 
         private Slot last() {
             if (this.slots.isEmpty()) {
-                throw new IllegalStateException("a slot's chance or tooltip comes after the slot is laid");
+                throw new IllegalStateException("a slot's chance, tooltip or frame comes after the slot is laid");
             }
             return this.slots.getLast();
         }

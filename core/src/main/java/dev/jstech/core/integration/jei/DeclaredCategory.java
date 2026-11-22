@@ -112,8 +112,8 @@ final class DeclaredCategory<T> implements IRecipeCategory<T> {
             final int y = slot.y() + SLOT_INSET;
             final IRecipeSlotBuilder made = slot.role() == RecipeView.Role.OUTPUT ? builder.addOutputSlot(x, y)
                     : builder.addInputSlot(x, y);
-            // A page on a machine's face has its slots in the face's own ports and glasses.
-            if (page.face().isEmpty()) {
+            // A page on a machine's face has its slots in the face's own ports and glasses; an icon has no frame.
+            if (page.face().isEmpty() && slot.framed()) {
                 made.setStandardSlotBackground();
             }
             if (slot.holdsFluid()) {
@@ -152,6 +152,9 @@ final class DeclaredCategory<T> implements IRecipeCategory<T> {
         RecipeFaces.draw(graphics, page, 0, 0);
         for (final RecipeView.Sprite sprite : page.sprites()) {
             graphics.blitSprite(sprite.sprite(), sprite.x(), sprite.y(), sprite.width(), sprite.height());
+        }
+        for (final RecipeView.Rule rule : page.rules()) {
+            graphics.fill(rule.x(), rule.y(), rule.x() + rule.width(), rule.y() + rule.height(), rule.colour());
         }
     }
 

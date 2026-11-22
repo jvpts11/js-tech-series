@@ -19,6 +19,7 @@ import dev.jstech.computers.client.chain.ChainEmitters;
 import dev.jstech.computers.client.chain.ChainFaceScreens;
 import dev.jstech.computers.client.chain.ChainMachineItemRenderer;
 import dev.jstech.computers.client.chain.ChainMachineRenderer;
+import dev.jstech.computers.client.chain.ChainRecipePages;
 import dev.jstech.computers.client.chain.ChainRigs;
 import dev.jstech.computers.client.portable.CameraShots;
 import dev.jstech.computers.client.portable.PortableApps;
@@ -108,6 +109,7 @@ public final class ComputingClientSetup {
         ChainMachineRenderer.listen();
         PrebuilderSounds.listen();
         ChainFaceScreens.listen(modBus);
+        ChainRecipePages.listen(modBus);
         modBus.addListener(RegisterMenuScreensEvent.class, ComputingClientSetup::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, ComputingClientSetup::registerRenderers);
         modBus.addListener(RegisterClientExtensionsEvent.class, ComputingClientSetup::registerItemRenderers);

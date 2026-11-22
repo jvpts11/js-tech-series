@@ -748,9 +748,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   most first, making the chunks never made as walking there would; for an agent finding where ores and other blocks
   lie.
 - (Core) The MCP reads the recipes the game holds: `recipes_read` answers, as a recipe viewer shows them, what each
-  recipe takes, what it needs and does not use up and what it makes, items, fluids and a machine's gases, and the
-  stations that work each kind of the mods on J's Core; of a mod, of a kind, or making a thing, for an agent
-  following what a thing is made of down to what the world gives.
+  recipe takes, what it needs and does not use up and what it makes, items, fluids and a machine's gases, those of a
+  page that is no recipe as its machine's face draws them, and the stations that work each kind of the mods on J's
+  Core; of a mod, of a kind, or making a thing, for an agent following what a thing is made of down to what the world
+  gives.
+- (Core) A recipe page can draw a rule and lay a slot as a bare icon with no frame behind it, as a line of what a
+  recipe needs shows one, in JEI, EMI and REI alike; and a page a mod lays on a machine's face itself puts a fluid in
+  a sight glass as the machines' own pages do.
 - (Space) A ship's floor pulls its crew, however it is turned and out in space too: got up from the helm in flight,
   pitched, rolled or at 120 metres a second in deep space, its crew stands and walks its deck to its helm and its
   doors, carried with it, where they floated weightless and were left behind.
@@ -771,15 +775,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The CDU: placed whole as the Supercomputer Rack is, the rack's own cabinet with two pumps and a plate exchanger in its bay, it stands between the racks and the Chiller, taking the racks' Hot Water back and sending them Cold Water, up to 64 mB/s for eight racks, and heating the Chiller's water a millibucket for a millibucket. Its four water ports are in its roof, its energy at its back, and it has its own screen, the names under its sight glasses kept inside their dark bank. Its item shows the CDU, in a slot, a hand and the recipe viewers.
 - (Computers) Liquid cooling for the datacenter: Cold Water and Hot Water go round two loops through the pipes, 1 mB a second carrying 1 kW. The Supercomputer Rack takes Cold Water at a port in its roof and gives Hot Water at another, and sheds up to 8,000 W more; its window shows a drop, blue while it gets all it asks and amber when short, its tooltip the watts and the flow. The Chiller cools the racks' water, up to 120 mB/s for 30 kW, heating the tower's; the Cooling Tower cools the Chiller's, up to 200 mB/s, evaporating plain water from its FILL inlet. Both are built of the chain's kit and parts of their own (the tower's Basin, Louvres, Fills and Fan, the Chiller's Evaporator, Condenser and Compressor), each with its own screen. Plain water piped into a COLD inlet counts as Cold Water, to fill a loop. The Guide to Operations has a page on it.
 - (Core) Pieces of ore over the veins: a few pieces of a vein's ore lie on the surface over it, as a prospector's float, about eight a vein within its reach, each two to four pieces cut from its ore's own picture, of the vein's minerals as it holds them. They lie only on solid, dry ground, break at once by hand, give the ore itself, one of what its ore block gives (raw iron, raw copper), and are walked through; a block placed where they lie replaces them. Chalcopyrite Pieces, Hematite Pieces and so on, one for every mineral with an ore.
-- (Computers) A wafer's steps in JEI: Lithography, Plasma Etching, Ion Implantation, Deposition and Packaging, each page the step running on its machine's own face, the step's items in the face's slots and its liquids and gases in its sight glasses, each glass saying on its tooltip how much the step takes. A page a mask, an era, a metal or a chip; U on a wafer in process shows the steps it goes through.
+- (Computers) A wafer's steps in the recipe viewers, JEI, EMI and REI alike: Lithography, Plasma Etching, Ion Implantation, Deposition and Packaging, each page the step running on its machine's own face, its loop playing, the step's items in the face's slots, its liquids in its sight glasses as fluids a viewer looks up and its gases in theirs, each glass saying on its tooltip how much the step takes. A page a mask, an era, a metal or a chip; U on a wafer in process shows the steps it goes through. The Air Separation Unit has its page too, on its face: nothing taken, as it draws the air round it, and the nitrogen, oxygen, argon and krypton a step gives in its four glasses.
 - (Computers) Midsoft Lithography, the program of a computer cabled to a Lithography Station from the Legacy on,
   writes the station's masks: put a Mask Blank in the station, pick the mask, and Write puts it on the blank in one
   layer's time, half on a computer two eras newer, the mask then standing where the blank was. On MC-DOS and MC-NET it
   takes the whole screen (`litho`), the arrows and Tab picking the mask and W writing it; on the desktops it is a window
   with a tab a kind of chip and Write Mask. Both show the station: what it does, the wafer and layer it exposes, its
   liquids and gases, the memory its computer holds for it and what is in its mask slot. A station exposing a wafer
-  writes no mask, and offers only the masks its computer's era makes chips for. JEI shows a Mask Writing page for each
-  mask, and the Mask Blank and every mask say in their tooltips how they are made. The Guide to Operations and the
+  writes no mask, and offers only the masks its computer's era makes chips for. The recipe viewers show a Mask Writing
+  page for each mask, the station, the computer and the program's installer what it needs and never uses up, and the
+  Mask Blank and every mask say in their tooltips how they are made. The Guide to Operations and the
   Frames Resource Kit have its pages. The masks of the Legacy and later eras could not be made.
 - (Space) The Starship Design screen lets a ship built whole go: under the dock's lines, which say "Ship whole" in
   green once it stands whole in the closed dock, a Release ship button opens the dock round it as its flight console

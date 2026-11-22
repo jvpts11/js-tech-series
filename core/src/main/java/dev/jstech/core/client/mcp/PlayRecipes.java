@@ -10,6 +10,7 @@ package dev.jstech.core.client.mcp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.jstech.core.client.recipeview.RecipeFaces;
 import dev.jstech.core.client.recipeview.ViewKinds;
 import dev.jstech.core.developer.mcp.McpCall;
 import dev.jstech.core.developer.mcp.McpPermission;
@@ -121,10 +122,14 @@ final class PlayRecipes {
             final JsonObject one = recipe(kind.idOf(recipe), kindId);
             final JsonArray takes = slots(view, RecipeView.Role.INPUT);
             final JsonArray makes = slots(view, RecipeView.Role.OUTPUT);
-            // A machine's gases and other matter are lines of its page, not slots: read from the recipe itself.
+            // A machine's gases and other matter are no slots: read from the recipe itself, or, on a page that is no
+            // machine's recipe, from the face it is drawn on, by whether its tank takes or gives.
             if (recipe instanceof RecipeHolder<?> holder && holder.value() instanceof ProcessingRecipe processing) {
                 processing.matterInputs().forEach(matter -> takes.add(matter(matter)));
                 processing.matterOutputs().forEach(matter -> makes.add(matter(matter)));
+            } else {
+                view.face().ifPresent(face -> face.matter().forEach((tank, matter) -> (RecipeFaces.taking(view, tank)
+                        .orElse(true) ? takes : makes).add(matter(matter))));
             }
             one.add("takes", takes);
             one.add("needs", slots(view, RecipeView.Role.CATALYST));

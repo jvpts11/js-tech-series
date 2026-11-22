@@ -84,7 +84,7 @@ final class DeclaredEmiRecipe<T> extends BasicEmiRecipe {
             // A fluid in a machine's face fills the face's sight glass; the face's ports are its slots' frames.
             final SlotWidget widget = slot.holdsFluid() && faced ? widgets.addTank(held, slot.x(), slot.y(),
                     slot.width() + 2, slot.height() + 2, slot.capacity()) : widgets.addSlot(held, slot.x(), slot.y());
-            if (faced) {
+            if (faced || !slot.framed()) {
                 widget.drawBack(false);
             }
             if (slot.role() == RecipeView.Role.OUTPUT) {
@@ -112,6 +112,11 @@ final class DeclaredEmiRecipe<T> extends BasicEmiRecipe {
             widgets.addDrawable(sprite.x(), sprite.y(), sprite.width(), sprite.height(),
                     (graphics, mouseX, mouseY, delta) -> graphics.blitSprite(sprite.sprite(), 0, 0, sprite.width(),
                             sprite.height()));
+        }
+        for (final RecipeView.Rule rule : page.rules()) {
+            widgets.addDrawable(rule.x(), rule.y(), rule.width(), rule.height(),
+                    (graphics, mouseX, mouseY, delta) -> graphics.fill(0, 0, rule.width(), rule.height(),
+                            rule.colour()));
         }
         for (final RecipeFaces.Note note : RecipeFaces.notes(page)) {
             widgets.addTooltipText(note.lines(), note.x(), note.y(), note.width(), note.height());

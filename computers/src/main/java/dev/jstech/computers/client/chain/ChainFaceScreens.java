@@ -148,7 +148,8 @@ public final class ChainFaceScreens {
         return () -> made.get().map(MachineChrome::rating).orElse("");
     }
 
-    private static ResourceLocation frames(final String face) {
+    /* The frames of the face {@code face}, as the machine's screen and its recipes' pages draw them. */
+    static ResourceLocation frames(final String face) {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/machine/face/" + face + ".png");
     }
 

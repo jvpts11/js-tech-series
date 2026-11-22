@@ -31,13 +31,17 @@ public class AirSeparationBlockEntity extends ChainMachineBlockEntity {
         super(machine, pos, state);
     }
 
+    /** What a step separates out of the air, in the order its tanks fill: what its recipe page shows too. */
+    public static List<MatterStack> step() {
+        return List.of(new MatterStack(Elements.of(Element.NITROGEN), 780),
+                new MatterStack(Elements.of(Element.OXYGEN), 210), new MatterStack(Elements.of(Element.ARGON), 9),
+                new MatterStack(Elements.of(Element.KRYPTON), 1));
+    }
+
     /* A step of the air round it, always. */
     @Override
     protected Optional<Processing> process(final Level level, final ProcessingInput input) {
-        final List<MatterStack> gases = List.of(new MatterStack(Elements.of(Element.NITROGEN), 780),
-                new MatterStack(Elements.of(Element.OXYGEN), 210), new MatterStack(Elements.of(Element.ARGON), 9),
-                new MatterStack(Elements.of(Element.KRYPTON), 1));
         return run(level, input, new Processing(List.of(), List.of(), List.of(), List.of(), machine().seconds() * TICKS,
-                0, List.of(), gases, List.of(), List.of()), null);
+                0, List.of(), step(), List.of(), List.of()), null);
     }
 }

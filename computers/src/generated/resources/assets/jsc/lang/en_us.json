@@ -9771,6 +9771,7 @@
   "jsc.recipe_kind.vintage_lithography": "Vintage Lithography",
   "jsc.recipe_kind.wafer_saw": "Wafer Saw",
   "jsc.recipe_kind.wire_drawer": "Wire Drawer",
+  "jsc.recipe_view.air_separation": "Air Separation",
   "jsc.redstone_interface.clash": "Another interface already has this name",
   "jsc.redstone_interface.computer": "COMPUTER",
   "jsc.redstone_interface.default_name": "Redstone Interface",

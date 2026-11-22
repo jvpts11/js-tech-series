@@ -88,6 +88,10 @@ final class DeclaredReiCategory<T> implements DisplayCategory<DeclaredReiDisplay
             widgets.add(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> graphics.blitSprite(
                     sprite.sprite(), x0 + sprite.x(), y0 + sprite.y(), sprite.width(), sprite.height())));
         }
+        for (final RecipeView.Rule rule : page.rules()) {
+            widgets.add(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> graphics.fill(x0 + rule.x(),
+                    y0 + rule.y(), x0 + rule.x() + rule.width(), y0 + rule.y() + rule.height(), rule.colour())));
+        }
         page.arrow().ifPresent(arrow -> {
             final Arrow made = Widgets.createArrow(new Point(x0 + arrow.x(), y0 + arrow.y()));
             widgets.add(arrow.ticks() > 0 ? made.animationDurationTicks(arrow.ticks()) : made);
@@ -96,7 +100,7 @@ final class DeclaredReiCategory<T> implements DisplayCategory<DeclaredReiDisplay
             // A slot's frame is a pixel round what it shows: an item's 16 pixels, or a face's sight glass.
             final Slot made = Widgets.createSlot(new Rectangle(x0 + slot.x(), y0 + slot.y(),
                     slot.width() + 2 * SLOT_INSET, slot.height() + 2 * SLOT_INSET))
-                    .entries(DeclaredReiDisplay.ingredientOf(slot)).backgroundEnabled(!faced);
+                    .entries(DeclaredReiDisplay.ingredientOf(slot)).backgroundEnabled(!faced && slot.framed());
             widgets.add(slot.role() == RecipeView.Role.OUTPUT ? made.markOutput() : made.markInput());
         }
         for (final RecipeView.Line line : page.lines()) {

@@ -597,9 +597,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   most first, making the chunks never made as walking there would; for an agent finding where ores and other blocks
   lie.
 - The MCP reads the recipes the game holds: `recipes_read` answers, as a recipe viewer shows them, what each
-  recipe takes, what it needs and does not use up and what it makes, items, fluids and a machine's gases, and the
-  stations that work each kind of the mods on J's Core; of a mod, of a kind, or making a thing, for an agent
-  following what a thing is made of down to what the world gives.
+  recipe takes, what it needs and does not use up and what it makes, items, fluids and a machine's gases, those of a
+  page that is no recipe as its machine's face draws them, and the stations that work each kind of the mods on J's
+  Core; of a mod, of a kind, or making a thing, for an agent following what a thing is made of down to what the world
+  gives.
+- A recipe page can draw a rule and lay a slot as a bare icon with no frame behind it, as a line of what a
+  recipe needs shows one, in JEI, EMI and REI alike; and a page a mod lays on a machine's face itself puts a fluid in
+  a sight glass as the machines' own pages do.
 - Walking a turned deck: in a moving structure whose floor pulls towards itself, pitched or rolled more than a
   degree, upside down or out in space, a player walks on its floor as on the ground, its floor down: walking,
   running, jumping, sneaking at its edges, stepping up its stairs and climbing its ladders, the deck carrying them as

@@ -46,6 +46,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The machines' own faces the recipe viewers lay pages on. A kind of processing whose machine has a face drawn as a
@@ -136,15 +137,11 @@ public final class RecipeFaces {
         }
         for (int k = 0; k < recipe.fluidInputs().size(); k++) {
             final SizedFluidIngredient fluid = recipe.fluidInputs().get(k);
-            final FacePicture.Glass glass = placed.fluidInputs().get(k);
-            page.fluidInput(frameX(glass), frameY(glass), List.of(fluid.getFluids()), capacity(fluid.amount()))
-                    .sized(shownWidth(glass), shownHeight(glass));
+            fluid(page, placed.fluidInputs().get(k), List.of(fluid.getFluids()), fluid.amount(), true);
         }
         for (int k = 0; k < recipe.fluidOutputs().size(); k++) {
             final FluidStack fluid = recipe.fluidOutputs().get(k);
-            final FacePicture.Glass glass = placed.fluidOutputs().get(k);
-            page.fluidOutput(frameX(glass), frameY(glass), fluid, capacity(fluid.getAmount()))
-                    .sized(shownWidth(glass), shownHeight(glass));
+            fluid(page, placed.fluidOutputs().get(k), List.of(fluid), fluid.getAmount(), false);
         }
         final Map<Integer, MatterStack> matter = new HashMap<>();
         for (int k = 0; k < recipe.matterInputs().size(); k++) {
@@ -219,6 +216,31 @@ public final class RecipeFaces {
             }
         }
         return notes;
+    }
+
+    /**
+     * Lays {@code amount} millibuckets of any of {@code fluids} in {@code glass} of a face, taken or given as
+     * {@code taking} says, drawn as full as a working machine's glasses stand: for a page a mod lays on a machine's
+     * face itself, as {@link #lay} lays a recipe's fluids.
+     */
+    public static void fluid(final RecipeView.Builder page, final FacePicture.Glass glass,
+                             final List<FluidStack> fluids, final int amount, final boolean taking) {
+        if (taking) {
+            page.fluidInput(frameX(glass), frameY(glass), fluids, capacity(amount));
+        } else {
+            page.fluidOutput(frameX(glass), frameY(glass), fluids.getFirst(), capacity(amount));
+        }
+        page.sized(shownWidth(glass), shownHeight(glass));
+    }
+
+    /**
+     * Whether the tank {@code tank} of the machine whose face {@code page} is laid on takes what it holds rather than
+     * gives it: what a page's matter is to its recipe. None for a page on no face, or a tank the face has not.
+     */
+    @ApiStatus.Internal
+    public static Optional<Boolean> taking(final RecipeView page, final int tank) {
+        return page.face().map(each -> BY_FRAMES.get(each.id())).filter(face -> tank >= 0
+                && tank < face.tanks().size()).map(face -> face.tanks().get(tank).taking());
     }
 
     /* How much of a fluid fills its glass, drawn as full as a working machine's glasses stand. */

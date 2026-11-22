@@ -6611,6 +6611,7 @@
   "jsc.jei.wafer.implant": "Implantação Iônica",
   "jsc.jei.wafer.deposition": "Deposição",
   "jsc.jei.wafer.packaging": "Encapsulamento",
+  "jsc.recipe_view.air_separation": "Separação do Ar",
   "jsc.knot.file": "Arquivo",
   "jsc.knot.no_change": "Nenhuma mudança em r%s",
   "jsc.knot.no_knothub": "Nenhum KnotHub nesta rede",

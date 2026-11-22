@@ -16,6 +16,9 @@ import java.util.List;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.StonecutterRecipe;
@@ -24,8 +27,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Core's kit of recipe views: the test mod declares the game's stonecutting and a list of fuels, kinds that are
- * no machine's; each lists its recipes from the world, lays each page out as it says, and a kind declared twice stops
- * the game with a paragraph saying so.
+ * no machine's; each lists its recipes from the world, lays each page out as it says, rules and bare icons too, and a
+ * kind declared twice stops the game with a paragraph saying so.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -33,6 +36,9 @@ public final class RecipeViewGameTests {
 
     private static final String ARENA = "empty";
     private static final int FUELS = 3;
+    private static final int RULE_Y = 20;
+    private static final int RULE_WIDTH = 100;
+    private static final int RULE_COLOUR = 0xFF8B8B8B;
 
     private RecipeViewGameTests() {
     }
@@ -73,6 +79,21 @@ public final class RecipeViewGameTests {
         } catch (final DeclarationError refused) {
             helper.assertTrue(refused.getMessage().contains("test_fuels"), "saying which kind");
         }
+        helper.succeed();
+    }
+
+    /* A page draws a rule where it says, and a slot laid as a bare icon keeps its place, its tooltip and its items. */
+    @GameTest(template = ARENA)
+    public static void page_drawsARuleAndABareIcon(final GameTestHelper helper) {
+        final RecipeView page = new RecipeView.Builder().input(0, 0, List.of(new ItemStack(Items.COAL)))
+                .catalyst(RULE_Y, RULE_Y, List.of(new ItemStack(Items.FURNACE))).tooltip(Component.literal("kept"))
+                .unframed().rule(1, RULE_Y, RULE_WIDTH, 1, RULE_COLOUR).build();
+        helper.assertTrue(page.slots(RecipeView.Role.INPUT).getFirst().framed(), "a slot has its frame");
+        final RecipeView.Slot icon = page.slots(RecipeView.Role.CATALYST).getFirst();
+        helper.assertTrue(!icon.framed() && icon.x() == RULE_Y && icon.items().getFirst().is(Items.FURNACE)
+                && icon.tooltip().size() == 1, "an icon has none, and keeps the rest: " + icon);
+        helper.assertTrue(page.rules().equals(List.of(new RecipeView.Rule(1, RULE_Y, RULE_WIDTH, 1, RULE_COLOUR))),
+                "the rule is drawn where the page says: " + page.rules());
         helper.succeed();
     }
 }

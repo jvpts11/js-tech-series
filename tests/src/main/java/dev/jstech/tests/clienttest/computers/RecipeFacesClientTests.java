@@ -8,14 +8,18 @@
 package dev.jstech.tests.clienttest.computers;
 
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.computers.chain.machine.WaferPages;
+import dev.jstech.computers.client.chain.ChainRecipePages;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.client.recipeview.RecipeFaces;
+import dev.jstech.core.client.recipeview.ViewKinds;
 import dev.jstech.core.integration.emi.CoreEmiPlugin;
 import dev.jstech.core.integration.jei.CoreJeiPlugin;
 import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.recipeview.RecipeView;
+import dev.jstech.core.recipeview.RecipeViewKind;
 import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -34,8 +38,8 @@ import net.neoforged.fml.ModList;
 /**
  * The machines' own faces in the recipe viewers: each kind of a chain machine's work is laid on that machine's face,
  * every recipe of it in the face's ports and sight glasses; the Optical Polisher's fibres on its drawing tower; a
- * bench's kinds keep their plain pages; and a page draws the machine at work, its loop playing, its words said for the
- * recipe on it.
+ * bench's kinds keep their plain pages; a page draws the machine at work, its loop playing, its words said for the
+ * recipe on it; and the pages no recipe holds (a wafer's steps, the air separated, Mask Writing) are the Core's kinds.
  */
 public final class RecipeFacesClientTests {
 
@@ -83,6 +87,44 @@ public final class RecipeFacesClientTests {
                         ctx.assertTrue(drawn.endsWith(fibre ? "optical_polisher_fibre.png" : "optical_polisher.png"),
                                 holder.id() + " is drawn on " + drawn);
                     }
+                });
+    }
+
+    /*
+     * The pages no recipe holds are the Core's kinds, for every viewer: a wafer's steps on their machines' faces, a
+     * step's liquid in its sight glass as a fluid and its gases on the face; the Air Separation Unit's four gases given
+     * out of its tanks, nothing taken; and Mask Writing's page with its rule and its three needs as bare icons.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void pages_ofTheWaferMasksAndAirAreTheCoresKinds(final ClientTestContext ctx) {
+        ctx.thenWaitUntil(() -> ctx.mc().level != null, VIEWER_WAIT, "the client's world")
+                .then(0, () -> {
+                    for (final WaferPages.Step step : WaferPages.Step.values()) {
+                        ctx.assertTrue(ChainRecipePages.step(step).map(kind -> !kind.recipes(ctx.mc().level)
+                                .isEmpty()).orElse(false), step + " is a kind with its pages");
+                    }
+                    final RecipeViewKind<WaferPages.Page> etch = ChainRecipePages.step(WaferPages.Step.ETCH)
+                            .orElseThrow();
+                    final RecipeView acid = etch.view(etch.recipes(ctx.mc().level).getFirst());
+                    ctx.assertTrue(acid.face().isPresent() && acid.slots(RecipeView.Role.INPUT).stream()
+                            .anyMatch(RecipeView.Slot::holdsFluid), "the Vintage's etching on its face, its acid a "
+                            + "fluid in its glass: " + acid.slots());
+                    final RecipeView plasma = etch.view(etch.recipes(ctx.mc().level).getLast());
+                    ctx.assertTrue(plasma.face().map(face -> face.matter().size() == 2).orElse(false),
+                            "the Advanced's chlorine and argon on its face: " + plasma.face());
+                    final RecipeViewKind<?> air = ViewKinds.all().stream().filter(kind -> kind.id().equals(
+                            ResourceLocation.fromNamespaceAndPath("jsc", "air_separation"))).findFirst()
+                            .orElseThrow(() -> new IllegalStateException("no air separation kind"));
+                    final RecipeView gases = first(air, ctx);
+                    ctx.assertTrue(gases.slots().isEmpty() && gases.face().map(face -> face.matter().size() == 4
+                            && face.matter().keySet().stream().noneMatch(tank -> RecipeFaces.taking(gases, tank)
+                            .orElse(true))).orElse(false), "four gases given out, nothing taken: " + gases.face());
+                    final RecipeViewKind<ChainRecipePages.MaskPage> masks = ChainRecipePages.maskWriting()
+                            .orElseThrow();
+                    final RecipeView mask = masks.view(masks.recipes(ctx.mc().level).getFirst());
+                    ctx.assertTrue(mask.rules().size() == 1 && mask.slots(RecipeView.Role.CATALYST).size() == 3
+                            && mask.slots(RecipeView.Role.CATALYST).stream().noneMatch(RecipeView.Slot::framed),
+                            "Mask Writing's rule and its three needs as bare icons: " + mask);
                 });
     }
 
@@ -148,6 +190,11 @@ public final class RecipeFacesClientTests {
     }
 
     /* The kind the chain machine {@code id} works. */
+    /* The page of the first recipe {@code kind} lists in the client's world. */
+    private static <T> RecipeView first(final RecipeViewKind<T> kind, final ClientTestContext ctx) {
+        return kind.view(kind.recipes(ctx.mc().level).getFirst());
+    }
+
     private static ProcessingKind kindOf(final String id) {
         return ChainMachines.workedBy(ChainMachines.byId(id).orElseThrow()).getFirst().kind();
     }
