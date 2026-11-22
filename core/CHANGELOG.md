@@ -595,7 +595,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Walking a turned deck: in a moving structure whose floor pulls towards itself, pitched, rolled, upside down
   or out in space, a player walks on its floor as on the ground, its floor down: walking, running, jumping, sneaking
   at its edges, stepping up its stairs and climbing its ladders, the deck carrying them as it turns and goes, and the
-  server taking where on it they stand, a fall counted down its floor, not down the world. Their look is kept in its
+  server taking where on it they stand, a fall counted down its floor, not down the world. One coming into its field,
+  its box and a block round it, is drawn down onto its floor; one walking out of it goes on with the speed the
+  structure had where they left, under the world's pull again, floating out in space. Their look is kept in its
   frame as in its seats: the mouse turns it about the
   floor's up, it is carried round as the deck turns, the view rolls to keep the floor's up at its top, and their eyes
   stand over their feet along the floor's up, so they aim at and use what they see. Every player sees them drawn

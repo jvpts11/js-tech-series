@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest.core;
 
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
+import dev.jstech.core.client.moving.DeckWalk;
 import dev.jstech.core.client.moving.SeatLookClient;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.LevelMovingStructures;
@@ -18,6 +19,7 @@ import dev.jstech.core.moving.SeatLook;
 import dev.jstech.core.moving.StructureFooting;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.TowardMotion;
 import dev.jstech.core.region.Box;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -80,6 +82,17 @@ public final class DeckWalkClientTests {
     private static final double ALONG = 0.02;
     /* How much further the floor is turned, in radians, while the look is carried with it. */
     private static final double FURTHER = 0.4;
+    /*
+     * How far off the floor, along its up, the player starts out of its field, and how hard they are pushed at it, in
+     * blocks and blocks a tick; how far and how fast the floor rises, in blocks and blocks a second; ticks in a second,
+     * and somewhat more than the world's pull takes off a speed in a tick, in blocks a tick.
+     */
+    private static final double OUT_OF_FIELD = 2;
+    private static final double PUSH = 0.4;
+    private static final double RISE = 30;
+    private static final double RISE_SPEED = 4;
+    private static final double TICKS = 20;
+    private static final double FIRST_FALL = 0.1;
     /* Pitched half way up about the east-west line, rolled on its side, and upside down. */
     private static final List<Turn> TURNS = List.of(new Turn("pitched", 1, 0, 0, Math.PI / 4),
             new Turn("rolled", 0, 0, 1, Math.PI / 2), new Turn("upside down", 0, 0, 1, Math.PI));
@@ -286,6 +299,81 @@ public final class DeckWalkClientTests {
                 .thenWaitUntil(() -> drawnUp[0] != null && drawnUp[0].distanceTo(floorUp()) < ALONG, SETTLE,
                         "the player to be drawn standing on the rolled floor, its up theirs",
                         () -> "drawn up " + drawnUp[0] + " against the floor's " + floorUp());
+    }
+
+    /*
+     * Rolled on its side, the floor takes a player pushed into its field off the world's pull down onto its own floor;
+     * rising, it carries them; and they walk off its end out of its field into the world's pull, going on with the
+     * speed the floor had there.
+     */
+    @ClientTest(timeoutTicks = 1500)
+    public static void field_takesOneInToItsFloorAndLetsThemGoWithItsSpeed(final ClientTestContext ctx) {
+        final AtomicReference<MovingStructure> made = new AtomicReference<>();
+        final double[] leaving = new double[1];
+        ctx.afterTest(() -> {
+            ctx.mc().options.keyUp.setDown(false);
+            ctx.server().execute(() -> takeAll(ctx.serverLevel()));
+        });
+        ctx.thenServer(0, level -> {
+            takeAll(level);
+            for (final BlockPos at : BlockPos.betweenClosed(ctx.abs(CORNER), ctx.abs(OTHER_CORNER.below()))) {
+                level.setBlockAndUpdate(at, Blocks.STONE.defaultBlockState());
+            }
+            final MovingStructure floor = MovingStructures.assemble(level, ctx.abs(CORNER),
+                    ctx.abs(OTHER_CORNER.below())).structure();
+            floor.deckGravity(true);
+            final StructurePose pose = floor.pose();
+            floor.teleport(StructurePose.turned(pose.x(), pose.y(), pose.z(), 0, 0, 1, Math.PI / 2));
+            made.set(floor);
+        })
+                .thenTeleport(0, STAND, Direction.NORTH)
+                .thenAwaitLandDrawn(WAIT)
+                .thenWaitUntil(() -> seen() != null && seen().ready() && seen().frame().pose()
+                        .angleTo(made.get().pose()) < 1.0e-3, WAIT, "the floor, rolled, to reach the player's game")
+                .thenServer(0, level -> {
+                    // Out of its field, two blocks off its floor along its up.
+                    final Box box = made.get().bounds();
+                    final StructureFrame frame = made.get().frame();
+                    final double x = (box.minX() + box.maxX() + 1) / 2.0;
+                    final double y = box.maxY() + 1 + OUT_OF_FIELD;
+                    final double z = (box.minZ() + box.maxZ() + 1) / 2.0;
+                    ctx.serverPlayer().teleportTo(level, frame.worldX(x, y, z), frame.worldY(x, y, z),
+                            frame.worldZ(x, y, z), 0, 0);
+                })
+                .thenWaitUntil(() -> Math.abs(yard(ctx).y - (seen().bounds().maxY() + 1 + OUT_OF_FIELD)) < ON
+                                && !DeckWalk.walks(ctx.player()), WAIT, "the player sent out of the floor's field",
+                        () -> where(ctx))
+                .then(0, () -> {
+                    final StructureFrame frame = seen().frame();
+                    ctx.player().setDeltaMovement(new Vec3(frame.turnX(0, -PUSH, 0), frame.turnY(0, -PUSH, 0),
+                            frame.turnZ(0, -PUSH, 0)));
+                })
+                .thenWaitUntil(() -> StructureFooting.standingOn(ctx.player()) == seen() && ctx.player().onGround()
+                                && Math.abs(yard(ctx).y - (seen().bounds().maxY() + 1)) < ON, WAIT,
+                        "the player pushed into the floor's field to come down on its floor", () -> where(ctx))
+                .thenServer(0, level -> {
+                    final StructurePose pose = made.get().pose();
+                    made.get().move(new TowardMotion(pose.movedTo(pose.x(), pose.y() + RISE, pose.z()), RISE_SPEED,
+                            0));
+                })
+                .then(SETTLE, () -> {
+                    // Along the floor towards its far end, and off it.
+                    final StructureFrame frame = seen().frame();
+                    final Vec3 ahead = new Vec3(frame.turnX(0, 0, -1), frame.turnY(0, 0, -1), frame.turnZ(0, 0, -1));
+                    ctx.player().setYRot((float) Math.toDegrees(Math.atan2(-ahead.x, ahead.z)));
+                    ctx.player().setXRot((float) Math.toDegrees(Math.asin(-ahead.y)));
+                    ctx.mc().options.keyUp.setDown(true);
+                })
+                .thenWaitUntil(() -> !DeckWalk.walks(ctx.player()), WAIT,
+                        "the player to walk off the rising floor's end, out of its field", () -> where(ctx))
+                .then(0, () -> {
+                    ctx.mc().options.keyUp.setDown(false);
+                    leaving[0] = ctx.player().getDeltaMovement().y;
+                })
+                .thenWaitUntil(() -> leaving[0] > RISE_SPEED / TICKS - FIRST_FALL, 1,
+                        "the player to go on with the rising floor's speed as they leave it, less a tick's fall",
+                        () -> "going up " + leaving[0] + " as they left, the floor rising "
+                                + (seen().frame().pose().y() - seen().previousFrame().pose().y()));
     }
 
     /* The floor's up, in the world. */

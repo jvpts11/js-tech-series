@@ -100,9 +100,14 @@ public final class DeckWalk {
         }
         final IStructureBody body = body(player);
         if (body == null) {
-            walkedIn = null;
-            givenBack = null;
+            if (walkedIn != null) {
+                leave(player, walkedIn);
+            }
             return false;
+        }
+        if (walkedIn != null && walkedIn != body) {
+            // Out of one structure's field into another's: the first's speed is theirs as they come into the next.
+            leave(player, walkedIn);
         }
         final StructureFrame frame = body.frame();
         final StructureFrame before = body.previousFrame();
@@ -153,7 +158,6 @@ public final class DeckWalk {
                     * AIR_DRAG, 0);
         }
         final Vec3 yard = player.position();
-        final boolean grounded = player.onGround();
         player.setPos(frame.worldX(yard.x, yard.y, yard.z), frame.worldY(yard.x, yard.y, yard.z),
                 frame.worldZ(yard.x, yard.y, yard.z));
         player.xo = xo;
@@ -165,11 +169,23 @@ public final class DeckWalk {
         deckSpeed = stepped;
         givenBack = turn(frame, stepped);
         player.setDeltaMovement(givenBack);
-        // On its floor, or in its field off it, the deck carries them, and the server hears where on it they are.
-        if (grounded || StructureFooting.standingOn(player) != body) {
-            StructureFooting.stood(player, body, BlockPos.containing(yard.x, yard.y - UNDERFOOT, yard.z));
-        }
+        // On its floor or off it in its field, every tick, the deck carries them and the server hears where on it they
+        // are; their speed stays the deck's own till they leave its field, and is never handed the deck's meanwhile.
+        StructureFooting.stood(player, body, BlockPos.containing(yard.x, yard.y - UNDERFOOT, yard.z));
         return true;
+    }
+
+    /*
+     * {@code player} walked out of the field of {@code body}: their speed, kept the deck's own as it carried them, is
+     * the world's again, the deck's speed where they left it given them, and they stand on it no more.
+     */
+    private static void leave(final LocalPlayer player, final IStructureBody body) {
+        player.setDeltaMovement(player.getDeltaMovement().add(StructureFooting.speedAt(body, player.position())));
+        if (StructureFooting.standingOn(player) == body) {
+            StructureFooting.leftWithItsSpeed(player);
+        }
+        walkedIn = null;
+        givenBack = null;
     }
 
     /* The structure whose floor {@code player} walks on in its frame, or null where the world's walking holds. */

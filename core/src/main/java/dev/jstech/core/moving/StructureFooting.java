@@ -131,6 +131,15 @@ public final class StructureFooting {
         action.accept(entity);
     }
 
+    /**
+     * {@code entity} left the structure it stood on, on this side, whoever handed it the structure's speed: it stands
+     * on none from now on, and is given none of the structure's speed as its stand ages out.
+     */
+    @ApiStatus.Internal
+    public static void leftWithItsSpeed(final Entity entity) {
+        side(entity.level()).remove(entity);
+    }
+
     /** {@code entity} stood on {@code body} this tick, on the block {@code support} of the yard. */
     public static void stood(final Entity entity, final IStructureBody body, final BlockPos support) {
         final Map<Entity, Stand> stands = side(entity.level());
