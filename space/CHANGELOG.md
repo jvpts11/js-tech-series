@@ -79,6 +79,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the player's game was sent, else the declared. Experimental.
 
 ### Added
+- A ship's floor pulls its crew, however it is turned and out in space too: got up from the helm in flight,
+  pitched, rolled or at 120 metres a second in deep space, its crew stands and walks its deck to its helm and its
+  doors, carried with it, where they floated weightless and were left behind.
 - The Sun is round: a disc in pixels, white at its middle and warmer to its limb, with a corona round it, in
   every world's sky, the Overworld's too, and in space, where the game drew a square.
 - The Starship Design screen lets a ship built whole go: under the dock's lines, which say "Ship whole" in

@@ -551,6 +551,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
         final int[] nose = planTurn().apply(0, 0, -1);
         MovingStructures.move(made.structure(), ShipFlight.resting(nose[0], nose[2], ShipFlight.performance(design,
                 ShipParts.all(server)), Optional.of(ShipFlight.fromPivot(made.structure(), keeps))));
+        // Its floor pulls its crew however it is turned, out in space too, so they walk it to its helm and its doors.
+        made.structure().deckGravity(true);
         this.plan.set(null);
         this.planAt.set(null);
         this.doors.shipLetGo();

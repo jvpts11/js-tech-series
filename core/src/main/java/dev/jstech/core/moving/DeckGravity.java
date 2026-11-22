@@ -30,6 +30,11 @@ public final class DeckGravity {
 
     /** How far round a structure's blocks its pull reaches, in blocks. */
     public static final double REACH = 1.0;
+    /*
+     * How far a structure may lean or pitch from level, in radians, where the world pulls, for one on its floor to
+     * walk as the world has them: a degree, under which its floor is a ramp no one feels.
+     */
+    private static final double LEVEL_ENOUGH = Math.toRadians(1);
     /* Under this share of the usual pull a dimension counts as weightless, and a deck pulls at the usual pull. */
     private static final double WEIGHTLESS = 0.01;
 
@@ -72,13 +77,20 @@ public final class DeckGravity {
 
     /**
      * Whether one in {@code body}'s field walks in its own frame, its floor down: when it pulls towards its floor and
-     * leans or pitches at all, or stands where its dimension pulls nothing. Level where the world pulls, its floor is
-     * the world's down already, and the world's own walking carries one on it.
+     * leans or pitches more than a degree, or stands where its dimension pulls nothing. Level where the
+     * world pulls, or as near level as a ship settled on its gear stands, its floor is the world's down already, and
+     * the world's own walking carries one on it.
      */
     @ApiStatus.Internal
     public static boolean walksIn(final IStructureBody body) {
-        return body.deckGravity() && (SeatLook.tilted(body.frame())
-                || DimensionRulesData.of(body.level()).gravity() < WEIGHTLESS);
+        if (!body.deckGravity()) {
+            return false;
+        }
+        if (DimensionRulesData.of(body.level()).gravity() < WEIGHTLESS) {
+            return true;
+        }
+        final StructureFrame frame = body.frame();
+        return frame.turnY(0, 1, 0) < Math.cos(LEVEL_ENOUGH);
     }
 
     /** The way {@code body}'s deck pulls, in the world: its floor's down, however it is turned, of length one. */

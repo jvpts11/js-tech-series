@@ -11,6 +11,8 @@ import dev.jstech.core.client.dimension.TravelScreens;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
+import dev.jstech.core.client.moving.DeckWalk;
+import dev.jstech.core.moving.DeckGravity;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureFrame;
@@ -19,6 +21,7 @@ import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.moving.TowardMotion;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.FormedPieceAim;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.client.rocket.FlightComputerFace;
@@ -66,6 +69,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -116,6 +120,14 @@ public final class ShipOrbitClientTests {
      */
     private static final int WATCHED = 40;
     private static final double A_STEP = 0.5;
+    /*
+     * How long the crew walks its deck each way in deep space, in ticks; how far apart the server and their game may
+     * have them, in blocks.
+     */
+    private static final int DECK_WALK = 15;
+    private static final double AGREE = 0.5;
+    /* The piece of the cockpit's model its pilot's seat is drawn as. */
+    private static final String SEAT_PIECE = "seat";
     /* Far out in the Solar System's space, over no world; how often a mode is switched; how still a crew stands. */
     private static final double DEEP_SPACE = 15_000;
     private static final int SWITCHES = 4;
@@ -377,6 +389,93 @@ public final class ShipOrbitClientTests {
     }
 
     /*
+     * In deep space, the ship flying at 120 metres a second, its pilot got up from the helm stands on its deck, its
+     * floor pulling them as no world does there, and walks back along it towards its hatch and forward again, carried
+     * with it all the while, on the server too; then sits at the helm again.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void deck_flyingInSpaceTheCrewWalksItsDeckAndSitsAgain(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final MovingStructure[] there = new MovingStructure[1];
+        final BlockPos[] helm = new BlockPos[1];
+        final Vec3[] onDeck = new Vec3[1];
+        final float[] nose = new float[1];
+        final KeyMapping crouch = ctx.mc().options.keyShift;
+        final KeyMapping back = ctx.mc().options.keyDown;
+        final KeyMapping ahead = ctx.mc().options.keyUp;
+        final KeyMapping use = ctx.mc().options.keyUse;
+        ctx.afterTest(() -> {
+            crouch.setDown(false);
+            back.setDown(false);
+            ahead.setDown(false);
+            use.setDown(false);
+        });
+        atTheHelm(ctx, ship)
+                .thenServer(0, level -> ctx.assertTrue(MovingStructures.travel(ship[0], space(ctx), new Vec3(0,
+                        SystemLayout.ORBIT_Y, DEEP_SPACE)).ok(), "the ship is sent into space, over no world"))
+                .thenWaitUntilServer(level -> {
+                    there[0] = MovingStructures.byId(space(ctx), ship[0].id());
+                    return there[0] != null && there[0].ready();
+                }, ARRIVE, "the ship to come into space", level -> "at " + ship[0].pose())
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(SPACE), ARRIVE,
+                        "its pilot's game to be in space")
+                .thenServer(0, level -> {
+                    ctx.assertTrue(there[0].deckGravity() && DeckGravity.strength(level) == 1, "its floor pulls its"
+                            + " crew, as hard as the ground does, in space where nothing else pulls");
+                    helm[0] = ((StructureSeatEntity) ctx.serverPlayer().getVehicle()).seat();
+                    MovingStructures.move(there[0], ((ShipFlight) there[0].motion()).with(
+                            new ShipFlightModel.State(FAST, 0, 1, 0, 0)));
+                })
+                .then(SETTLE, () -> crouch.setDown(true))
+                .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,
+                        "its pilot to get up from the helm, crouching")
+                .then(SETTLE, () -> crouch.setDown(false))
+                .thenWaitUntil(() -> DeckWalk.walks(ctx.player()) && ctx.player().onGround(), ARRIVE,
+                        "its pilot to stand on its deck, its floor pulling them",
+                        () -> "at " + ctx.player().position() + ", on the ground " + ctx.player().onGround())
+                .thenServer(0, level -> {
+                    // Looking along the ship's nose, as the pilot at its helm does, then walking back from it.
+                    final ShipFlight flight = (ShipFlight) there[0].motion();
+                    final StructureFrame frame = there[0].frame();
+                    nose[0] = (float) Math.toDegrees(Math.atan2(-frame.turnX(flight.noseX(), 0, flight.noseZ()),
+                            frame.turnZ(flight.noseX(), 0, flight.noseZ())));
+                })
+                .then(0, () -> {
+                    ctx.player().setYRot(nose[0]);
+                    ctx.player().setXRot(0);
+                    back.setDown(true);
+                })
+                .then(DECK_WALK, () -> back.setDown(false))
+                .then(SETTLE, () -> ahead.setDown(true))
+                .then(DECK_WALK, () -> ahead.setDown(false))
+                .thenServer(SETTLE, level -> onDeck[0] = MovingStructures.toYard(there[0],
+                        ctx.serverPlayer().position()))
+                .thenWaitUntil(() -> ctx.player().onGround() && onDeck(ctx, there[0]).distanceTo(onDeck[0]) < AGREE
+                                && ClientMovingStructures.byPlot(there[0].plot()).worldBox().inflate(1)
+                                .contains(ctx.player().position()), 1,
+                        "its pilot, walked back and forward, to stand on its deck still, carried with it, the server"
+                                + " having them where on it their game does",
+                        () -> "on the deck by their game at " + onDeck(ctx, there[0]) + ", by the server at "
+                                + onDeck[0] + ", in the world at " + ctx.player().position() + ", the ship "
+                                + ClientMovingStructures.byPlot(there[0].plot()).worldBox())
+                .thenWaitUntil(() -> {
+                    // At the middle of the seat drawn, its piece of the cockpit's model, where their game has it.
+                    final StructureFrame frame = ClientMovingStructures.byPlot(there[0].plot()).frame();
+                    final Vec3 seat = FormedPieceAim.named(ctx.mc().level, helm[0], SEAT_PIECE).orElseThrow().box()
+                            .getCenter();
+                    ctx.lookAt(new Vec3(frame.worldX(seat.x, seat.y, seat.z), frame.worldY(seat.x, seat.y, seat.z),
+                            frame.worldZ(seat.x, seat.y, seat.z)));
+                    use.setDown(true);
+                    return ctx.player().getVehicle() instanceof StructureSeatEntity;
+                }, ARRIVE, "its pilot to sit at the helm again, looking at its seat", () -> "aimed at "
+                        + (ctx.mc().hitResult instanceof BlockHitResult hit ? hit.getBlockPos() + " "
+                        + ctx.mc().level.getBlockState(hit.getBlockPos()) : ctx.mc().hitResult) + ", the seat at "
+                        + helm[0] + " " + ctx.mc().level.getBlockState(helm[0]) + ", standing on the deck at "
+                        + onDeck(ctx, there[0]))
+                .then(0, () -> use.setDown(false));
+    }
+
+    /*
      * In space, the ship at a stop, its pilot got up and standing in its cockpit has their game mode switched, from
      * survival to creative and back: they stand on in the cockpit, where they stood.
      */
@@ -575,6 +674,13 @@ public final class ShipOrbitClientTests {
                 .thenWaitUntilServer(level -> SealedRooms.roomBeside(level, ((ShipFlight) ship[0].motion())
                         .consoleIn(ship[0]).orElseThrow()).isPresent(), ARRIVE, "its cockpit to be a sealed room",
                         level -> "no room by its console");
+    }
+
+    /* Where on {@code ship}'s deck the player stands by their game, in its yard. */
+    private static Vec3 onDeck(final ClientTestContext ctx, final MovingStructure ship) {
+        final StructureFrame frame = ClientMovingStructures.byPlot(ship.plot()).frame();
+        final Vec3 at = ctx.player().position();
+        return new Vec3(frame.yardX(at.x, at.y, at.z), frame.yardY(at.x, at.y, at.z), frame.yardZ(at.x, at.y, at.z));
     }
 
     /* Whether the player's game is in the Solar System's space; any loading screen seen on the way is noted. */
