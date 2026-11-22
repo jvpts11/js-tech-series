@@ -33,7 +33,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * apart, so the player's game says instead where on the deck they stand ({@code StructureFootingPayload}) and the
  * server puts them there on its own deck; a vehicle the player drives on a deck is put where its driver's game says it
  * stands the same way. And the game sends away a player off the ground too long, counting only the world's blocks: one
- * standing on a deck stands on blocks. A player not on a structure moves as before.
+ * standing on a deck stands on blocks; one walking on a deck in its frame falls down its floor, not down the world. A
+ * player not on a structure moves as before.
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImplMixin {
@@ -84,6 +85,25 @@ public abstract class ServerGamePacketListenerImplMixin {
             return;
         }
         mover.setPos(deck.x, deck.y, deck.z);
+    }
+
+    /*
+     * A player walking on a structure's floor in its frame falls down its floor, not down the world: the game counts
+     * a fall by how far the player went down the world off the ground, and crossing a deck rolled on its side, in a
+     * leap, goes down the world as far as the deck is wide. Their step on the floor, as their game said it, is counted
+     * instead; a turn of the head alone moves them nowhere.
+     */
+    @WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;doCheckFallDamage(DDDZ)V"))
+    private void jscore$fallDownTheDeck(final ServerPlayer mover, final double dx, final double dy, final double dz,
+                                        final boolean onGround, final Operation<Void> original,
+                                        @Local(argsOnly = true) final ServerboundMovePlayerPacket packet) {
+        final Vec3 step = packet.hasPosition() ? StructureFooting.deckStep(mover) : null;
+        if (step == null) {
+            original.call(mover, dx, dy, dz, onGround);
+            return;
+        }
+        original.call(mover, step.x, step.y, step.z, onGround);
     }
 
     @WrapOperation(method = "handleMoveVehicle", at = @At(value = "INVOKE",

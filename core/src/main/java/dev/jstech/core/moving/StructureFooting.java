@@ -24,6 +24,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -337,6 +338,27 @@ public final class StructureFooting {
     }
 
     /**
+     * How far {@code player} moved on the floor of the structure they stand on since their game last said, in the
+     * structure's own directions, when they walk on it in its frame ({@link DeckGravity#walksIn}); null otherwise. A
+     * fall is down its floor, not down the world: crossing a deck rolled on its side moves them across the world's
+     * height, and falls them no further than walking a floor does. Each step is taken once.
+     */
+    @ApiStatus.Internal
+    public static @Nullable Vec3 deckStep(final ServerPlayer player) {
+        if (REPORTED.isEmpty()) {
+            return null;
+        }
+        final Reported reported = REPORTED.get(player);
+        if (reported == null || !DeckGravity.walksIn(reported.structure)) {
+            return null;
+        }
+        final double[] at = reported.place;
+        final double[] was = reported.before;
+        REPORTED.put(player, new Reported(reported.structure, at, at));
+        return new Vec3(at[0] - was[0], at[1] - was[1], at[2] - was[2]);
+    }
+
+    /**
      * Where the vehicle {@code player} drives stands, by their game's word, in the world as the server's structure
      * stands now, for the vehicle's move they sent next; null when it stands on none.
      */
@@ -377,7 +399,8 @@ public final class StructureFooting {
             standsOnNone(player, payload.vehicle());
             return;
         }
-        kept.put(player, new Reported(structure, place));
+        final Reported was = kept.get(player);
+        kept.put(player, new Reported(structure, place, was != null && was.structure == structure ? was.place : place));
         if (payload.vehicle()) {
             return;
         }
@@ -393,7 +416,7 @@ public final class StructureFooting {
      */
     static void gotUpAt(final ServerPlayer player, final MovingStructure structure, final Vec3 place) {
         final double[] at = {place.x, place.y, place.z};
-        REPORTED.put(player, new Reported(structure, at));
+        REPORTED.put(player, new Reported(structure, at, at));
         final float yaw = (float) Mth.wrapDegrees(player.getYRot() - structure.pose().yawDegrees());
         player.setData(CoreAttachments.FOOTING.get(), Footing.on(structure.id(), at[0], at[1], at[2], yaw));
         // Their next move is checked from where they got up, not from the seat: the game keeps that till its tick.
@@ -449,7 +472,7 @@ public final class StructureFooting {
         }
     }
 
-    /* Where a player's game last said they stand. */
-    private record Reported(MovingStructure structure, double[] place) {
+    /* Where a player's game last said they stand, and where it said before, of the same structure, not yet taken. */
+    private record Reported(MovingStructure structure, double[] place, double[] before) {
     }
 }
