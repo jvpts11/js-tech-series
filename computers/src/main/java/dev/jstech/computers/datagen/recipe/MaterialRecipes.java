@@ -53,9 +53,9 @@ import net.minecraft.world.level.material.Fluids;
 /**
  * The chain's materials, as computers/docs/design/survival.md ("The chain's numbers") makes them: ore crushed into two
  * crushed ores with its byproducts' chances, crushed ore and byproduct dust smelted (in the furnace the metals it
- * melts, in the Induction Furnace the refractory ones), the forms rolled, drawn and ground from any metal or alloy the
- * chain uses, the alloys and furnace work in their real proportions, the air separated, the electrolysis, the coke and
- * the chemistry. Every number is a first estimate.
+ * melts, their raw ore too, in the Induction Furnace the refractory ones), the forms rolled, drawn and ground from any
+ * metal or alloy the chain uses, the alloys and furnace work in their real proportions, the air separated, the
+ * electrolysis, the coke and the chemistry. Every number is a first estimate.
  */
 final class MaterialRecipes {
 
@@ -133,9 +133,25 @@ final class MaterialRecipes {
 
     /*
      * A crushed ore, or a byproduct's dust, gives one ingot: in the vanilla furnace for the metals it melts, in the
-     * Induction Furnace for the refractory ones. Crushed mercury ore, roasted, gives its mercury.
+     * Induction Furnace for the refractory ones. Crushed mercury ore, roasted, gives its mercury. The raw ore of a metal
+     * the furnace melts gives its ingot too, in the furnace and the blast furnace, as the game's raw iron does: the
+     * metals of the machines' first step exist before any machine, and the Crusher still gives two for one.
      */
     private static void smelting(final RecipeOutput output) {
+        for (final Element element : FURNACE_METALS) {
+            final Material metal = Elements.of(element);
+            if (used(metal, Forms.RAW) && used(metal, Forms.INGOT) && metal.provided(Forms.RAW).isEmpty()) {
+                final String name = element.name().toLowerCase() + "_from_raw";
+                SimpleCookingRecipeBuilder.smelting(Ingredient.of(Forms.RAW.itemTag(metal)), RecipeCategory.MISC,
+                                ingot(element), FURNACE_XP, FURNACE_TICKS)
+                        .unlockedBy("has_it", has(of(element, Forms.RAW)))
+                        .save(output, id("smelting/" + name));
+                SimpleCookingRecipeBuilder.blasting(Ingredient.of(Forms.RAW.itemTag(metal)), RecipeCategory.MISC,
+                                ingot(element), FURNACE_XP, FURNACE_TICKS / 2)
+                        .unlockedBy("has_it", has(of(element, Forms.RAW)))
+                        .save(output, id("blasting/" + name));
+            }
+        }
         for (final Element element : FURNACE_METALS) {
             for (final Form from : List.of(Forms.CRUSHED, Forms.DUST)) {
                 if (used(Elements.of(element), from) && used(Elements.of(element), Forms.INGOT)) {

@@ -13,9 +13,13 @@ import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
 import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.core.jstechseries.Element;
+import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
+import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -37,10 +41,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
@@ -49,8 +55,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * J's Computers' recipes (computers/docs/design/recipes.md): every recipe file loads, no two recipes a machine or a
- * bench could run take the same things, every bench recipe makes one thing, and the Crafting Computer is made of an
- * empty Personal Computer and its card, never of one with parts inside.
+ * bench could run take the same things, every bench recipe makes one thing, the Crafting Computer is made of an
+ * empty Personal Computer and its card, never of one with parts inside, and the raw ore of the furnace's metals melts.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -171,6 +177,33 @@ public final class ComputersRecipesGameTests {
         helper.assertTrue(helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, CraftingInput.of(2, 1,
                 List.of(built, new ItemStack(Items.BLUE_DYE))), helper.getLevel()).isEmpty(), "one with parts"
                 + " inside is not dyed");
+        helper.succeed();
+    }
+
+    /*
+     * The metals of the machines' first step exist before any machine: the raw ore of each metal the furnace melts
+     * gives its ingot in the furnace and the blast furnace, the Crusher not needed.
+     */
+    @GameTest(template = ARENA)
+    public static void rawOre_ofTheFurnacesMetalsSmeltsIntoItsIngot(final GameTestHelper helper) {
+        final List<String> missing = new ArrayList<>();
+        for (final Element element : List.of(Element.TIN, Element.LEAD, Element.ZINC, Element.SILVER, Element.NICKEL,
+                Element.COBALT, Element.MANGANESE)) {
+            final ItemStack raw = new ItemStack(MaterialUses.item(Elements.of(element), Forms.RAW).get());
+            final Item ingot = MaterialUses.item(Elements.of(element), Forms.INGOT).get();
+            for (final RecipeType<? extends AbstractCookingRecipe> furnace : List.of(RecipeType.SMELTING,
+                    RecipeType.BLASTING)) {
+                final SingleRecipeInput input = new SingleRecipeInput(raw);
+                final boolean melts = helper.getLevel().getRecipeManager().getRecipeFor(furnace, input,
+                        helper.getLevel()).map(recipe -> recipe.value().assemble(input, helper.getLevel()
+                        .registryAccess()).is(ingot)).orElse(false);
+                if (!melts) {
+                    missing.add(element.name().toLowerCase() + " in " + BuiltInRegistries.RECIPE_TYPE.getKey(furnace)
+                            .getPath());
+                }
+            }
+        }
+        helper.assertTrue(missing.isEmpty(), "each raw ore melts into its ingot: not " + missing);
         helper.succeed();
     }
 

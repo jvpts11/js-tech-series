@@ -1,0 +1,39 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "jscore:setting",
+      "file": "jscomputers-server",
+      "setting": "survival.own_chain"
+    }
+  ],
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_it": {
+      "conditions": {
+        "items": [
+          {
+            "items": "jscore:tin_raw"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "jsc:blasting/tin_from_raw"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_it"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "jsc:blasting/tin_from_raw"
+    ]
+  }
+}
