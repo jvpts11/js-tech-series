@@ -9,8 +9,15 @@
       "material": "jscore:siderite"
     },
     {
+      "material": "jscore:hematite"
+    },
+    {
+      "material": "jscore:pyrite",
+      "weight": 0.5
+    },
+    {
       "material": "jscore:iron",
-      "weight": 0.25
+      "weight": 0.625
     }
   ],
   "rocks": [

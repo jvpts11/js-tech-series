@@ -10,12 +10,16 @@ package dev.jstech.tests.gametest.industrial;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.jstechseries.SeriesDeposits;
 import dev.jstech.core.jstechseries.SeriesMaterials;
+import dev.jstech.core.jstechseries.SeriesMinerals;
 import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.material.HostRock;
 import dev.jstech.core.material.HostRocks;
+import dev.jstech.core.material.Material;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.vein.DepositType;
 import dev.jstech.core.worldgen.vein.Deposits;
+import dev.jstech.core.worldgen.vein.OreTable;
 import dev.jstech.core.worldgen.vein.VeinField;
 import dev.jstech.core.worldgen.vein.VeinPainter;
 import dev.jstech.industrial.world.IndustrialDeposits;
@@ -24,6 +28,7 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestFluidMachines;
 import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.testkit.LandSurvey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,9 +52,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * J's Industrial's world: its deposit types stand in for J's Core's plain veins and bring the ore of their minerals'
- * elements; a material of a deposit lies only in its part of a vein or its biomes; the prospecting pick tells a vein's
- * direction and strength and a reservoir's depth in words, never coordinates, and the scanner what a vein holds; and a
- * well pump drains the reservoir below it block by block.
+ * elements, every ore their minerals have laid by one of them; a material of a deposit lies only in its part of a vein
+ * or its biomes; the prospecting pick tells a vein's direction and strength and a reservoir's depth in words, never
+ * coordinates, and the scanner what a vein holds; and a well pump drains the reservoir below it block by block.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -91,6 +96,28 @@ public final class IndustrialWorldGameTests {
                 - 3 * IndustrialDeposits.ELEMENT_ORE_SHARE) < WEIGHT, "iron's, a quarter of pyrite's and magnetite's");
         helper.assertTrue(porphyry.rocks().containsAll(List.of(HostRocks.GRANITE.id(), HostRocks.ANDESITE.id(),
                 HostRocks.STONE.id(), HostRocks.DEEPSLATE.id())), "it crosses its rocks and those of the game's ores");
+        helper.succeed();
+    }
+
+    /*
+     * Every ore a mineral of the deposits has is laid by one of them: magnetite and pyrite in the porphyry's diorite,
+     * pyrite in the massive sulfide's tuff, hematite and pyrite in the sedimentary iron's sandstone and pyrite in its
+     * calcite, and malachite in the calcite of a skarn's upper part.
+     */
+    @GameTest(template = ARENA)
+    public static void deposits_layEachOreTheirMineralsHaveInTheirRocks(final GameTestHelper helper) {
+        final List<String> missing = new ArrayList<>();
+        laid(helper, IndustrialDeposits.PORPHYRY_COPPER, Blocks.DIORITE, List.of(SeriesMinerals.MAGNETITE,
+                SeriesMinerals.PYRITE), HostRocks.DIORITE, missing);
+        laid(helper, IndustrialDeposits.MASSIVE_SULFIDE, Blocks.TUFF, List.of(SeriesMinerals.PYRITE), HostRocks.TUFF,
+                missing);
+        laid(helper, IndustrialDeposits.SEDIMENTARY_IRON, Blocks.SANDSTONE, List.of(SeriesMinerals.HEMATITE,
+                SeriesMinerals.PYRITE), HostRocks.SANDSTONE, missing);
+        laid(helper, IndustrialDeposits.SEDIMENTARY_IRON, Blocks.CALCITE, List.of(SeriesMinerals.PYRITE),
+                HostRocks.CALCITE, missing);
+        laid(helper, IndustrialDeposits.SKARN, Blocks.CALCITE, List.of(SeriesMinerals.MALACHITE), HostRocks.CALCITE,
+                missing);
+        helper.assertTrue(missing.isEmpty(), "each ore is laid: not " + missing);
         helper.succeed();
     }
 
@@ -221,12 +248,37 @@ public final class IndustrialWorldGameTests {
         return new DepositType(minerals, 0, 0, 1, 12, 4, 1, Optional.empty(), 0, List.of());
     }
 
+    /*
+     * Lays {@code deposit} through three layers of {@code rock} and notes in {@code missing} each of {@code minerals}
+     * whose ore in {@code host} it laid none of.
+     */
+    private static void laid(final GameTestHelper helper, final ResourceLocation deposit, final Block rock,
+                             final List<Material> minerals, final HostRock host, final List<String> missing) {
+        layers(helper, rock);
+        paint(helper, Deposits.declared().get(deposit));
+        for (final Material mineral : minerals) {
+            final Block ore = OreTable.oreOf(mineral.id(), host);
+            int found = 0;
+            for (int y = 1; y <= 3; y++) {
+                found += ore == null ? 0 : count(helper, y, ore);
+            }
+            if (found == 0) {
+                missing.add(mineral.id().getPath() + " in " + host.id().getPath() + " by " + deposit.getPath());
+            }
+        }
+    }
+
     /* Three layers of stone in the arena, from y 1 up. */
     private static void stone(final GameTestHelper helper) {
+        layers(helper, Blocks.STONE);
+    }
+
+    /* Three layers of {@code rock} in the arena, from y 1 up. */
+    private static void layers(final GameTestHelper helper, final Block rock) {
         for (int x = 0; x <= SIDE; x++) {
             for (int z = 0; z <= SIDE; z++) {
                 for (int y = 1; y <= 3; y++) {
-                    helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                    helper.setBlock(new BlockPos(x, y, z), rock);
                 }
             }
         }

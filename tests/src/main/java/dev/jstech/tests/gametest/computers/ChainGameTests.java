@@ -116,6 +116,8 @@ public final class ChainGameTests {
                 && tungsten.rocks().equals(List.of(HostRocks.DEEPSLATE.id())), "the later eras' only in the deepslate");
         helper.assertTrue(fluorspar.minerals().getFirst().material().equals(SeriesMinerals.FLUORSPAR.id())
                 && fluorspar.rocks().size() == 5, "fluorspar lies in veins of its own, through each of its rocks");
+        helper.assertTrue(fluorspar.minY() < 0 && fluorspar.maxY() == lead.maxY(),
+                "down to the tuff, one of its rocks, which lies below y 0");
         helper.succeed();
     }
 

@@ -43,18 +43,19 @@ public final class IndustrialDeposits {
     /** How much of a deposit the ore of an element is, against the minerals mined for it. */
     public static final double ELEMENT_ORE_SHARE = 0.25;
 
-    /* Middle to deep in granite and andesite, huge and low-grade, as the porphyries of Chile are. */
+    /* Middle to deep in granite, diorite and andesite, huge and low-grade, as the porphyries of Chile are. */
     public static final ResourceLocation PORPHYRY_COPPER = deposit("porphyry_copper")
             .mineral(SeriesMinerals.CHALCOPYRITE, 4).mineral(SeriesMinerals.PYRITE, 2)
-            .mineral(SeriesMinerals.MAGNETITE, 1).rocks(HostRocks.GRANITE, HostRocks.ANDESITE).heights(-32, 48)
-            .frequency(0.06).size(24, 8).density(0.45).declare();
+            .mineral(SeriesMinerals.MAGNETITE, 1).rocks(HostRocks.GRANITE, HostRocks.DIORITE, HostRocks.ANDESITE)
+            .heights(-32, 48).frequency(0.06).size(24, 8).density(0.45).declare();
     /* Huge and poor, in stone and deepslate, as the banded iron of the Pilbara and the Mesabi Range. */
     public static final ResourceLocation BANDED_IRON = deposit("banded_iron")
             .mineral(SeriesMinerals.HEMATITE, 4).mineral(SeriesMinerals.MAGNETITE, 2).heights(-48, 64)
             .frequency(0.10).size(32, 5).density(0.35).declare();
-    /* Shallow to middle, in beds of sediment. */
+    /* Shallow to middle, in beds of sediment, siderite and hematite with some pyrite, as the oolitic ironstones. */
     public static final ResourceLocation SEDIMENTARY_IRON = deposit("sedimentary_iron")
-            .mineral(SeriesMinerals.SIDERITE, 1).rocks(HostRocks.SANDSTONE, HostRocks.CALCITE).heights(0, 80)
+            .mineral(SeriesMinerals.SIDERITE, 1).mineral(SeriesMinerals.HEMATITE, 1)
+            .mineral(SeriesMinerals.PYRITE, 0.5).rocks(HostRocks.SANDSTONE, HostRocks.CALCITE).heights(0, 80)
             .frequency(0.06).size(20, 5).density(0.45).declare();
     /* Near the surface, above sulfide deposits, more in dry land, where water leaches the sulfides away. */
     public static final ResourceLocation OXIDISED_ZONE = deposit("oxidised_zone")
@@ -69,13 +70,14 @@ public final class IndustrialDeposits {
     public static final ResourceLocation TIN_GREISEN = deposit("tin_greisen")
             .mineral(SeriesMinerals.CASSITERITE, 1).rocks(HostRocks.GRANITE).heights(0, 64).frequency(0.06)
             .size(16, 6).density(0.5).declare();
-    /* Middle to deep, massive sulfides laid by sea-floor vents, as Rio Tinto's. */
+    /* Middle to deep, massive sulfides laid by sea-floor vents in the volcanic tuff round them, as Rio Tinto's. */
     public static final ResourceLocation MASSIVE_SULFIDE = deposit("massive_sulfide")
-            .mineral(SeriesMinerals.PYRITE, 4).mineral(SeriesMinerals.CHALCOPYRITE, 2).heights(-48, 32)
-            .frequency(0.05).size(18, 6).density(0.6).declare();
-    /* Where granite meets calcite, at middle depths. */
+            .mineral(SeriesMinerals.PYRITE, 4).mineral(SeriesMinerals.CHALCOPYRITE, 2).rocks(HostRocks.TUFF)
+            .heights(-48, 32).frequency(0.05).size(18, 6).density(0.6).declare();
+    /* Where granite meets calcite, at middle depths, its upper part oxidised to malachite as copper skarns are. */
     public static final ResourceLocation SKARN = deposit("skarn")
             .mineral(SeriesMinerals.MAGNETITE, 3).mineral(SeriesMinerals.CHALCOPYRITE, 1)
+            .mineral(SeriesMinerals.MALACHITE, 1, DepositType.Zone.UPPER)
             .rocks(HostRocks.GRANITE, HostRocks.CALCITE).heights(-16, 48).frequency(0.05).size(16, 6).density(0.5)
             .declare();
 

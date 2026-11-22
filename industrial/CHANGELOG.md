@@ -111,7 +111,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stop.
 - Its deposit types, real kinds of deposit holding the minerals that form together and the ore of their
   elements: porphyry copper, banded iron, sedimentary iron, the oxidised zone, epithermal gold, tin greisen, massive
-  sulfide and skarn, each with the minerals that exist so far, its data file a pack can change.
+  sulfide and skarn, each with the minerals that exist so far, its data file a pack can change. Every ore their
+  minerals have is laid by one of them: the porphyry crosses diorite too, the massive sulfide its tuff, the
+  sedimentary iron holds hematite and pyrite beside its siderite, and a skarn's upper part malachite.
 - Prospecting in words, never coordinates: the direction and strength of the veins near, traces, a vein
   or a rich vein, and the reservoirs below with about how deep each lies; and the scanner's reading of a vein's ore
   and a reservoir's size. The rule of a well pump, which drains the reservoir straight below it block by block.

@@ -37,7 +37,8 @@ public final class ChainDeposits {
     public static final List<ResourceLocation> NEAR_THE_SURFACE = List.of(
             shallow(Element.LEAD), shallow(Element.ZINC), shallow(Element.NICKEL), shallow(Element.ALUMINIUM),
             shallow(Element.TANTALUM), shallow(Element.CHROMIUM), shallow(Element.MANGANESE),
-            shallow(Element.MERCURY), vein("fluorspar", SeriesMinerals.FLUORSPAR, 0, 80, VINTAGE,
+            // Fluorspar reaches below the others, down to the tuff, one of its rocks, which lies below y 0.
+            shallow(Element.MERCURY), vein("fluorspar", SeriesMinerals.FLUORSPAR, -32, 80, VINTAGE,
                     ChainMaterials.FLUORSPAR_ROCKS.toArray(HostRock[]::new)));
     /** The Legacy's veins, deeper. */
     public static final List<ResourceLocation> DEEP = List.of(deep(Element.COBALT), deep(Element.SILVER),

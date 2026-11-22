@@ -24,6 +24,7 @@
   "radius": 18.0,
   "rocks": [
     "minecraft:stone",
-    "minecraft:deepslate"
+    "minecraft:deepslate",
+    "minecraft:tuff"
   ]
 }

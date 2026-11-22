@@ -29,6 +29,7 @@
     "minecraft:stone",
     "minecraft:deepslate",
     "minecraft:granite",
+    "minecraft:diorite",
     "minecraft:andesite"
   ],
   "thickness": 8.0

@@ -464,9 +464,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - PNG pictures on the computers' disks: a file naming a picture the server keeps, weighing what the
   picture does, as a song's file does.
 - The chain's ores, all in the Overworld: lead, zinc, nickel, aluminium, tantalum, chromium, manganese,
-  mercury and fluorspar near the surface (y 0 to 80, a vein about every 12 chunks), cobalt, silver and lithium deeper
-  (y −16 to 40, every 16 chunks), and zirconium, tungsten and molybdenum in the deepslate alone (y −64 to 0, every 24
-  chunks); tin keeps J's Core's veins. Each ore lies in the stone and the deepslate, the last three in the deepslate
+  mercury and fluorspar near the surface (y 0 to 80, fluorspar down to −32 for its tuff, a vein about every 12
+  chunks), cobalt, silver and lithium deeper (y −16 to 40, every 16 chunks), and zirconium, tungsten and molybdenum
+  in the deepslate alone (y −64 to 0, every 24 chunks); tin keeps J's Core's veins. Each ore lies in the stone and the deepslate, the last three in the deepslate
   only and fluorspar in its five rocks, and the forms the chain takes of each metal, compound and alloy (crushed ore,
   ingots, nuggets, dust, lumps, plates, sheets, foils, wires, rods, boules, wafers, crystals, lenses) come with them,
   with the chain's liquids: mercury, the acids and solvents, photoresist, ultrapure water, liquid crystal and the

@@ -12,12 +12,16 @@
       "material": "jscore:chalcopyrite"
     },
     {
+      "material": "jscore:malachite",
+      "zone": "upper"
+    },
+    {
       "material": "jscore:iron",
       "weight": 0.75
     },
     {
       "material": "jscore:copper",
-      "weight": 0.25
+      "weight": 0.5
     }
   ],
   "radius": 16.0,

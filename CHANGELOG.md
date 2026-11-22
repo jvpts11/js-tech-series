@@ -2370,7 +2370,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   knowing the other.
 - (Industrial) Its deposit types, real kinds of deposit holding the minerals that form together and the ore of their
   elements: porphyry copper, banded iron, sedimentary iron, the oxidised zone, epithermal gold, tin greisen, massive
-  sulfide and skarn, each with the minerals that exist so far, its data file a pack can change.
+  sulfide and skarn, each with the minerals that exist so far, its data file a pack can change. Every ore their
+  minerals have is laid by one of them: the porphyry crosses diorite too, the massive sulfide its tuff, the
+  sedimentary iron holds hematite and pyrite beside its siderite, and a skarn's upper part malachite.
 - (Industrial) Prospecting in words, never coordinates: the direction and strength of the veins near, traces, a vein
   or a rich vein, and the reservoirs below with about how deep each lies; and the scanner's reading of a vein's ore
   and a reservoir's size. The rule of a well pump, which drains the reservoir straight below it block by block.
@@ -2711,9 +2713,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   (`MediaProbe.pngSize`, `MediaInfo.STILL`), and `MediaUploader.upload` brings bytes a game made itself, such as a
   camera's picture.
 - (Computers) The chain's ores, all in the Overworld: lead, zinc, nickel, aluminium, tantalum, chromium, manganese,
-  mercury and fluorspar near the surface (y 0 to 80, a vein about every 12 chunks), cobalt, silver and lithium deeper
-  (y −16 to 40, every 16 chunks), and zirconium, tungsten and molybdenum in the deepslate alone (y −64 to 0, every 24
-  chunks); tin keeps J's Core's veins. Each ore lies in the stone and the deepslate, the last three in the deepslate
+  mercury and fluorspar near the surface (y 0 to 80, fluorspar down to −32 for its tuff, a vein about every 12
+  chunks), cobalt, silver and lithium deeper (y −16 to 40, every 16 chunks), and zirconium, tungsten and molybdenum
+  in the deepslate alone (y −64 to 0, every 24 chunks); tin keeps J's Core's veins. Each ore lies in the stone and the deepslate, the last three in the deepslate
   only and fluorspar in its five rocks, and the forms the chain takes of each metal, compound and alloy (crushed ore,
   ingots, nuggets, dust, lumps, plates, sheets, foils, wires, rods, boules, wafers, crystals, lenses) come with them,
   with the chain's liquids: mercury, the acids and solvents, photoresist, ultrapure water, liquid crystal and the
