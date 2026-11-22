@@ -9866,6 +9866,12 @@ stable 4
 10 dev.jstech.core.moving.BlockMove  type record(Level from, Level to, Map<BlockPos, BlockPos> moved, Rotation rotation)
 10 dev.jstech.core.moving.BlockMove  BlockPos where(BlockPos)
 10 dev.jstech.core.moving.BlockMove  boolean movedHere(BlockPos)
+86 dev.jstech.core.moving.DeckGravity  type final class
+86 dev.jstech.core.moving.DeckGravity  static IStructureBody fieldAt(Level, Vec3)
+86 dev.jstech.core.moving.DeckGravity  static IStructureBody fieldOf(Entity)
+86 dev.jstech.core.moving.DeckGravity  static Vec3 down(IStructureBody)
+86 dev.jstech.core.moving.DeckGravity  static double strength(Level)
+86 dev.jstech.core.moving.DeckGravity  static final double REACH
 10 dev.jstech.core.moving.FaceMotion  type record(double directionX, double directionY, double directionZ, double rate) implements IStructureMotion
 10 dev.jstech.core.moving.FaceMotion  ResourceLocation type()
 10 dev.jstech.core.moving.FaceMotion  Step step(StructurePose, Context)
@@ -10007,6 +10013,7 @@ stable 4
 10 dev.jstech.core.moving.IStructureBody  abstract boolean ready()
 10 dev.jstech.core.moving.IStructureBody  abstract int plot()
 30 dev.jstech.core.moving.IStructureBody  default StructureFrame aimFrame()
+86 dev.jstech.core.moving.IStructureBody  default boolean deckGravity()
 10 dev.jstech.core.moving.IStructureMotion  type interface
 10 dev.jstech.core.moving.IStructureMotion  abstract ResourceLocation type()
 10 dev.jstech.core.moving.IStructureMotion  abstract Step step(StructurePose, Context)
@@ -10053,6 +10060,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructure  StructurePose pose()
 10 dev.jstech.core.moving.MovingStructure  StructureUuid id()
 10 dev.jstech.core.moving.MovingStructure  boolean arriving()
+86 dev.jstech.core.moving.MovingStructure  boolean deckGravity()
 10 dev.jstech.core.moving.MovingStructure  boolean departing()
 10 dev.jstech.core.moving.MovingStructure  boolean keepsItsPlace()
 59 dev.jstech.core.moving.MovingStructure  boolean parts(StructureUuid)
@@ -10066,6 +10074,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructure  int blocks()
 63 dev.jstech.core.moving.MovingStructure  int changes()
 10 dev.jstech.core.moving.MovingStructure  int plot()
+86 dev.jstech.core.moving.MovingStructure  void deckGravity(boolean)
 10 dev.jstech.core.moving.MovingStructure  void fly(StructureAutopilot)
 10 dev.jstech.core.moving.MovingStructure  void move(IStructureMotion)
 10 dev.jstech.core.moving.MovingStructure  void setPivot(double, double, double)
@@ -10079,6 +10088,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructureEntity  StructureUuid structureId()
 10 dev.jstech.core.moving.MovingStructureEntity  boolean canBeCollidedWith()
 10 dev.jstech.core.moving.MovingStructureEntity  boolean canUsePortal(boolean)
+86 dev.jstech.core.moving.MovingStructureEntity  boolean deckGravity()
 10 dev.jstech.core.moving.MovingStructureEntity  boolean displayFireAnimation()
 10 dev.jstech.core.moving.MovingStructureEntity  boolean fireImmune()
 10 dev.jstech.core.moving.MovingStructureEntity  boolean hurt(DamageSource, float)

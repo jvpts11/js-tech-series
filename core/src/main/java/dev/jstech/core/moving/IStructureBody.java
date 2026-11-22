@@ -11,6 +11,7 @@ import dev.jstech.core.region.Box;
 import dev.jstech.core.uuid.StructureUuid;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A moving structure as both sides of the game know it: where its blocks are in the yard, how they stand in the world
@@ -51,4 +52,12 @@ public interface IStructureBody {
 
     /** Whether its blocks are loaded and it can be collided with, aimed at and stood on. */
     boolean ready();
+    /**
+     * Whether it pulls what stands in it towards its own floor, however it is turned, as a ship's artificial gravity
+     * does ({@link DeckGravity}); none by default.
+     */
+    @ApiStatus.Experimental
+    default boolean deckGravity() {
+        return false;
+    }
 }

@@ -55,6 +55,8 @@ public final class MovingStructureEntity extends Entity {
             SynchedEntityData.defineId(MovingStructureEntity.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<BlockPos> DATA_MAX =
             SynchedEntityData.defineId(MovingStructureEntity.class, EntityDataSerializers.BLOCK_POS);
+    private static final EntityDataAccessor<Boolean> DATA_DECK_GRAVITY =
+            SynchedEntityData.defineId(MovingStructureEntity.class, EntityDataSerializers.BOOLEAN);
     private static final Logger LOGGER = CoreLogs.MOVING.logger();
 
     public MovingStructureEntity(final EntityType<? extends MovingStructureEntity> type, final Level level) {
@@ -83,6 +85,11 @@ public final class MovingStructureEntity extends Entity {
         final BlockPos min = entityData.get(DATA_MIN);
         final BlockPos max = entityData.get(DATA_MAX);
         return Box.between(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ());
+    }
+
+    /** Whether its structure pulls what stands in it towards its own floor, on both sides. */
+    public boolean deckGravity() {
+        return entityData.get(DATA_DECK_GRAVITY);
     }
 
     /** The pivot its pose stands at, a place of the yard, as {@code {x, y, z}}, on both sides. */
@@ -274,6 +281,7 @@ public final class MovingStructureEntity extends Entity {
         entityData.set(DATA_PLOT, moving.plot());
         boundsChanged();
         pivotChanged();
+        deckGravityChanged();
         follow(moving.frame());
     }
 
@@ -296,6 +304,13 @@ public final class MovingStructureEntity extends Entity {
         final Box box = structure.bounds();
         entityData.set(DATA_MIN, new BlockPos(box.minX(), box.minY(), box.minZ()));
         entityData.set(DATA_MAX, new BlockPos(box.maxX(), box.maxY(), box.maxZ()));
+    }
+
+    /** Tells the players' games whether its structure pulls towards its own floor, after that changed. */
+    void deckGravityChanged() {
+        if (structure != null) {
+            entityData.set(DATA_DECK_GRAVITY, structure.deckGravity());
+        }
     }
 
     /** Tells the players' games where the pivot is, after it moved. */
@@ -326,6 +341,7 @@ public final class MovingStructureEntity extends Entity {
         builder.define(DATA_PIVOT_REST, new Vector3f());
         builder.define(DATA_MIN, BlockPos.ZERO);
         builder.define(DATA_MAX, BlockPos.ZERO);
+        builder.define(DATA_DECK_GRAVITY, false);
     }
 
     @Override

@@ -33,6 +33,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -87,6 +88,8 @@ public final class MovingStructure implements IStructureBody {
     private @Nullable UUID maker;
     /* What the autopilot has built up holding its height against its weight. */
     private final double[] autopilotHold = new double[1];
+    /* Whether it pulls what stands in it towards its own floor, however it is turned ({@link DeckGravity}). */
+    private boolean deckGravity;
     private boolean parting;
     private boolean ready;
     private boolean held;
@@ -107,6 +110,7 @@ public final class MovingStructure implements IStructureBody {
     private static final String MOUNT = "mount";
     private static final String AUTOPILOT = "autopilot";
     private static final String MAKER = "maker";
+    private static final String DECK_GRAVITY = "deck_gravity";
     private static final String SPLIT_SEEDS = "split_seeds";
     private static final String SPLIT_PLOTS = "split_plots";
     private static final Codec<double[]> PLACE = Codec.DOUBLE.listOf(3, 3).xmap(
@@ -169,6 +173,7 @@ public final class MovingStructure implements IStructureBody {
         if (tag.hasUUID(MAKER)) {
             read.maker = tag.getUUID(MAKER);
         }
+        read.deckGravity = tag.getBoolean(DECK_GRAVITY);
         for (final long seed : tag.getLongArray(SPLIT_SEEDS)) {
             read.splitSeeds.add(seed);
         }
@@ -214,6 +219,9 @@ public final class MovingStructure implements IStructureBody {
         }
         if (maker != null) {
             tag.putUUID(MAKER, maker);
+        }
+        if (deckGravity) {
+            tag.putBoolean(DECK_GRAVITY, true);
         }
         // A piece waiting to part is looked for again as it loads, and the plot taken for it given back.
         final Set<Long> seeds = new HashSet<>(splitSeeds);
@@ -276,6 +284,22 @@ public final class MovingStructure implements IStructureBody {
     @Override
     public boolean ready() {
         return ready;
+    }
+
+    @Override
+    public boolean deckGravity() {
+        return deckGravity;
+    }
+
+    /**
+     * Has it pull what stands in it towards its own floor, however it is turned, or the world's way again: a ship's
+     * floor stays down for its crew through a dive, a roll or a loop ({@link DeckGravity}). It goes with it to another
+     * dimension, and is kept in its save.
+     */
+    @ApiStatus.Experimental
+    public void deckGravity(final boolean pulls) {
+        deckGravity = pulls;
+        entity.deckGravityChanged();
     }
 
     /** The entity it lives in. */

@@ -139,6 +139,11 @@ public final class ClientStructure implements IStructureBody {
         return ready;
     }
 
+    @Override
+    public boolean deckGravity() {
+        return entity.deckGravity();
+    }
+
     public MovingStructureEntity entity() {
         return entity;
     }

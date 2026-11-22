@@ -694,6 +694,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- (Core) A structure's own gravity: J's Core's API is at version 86. `MovingStructure.deckGravity(true)` has a moving
+  structure pull what stands in it towards its own floor however it is turned, as a ship's artificial gravity keeps
+  its floor down through a dive, a roll or a loop; it is kept in its save and goes with it to another dimension, and
+  `IStructureBody.deckGravity` tells it on both sides. `DeckGravity` gives the structure whose field holds an entity
+  or a place (`fieldOf`, `fieldAt`: its blocks' box and `REACH` round it), the way its floor pulls in the world
+  (`down`) and how hard (`strength`: the dimension's own pull, or the usual one where it pulls nothing, as in space).
+  Experimental.
 - (Core) Where a mod's things are, for an agent: J's Core's API is at version 85. `AgentPlaces.declare` takes an
   `IPlaceSource` that hands each `AgentPlace` of a mod in the player's dimension, its kind, its name and where it is;
   `LevelStructures.terminals` gives every structure's terminal loaded in a dimension. Experimental.

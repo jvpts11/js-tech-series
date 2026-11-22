@@ -177,6 +177,7 @@ public final class StructureTravel {
         }
         there.move(motion);
         there.controls().takeOver(structure.controls());
+        there.deckGravity(structure.deckGravity());
         structure.handMakerTo(there);
         // What it holds stands where it stood on it, here and there, its blocks now in another plot.
         StructureMounts.shift(from, structure.id(), dx, dy, dz);
