@@ -123,7 +123,12 @@ public final class FireGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = ARENA, batch = REMAINS, timeoutTicks = 1200)
+    /*
+     * The game's own fire decides by chance when the wool burns and when the fire left in its place goes out, each
+     * fire's tick 30 to 40 ticks apart: some seventeen of them on average, so 1,200 ticks ran out about once in a
+     * hundred runs. Three times as long is past what chance reaches.
+     */
+    @GameTest(template = ARENA, batch = REMAINS, timeoutTicks = 3600)
     public static void fire_spreadsByTheAirAndLeavesItsRemains(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         level.setWeatherParameters(6_000, 0, false, false);
