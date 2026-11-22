@@ -45,11 +45,12 @@ public final class OreUsesGameTests {
     /* The mods whose recipes make J's Computers' chain, followed from the ores. */
     private static final Set<String> CHAIN = Set.of("jscore", "jsc");
     /*
-     * The wafers of light, which the Lithography Station takes by its own steps, through the laser diodes' mask or the
-     * LEDs', rather than by a recipe; until the recipe viewers show those steps.
+     * What a wafer's steps take rather than a recipe, as their pages show: the wafers of light, which the Lithography
+     * Station takes through the laser diodes' mask or the LEDs', and the lead-free solder balls the Packaging Line
+     * solders the chips of the Transition on with.
      */
     private static final Set<String> WORKED_BY_STEPS = Set.of("algainp_wafer", "gallium_arsenide_wafer",
-            "gallium_nitride_wafer");
+            "gallium_nitride_wafer", "lead_free_solder_nugget");
     /*
      * The Moon's and Mars' own minerals: what J's Space's own recipes will need, not yet built (its minerals page,
      * "To build"); mined and kept until then.
