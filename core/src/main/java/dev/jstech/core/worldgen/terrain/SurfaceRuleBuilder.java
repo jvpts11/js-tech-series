@@ -33,10 +33,18 @@ import net.minecraft.world.level.levelgen.synth.NormalNoise;
  *         .in(MY_DESERT, Terrains.surfaceRules().layers(() -> Blocks.SAND, () -> Blocks.SANDSTONE, 4))
  *         .layers(() -> Blocks.GRASS_BLOCK, () -> Blocks.DIRT, 3);
  * }</pre>
+ *
+ * <p>The game reads the rule for every block of a column, deep rock included. The rules are read only as deep under the
+ * floor as they lay anything, one test of the depth for the rock below; and a biome's or a noise's test, which costs
+ * far more than a depth's, is made only as deep as the rules {@link #in} that biome or {@link #where} that noise lay
+ * anything. The surface comes out the same, made many times faster.
  */
 public final class SurfaceRuleBuilder {
 
     private final List<Supplier<SurfaceRules.RuleSource>> rules = new ArrayList<>();
+    /* How deep under the floor the rules given lay anything at most, in blocks; with one laying anywhere, no bound. */
+    private int deepest;
+    private boolean anywhere;
 
     SurfaceRuleBuilder() {
     }
@@ -47,6 +55,7 @@ public final class SurfaceRuleBuilder {
      */
     public SurfaceRuleBuilder bedrock(final String name, final int blocks) {
         Objects.requireNonNull(name, "name");
+        this.anywhere = true;
         this.rules.add(() -> SurfaceRules.ifTrue(SurfaceRules.verticalGradient(name, VerticalAnchor.bottom(),
                 VerticalAnchor.aboveBottom(blocks)), state(() -> Blocks.BEDROCK)));
         return this;
@@ -80,6 +89,7 @@ public final class SurfaceRuleBuilder {
      */
     public SurfaceRuleBuilder layers(final Supplier<? extends Block> top, final Supplier<? extends Block> under,
                                      final int depth) {
+        this.deepest = Math.max(this.deepest, depth);
         this.rules.add(() -> SurfaceRules.sequence(
                 SurfaceRules.ifTrue(SurfaceRules.ON_FLOOR, SurfaceRules.sequence(
                         SurfaceRules.ifTrue(SurfaceRules.waterBlockCheck(-1, 0), state(top)), state(under))),
@@ -87,29 +97,60 @@ public final class SurfaceRuleBuilder {
         return this;
     }
 
-    /** In {@code biome}, the rules of {@code inside}. */
+    /** In {@code biome}, the rules of {@code inside}, given whole. */
     public SurfaceRuleBuilder in(final ResourceKey<Biome> biome, final SurfaceRuleBuilder inside) {
         Objects.requireNonNull(biome, "biome");
-        this.rules.add(() -> SurfaceRules.ifTrue(SurfaceRules.isBiome(biome), inside.build()));
+        reach(inside);
+        this.rules.add(() -> inside.underTheFloor(SurfaceRules.isBiome(biome)));
         return this;
     }
 
-    /** Where {@code noise} reads from {@code from} to {@code to}, the rules of {@code inside}: patches of a surface. */
+    /**
+     * Where {@code noise} reads from {@code from} to {@code to}, the rules of {@code inside}, given whole: patches of a
+     * surface.
+     */
     public SurfaceRuleBuilder where(final ResourceKey<NormalNoise.NoiseParameters> noise, final double from,
                                     final double to, final SurfaceRuleBuilder inside) {
         Objects.requireNonNull(noise, "noise");
-        this.rules.add(() -> SurfaceRules.ifTrue(SurfaceRules.noiseCondition(noise, from, to), inside.build()));
+        reach(inside);
+        this.rules.add(() -> inside.underTheFloor(SurfaceRules.noiseCondition(noise, from, to)));
         return this;
     }
 
-    /** Any rule of the game's own, in its turn among the rest. */
+    /** Any rule of the game's own, in its turn among the rest; it may lay blocks anywhere. */
     public SurfaceRuleBuilder rule(final Supplier<SurfaceRules.RuleSource> rule) {
+        this.anywhere = true;
         this.rules.add(Objects.requireNonNull(rule, "rule"));
         return this;
     }
 
-    /** The rules as the game's surface rule, read in the order they were given. */
+    /**
+     * The rules as the game's surface rule, read in the order they were given; read only as deep under the floor as
+     * they lay anything.
+     */
     public SurfaceRules.RuleSource build() {
+        return this.anywhere ? sequence() : SurfaceRules.ifTrue(SurfaceRules.stoneDepthCheck(this.deepest, false,
+                CaveSurface.FLOOR), sequence());
+    }
+
+    /* As deep as the rules of {@code inside} lay anything, so do these. */
+    private void reach(final SurfaceRuleBuilder inside) {
+        this.anywhere |= inside.anywhere;
+        this.deepest = Math.max(this.deepest, inside.deepest);
+    }
+
+    /*
+     * These rules where {@code condition} holds, it tested only as deep under the floor as they lay anything: no
+     * deeper they lay nothing, so the surface is the same, with the costly test left out of the rock below.
+     */
+    private SurfaceRules.RuleSource underTheFloor(final SurfaceRules.ConditionSource condition) {
+        final SurfaceRules.RuleSource tested = SurfaceRules.ifTrue(condition, sequence());
+        return this.anywhere ? tested : SurfaceRules.ifTrue(SurfaceRules.stoneDepthCheck(this.deepest, false,
+                CaveSurface.FLOOR), tested);
+    }
+
+    /* The rules read in the order they were given, at any depth. */
+    private SurfaceRules.RuleSource sequence() {
         return SurfaceRules.sequence(this.rules.stream().map(Supplier::get).toArray(SurfaceRules.RuleSource[]::new));
     }
 

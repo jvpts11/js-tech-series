@@ -15,8 +15,10 @@ import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.IWorldGenerator;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.geology.SpaceRocks;
+import java.util.function.Supplier;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.SurfaceRules;
@@ -77,10 +79,9 @@ public final class AridGenerator implements IWorldGenerator {
                         .layers(SpaceRocks.BASALT_SAND, SpaceRocks.BASALT_SAND, SAND))
                 .in(MarsBiomes.OXIDE_PLAINS.key(), Terrains.surfaceRules().steep(SpaceRocks.MARTIAN_BASALT)
                         .layers(SpaceRocks.HEMATITE_REGOLITH, SpaceRocks.MARTIAN_REGOLITH, REGOLITH))
-                .in(MarsBiomes.LAKEBED.key(), mudstone(Terrains.surfaceRules()
-                        .layers(SpaceRocks.MUDSTONE, SpaceRocks.MUDSTONE, MUDSTONE)))
-                .in(MarsBiomes.CHAOS_TERRAIN.key(), mudstone(Terrains.surfaceRules()
-                        .layers(SpaceRocks.MARTIAN_REGOLITH, SpaceRocks.MUDSTONE, MUDSTONE)))
+                .in(MarsBiomes.LAKEBED.key(), mudstone(SpaceRocks.MUDSTONE, SpaceRocks.MUDSTONE, MUDSTONE))
+                .in(MarsBiomes.CHAOS_TERRAIN.key(), mudstone(SpaceRocks.MARTIAN_REGOLITH, SpaceRocks.MUDSTONE,
+                        MUDSTONE))
                 // The springs: red dust over the white silica soil, the sinter bare on the steep; the layered
                 // mounds: dust over the sulfate beds; the cryptic region: the seasonal ice over the red ground.
                 .in(MarsBiomes.LIFELESS_SPRINGS.key(), Terrains.surfaceRules().steep(SpaceRocks.SILICA_SINTER)
@@ -96,8 +97,9 @@ public final class AridGenerator implements IWorldGenerator {
                 .build();
     }
 
-    /* {@code rules} with the mudstone bare on the steep walls first. */
-    private static SurfaceRuleBuilder mudstone(final SurfaceRuleBuilder rules) {
-        return Terrains.surfaceRules().steep(SpaceRocks.MUDSTONE).rule(rules::build);
+    /* The layers {@code top} over {@code under}, {@code depth} deep, the mudstone bare on the steep walls first. */
+    private static SurfaceRuleBuilder mudstone(final Supplier<? extends Block> top,
+                                               final Supplier<? extends Block> under, final int depth) {
+        return Terrains.surfaceRules().steep(SpaceRocks.MUDSTONE).layers(top, under, depth);
     }
 }
