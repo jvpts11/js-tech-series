@@ -79,10 +79,11 @@ public final class DescentGameTests {
     private static final double FULL = 5_000;
     private static final double SOME = 2_000;
     /*
-     * As long as a rocket takes to reach its orbit and come down: the orbit's far chunks load in real time while the
-     * test server's ticks run unbounded, so a shorter wait runs out under a busy battery.
+     * As long as a rocket takes to reach its orbit and come down: the orbit's far chunks, and the Moon's land it comes
+     * down into, are made and loaded in real time while the test server's ticks run unbounded, so on a slower machine
+     * a few thousand ticks run out before the land is there.
      */
-    private static final int LONG = 6_000;
+    private static final int LONG = 60_000;
     /* The spot marked on each world, at its middle, and how far past its ellipse it may stand. */
     private static final int MARKED = 0;
     private static final double SLACK = 4;
