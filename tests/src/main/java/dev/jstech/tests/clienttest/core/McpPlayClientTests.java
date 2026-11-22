@@ -119,6 +119,8 @@ public final class McpPlayClientTests {
     private static final String MACHINES = AudioChannels.MACHINES.id().toString();
     /* How long a held world is watched standing still between calls, in the client's ticks. */
     private static final int THINKS = 40;
+    /* How many slots of cobblestone the furnace's recipe takes. */
+    private static final int FURNACE_SLOTS = 8;
     /* What the test mod tells of its machine, and the mod whose reading fails. */
     private static final String WORKING = "working";
     private static final String BROKEN = "jstests_broken";
@@ -619,6 +621,47 @@ public final class McpPlayClientTests {
                         + result)));
     }
 
+    /*
+     * The recipes the game holds: the furnace's, a crafting table's, takes eight slots any of cobblestone does; a test
+     * machine's pressing takes two iron ingots, coal and water and makes an iron block, charcoal and lava; and a kind
+     * is listed with the machine that works it.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void recipes_tellWhatEachTakesAndMakes(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        ctx.afterTest(() -> McpGame.turn(false));
+        pair(ctx, sent, key, port);
+        run(ctx, sent, key, port, new Step("recipes_read", "{\"kind\":\"minecraft:crafting\","
+                + "\"makes\":\"minecraft:furnace\"}", result -> {
+                    final JsonObject furnace = recipe(result, "minecraft:furnace");
+                    final List<JsonElement> takes = furnace.getAsJsonArray("takes").asList();
+                    ctx.assertTrue(takes.size() == FURNACE_SLOTS && takes.stream().allMatch(slot -> holds(slot,
+                            "items", "minecraft:cobblestone")), "the furnace takes eight of cobblestone: " + furnace);
+                }));
+        run(ctx, sent, key, port, new Step("recipes_read", "{\"mod\":\"jstests\",\"kind\":\"test_pressing\","
+                + "\"makes\":\"minecraft:lava\"}", result -> {
+                    final JsonObject pressing = recipe(result, "jstests:test_pressing/iron_block");
+                    final List<JsonElement> takes = pressing.getAsJsonArray("takes").asList();
+                    ctx.assertTrue(takes.stream().anyMatch(slot -> holds(slot, "items", "minecraft:iron_ingot")
+                            && slot.getAsJsonObject().get("count").getAsInt() == 2)
+                            && takes.stream().anyMatch(slot -> holds(slot, "items", "minecraft:coal"))
+                            && takes.stream().anyMatch(slot -> holds(slot, "fluids", "minecraft:water")),
+                            "the pressing takes two iron ingots, coal and water: " + pressing);
+                    final List<JsonElement> makes = pressing.getAsJsonArray("makes").asList();
+                    ctx.assertTrue(makes.stream().anyMatch(slot -> holds(slot, "items", "minecraft:iron_block"))
+                            && makes.stream().anyMatch(slot -> holds(slot, "items", "minecraft:charcoal"))
+                            && makes.stream().anyMatch(slot -> holds(slot, "fluids", "minecraft:lava")),
+                            "the pressing makes an iron block, charcoal and lava: " + pressing);
+                }));
+        run(ctx, sent, key, port, new Step("recipes_read", "{\"kind\":\"test_refining\",\"most\":1}",
+                result -> ctx.assertTrue(result.getAsJsonArray("kinds").asList().stream()
+                        .map(JsonElement::getAsJsonObject).anyMatch(kind -> "jstests:test_refining".equals(text(kind,
+                                "id")) && holds(kind, "stations", "jstests:test_kit_machine")),
+                        "the refining kind is listed with the kit machine that works it: " + result.get("kinds"))));
+    }
+
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */
     @ClientTest(timeoutTicks = 1600)
     public static void off_takesTheKeysBackFromACallStillActing(final ClientTestContext ctx) {
@@ -734,6 +777,20 @@ public final class McpPlayClientTests {
     private static boolean worded(final JsonObject tree, final String words) {
         return tree.has("widgets") && tree.getAsJsonArray("widgets").asList().stream()
                 .map(JsonElement::getAsJsonObject).anyMatch(widget -> words.equals(text(widget, "words")));
+    }
+
+    /* The recipe {@code id} among those an answer of recipes_read holds. */
+    private static JsonObject recipe(final JsonObject result, final String id) {
+        return result.getAsJsonArray("recipes").asList().stream().map(JsonElement::getAsJsonObject)
+                .filter(one -> id.equals(text(one, "id"))).findFirst()
+                .orElseThrow(() -> new ClientTestFailure("the recipe " + id + " is read: " + result));
+    }
+
+    /* Whether a recipe's slot, or a kind, holds {@code id} among its {@code what}: items, fluids or stations. */
+    private static boolean holds(final JsonElement slot, final String what, final String id) {
+        final JsonObject one = slot.getAsJsonObject();
+        return one.has(what) && one.getAsJsonArray(what).asList().stream()
+                .anyMatch(each -> id.equals(each.getAsString()));
     }
 
     /* The words under {@code name} in an answer, or none. */

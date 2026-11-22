@@ -596,6 +596,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   round the player's, of a mod or whose id holds some words, by their id, each with the first place it was found, the
   most first, making the chunks never made as walking there would; for an agent finding where ores and other blocks
   lie.
+- The MCP reads the recipes the game holds: `recipes_read` answers, as a recipe viewer shows them, what each
+  recipe takes, what it needs and does not use up and what it makes, items and fluids, and the stations that work
+  each kind of the mods on J's Core; of a mod, of a kind, or making a thing, for an agent following what a thing is
+  made of down to what the world gives.
 - Walking a turned deck: in a moving structure whose floor pulls towards itself, pitched or rolled more than a
   degree, upside down or out in space, a player walks on its floor as on the ground, its floor down: walking,
   running, jumping, sneaking at its edges, stepping up its stairs and climbing its ladders, the deck carrying them as
