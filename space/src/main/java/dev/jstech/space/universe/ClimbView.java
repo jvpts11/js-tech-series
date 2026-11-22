@@ -15,8 +15,10 @@ package dev.jstech.space.universe;
  * far map of the ground as the world's generator makes it ({@link FarRings}), on a ground that bends just enough for
  * its horizon to lie within the map's reach, under the game's clouds and a haze that matches the game's fog. From the
  * middle up the blocks give way to the far map's own picture of them, too far below by then to tell apart, and the eye
- * rises ever faster, the ground bending into a world, until near the line the real ground melts, under a veil of haze,
- * into the world's painted sphere, never seen through, and the line is crossed with the very picture its space shows.
+ * rises faster, the ground bending into a world, then slower again as it nears the height its space sees the world
+ * from, as a ship leaving a world's air sees it fall away and settle; near the line the real ground
+ * melts, under a veil of haze, into the world's painted sphere, never seen through, and the line is crossed with the
+ * very picture its space shows, standing as still below as it stands there. Coming down, the same the other way.
  *
  * <p>How far up a climber is goes from 0 at the build limit to 1 at the line. Pure: no game types.
  */
@@ -64,13 +66,14 @@ public final class ClimbView {
         final double high = (away - radius) / radius;
         // The eye's height over the sea, in blocks: the climber's own, then rising by a factor to where the ground,
         // bent so its horizon stays within reach, looks from as high as the arrival does from its world; going on at
-        // the climber's own pace where the blocks give way and ever faster after.
+        // the climber's own pace where the blocks give way, faster through the middle, and slowing to a stop at the
+        // line, so it rises into the height its space sees the world from rather than shooting up to it.
         final double given = Math.max(1, limit + BLOCKS_GIVE_WAY * SpaceClimbs.ABOVE_THE_LIMIT - sea);
         final double rise = Math.log(Math.max(1, REACH * Math.sqrt(high / 2) / given));
         final double pace = Math.min(rise, (1 - BLOCKS_GIVE_WAY) * SpaceClimbs.ABOVE_THE_LIMIT / given);
         final double past = (share - BLOCKS_GIVE_WAY) / (1 - BLOCKS_GIVE_WAY);
         final double eye = share <= BLOCKS_GIVE_WAY ? Math.max(1, height - sea)
-                : given * Math.exp(pace * past + (rise - pace) * past * past);
+                : given * Math.exp(pace * past * (1 - past) * (1 - past) + rise * past * past * (3 - 2 * past));
         final double bend = Math.min(width / (2 * Math.PI), REACH * REACH / (2 * eye));
         final double turn = smooth(BLOCKS_GIVE_WAY, 1, share);
         final double[] up = slerp(new double[] {0, 1, 0}, upAtArrival, turn);

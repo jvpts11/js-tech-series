@@ -240,9 +240,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   block by block, painted in the blocks' own colours as each biome tints them, its coasts and snow lines where its
   heights put them; the game's clouds go on to the horizon, drifting as they do, and a haze like the game's fog
   thickens with the distance, so the loaded land melts into the far one with no seam. The sky turns navy and then
-  black, the stars come out, and from halfway up the eye rises ever faster as the ground bends into the world's
-  sphere; near the top the real ground melts under a veil of haze into the world's painted sphere, never seen
-  through, and the line is crossed with the very picture the space shows. Each place of a world arrives at its own
+  black, the stars come out, and from halfway up the eye rises faster as the ground bends into the world's sphere,
+  then slower again near the top, so the world falls away and settles rather than shooting off; there the real ground
+  melts under a veil of haze into the world's painted sphere, never seen through, and the line is crossed with the
+  very picture the space shows. Each place of a world arrives at its own
   spot of the low orbit, laid out like a map of the world, so a station built there stands over its base; going down
   through the floor of the low orbits shows the climb's own pictures on the way and comes back down over the same
   place, high over the ground. Every other passage between the Solar System's worlds and its space shows no loading

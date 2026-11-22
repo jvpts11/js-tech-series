@@ -97,6 +97,15 @@ class ClimbViewTest {
         }
     }
 
+    @Test
+    void at_risesFastestOnTheWayAndSettlesIntoTheLine() {
+        final double onTheWay = LIMIT + 0.75 * SpaceClimbs.ABOVE_THE_LIMIT;
+        final double midway = at(onTheWay + 1).eyeHeight() / at(onTheWay).eyeHeight();
+        final double last = at(LINE).eyeHeight() / at(LINE - 1).eyeHeight();
+        assertTrue(last < 1.001, "it settles into the line, its last block hardly raising it: " + last);
+        assertTrue(midway > last * 1.005, "rising faster on the way: " + midway + ", then " + last);
+    }
+
     private static ClimbView.Climb at(final double height) {
         return ClimbView.at(SolarBody.OVERWORLD, 0, 0, height, LIMIT, SEA, WIDTH);
     }
