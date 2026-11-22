@@ -25,7 +25,6 @@ final class JeiTexts {
     static final TextKey IMPLANT = TextKey.of("jsc.jei.wafer.implant", "Ion Implantation");
     static final TextKey DEPOSITION = TextKey.of("jsc.jei.wafer.deposition", "Deposition");
     static final TextKey PACKAGING = TextKey.of("jsc.jei.wafer.packaging", "Packaging");
-    static final TextKey SECONDS = TextKey.of("jsc.jei.wafer.seconds", "%s S");
 
     private JeiTexts() {
     }

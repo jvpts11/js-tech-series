@@ -81,7 +81,9 @@ public final class ChainMachines {
     private static final int TICKS = 20;
 
     static {
-        machine("crusher").named("Crusher").step(8, 2_000).slots(1, 2, 0, 0, 0, 0)
+        // The Crusher's four outputs: the crushed ore and up to three byproducts, as zinc ore gives indium, germanium
+        // and sulfur; the work starts only when all of it fits.
+        machine("crusher").named("Crusher").step(8, 2_000).slots(1, 4, 0, 0, 0, 0)
                 .shape("aba,cac,ada", "aa#,aea,aaa", "aaa,afa,aaa")
                 .legend("a=machine_casing,b=item_outlet,c=crusher_drive,d=power_entry,e=crusher_roll,f=item_inlet")
                 .declareRecipes();

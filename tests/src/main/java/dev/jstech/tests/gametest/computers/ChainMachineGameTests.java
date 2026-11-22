@@ -25,7 +25,11 @@ import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachineTerminalBlock;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.jstechseries.Element;
+import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestComputerEnergy;
@@ -138,6 +142,19 @@ public final class ChainMachineGameTests {
                 .insertItem(0, new ItemStack(ChainParts.FERRITE.get()), false));
         helper.succeedWhen(() -> helper.assertTrue(holds(machineAt(helper, terminal), ChainParts.INDUCTOR.get(), 2),
                 "the ferrite crushed into two inductors"));
+    }
+
+    /*
+     * Raw zinc gives its crushed ore and three byproducts, indium, germanium and sulfur, each by its chance: the work
+     * starts only when all of it fits at once, and the Crusher has an output for each. With two it never began.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void crusher_crushesZincWithRoomForItsThreeByproducts(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("crusher"));
+        helper.runAfterDelay(20, () -> machineAt(helper, terminal).getInventory().insertItem(0, new ItemStack(
+                MaterialUses.item(Elements.of(Element.ZINC), Forms.RAW).get()), false));
+        helper.succeedWhen(() -> helper.assertTrue(holds(machineAt(helper, terminal), MaterialUses.item(
+                Elements.of(Element.ZINC), Forms.CRUSHED).get(), 2), "the raw zinc crushed into two crushed zinc"));
     }
 
     /* What moves things for it (a hopper, a bus, a Crafting Interface) reaches it through its inlet and its outlet. */

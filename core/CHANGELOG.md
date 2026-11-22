@@ -585,6 +585,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   formed model's doors' leaves are left out of its blocks' shapes. Experimental.
 
 ### Added
+- The machines' recipes on their own faces in JEI, EMI and REI: a kind of processing whose machine is drawn on a face of its own has each recipe shown on that face at work, its loop playing, its RUN lamp lit and its LCD saying how long the recipe takes, the recipe's items in the face's ports and its fluids and matter in its sight glasses, each glass named as what it holds and saying on its tooltip how much the recipe takes or makes. A mod registers a kind's face with `RecipeFaces.register`; a recipe its face cannot hold keeps the plain page (core/docs/RECIPE_VIEWERS.md).
 - Pieces of ore over the veins: a few pieces of a vein's ore lie on the surface over it, as a prospector's float, about eight a vein within its reach, each two to four pieces cut from its ore's own picture, of the vein's minerals as it holds them. They lie only on solid, dry ground, break at once by hand, give the ore itself, one of what its ore block gives (raw iron, raw copper), and are walked through; a block placed where they lie replaces them. Chalcopyrite Pieces, Hematite Pieces and so on, one for every mineral with an ore.
 - A little of each ore lies loose between the veins, in small knots of a handful of blocks, as the game's own
   ores lie scattered: a player digging anywhere comes on some of every kind at its heights, a vein still being where

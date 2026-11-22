@@ -15,6 +15,7 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.WidgetHolder;
+import dev.jstech.core.client.recipeview.RecipeFaces;
 import dev.jstech.core.recipeview.RecipeView;
 import dev.jstech.core.recipeview.RecipeViewKind;
 import java.util.ArrayList;
@@ -64,6 +65,11 @@ final class DeclaredEmiRecipe<T> extends BasicEmiRecipe {
     public void addWidgets(final WidgetHolder widgets) {
         // Laid out as it is now, each time it is shown: a padlock goes as soon as its knowledge is learnt.
         final RecipeView page = this.kind.view(this.recipe);
+        final boolean faced = page.face().isPresent();
+        if (faced) {
+            widgets.addDrawable(0, 0, getDisplayWidth(), getDisplayHeight(),
+                    (graphics, mouseX, mouseY, delta) -> RecipeFaces.draw(graphics, page, 0, 0));
+        }
         for (int i = 0; i < page.slots().size(); i++) {
             final RecipeView.Slot slot = page.slots().get(i);
             EmiIngredient held = this.laid.get(i);
@@ -75,7 +81,12 @@ final class DeclaredEmiRecipe<T> extends BasicEmiRecipe {
                 }
                 held = EmiIngredient.of(chanced);
             }
-            final SlotWidget widget = widgets.addSlot(held, slot.x(), slot.y());
+            // A fluid in a machine's face fills the face's sight glass; the face's ports are its slots' frames.
+            final SlotWidget widget = slot.holdsFluid() && faced ? widgets.addTank(held, slot.x(), slot.y(),
+                    slot.width() + 2, slot.height() + 2, slot.capacity()) : widgets.addSlot(held, slot.x(), slot.y());
+            if (faced) {
+                widget.drawBack(false);
+            }
             if (slot.role() == RecipeView.Role.OUTPUT) {
                 widget.recipeContext(this);
             } else if (slot.role() == RecipeView.Role.CATALYST) {
@@ -101,6 +112,9 @@ final class DeclaredEmiRecipe<T> extends BasicEmiRecipe {
             widgets.addDrawable(sprite.x(), sprite.y(), sprite.width(), sprite.height(),
                     (graphics, mouseX, mouseY, delta) -> graphics.blitSprite(sprite.sprite(), 0, 0, sprite.width(),
                             sprite.height()));
+        }
+        for (final RecipeFaces.Note note : RecipeFaces.notes(page)) {
+            widgets.addTooltipText(note.lines(), note.x(), note.y(), note.width(), note.height());
         }
     }
 

@@ -27,16 +27,15 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * A wafer's steps as the recipe viewer shows them (computers/docs/design/survival.md, "How a chip is made"): every
- * item of every page lies in a port of its machine's own face, so none is lost from the page, and every page has its
- * three lines; each mask exposes on a lithography page, each chip is packaged on one, each era is etched and implanted
- * on one.
+ * item of every page lies in a port of its machine's own face and every fill in one of its sight glasses, so none is
+ * lost from the page; each mask exposes on a lithography page, each chip is packaged on one, each era is etched and
+ * implanted on one.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class WaferPagesGameTests {
 
     private static final String ARENA = "empty";
-    private static final int LINES = 3;
     /* The wafers of light: three lasers' and the LEDs'. */
     private static final int LIGHTS = 4;
 
@@ -59,11 +58,16 @@ public final class WaferPagesGameTests {
                     wrong.add(page.step() + " on " + page.machine().id() + ": slot " + slot + " has no port");
                 }
             }
-            if (page.lines().size() != LINES) {
-                wrong.add(page.step() + " on " + page.machine().id() + " has " + page.lines().size() + " lines");
+            final Set<Integer> glasses = new HashSet<>();
+            picture.get().glasses().forEach(glass -> glasses.add(glass.tank()));
+            for (final Integer tank : page.tanks().keySet()) {
+                if (!glasses.contains(tank)) {
+                    wrong.add(page.step() + " on " + page.machine().id() + ": tank " + tank + " has no glass");
+                }
             }
         }
-        helper.assertTrue(wrong.isEmpty(), "every page's items lie in its machine's face's ports: " + wrong);
+        helper.assertTrue(wrong.isEmpty(), "every page's items lie in its machine's face's ports and its fills in "
+                + "its glasses: " + wrong);
         helper.succeed();
     }
 

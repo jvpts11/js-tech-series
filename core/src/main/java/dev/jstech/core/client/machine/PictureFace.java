@@ -50,6 +50,11 @@ public final class PictureFace implements IMachineFace {
     private boolean statistics;
 
     private static final double MILLIS_A_TICK = 50.0;
+    /*
+     * A still's clock in ticks starts over each in-game day: read off the wall clock, its ticks are far too many for a
+     * float to keep moving by one, and the bubbles of its glasses would stand still.
+     */
+    private static final long TICKS_A_DAY = 24_000L;
     /* How far the name plate keeps from the LCD's bezel. */
     private static final int PLATE_GAP = 4;
     /* What a still's glass with nothing in it writes under it. */
@@ -111,7 +116,7 @@ public final class PictureFace implements IMachineFace {
         final FacePicture.Box lcd = picture.lcd();
         MachineArt.lcd(g, font, x + lcd.x(), y + lcd.y(), lcd.w(), lcd.h(), still.lcd(), true, true);
         toggle(g, font, x, y, picture, true);
-        final float tick = (float) (now / MILLIS_A_TICK);
+        final float tick = (float) ((long) (now / MILLIS_A_TICK) % TICKS_A_DAY);
         for (int i = 0; i < picture.glasses().size(); i++) {
             final FacePicture.Glass glass = picture.glasses().get(i);
             final Optional<Fill> fill = i < still.fills().size() ? still.fills().get(i) : Optional.empty();
@@ -191,7 +196,8 @@ public final class PictureFace implements IMachineFace {
 
     /* The frame of the loop {@code millis} into it. */
     private static int loopFrame(final FacePicture picture, final double millis) {
-        return 1 + (int) (millis / picture.millis()) % picture.frames();
+        // Counted in a long: a still reads the wall clock, whose frames since 1970 are far past an int.
+        return 1 + (int) ((long) (millis / picture.millis()) % picture.frames());
     }
 
     /* Frame {@code frame} of the picture, the face's top left at ({@code x}, {@code y}). */

@@ -37,7 +37,6 @@ public enum ChainFaceWord {
     DIA(TextKey.of("jsc.machine_face_word.dia", "DIA")),
     DIE(TextKey.of("jsc.machine_face_word.die", "DIE")),
     DRY(TextKey.of("jsc.machine_face_word.dry", "DRY")),
-    DUST(TextKey.of("jsc.machine_face_word.dust", "DUST")),
     ETCH(TextKey.of("jsc.machine_face_word.etch", "ETCH")),
     EVAP(TextKey.of("jsc.machine_face_word.evap", "EVAP")),
     FILL(TextKey.of("jsc.machine_face_word.fill", "FILL")),

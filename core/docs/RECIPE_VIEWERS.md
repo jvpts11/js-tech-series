@@ -54,6 +54,8 @@ from its top left, a slot's place being the top left of its frame of 18 pixels:
 | `fluidOutput(x, y, fluid, capacity)` | A slot of a fluid it makes |
 | `chance(chance)` | The last slot's output comes by that chance, from 0 to 1 |
 | `tooltip(line)` | A line added to the last slot's tooltip |
+| `sized(width, height)` | The last slot shows that wide and tall, a pixel in from its frame, as a sight glass is |
+| `face(face)` | The page is laid on a machine's own face (below), its slots in the face's ports and glasses |
 | `line(x, y, width, text, colour)` | A line of text |
 | `sprite(sprite, x, y, width, height)` | A sprite of the game's GUI atlas |
 | `arrow(x, y, ticks)` | The arrow between, filling in `ticks`, or not filling at 0 |
@@ -61,6 +63,32 @@ from its top left, a slot's place being the top left of its frame of 18 pixels:
 `size` sets one size for every page; `sizedBy` works it out from all of the kind's recipes, as the machines' pages
 are as large as their largest recipe. Each viewer draws the page with its own slots, arrow and text, and shows a
 chance and a catalyst its own way. A kind's id is its category's id in every viewer, so a bookmark names the kind.
+
+## A machine's own face
+
+*Added 2026-11-22.* A machine drawn on a face of its own (a `PictureFace`, the picture of its panel with its ports,
+sight glasses, plates, meter, LCD and switch) can have its recipes shown on that face instead of a plain page: the
+machine at work, its loop playing, each recipe's items in the face's ports and its fluids and matter in its sight
+glasses. Register each kind's face from your client setup:
+
+```java
+RecipeFaces.register(MY_KIND.id(), new RecipeFaces.RecipeFace(frames, picture, machineLayout, plateWords,
+        () -> classPlate, (recipe, written) -> translated(written)));
+```
+
+- The face's ports go to the machine's slots by their number: inputs and catalysts to the input ports, outputs and
+  byproducts to the output ports, in the order of their slots, as `machineLayout` sorts them.
+- A sight glass goes to a tank by its number, the machine's tanks counted as its screen counts them: its fluid tanks
+  taking, then giving, then its matter tanks, each state's taking and then giving. A recipe's fluids fill the glasses
+  of its fluid tanks; its matter fills the glasses of the tanks of the state the matter is in at room temperature,
+  else any of its matter tanks, and says how much it takes or makes on the glass's tooltip.
+- The words written on the picture are said for each recipe as its page is laid: `(recipe, written)` returns what a
+  word says on that recipe's page, its translation or a reading of the recipe, such as its byproduct's chance.
+- A machine drawn one way for some of its work and another for the rest registers a face for each, the first with
+  what it shows: `RecipeFaces.register(kind, fibreFace, recipe -> recipe.inputs().size() > 1)`. A recipe goes on the
+  first face that shows it and holds it.
+- A recipe its face cannot hold (more items than ports, more fluids than glasses) or that needs knowledge or
+  conditions keeps the plain page, which has the room to say them.
 
 ## Screens and viewers
 

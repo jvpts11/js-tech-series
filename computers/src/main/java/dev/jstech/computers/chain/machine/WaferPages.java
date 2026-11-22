@@ -20,11 +20,6 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialUses;
-import dev.jstech.core.text.GameText;
-import dev.jstech.core.text.Text;
-import dev.jstech.core.text.TextHolder;
-import dev.jstech.core.text.TextKey;
-import dev.jstech.core.text.TextLists;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -35,60 +30,16 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A wafer's steps as a recipe viewer shows them (computers/docs/design/survival.md, "How a chip is made"): no recipe
  * holds them, as the wafer carries its chip and its layer from machine to machine, so each page is worked out from
- * the steps' own rules ({@link WaferSteps}). A page is one step on its machine: what lies in which of its slots, what
- * its tanks hold, and three lines saying the layer and the next step, the time and what it uses, and what else the
- * machine needs. Lithography has a page a mask, etching and implanting one an era, deposition one a metal, and
+ * the steps' own rules ({@link WaferSteps}). A page is one step on its machine: what lies in which of its slots and
+ * what its tanks hold. Lithography has a page a mask, etching and implanting one an era, deposition one a metal, and
  * packaging one a chip.
  */
-@TextHolder
 public final class WaferPages {
-
-    /* The lines of the pages, each step's. */
-    static final TextKey LITHOGRAPHY_LAYERS = TextKey.of("jsc.wafer_page.lithography_layers",
-            "Each of the %s layers of %s; next: etching");
-    static final TextKey LITHOGRAPHY_LIGHT = TextKey.of("jsc.wafer_page.lithography_light",
-            "The one layer of %s; next: etching");
-    static final TextKey LITHOGRAPHY_USES = TextKey.of("jsc.wafer_page.lithography_uses", "%s s. %s; the mask stays");
-    static final TextKey LINKED = TextKey.of("jsc.wafer_page.linked",
-            "Needs a computer, on, linked to its peripheral port");
-    static final TextKey TIN = TextKey.of("jsc.wafer_page.tin", "a tin nugget every %s layers");
-    static final TextKey ETCH_LAYERS = TextKey.of("jsc.wafer_page.etch_layers",
-            "Any layer of a %s chip; next: implanting");
-    static final TextKey USES = TextKey.of("jsc.wafer_page.uses", "%s s. %s");
-    static final TextKey ETCH_ACID_BEFORE = TextKey.of("jsc.wafer_page.etch_acid_before",
-            "Up to the Legacy: 100 mB of hydrofluoric acid");
-    static final TextKey ETCH_PLASMA_AFTER = TextKey.of("jsc.wafer_page.etch_plasma_after",
-            "From the Transition: chlorine and argon");
-    static final TextKey IMPLANT_LAYERS = TextKey.of("jsc.wafer_page.implant_layers",
-            "Any layer of a %s chip; next: deposition");
-    static final TextKey IMPLANT_USES = TextKey.of("jsc.wafer_page.implant_uses",
-            "%s s. One phosphorus or boron dust dopes %s layers");
-    static final TextKey DEPOSIT_LAYERS = TextKey.of("jsc.wafer_page.deposit_layers",
-            "%s of a %s chip: its %s wiring");
-    static final TextKey DEPOSIT_ANY = TextKey.of("jsc.wafer_page.deposit_any", "Any layer");
-    static final TextKey DEPOSIT_ODD = TextKey.of("jsc.wafer_page.deposit_odd", "An odd layer");
-    static final TextKey DEPOSIT_EVEN = TextKey.of("jsc.wafer_page.deposit_even", "An even layer");
-    static final TextKey DEPOSIT_FIRST = TextKey.of("jsc.wafer_page.deposit_first",
-            "The first layer of a Standard chip: copper and its hafnium gate");
-    static final TextKey DEPOSIT_NEXT = TextKey.of("jsc.wafer_page.deposit_next",
-            "%s s. Next: the next layer, or packaging");
-    static final TextKey DEPOSIT_METALS = TextKey.of("jsc.wafer_page.deposit_metals",
-            "Its metal by era: Al, Cu, Cu and W, Co and Ru");
-    static final TextKey PACKAGE_INTO = TextKey.of("jsc.wafer_page.package_into", "A finished %s wafer into %s %s");
-    static final TextKey PACKAGE_NONE = TextKey.of("jsc.wafer_page.package_none", "%s s. Light needs no package");
-    static final TextKey PACKAGE_SMALL = TextKey.of("jsc.wafer_page.package_small",
-            "A memory or controller wafer gives 8 chips");
-    static final TextKey PACKAGE_BIG = TextKey.of("jsc.wafer_page.package_big",
-            "A processor or graphics wafer gives 4 chips");
-    static final TextKey AMOUNT = TextKey.of("jsc.wafer_page.amount", "%s mB of %s");
-    static final TextKey COUNT = TextKey.of("jsc.wafer_page.count", "%s %s");
-    private static final String AND = ", ";
 
     private WaferPages() {
     }
@@ -128,9 +79,7 @@ public final class WaferPages {
                 slots.put(1, List.of(new ItemStack(MaterialUses.item(light.material(), Forms.WAFER).get())));
                 slots.put(station.layout().firstOutput(), List.of(wafer(light.era(), light.made(), 1, 1,
                         WaferWork.Step.ETCH)));
-                out.add(new Page(Step.LITHOGRAPHY, station, slots, litho(station, light.era()),
-                        List.of(LITHOGRAPHY_LIGHT.with(name(BuiltInRegistries.ITEM.get(light.made()))),
-                                lithoUses(station, light.era()), linked(station))));
+                out.add(new Page(Step.LITHOGRAPHY, station, slots, litho(station, light.era())));
             });
         }
     }
@@ -148,8 +97,7 @@ public final class WaferPages {
                 slots.put(2, List.of(new ItemStack(WaferSteps.nugget(Element.TIN))));
             }
             slots.put(station.layout().firstOutput(), List.of(wafer(era, id, 1, layers, WaferWork.Step.ETCH)));
-            out.add(new Page(Step.LITHOGRAPHY, station, slots, litho(station, era),
-                    List.of(LITHOGRAPHY_LAYERS.with(layers, name(chip)), lithoUses(station, era), linked(station))));
+            out.add(new Page(Step.LITHOGRAPHY, station, slots, litho(station, era)));
         });
     }
 
@@ -166,34 +114,19 @@ public final class WaferPages {
         return tanks;
     }
 
-    private static Text lithoUses(final ChainMachine station, final Era era) {
-        final List<Text> uses = new ArrayList<>(amounts(litho(station, era)));
-        if (era == HardwareEra.ADVANCED) {
-            uses.add(TIN.with(WaferSteps.DROPLET_LAYERS));
-        }
-        return LITHOGRAPHY_USES.with(station.seconds(), TextLists.join(AND, uses));
-    }
-
-    private static Text linked(final ChainMachine station) {
-        return station.linked() ? LINKED.text() : Text.EMPTY;
-    }
-
     /* An era's etching: by acid up to the Legacy, by a chlorine plasma with argon after. */
     private static void etch(final List<Page> out, final ChainMachine etcher, final Era era) {
         final Map<Integer, List<ItemStack>> slots = new HashMap<>();
         slots.put(0, List.of(any(era, WaferWork.Step.ETCH)));
         slots.put(etcher.layout().firstOutput(), List.of(any(era, WaferWork.Step.IMPLANT)));
         final Map<Integer, Fill> tanks = new LinkedHashMap<>();
-        final boolean acid = era.isAtMost(HardwareEra.LEGACY);
-        if (acid) {
+        if (era.isAtMost(HardwareEra.LEGACY)) {
             tanks.put(0, new Fill(SeriesChemicals.HYDROFLUORIC_ACID, WaferSteps.ACID));
         } else {
             tanks.put(gas(etcher, 0), new Fill(Elements.of(Element.CHLORINE), WaferSteps.CHLORINE));
             tanks.put(gas(etcher, 1), new Fill(Elements.of(Element.ARGON), WaferSteps.ETCH_ARGON));
         }
-        out.add(new Page(Step.ETCH, etcher, slots, tanks, List.of(ETCH_LAYERS.with(era.name()),
-                USES.with(etcher.seconds(), TextLists.join(AND, amounts(tanks))),
-                (acid ? ETCH_PLASMA_AFTER : ETCH_ACID_BEFORE).text())));
+        out.add(new Page(Step.ETCH, etcher, slots, tanks));
     }
 
     /* An era's implanting: a phosphorus or boron dust for every eight layers. */
@@ -202,30 +135,27 @@ public final class WaferPages {
         slots.put(0, List.of(dust(Element.PHOSPHORUS), dust(Element.BORON)));
         slots.put(1, List.of(any(era, WaferWork.Step.IMPLANT)));
         slots.put(implanter.layout().firstOutput(), List.of(any(era, WaferWork.Step.DEPOSITION)));
-        out.add(new Page(Step.IMPLANT, implanter, slots, Map.of(), List.of(IMPLANT_LAYERS.with(era.name()),
-                IMPLANT_USES.with(implanter.seconds(), WaferSteps.DOPED_LAYERS), Text.EMPTY)));
+        out.add(new Page(Step.IMPLANT, implanter, slots, Map.of()));
     }
 
     /* Each era's wiring: its metal a page, and the Standard's first layer with its hafnium. */
     private static void deposition(final List<Page> out, final ChainMachine chamber) {
-        deposit(out, chamber, HardwareEra.VINTAGE, DEPOSIT_ANY, Elements.of(Element.ALUMINIUM), null);
-        deposit(out, chamber, HardwareEra.LEGACY, DEPOSIT_ANY, Elements.of(Element.ALUMINIUM), null);
-        deposit(out, chamber, HardwareEra.TRANSITION, DEPOSIT_ANY, SeriesAlloys.REFINED_COPPER, null);
-        deposit(out, chamber, HardwareEra.STANDARD, null, Elements.of(Element.COPPER),
-                WaferSteps.nugget(Element.HAFNIUM));
-        deposit(out, chamber, HardwareEra.STANDARD, DEPOSIT_ODD, Elements.of(Element.COPPER), null);
-        deposit(out, chamber, HardwareEra.STANDARD, DEPOSIT_EVEN, Elements.of(Element.TUNGSTEN), null);
-        deposit(out, chamber, HardwareEra.ADVANCED, DEPOSIT_ODD, Elements.of(Element.COBALT), null);
-        deposit(out, chamber, HardwareEra.ADVANCED, DEPOSIT_EVEN, Elements.of(Element.RUTHENIUM), null);
+        deposit(out, chamber, HardwareEra.VINTAGE, Elements.of(Element.ALUMINIUM), null);
+        deposit(out, chamber, HardwareEra.LEGACY, Elements.of(Element.ALUMINIUM), null);
+        deposit(out, chamber, HardwareEra.TRANSITION, SeriesAlloys.REFINED_COPPER, null);
+        deposit(out, chamber, HardwareEra.STANDARD, Elements.of(Element.COPPER), WaferSteps.nugget(Element.HAFNIUM));
+        deposit(out, chamber, HardwareEra.STANDARD, Elements.of(Element.COPPER), null);
+        deposit(out, chamber, HardwareEra.STANDARD, Elements.of(Element.TUNGSTEN), null);
+        deposit(out, chamber, HardwareEra.ADVANCED, Elements.of(Element.COBALT), null);
+        deposit(out, chamber, HardwareEra.ADVANCED, Elements.of(Element.RUTHENIUM), null);
     }
 
     /*
-     * A page of the deposition of a nugget of {@code metal} on the layers {@code which} says of an {@code era} chip,
-     * {@code gate} beside it on the Standard's first layer (which none, then); the wafer out is the next layer's, or
-     * finished.
+     * A page of the deposition of a nugget of {@code metal} on a layer of an {@code era} chip, {@code gate} beside it
+     * on the Standard's first layer; the wafer out is the next layer's, or finished.
      */
-    private static void deposit(final List<Page> out, final ChainMachine chamber, final Era era,
-                                final @Nullable TextKey which, final Material metal, final @Nullable Item gate) {
+    private static void deposit(final List<Page> out, final ChainMachine chamber, final Era era, final Material metal,
+                                final @Nullable Item gate) {
         final int index = ChainParts.ERAS.indexOf(era);
         final ResourceLocation chip = WaferSteps.idOf(ChainParts.MEMORY_CHIPS.get(index).get());
         final int layers = WaferSteps.layers(era);
@@ -240,10 +170,7 @@ public final class WaferPages {
                 WaferWork.Step.PACKAGING));
         slots.put(chamber.layout().firstOutput(), List.of(wafer(era, chip, 2, layers, WaferWork.Step.LITHOGRAPHY),
                 finished));
-        final Text first = which == null ? DEPOSIT_FIRST.text()
-                : DEPOSIT_LAYERS.with(which.text(), era.name(), metal.name());
-        out.add(new Page(Step.DEPOSITION, chamber, slots, Map.of(), List.of(first,
-                DEPOSIT_NEXT.with(chamber.seconds()), DEPOSIT_METALS.text())));
+        out.add(new Page(Step.DEPOSITION, chamber, slots, Map.of()));
     }
 
     /* A page a chip: its finished wafer cut into its dies, each packaged as its era packages chips; light's, bare. */
@@ -265,15 +192,13 @@ public final class WaferPages {
             final Map<Integer, List<ItemStack>> slots = new HashMap<>();
             slots.put(0, List.of(finished));
             slots.put(line.layout().firstOutput(), List.of(new ItemStack(made, count)));
-            out.add(new Page(Step.PACKAGING, line, slots, Map.of(), List.of(PACKAGE_INTO.with(light.era().name(),
-                    count, name(made)), PACKAGE_NONE.with(line.seconds()), Text.EMPTY)));
+            out.add(new Page(Step.PACKAGING, line, slots, Map.of()));
         }
     }
 
     private static void packaged(final List<Page> out, final ChainMachine line, final Era era, final Item chip) {
         final int index = ChainParts.ERAS.indexOf(era);
-        final boolean small = WaferSteps.small(chip);
-        final int dies = small ? WaferSteps.SMALL_DIES : WaferSteps.BIG_DIES;
+        final int dies = WaferSteps.small(chip) ? WaferSteps.SMALL_DIES : WaferSteps.BIG_DIES;
         final int shares = dies / WaferSteps.CHIPS_A_SHARE;
         final ItemStack finished = new ItemStack(ChainParts.FINISHED_WAFERS.get(index).get());
         finished.set(ComputingComponents.WAFER_WORK.get(), new WaferWork(WaferSteps.idOf(chip),
@@ -293,15 +218,7 @@ public final class WaferPages {
             slots.put(3, List.of(new ItemStack(WaferSteps.plateOf(SeriesCompounds.EPOXY_RESIN), shares)));
         }
         slots.put(line.layout().firstOutput(), List.of(new ItemStack(chip, dies)));
-        final List<Text> uses = new ArrayList<>();
-        for (int slot = 1; slot < line.layout().firstOutput(); slot++) {
-            for (final ItemStack stack : slots.getOrDefault(slot, List.of())) {
-                uses.add(COUNT.with(stack.getCount(), name(stack.getItem())));
-            }
-        }
-        out.add(new Page(Step.PACKAGING, line, slots, Map.of(), List.of(PACKAGE_INTO.with(era.name(), dies,
-                name(chip)), USES.with(line.seconds(), TextLists.join(AND, uses)),
-                (small ? PACKAGE_SMALL : PACKAGE_BIG).text())));
+        out.add(new Page(Step.PACKAGING, line, slots, Map.of()));
     }
 
     /* The station of {@code era}'s layers, which its masks expose on. */
@@ -344,18 +261,6 @@ public final class WaferPages {
         return new ItemStack(MaterialUses.item(Elements.of(element), Forms.DUST).get());
     }
 
-    private static List<Text> amounts(final Map<Integer, Fill> tanks) {
-        final List<Text> out = new ArrayList<>();
-        for (final Fill fill : tanks.values()) {
-            out.add(AMOUNT.with(fill.amount(), fill.material().name()));
-        }
-        return out;
-    }
-
-    private static Text name(final ItemLike item) {
-        return GameText.of(new ItemStack(item).getHoverName());
-    }
-
     /** A wafer's step. */
     public enum Step {
         LITHOGRAPHY,
@@ -372,15 +277,12 @@ public final class WaferPages {
      * @param machine the machine it is worked on
      * @param slots   what lies in which of the machine's slots, each slot's choices, its inputs and its outputs
      * @param tanks   what lies in which of its tanks, by their order (its liquids in, then out, then its gases)
-     * @param lines   its three lines
      */
-    public record Page(Step step, ChainMachine machine, Map<Integer, List<ItemStack>> slots, Map<Integer, Fill> tanks,
-                       List<Text> lines) {
+    public record Page(Step step, ChainMachine machine, Map<Integer, List<ItemStack>> slots, Map<Integer, Fill> tanks) {
 
         public Page {
             slots = Map.copyOf(slots);
             tanks = Map.copyOf(tanks);
-            lines = List.copyOf(lines);
         }
     }
 

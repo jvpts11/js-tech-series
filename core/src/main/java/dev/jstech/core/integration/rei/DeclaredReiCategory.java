@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.integration.rei;
 
+import dev.jstech.core.client.recipeview.RecipeFaces;
 import dev.jstech.core.recipeview.RecipeView;
 import dev.jstech.core.recipeview.RecipeViewKind;
 import dev.jstech.core.text.GameText;
@@ -78,6 +79,11 @@ final class DeclaredReiCategory<T> implements DisplayCategory<DeclaredReiDisplay
         final int y0 = bounds.y + PADDING;
         final List<Widget> widgets = new ArrayList<>();
         widgets.add(Widgets.createRecipeBase(bounds));
+        final boolean faced = page.face().isPresent();
+        if (faced) {
+            widgets.add(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> RecipeFaces.draw(graphics,
+                    page, x0, y0)));
+        }
         for (final RecipeView.Sprite sprite : page.sprites()) {
             widgets.add(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> graphics.blitSprite(
                     sprite.sprite(), x0 + sprite.x(), y0 + sprite.y(), sprite.width(), sprite.height())));
@@ -87,13 +93,19 @@ final class DeclaredReiCategory<T> implements DisplayCategory<DeclaredReiDisplay
             widgets.add(arrow.ticks() > 0 ? made.animationDurationTicks(arrow.ticks()) : made);
         });
         for (final RecipeView.Slot slot : page.slots()) {
-            final Slot made = Widgets.createSlot(new Point(x0 + slot.x() + SLOT_INSET, y0 + slot.y() + SLOT_INSET))
-                    .entries(DeclaredReiDisplay.ingredientOf(slot));
+            // A slot's frame is a pixel round what it shows: an item's 16 pixels, or a face's sight glass.
+            final Slot made = Widgets.createSlot(new Rectangle(x0 + slot.x(), y0 + slot.y(),
+                    slot.width() + 2 * SLOT_INSET, slot.height() + 2 * SLOT_INSET))
+                    .entries(DeclaredReiDisplay.ingredientOf(slot)).backgroundEnabled(!faced);
             widgets.add(slot.role() == RecipeView.Role.OUTPUT ? made.markOutput() : made.markInput());
         }
         for (final RecipeView.Line line : page.lines()) {
             widgets.add(Widgets.createLabel(new Point(x0 + line.x(), y0 + line.y()), line.text()).leftAligned()
                     .noShadow().color(line.colour(), line.colour()));
+        }
+        for (final RecipeFaces.Note note : RecipeFaces.notes(page)) {
+            widgets.add(Widgets.createTooltip(new Rectangle(x0 + note.x(), y0 + note.y(), note.width(),
+                    note.height()), note.lines()));
         }
         return widgets;
     }

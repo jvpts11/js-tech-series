@@ -440,17 +440,24 @@ public final class StandardFace implements IMachineFace {
         final List<MatterTank> matters = matterTanks(machine);
         if (index < fluids.size()) {
             final FluidStack held = fluids.get(index).getFluid();
-            if (held.isEmpty()) {
-                return EMPTY_TANK;
-            }
-            return MaterialLiquids.materialOf(held.getFluid()).flatMap(StandardFace::symbol)
-                    .orElse(held.getHoverName().getString().toUpperCase(Locale.ROOT));
+            return held.isEmpty() ? EMPTY_TANK : written(held);
         }
         if (index - fluids.size() < matters.size()) {
-            return matters.get(index - fluids.size()).held().map(stack -> symbol(stack.material())
-                    .orElse(GameText.resolve(stack.material().name()).toUpperCase(Locale.ROOT))).orElse(EMPTY_TANK);
+            return matters.get(index - fluids.size()).held().map(stack -> written(stack.material()))
+                    .orElse(EMPTY_TANK);
         }
         return EMPTY_TANK;
+    }
+
+    /** {@code fluid} as short as a panel writes it: its material's formula or symbol when it has one, else its name. */
+    public static String written(final FluidStack fluid) {
+        return MaterialLiquids.materialOf(fluid.getFluid()).flatMap(StandardFace::symbol)
+                .orElse(fluid.getHoverName().getString().toUpperCase(Locale.ROOT));
+    }
+
+    /** {@code material} as short as a panel writes it: its formula or its symbol when it has one, else its name. */
+    public static String written(final Material material) {
+        return symbol(material).orElse(GameText.resolve(material.name()).toUpperCase(Locale.ROOT));
     }
 
     /* The fluid's own texture tiled in the glass from {@code top} down, shaded deeper below; its tint. */

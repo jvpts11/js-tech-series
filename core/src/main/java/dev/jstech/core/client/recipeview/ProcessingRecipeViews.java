@@ -63,16 +63,35 @@ public final class ProcessingRecipeViews {
 
     /**
      * {@code kind} as a kind of recipe view, the same pages in JEI, EMI and REI: its machines beside it, each page as
-     * large as its largest recipe's, laid out as {@link #lay} lays it.
+     * large as its largest recipe's; each recipe on the kind's machine's own face when the kind has one that holds it
+     * ({@link RecipeFaces}), else laid out as {@link #lay} lays it.
      */
     public static RecipeViewKind<RecipeHolder<ProcessingRecipe>> viewKind(final ProcessingKind kind) {
         return RecipeViews.recipes(kind.id().getNamespace(), kind.id().getPath(), kind.title(), kind::type)
                 .workstations(() -> machineStacks(kind))
                 .sizedBy(recipes -> {
-                    final ProcessingViewLayout largest = largest(recipes.stream().map(RecipeHolder::value).toList());
-                    return new RecipeViewKind.Size(largest.width(), largest.height());
+                    final List<ProcessingRecipe> plain = new ArrayList<>();
+                    boolean faced = false;
+                    for (final RecipeHolder<ProcessingRecipe> holder : recipes) {
+                        if (faceOf(kind, holder.value()).isPresent()) {
+                            faced = true;
+                        } else {
+                            plain.add(holder.value());
+                        }
+                    }
+                    final ProcessingViewLayout largest = largest(plain);
+                    return faced && plain.isEmpty() ? new RecipeViewKind.Size(RecipeFaces.width(),
+                            RecipeFaces.height()) : new RecipeViewKind.Size(Math.max(largest.width(), faced
+                            ? RecipeFaces.width() : 0), Math.max(largest.height(), faced ? RecipeFaces.height() : 0));
                 })
-                .layout((holder, page) -> lay(holder.value(), page))
+                .layout((holder, page) -> {
+                    final Optional<RecipeFaces.RecipeFace> face = faceOf(kind, holder.value());
+                    if (face.isPresent()) {
+                        RecipeFaces.lay(face.get(), holder.value(), page);
+                    } else {
+                        lay(holder.value(), page);
+                    }
+                })
                 .build();
     }
 
@@ -108,11 +127,7 @@ public final class ProcessingRecipeViews {
         }
         for (final Byproduct byproduct : recipe.byproducts()) {
             final ProcessingViewLayout.Point at = layout.output(index++);
-            if (byproduct.draw() == Byproduct.Draw.SHARE) {
-                page.output(at.x(), at.y(), byproduct.stack()).tooltip(counted(byproduct.amount()));
-            } else {
-                page.output(at.x(), at.y(), byproduct.stack()).chance(byproduct.chance());
-            }
+            byproduct(page, at.x(), at.y(), byproduct);
         }
         page.arrow(layout.arrow().x(), layout.arrow().y(), recipe.ticks());
         page.line(layout.textLine().x(), layout.textLine().y(), layout.width(), workLine(recipe), colour);
@@ -129,6 +144,18 @@ public final class ProcessingRecipeViews {
             final int indent = knowledgeIndent(recipe);
             page.line(at.x() + indent, at.y(), layout.width() - indent, needs, colour);
         });
+    }
+
+    /**
+     * The slot of {@code byproduct}, its frame's top left at ({@code x}, {@code y}): how much of it comes each time
+     * when it is counted, else how likely it comes.
+     */
+    public static void byproduct(final RecipeView.Builder page, final int x, final int y, final Byproduct byproduct) {
+        if (byproduct.draw() == Byproduct.Draw.SHARE) {
+            page.output(x, y, byproduct.stack()).tooltip(counted(byproduct.amount()));
+        } else {
+            page.output(x, y, byproduct.stack()).chance(byproduct.chance());
+        }
     }
 
     /**
@@ -240,6 +267,11 @@ public final class ProcessingRecipeViews {
         }
         return GameText.component(MachineTexts.RECIPE_TIME_AND_ENERGY.with(seconds,
                 recipe.kind().energy().rate(recipe.energyPerTick())));
+    }
+
+    /* The face of {@code kind}'s machine {@code recipe} is laid on, if the kind has one and it holds the recipe. */
+    private static Optional<RecipeFaces.RecipeFace> faceOf(final ProcessingKind kind, final ProcessingRecipe recipe) {
+        return RecipeFaces.of(kind.id(), recipe);
     }
 
     /* A line for a span from {@code least} to {@code most}, when it says anything at all. */

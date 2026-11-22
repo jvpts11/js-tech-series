@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.integration.jei;
 
+import dev.jstech.core.client.recipeview.RecipeFaces;
 import dev.jstech.core.client.recipeview.ViewKinds;
 import dev.jstech.core.recipeview.RecipeView;
 import dev.jstech.core.recipeview.RecipeViewKind;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
+import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.gui.widgets.IRecipeExtrasBuilder;
@@ -108,10 +110,14 @@ final class DeclaredCategory<T> implements IRecipeCategory<T> {
         for (final RecipeView.Slot slot : page.slots()) {
             final int x = slot.x() + SLOT_INSET;
             final int y = slot.y() + SLOT_INSET;
-            final IRecipeSlotBuilder made = (slot.role() == RecipeView.Role.OUTPUT ? builder.addOutputSlot(x, y)
-                    : builder.addInputSlot(x, y)).setStandardSlotBackground();
+            final IRecipeSlotBuilder made = slot.role() == RecipeView.Role.OUTPUT ? builder.addOutputSlot(x, y)
+                    : builder.addInputSlot(x, y);
+            // A page on a machine's face has its slots in the face's own ports and glasses.
+            if (page.face().isEmpty()) {
+                made.setStandardSlotBackground();
+            }
             if (slot.holdsFluid()) {
-                made.setFluidRenderer(slot.capacity(), false, ITEM_SIZE, ITEM_SIZE)
+                made.setFluidRenderer(slot.capacity(), false, slot.width(), slot.height())
                         .addIngredients(NeoForgeTypes.FLUID_STACK, slot.fluids());
             } else {
                 made.addItemStacks(slot.items());
@@ -142,8 +148,20 @@ final class DeclaredCategory<T> implements IRecipeCategory<T> {
     @Override
     public void draw(final T recipe, final IRecipeSlotsView slots, final GuiGraphics graphics, final double mouseX,
                      final double mouseY) {
-        for (final RecipeView.Sprite sprite : pageOf(recipe).sprites()) {
+        final RecipeView page = pageOf(recipe);
+        RecipeFaces.draw(graphics, page, 0, 0);
+        for (final RecipeView.Sprite sprite : page.sprites()) {
             graphics.blitSprite(sprite.sprite(), sprite.x(), sprite.y(), sprite.width(), sprite.height());
+        }
+    }
+
+    @Override
+    public void getTooltip(final ITooltipBuilder tooltip, final T recipe, final IRecipeSlotsView slots,
+                           final double mouseX, final double mouseY) {
+        for (final RecipeFaces.Note note : RecipeFaces.notes(pageOf(recipe))) {
+            if (note.covers(mouseX, mouseY)) {
+                tooltip.addAll(note.lines());
+            }
         }
     }
 
