@@ -617,7 +617,10 @@ public static final Terrains.TerrainSpec RIDGES = Terrains.terrain(rl("ridges"))
 ```
 
 The first rule that holds for a block lays it. `where(noise, from, to, rules)` lays rules where a noise reads within
-a range, patches of a surface, and `rule(...)` takes any surface rule of the game's own. A density function may sample
+a range, patches of a surface, and `rule(...)` takes any surface rule of the game's own. `in(biome, rules)` reads the
+column's biome once, near its floor, with the Core's surface condition `jscore:column_biome` (a file writes it as the
+game's `minecraft:biome`, `{"type": "jscore:column_biome", "biome_is": [...]}`): the game's own reads the biome anew at
+every block it is asked at, a look into the biomes' noise down every block the rules reach (*added 2026-11-22*). A density function may sample
 another declared one, `OTHER.reference(densities)`. The test mod's ridged land is a worked example
 (`tests/src/main/java/dev/jstech/tests/TestWorldGen.java`).
 

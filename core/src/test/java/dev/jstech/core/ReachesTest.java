@@ -63,8 +63,14 @@ class ReachesTest {
             }
             final String[] parts = trimmed.split("\\s+");
             final String owner = parts[1].substring(parts[1].lastIndexOf('.') + 1);
-            final Matcher member = MEMBER.matcher(parts[2]);
-            final String reach = owner + "#" + (member.find() ? member.group() : parts[2]);
+            // A line of a class alone opens the class; one with a member, that member of it.
+            final String reach;
+            if (parts.length < 3) {
+                reach = owner;
+            } else {
+                final Matcher member = MEMBER.matcher(parts[2]);
+                reach = owner + "#" + (member.find() ? member.group() : parts[2]);
+            }
             if (rows.stream().noneMatch(row -> firstCell(row).contains("`" + reach + "`"))) {
                 missing.add(reach);
             }

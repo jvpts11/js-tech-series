@@ -113,7 +113,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:mars_polar_cap"
                   ]
@@ -219,7 +219,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:mars_dark_dunes"
                   ]
@@ -300,7 +300,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:mars_oxide_plains"
                   ]
@@ -403,7 +403,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:mars_lakebed"
                   ]
@@ -506,7 +506,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:mars_chaos_terrain"
                   ]
@@ -609,7 +609,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:mars_lifeless_springs"
                   ]
@@ -712,7 +712,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:mars_layered_mounds"
                   ]
@@ -815,7 +815,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:mars_spider_fields"
                   ]

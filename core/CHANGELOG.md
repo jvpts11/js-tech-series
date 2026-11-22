@@ -2219,11 +2219,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.
 
 ### Changed
-- Worlds whose surface is laid by the Core's rules, and whose rock the Core varies, generate two to three
+- Worlds whose surface is laid by the Core's rules, and whose rock the Core varies, generate three to five
   times faster, the same blocks coming out: a biome's or a noise's test is made only as deep under the floor as the
-  rules under it lay anything, not down every block of every column, and how a block of rock lies open is read only
-  for a variant that asks it, from the block's own chunk. The Moon makes a new stretch of its land in less than half
-  the time it took, and Mars in a third, so a ship coming down sees the real ground sooner.
+  rules under it lay anything, not down every block of every column, a biome is read once a column with the new
+  surface condition `jscore:column_biome`, and a rock's variants read only what they ask of it, the block over it
+  as the column is read down and its sides only for a variant that asks how they lie, from the block's own chunk.
+  The Moon and Mars make a new stretch of their land in about a fourth of the time they took, so a ship coming
+  down sees the real ground sooner.
 - A machine says why it will not work what it was given beside its status, in its lamp's tooltip and on its
   terminal's face.
 - A processing machine that takes no energy works its recipes without paying for them, where before it waited

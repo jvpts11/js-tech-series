@@ -97,11 +97,11 @@ public final class SurfaceRuleBuilder {
         return this;
     }
 
-    /** In {@code biome}, the rules of {@code inside}, given whole. */
+    /** In {@code biome}, the rules of {@code inside}, given whole; the column's biome read once, near its floor. */
     public SurfaceRuleBuilder in(final ResourceKey<Biome> biome, final SurfaceRuleBuilder inside) {
         Objects.requireNonNull(biome, "biome");
         reach(inside);
-        this.rules.add(() -> inside.underTheFloor(SurfaceRules.isBiome(biome)));
+        this.rules.add(() -> inside.underTheFloor(ColumnBiomeCondition.of(biome)));
         return this;
     }
 

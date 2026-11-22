@@ -113,7 +113,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:moon_mare"
                   ]
@@ -216,7 +216,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:moon_rille"
                   ]
@@ -319,7 +319,7 @@
               "then_run": {
                 "type": "minecraft:condition",
                 "if_true": {
-                  "type": "minecraft:biome",
+                  "type": "jscore:column_biome",
                   "biome_is": [
                     "jsspace:moon_lava_tube_skylight"
                   ]

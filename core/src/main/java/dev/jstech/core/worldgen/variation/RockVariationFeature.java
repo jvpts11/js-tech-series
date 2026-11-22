@@ -64,6 +64,8 @@ public final class RockVariationFeature extends Feature<RockVariationConfig> {
                 .toList();
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         final BlockPos.MutableBlockPos near = new BlockPos.MutableBlockPos();
+        // Which variants the column's biome takes, read once a column rather than at every block down it.
+        final boolean[] taken = new boolean[variants.size()];
         for (int x = x0; x <= x1; x++) {
             for (int z = z0; z <= z1; z++) {
                 final ChunkAccess chunk = level.getChunk(SectionPos.blockToSectionCoord(x),
@@ -71,24 +73,34 @@ public final class RockVariationFeature extends Feature<RockVariationConfig> {
                 final int top = level.getHeight(ground, x, z) - 1;
                 final int slope = slope(level, ground, x, z, top);
                 final Holder<Biome> biome = level.getBiome(at.set(x, top, z));
+                for (int k = 0; k < variants.size(); k++) {
+                    taken[k] = variants.get(k).biomes().map(set -> set.contains(biome)).orElse(true);
+                }
+                // Whether the block over the one read lets nothing solid lie on it, carried down the column as each
+                // block is read: over the ground's top, the sky.
+                boolean openOver = true;
                 for (int y = top; y >= level.getMinBuildHeight() && (long) top - y <= deepest; y--) {
                     at.set(x, y, z);
-                    if (!stateAt(level, chunk, at).is(config.rock())) {
+                    final BlockState state = stateAt(level, chunk, at);
+                    final boolean openAbove = openOver;
+                    openOver = !state.canOcclude();
+                    if (!state.is(config.rock())) {
                         continue;
                     }
                     final RockPlace buried = new RockPlace(top - y, slope, false, false, y);
-                    RockPlace place = null;
+                    // Its sides, four blocks round it, are read only for a variant that asks how they lie open.
+                    Boolean side = null;
                     for (int k = 0; k < variants.size(); k++) {
                         final RockVariationConfig.Variant variant = variants.get(k);
-                        if (!lying.get(k).fits(buried) || !variant.biomes().map(set -> set.contains(biome))
-                                .orElse(true)) {
+                        if (!taken[k] || !lying.get(k).fits(buried)) {
                             continue;
                         }
-                        if (place == null && variant.where().exposure() != RockRule.Exposure.ANY) {
-                            place = new RockPlace(top - y, slope, open(level, chunk, near.setWithOffset(at,
-                                    Direction.UP)), openSide(level, chunk, at, near), y);
+                        final RockRule.Exposure exposure = variant.where().exposure();
+                        if (exposure != RockRule.Exposure.ANY && exposure != RockRule.Exposure.TOP && side == null) {
+                            side = openSide(level, chunk, at, near);
                         }
-                        if (variant.where().exposure() == RockRule.Exposure.ANY || variant.where().fits(place)) {
+                        if (exposure == RockRule.Exposure.ANY || variant.where().fits(new RockPlace(top - y, slope,
+                                openAbove, side != null && side, y))) {
                             level.setBlock(at, variant.block(), UPDATE);
                             break;
                         }
