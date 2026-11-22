@@ -338,6 +338,16 @@ public final class StructureFooting {
     }
 
     /**
+     * Whether {@code player}, as their game last said, walks on the floor of a structure in its frame
+     * ({@link DeckGravity#walksIn}).
+     */
+    @ApiStatus.Internal
+    public static boolean walksOnDeck(final ServerPlayer player) {
+        final Reported reported = REPORTED.isEmpty() ? null : REPORTED.get(player);
+        return reported != null && !player.isPassenger() && DeckGravity.walksIn(reported.structure);
+    }
+
+    /**
      * How far {@code player} moved on the floor of the structure they stand on since their game last said, in the
      * structure's own directions, when they walk on it in its frame ({@link DeckGravity#walksIn}); null otherwise. A
      * fall is down its floor, not down the world: crossing a deck rolled on its side moves them across the world's

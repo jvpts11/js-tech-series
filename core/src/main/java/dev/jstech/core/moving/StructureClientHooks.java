@@ -92,5 +92,11 @@ public final class StructureClientHooks {
         default @Nullable Vec3 eye(final Entity entity, final float partialTick) {
             return null;
         }
+
+        /** Whether {@code player} walks on the floor of a structure in its frame, as this game sees them. */
+        @ApiStatus.Internal
+        default boolean walksOnDeck(final Player player) {
+            return false;
+        }
     }
 }

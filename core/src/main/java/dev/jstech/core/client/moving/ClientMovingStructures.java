@@ -264,6 +264,11 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
     }
 
     @Override
+    public boolean walksOnDeck(final Player player) {
+        return StandersDrawn.walks(player);
+    }
+
+    @Override
     public @Nullable Vec3 eye(final Entity entity, final float partialTick) {
         return entity instanceof LocalPlayer local ? DeckWalk.eye(local, partialTick, local.getEyeHeight()) : null;
     }

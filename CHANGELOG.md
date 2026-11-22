@@ -749,7 +749,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   server taking where on it they stand, a fall counted down its floor, not down the world. Their look is kept in its
   frame as in its seats: the mouse turns it about the
   floor's up, it is carried round as the deck turns, the view rolls to keep the floor's up at its top, and their eyes
-  stand over their feet along the floor's up, so they aim at and use what they see.
+  stand over their feet along the floor's up, so they aim at and use what they see. Every player sees them drawn
+  standing on its floor, facing where they look along it, and standing, or crouching as they sneak, not crawling.
 - (Space) The Sun is round: a disc in pixels, white at its middle and warmer to its limb, with a corona round it, in
   every world's sky, the Overworld's too, and in space, where the game drew a square.
 - (Core) The machines' recipes on their own faces in JEI, EMI and REI: a kind of processing whose machine is drawn on a face of its own has each recipe shown on that face at work, its loop playing, its RUN lamp lit and its LCD saying how long the recipe takes, the recipe's items in the face's ports and its fluids and matter in its sight glasses, each glass named as what it holds and saying on its tooltip how much the recipe takes or makes. A mod registers a kind's face with `RecipeFaces.register`; a recipe its face cannot hold keeps the plain page (core/docs/RECIPE_VIEWERS.md).

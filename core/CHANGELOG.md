@@ -598,7 +598,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   server taking where on it they stand, a fall counted down its floor, not down the world. Their look is kept in its
   frame as in its seats: the mouse turns it about the
   floor's up, it is carried round as the deck turns, the view rolls to keep the floor's up at its top, and their eyes
-  stand over their feet along the floor's up, so they aim at and use what they see.
+  stand over their feet along the floor's up, so they aim at and use what they see. Every player sees them drawn
+  standing on its floor, facing where they look along it, and standing, or crouching as they sneak, not crawling.
 - The machines' recipes on their own faces in JEI, EMI and REI: a kind of processing whose machine is drawn on a face of its own has each recipe shown on that face at work, its loop playing, its RUN lamp lit and its LCD saying how long the recipe takes, the recipe's items in the face's ports and its fluids and matter in its sight glasses, each glass named as what it holds and saying on its tooltip how much the recipe takes or makes. A mod registers a kind's face with `RecipeFaces.register`; a recipe its face cannot hold keeps the plain page (core/docs/RECIPE_VIEWERS.md).
 - Pieces of ore over the veins: a few pieces of a vein's ore lie on the surface over it, as a prospector's float, about eight a vein within its reach, each two to four pieces cut from its ore's own picture, of the vein's minerals as it holds them. They lie only on solid, dry ground, break at once by hand, give the ore itself, one of what its ore block gives (raw iron, raw copper), and are walked through; a block placed where they lie replaces them. Chalcopyrite Pieces, Hematite Pieces and so on, one for every mineral with an ore.
 - A little of each ore lies loose between the veins, in small knots of a handful of blocks, as the game's own

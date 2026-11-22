@@ -24,10 +24,12 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.SlabBlock;
@@ -36,8 +38,11 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import org.joml.Vector3f;
 
 /**
  * Walking in a moving structure whose floor pulls towards itself, on the player's own game: a floor with a step of
@@ -170,8 +175,8 @@ public final class DeckWalkClientTests {
 
     /*
      * Rolled on its side, the floor's up stays at the top of the view; the mouse turns the look about the floor's up,
-     * along it; the floor turning further carries the look round with it; and a lever on the floor, looked at, is
-     * pulled.
+     * along it; the floor turning further carries the look round with it; a lever on the floor, looked at, is pulled;
+     * the player stands, not crawls, on both sides; and seen from behind, they are drawn standing on the floor.
      */
     @ClientTest(timeoutTicks = 1500)
     public static void look_isKeptInTheDecksFrameAndAimsWhereItIsSeen(final ClientTestContext ctx) {
@@ -179,10 +184,16 @@ public final class DeckWalkClientTests {
         final AtomicReference<BlockPos> lever = new AtomicReference<>();
         final float[] viewRoll = new float[1];
         final Vec3[] kept = new Vec3[1];
+        final AtomicReference<Pose> serverPose = new AtomicReference<>();
+        final DrawnUp drawn = new DrawnUp();
+        final Vec3[] drawnUp = drawn.up;
         final Consumer<ViewportEvent.ComputeCameraAngles> angles = event -> viewRoll[0] = event.getRoll();
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.ComputeCameraAngles.class, angles);
+        NeoForge.EVENT_BUS.register(drawn);
         ctx.afterTest(() -> {
             NeoForge.EVENT_BUS.unregister(angles);
+            NeoForge.EVENT_BUS.unregister(drawn);
+            ctx.mc().options.setCameraType(CameraType.FIRST_PERSON);
             ctx.mc().options.keyUse.setDown(false);
             ctx.server().execute(() -> takeAll(ctx.serverLevel()));
         });
@@ -266,7 +277,21 @@ public final class DeckWalkClientTests {
                 .then(1, () -> ctx.mc().options.keyUse.setDown(false))
                 .thenWaitUntilServer(level -> level.getBlockState(lever.get()).getValue(LeverBlock.POWERED), SETTLE,
                         "the lever looked at on the rolled floor to be pulled",
-                        level -> "the lever " + level.getBlockState(lever.get()));
+                        level -> "the lever " + level.getBlockState(lever.get()))
+                .thenServer(0, level -> serverPose.set(ctx.serverPlayer().getPose()))
+                .thenWaitUntil(() -> ctx.player().getPose() == Pose.STANDING && serverPose.get() == Pose.STANDING, 1,
+                        "the player to stand on the rolled floor on both sides, not crawl",
+                        () -> "their game has them " + ctx.player().getPose() + ", the server " + serverPose.get())
+                .then(0, () -> ctx.mc().options.setCameraType(CameraType.THIRD_PERSON_BACK))
+                .thenWaitUntil(() -> drawnUp[0] != null && drawnUp[0].distanceTo(floorUp()) < ALONG, SETTLE,
+                        "the player to be drawn standing on the rolled floor, its up theirs",
+                        () -> "drawn up " + drawnUp[0] + " against the floor's " + floorUp());
+    }
+
+    /* The floor's up, in the world. */
+    private static Vec3 floorUp() {
+        final StructureFrame frame = seen().frame();
+        return new Vec3(frame.turnX(0, 1, 0), frame.turnY(0, 1, 0), frame.turnZ(0, 1, 0));
     }
 
     /* Where the player looks, in the floor's own frame. */
@@ -300,6 +325,20 @@ public final class DeckWalkClientTests {
         for (final IStructureBody left : List.copyOf(LevelMovingStructures.of(level).all())) {
             if (left instanceof MovingStructure structure) {
                 MovingStructures.takeAway(structure);
+            }
+        }
+    }
+
+    /* The up of the player's own model as it is drawn, after the Core's own turn of them, which comes before this. */
+    public static final class DrawnUp {
+
+        private final Vec3[] up = new Vec3[1];
+
+        @SubscribeEvent(priority = EventPriority.LOWEST)
+        public void drawn(final RenderLivingEvent.Pre<?, ?> event) {
+            if (event.getEntity() == Minecraft.getInstance().player) {
+                final Vector3f turned = event.getPoseStack().last().normal().transform(new Vector3f(0, 1, 0));
+                up[0] = new Vec3(turned.x(), turned.y(), turned.z());
             }
         }
     }

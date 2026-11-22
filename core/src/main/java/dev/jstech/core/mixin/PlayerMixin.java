@@ -10,10 +10,12 @@ package dev.jstech.core.mixin;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureClientHooks;
+import dev.jstech.core.moving.StructureFooting;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.moving.YardLayout;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -39,6 +41,21 @@ public abstract class PlayerMixin {
         final Player player = (Player) (Object) this;
         if (player.getVehicle() instanceof StructureSeatEntity seat && seat.lyingHead() != null) {
             player.setPose(Pose.SLEEPING);
+            info.cancel();
+        }
+    }
+
+    /*
+     * One walking on a structure's floor in its frame stands, or crouches sneaking, as on any floor: the game tries
+     * their upright box up the world, which on a floor turned reaches into the floor, and would have them crawl.
+     */
+    @Inject(method = "updatePlayerPose", at = @At("HEAD"), cancellable = true)
+    private void jscore$standOnATurnedDeck(final CallbackInfo info) {
+        final Player player = (Player) (Object) this;
+        final boolean walks = player instanceof ServerPlayer server ? StructureFooting.walksOnDeck(server)
+                : player.level().isClientSide() && StructureClientHooks.get().walksOnDeck(player);
+        if (walks && !player.isSleeping() && !player.isFallFlying()) {
+            player.setPose(player.isShiftKeyDown() ? Pose.CROUCHING : Pose.STANDING);
             info.cancel();
         }
     }

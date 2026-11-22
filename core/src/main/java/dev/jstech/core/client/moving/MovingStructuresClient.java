@@ -33,6 +33,7 @@ public final class MovingStructuresClient {
         PhysicsTooltips.listen();
         StructureDebugClient.listen();
         SittersDrawn.listen();
+        StandersDrawn.listen();
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, event -> {
             event.registerEntityRenderer(MovingStructures.ENTITY.get(), MovingStructureRenderer::new);
             // A seat and a hold on a rope are unseen: their rider is what is drawn.
