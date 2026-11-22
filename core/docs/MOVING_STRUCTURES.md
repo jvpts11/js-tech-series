@@ -569,6 +569,39 @@ A player who leaves the game standing on a structure in flight comes back standi
 What a player drives is carried the same way, a van on a ferry's deck: their game carries it and tells the server
 where on the deck it stands, and the server puts it there ([Entities](ENTITIES.md)).
 
+## Its own gravity
+
+*Added 2026-11-22.*
+
+A structure can pull what stands in it towards its own floor, however it is turned, as a ship's artificial gravity
+keeps its floor down for its crew through a dive, a roll or a loop:
+
+```java
+structure.deckGravity(true);   // kept in its save, told to the players' games, taken to another dimension
+```
+
+Its field is the box of its blocks and `DeckGravity.REACH`, a block, round it. `DeckGravity.fieldOf(entity)` and
+`DeckGravity.fieldAt(level, place)` give the structure whose field holds an entity or a place, `DeckGravity.down`
+the way its floor pulls in the world, and `DeckGravity.strength(level)` how hard: the dimension's own pull, a sixth on
+a moon, or, where the dimension pulls nothing, as space does, the usual pull of the ground.
+
+A player in the field of such a structure pitched or rolled more than a degree, upside down, or anywhere out in a
+dimension that pulls nothing, walks on its floor as on the ground. Their game takes the game's own step where the
+structure's blocks stand upright, in its plot of the yard, with their place, speed and look turned into its frame,
+then sets them back in the world where the structure stands; so walking, running, jumping, sneaking at an edge,
+stepping up a stair and climbing a ladder are the game's own, on the deck. Their look is kept in its frame as a
+sitter's is in its seats: the mouse turns it about the floor's up, the deck carries it round as it turns, the view
+rolls to keep the floor's up at its top, and their eyes stand over their feet along the floor's up, so they aim at
+and use what they see. Every player sees them drawn standing on its floor, facing where they look along it. The
+server takes where on the deck their game says they stand, counts a fall down its floor rather than down the world,
+and keeps them standing rather than crawling.
+
+Coming into the field from outside, one is drawn down onto its floor; walking out of it, they go on with the speed
+the structure had where they left, under the world's own pull again. Level where the world pulls, or as near level as
+a ship settled on its gear stands, its floor is the world's down already, and the world's own walking, above, holds.
+
+Only players walk in a structure's frame: mobs and dropped items aboard keep the world's rules, floating in space.
+
 ## Using its blocks
 
 *Added 2026-10-20.*
