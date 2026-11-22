@@ -60,7 +60,7 @@ import org.joml.Vector3d;
  */
 public final class SystemSpaceRenderer {
 
-    /* The game's sun is a square half its picture wide in the middle of it. */
+    /* The Sun's picture, the series' round one in place of the game's (assets/minecraft), its disc half as wide. */
     private static final double SUN_PICTURE = 2;
     /*
      * How wide a world's point is, half of it, in radians across the eye: over a third of a degree across, larger

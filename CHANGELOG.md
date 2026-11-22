@@ -736,6 +736,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Space) The Sun is round: a disc in pixels, white at its middle and warmer to its limb, with a corona round it, in
+  every world's sky, the Overworld's too, and in space, where the game drew a square.
 - (Core) The machines' recipes on their own faces in JEI, EMI and REI: a kind of processing whose machine is drawn on a face of its own has each recipe shown on that face at work, its loop playing, its RUN lamp lit and its LCD saying how long the recipe takes, the recipe's items in the face's ports and its fluids and matter in its sight glasses, each glass named as what it holds and saying on its tooltip how much the recipe takes or makes. A mod registers a kind's face with `RecipeFaces.register`; a recipe its face cannot hold keeps the plain page (core/docs/RECIPE_VIEWERS.md).
 - (Computers) Every chain machine's recipes are shown on its own face in the recipe viewers, the Crusher's byproduct chance on its counter and the Optical Polisher's fibres on its drawing tower; a bench's kinds keep their pages.
 - (Computers) The CDU: placed whole as the Supercomputer Rack is, the rack's own cabinet with two pumps and a plate exchanger in its bay, it stands between the racks and the Chiller, taking the racks' Hot Water back and sending them Cold Water, up to 64 mB/s for eight racks, and heating the Chiller's water a millibucket for a millibucket. Its four water ports are in its roof, its energy at its back, and it has its own screen, the names under its sight glasses kept inside their dark bank. Its item shows the CDU, in a slot, a hand and the recipe viewers.
