@@ -92,6 +92,12 @@ public final class RocketRoutesGameTests {
     private static final String MARS_HOME_BATCH = "jsspace_routes_mars_home";
     private static final String MOON_TO_MARS_BATCH = "jsspace_routes_moon_mars";
     private static final String MARS_TO_MOON_BATCH = "jsspace_routes_mars_moon";
+    /*
+     * As long as a whole trip may take: the land each world is set down on, and the plots its spent stages part into,
+     * are made and loaded in real time while the test server's ticks run unbounded, three or four hundred a second,
+     * so on a slower machine a trip of sixty thousand ran out waiting for its lander's spent stage to part.
+     */
+    private static final int WHOLE_TRIP = 120_000;
     /* Where a site built on another world stands, its place across and along, and the room round a rocket's foot. */
     private static final int SITE = 96;
     private static final int SITE_ROOM = 7;
@@ -332,7 +338,7 @@ public final class RocketRoutesGameTests {
      * its legs; on the ground XFER and EXEC send it home, the ascent stage lifting off and leaving the descent stage;
      * it comes home braking in the Overworld's air on its heat shield and lands under its parachutes.
      */
-    @GameTest(template = "bench", batch = MOON_BATCH, timeoutTicks = 60_000)
+    @GameTest(template = "bench", batch = MOON_BATCH, timeoutTicks = WHOLE_TRIP)
     public static void route_toTheMoonsGroundAndHomeInOneLaunch(final GameTestHelper helper) {
         // The cruise's events come by chance, a micrometeoroid breaching the heat shield a crew must patch: they have
         // their tests of their own, and the trip here is flown without them.
@@ -454,7 +460,7 @@ public final class RocketRoutesGameTests {
      * shield into the low orbit, its second stage, spent, gone; LAND and SET bring it down through Mars' thin air on
      * its parachutes and its engine to its legs. Coming back from Mars is a launch from a site built there.
      */
-    @GameTest(template = "bench", batch = MARS_BATCH, timeoutTicks = 60_000)
+    @GameTest(template = "bench", batch = MARS_BATCH, timeoutTicks = WHOLE_TRIP)
     public static void route_toTheGroundOfMarsInOneLaunch(final GameTestHelper helper) {
         SpaceServerConfig.FILE.set(SpaceServerConfig.CRUISE_EVENTS, false);
         final ServerLevel level = helper.getLevel();
@@ -542,7 +548,7 @@ public final class RocketRoutesGameTests {
      * Overworld; its crew sleeps and the cruise passes; it brakes in the Overworld's air on its heat shield and lands
      * under its parachutes.
      */
-    @GameTest(template = "bench", batch = MARS_HOME_BATCH, timeoutTicks = 60_000)
+    @GameTest(template = "bench", batch = MARS_HOME_BATCH, timeoutTicks = WHOLE_TRIP)
     public static void route_homeFromASiteBuiltOnMars(final GameTestHelper helper) {
         fromASite(helper, SolarBody.MARS, SolarBody.OVERWORLD, MARS_HOME, 1, "mars_home_crew");
     }
@@ -551,7 +557,7 @@ public final class RocketRoutesGameTests {
      * From a site built on the Moon to Mars' ground: a rocket of one stage with legs, a crew aboard, climbs off the
      * Moon, sets out in Mars' window, brakes in Mars' air and comes down on its legs.
      */
-    @GameTest(template = "bench", batch = MOON_TO_MARS_BATCH, timeoutTicks = 60_000)
+    @GameTest(template = "bench", batch = MOON_TO_MARS_BATCH, timeoutTicks = WHOLE_TRIP)
     public static void route_toMarsFromASiteBuiltOnTheMoon(final GameTestHelper helper) {
         fromASite(helper, SolarBody.MOON, SolarBody.MARS, MOON_TO_MARS, 0, "moon_mars_crew");
     }
@@ -560,7 +566,7 @@ public final class RocketRoutesGameTests {
      * From a site built on Mars to the Moon's ground: a rocket of two stages, its second with legs, a crew aboard,
      * climbs off Mars, sets out in its window, comes to rest in the Moon's orbit and brakes down to its legs.
      */
-    @GameTest(template = "bench", batch = MARS_TO_MOON_BATCH, timeoutTicks = 60_000)
+    @GameTest(template = "bench", batch = MARS_TO_MOON_BATCH, timeoutTicks = WHOLE_TRIP)
     public static void route_toTheMoonFromASiteBuiltOnMars(final GameTestHelper helper) {
         fromASite(helper, SolarBody.MARS, SolarBody.MOON, MARS_TO_MOON, 1, "mars_moon_crew");
     }
