@@ -82,12 +82,15 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestSequence;
+import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
@@ -107,6 +110,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A small ship let go from its dock flies as a moving structure: its pilot seat is its helm; taken up, it goes along
@@ -253,6 +257,8 @@ public final class ShipFlightGameTests {
     private static final int BURNING = 320;
     private static final double CLIMBING_PITCH = 60;
     private static final int CROSSED = 10;
+    /* More places than the server sends a pilot to on the way up: joining, sitting, crossing into space. */
+    private static final int TELEPORTS = 16;
     private static final double HELD_OPEN = 0.95;
     private static final ShipDesign LEGS_SHIP = new ShipDesign("JS-04", List.of(part("orbiter_cockpit"),
             part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
@@ -723,10 +729,12 @@ public final class ShipFlightGameTests {
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
     public static void flight_itClimbsOverTheBuildLimitAndIntoSpaceWithItsPilotAtTheHelm(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
-        final ServerPlayer[] pilot = new ServerPlayer[1];
         final ServerLevel overworld = helper.getLevel();
         final ServerLevel space = SystemSpaces.spaceOf(overworld.getServer(), StarSystems.SOLAR_SYSTEM);
-        final GameTestSequence sequence = letGo(helper, ship).thenExecute(() -> {
+        // Its pilot starts it from its console: their team is its crew.
+        final ServerPlayer[] pilot = {GameTestPlayers.connected(helper, "pilot")};
+        final GameTestSequence sequence = letGo(helper, ship, SHIP, pilot[0].getUUID()).thenExecute(() -> {
+            helper.assertTrue(console(helper, ship[0]).crew().isPresent(), "started by its pilot, it has its crew");
             final BlockPos seat = aboard(helper, ship[0], plan(helper).where(spot(helper,
                     ShipKitBlocks.PILOT_SEAT.getId())));
             // High over the build limit, under where the Overworld becomes its space, its nose pitched up, its
@@ -736,7 +744,6 @@ public final class ShipFlightGameTests {
                     .turnedBy(1, 0, 0, Math.toRadians(CLIMBING_PITCH)));
             MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(CRUISING,
                     0, 1, 0, 0)));
-            pilot[0] = GameTestPlayers.connected(helper, "pilot");
             pilot[0].setGameMode(GameType.SURVIVAL);
             helper.assertTrue(MovingStructures.sit(pilot[0], seat), "the pilot sits at its helm");
         });
@@ -756,6 +763,25 @@ public final class ShipFlightGameTests {
             helper.assertTrue(pilot[0].level() == space && pilot[0].getVehicle() instanceof StructureSeatEntity seat
                     && seat.structure() == there, "its pilot crossed with it, at its helm still");
             helper.assertTrue(console(helper, there).flight().speed() > CRUISE, "its console shows its flight");
+            // Their game answers every place the server sent them to, as a player's game does at once.
+            for (int id = 0; id <= TELEPORTS; id++) {
+                pilot[0].connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(id));
+            }
+        }).thenExecuteAfter(1, () -> {
+            // Flying in space, its pilot at the helm uses its console as their game asks the server to, and it
+            // opens: the server measures their reach to it aboard and lets the use through.
+            final MovingStructure there = MovingStructures.byId(space, ship[0].id());
+            pilot(helper, there, Map.of());
+            final BlockPos at = console(helper, there).getBlockPos();
+            helper.assertTrue(pilot[0].canInteractWithBlock(at, 1.0), "flying, its pilot at the helm reaches its"
+                    + " console");
+            pilot[0].connection.handleUseItemOn(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(at), Direction.UP, at, false), 0));
+            helper.assertTrue(pilot[0].containerMenu instanceof ShipConsoleMenu, "and opens it: "
+                    + pilot[0].containerMenu + "; may interact " + space.mayInteract(pilot[0], at) + ", below the top "
+                    + (at.getY() < space.getMaxBuildHeight()) + ", crew " + console(helper, there).crew().isPresent()
+                    + ", block " + space.getBlockState(at) + ", at " + at);
+            pilot[0].closeContainer();
         }).thenWaitUntil(() -> {
             // Its pilot at the helm still, the ship flying on: in space they breathe the cockpit's air.
             final MovingStructure there = MovingStructures.byId(space, ship[0].id());
@@ -1047,6 +1073,15 @@ public final class ShipFlightGameTests {
     /* The dock built, a ship of {@code design} built in it and let go, {@code ship} told it once it came in. */
     private static GameTestSequence letGo(final GameTestHelper helper, final MovingStructure[] ship,
                                           final ShipDesign design) {
+        return letGo(helper, ship, design, null);
+    }
+
+    /*
+     * The same, let go by the player {@code by}, as their starting it from its console does: their team its crew; by
+     * nobody, it has no crew.
+     */
+    private static GameTestSequence letGo(final GameTestHelper helper, final MovingStructure[] ship,
+                                          final ShipDesign design, final @Nullable UUID by) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         return helper.startSequence()
@@ -1068,7 +1103,7 @@ public final class ShipFlightGameTests {
                                 .defaultBlockState());
                     }
                     final List<String> told = new ArrayList<>();
-                    ship[0] = dock.release(null, why -> told.add(GameText.component(why).getString())).orElse(null);
+                    ship[0] = dock.release(by, why -> told.add(GameText.component(why).getString())).orElse(null);
                     helper.assertTrue(ship[0] != null, "the ship is let go: " + told + ", " + plan.formedParts()
                             .size() + " of its " + plan.plan().parts() + " parts formed");
                 })

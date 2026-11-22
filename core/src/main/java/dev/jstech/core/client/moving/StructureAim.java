@@ -13,11 +13,14 @@ import dev.jstech.core.client.multiblock.FormedMeshes;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.StructureRays;
+import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.moving.YardLayout;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -55,11 +58,16 @@ public final class StructureAim {
      */
     public static void beforePick(final float partialTick) {
         aiming = partialTick;
+        // A sitter's eyes stand in their seat's back: their aim passes through their own seat to what is before it.
+        final Entity camera = Minecraft.getInstance().getCameraEntity();
+        StructureRays.passing(camera != null && camera.getVehicle() instanceof StructureSeatEntity seat
+                ? seat.seat() : null);
     }
 
     /** The game found the player's aim for the frame. */
     public static void aimed() {
         aiming = Float.NaN;
+        StructureRays.passing(null);
     }
 
     /** After the game aimed: an aim at a structure's block names the place on it in the yard's places. */

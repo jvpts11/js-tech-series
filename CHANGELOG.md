@@ -3761,7 +3761,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   it on along its nose with the key they walk forward with, slows it with the one they walk back with and turns it
   with left and right. With nobody at the helm its throttle closes and, at rest on the land, it stays where it is,
   parked; its blocks fly as they stand, what works on the ground works aboard, and its crew walks about inside in
-  flight.
+  flight. A pilot at the helm uses what is before them, its flight console among it, their aim passing through the
+  back of the seat their head stands in.
 - (Space) A ship flies in the spirit of No Man's Sky: it goes where its nose points, with no drift. Its pilot opens
   and closes its throttle, which stays where they leave it, turns it, and pitches its nose up and down with the jump
   key and C, as far as they hold it, over the top and round; let go upside down in the air, it rights itself. In the

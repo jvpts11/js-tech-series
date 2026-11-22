@@ -8,6 +8,7 @@
 package dev.jstech.core.moving;
 
 import dev.jstech.core.multiblock.shape.FormedAim;
+import dev.jstech.core.multiblock.shape.FormedPieceUses;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.util.Loaded;
 import java.util.List;
@@ -22,6 +23,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,7 +35,23 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class StructureRays {
 
+    /*
+     * The seat, a place of the yard, whose piece the player's aim being found passes through: the sitter's eyes stand
+     * in their seat's back, and a ray starting there met it first, so a pilot clicked their own seat whatever they
+     * looked at. None while no aim is being found.
+     */
+    private static @Nullable BlockPos passing;
+
     private StructureRays() {
+    }
+
+    /**
+     * The player's aim about to be found, on the player's game, sitting on the seat {@code seat} of a structure, or
+     * none: the aim passes through that seat's piece. Cleared, with none, once the aim is found.
+     */
+    @ApiStatus.Internal
+    public static void passing(final @Nullable BlockPos seat) {
+        passing = seat == null ? null : seat.immutable();
     }
 
     /**
@@ -110,7 +128,8 @@ public final class StructureRays {
         // A block of a formed structure aboard, whose model is known here, is aimed at by the model's faces.
         final List<FormedPlace> formed = FormedAim.places(level, pos, state);
         if (!formed.isEmpty()) {
-            return FormedAim.hit(level, formed, from, to, pos);
+            final BlockHitResult hit = FormedAim.hit(level, formed, from, to, pos);
+            return hit != null && sitting(level, pos, hit.getLocation()) ? null : hit;
         }
         final VoxelShape shape = ray.getBlockShape(state, level, pos);
         final BlockHitResult block = level.clipWithInteractionOverride(from, to, pos, shape, state);
@@ -119,5 +138,12 @@ public final class StructureRays {
         final double blockDistance = block == null ? Double.MAX_VALUE : from.distanceToSqr(block.getLocation());
         final double wetDistance = wet == null ? Double.MAX_VALUE : from.distanceToSqr(wet.getLocation());
         return blockDistance <= wetDistance ? block : wet;
+    }
+
+    /* Whether {@code at} of the block at {@code pos} is on the piece of the seat the player's aim passes through. */
+    private static boolean sitting(final Level level, final BlockPos pos, final Vec3 at) {
+        final BlockPos seat = passing;
+        return seat != null && level.isClientSide() && (pos.equals(seat)
+                || FormedPieceUses.worksBy(level, pos, at).filter(seat::equals).isPresent());
     }
 }

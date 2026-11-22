@@ -13,11 +13,16 @@ import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
+import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.FormedPieceAim;
+import dev.jstech.core.multiblock.shape.FormedPieceUses;
+import dev.jstech.space.client.ship.ShipConsoleScreen;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipSounds;
 import dev.jstech.space.ship.SmallShipParts;
@@ -29,6 +34,7 @@ import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
@@ -36,9 +42,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -55,6 +64,8 @@ public final class ShipFlightClientTests {
 
     /* The dock dug into the land where the test stands, as the shipyard's client test builds it. */
     private static final BlockPos CORNER = new BlockPos(-11, -1, 6);
+    /* The cockpit's piece the flight console is drawn as. */
+    private static final String CONSOLE_PIECE = "flight_console";
     private static final int X0 = -13;
     private static final int X1 = 13;
     private static final int Z0 = 4;
@@ -109,6 +120,7 @@ public final class ShipFlightClientTests {
         final Vec3[] from = new Vec3[2];
         final boolean[] cruising = new boolean[1];
         final StandingWatch[] standing = new StandingWatch[1];
+        final BlockPos[] console = new BlockPos[1];
         final ShipDesign design = new ShipDesign("JS-03", List.of(part("orbiter_cockpit"), part("airlock"),
                 part("quarters"), part("lab"), part("reactor_flush")), List.of(part("twin_bells"),
                 part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"),
@@ -162,8 +174,9 @@ public final class ShipFlightClientTests {
                                 .defaultBlockState());
                     }
                 })
+                // Started by the player, as from its console: their team is its crew.
                 .thenServer(SETTLE, level -> ship[0] = ((ShipyardTerminalBlockEntity) level.getBlockEntity(
-                        terminal[0])).release(null).orElseThrow())
+                        terminal[0])).release(ctx.serverPlayer().getUUID()).orElseThrow())
                 .thenWaitUntilServer(level -> ship[0].ready(), ARRIVE, "its blocks to come into the structure",
                         level -> "arriving")
                 .thenServer(0, level -> {
@@ -214,6 +227,36 @@ public final class ShipFlightClientTests {
                             + ShipSounds.ENGINE_IDLE_INSIDE.id())), "at the helm its engines are heard all round: "
                             + SoundDirector.playing());
                 })
+                // Flying on, the pilot looks down at the flight console before the seat and right clicks it: their
+                // aim is on it, and its page opens.
+                .then(0, () -> {
+                    console[0] = ctx.server().submit(() -> ((ShipFlight) ship[0].motion()).consoleIn(ship[0])
+                            .orElseThrow()).join();
+                    // The middle of the console drawn, its panel, where the player's game has it: the server's ship
+                    // is a moment ahead of the one drawn.
+                    final StructureFrame frame = MovingStructures.at(ctx.mc().level, console[0]).frame();
+                    final Vec3 middle = FormedPieceAim.named(ctx.mc().level, console[0], CONSOLE_PIECE).orElseThrow()
+                            .box().getCenter();
+                    final Vec3 at = new Vec3(frame.worldX(middle.x, middle.y, middle.z), frame.worldY(middle.x,
+                            middle.y, middle.z), frame.worldZ(middle.x, middle.y, middle.z));
+                    final Vec3 eye = ctx.player().getEyePosition();
+                    final double across = Math.hypot(at.x - eye.x, at.z - eye.z);
+                    ctx.player().setYRot((float) Math.toDegrees(Math.atan2(-(at.x - eye.x), at.z - eye.z)));
+                    ctx.player().setXRot((float) -Math.toDegrees(Math.atan2(at.y - eye.y, across)));
+                })
+                .then(1, () -> {
+                    // On the console's block, or on another block of the console's piece, which works by it.
+                    ctx.assertTrue(ctx.mc().hitResult instanceof BlockHitResult hit
+                            && hit.getType() == HitResult.Type.BLOCK && (hit.getBlockPos().equals(console[0])
+                            || FormedPieceUses.worksBy(ctx.mc().level, hit.getBlockPos(), hit.getLocation())
+                            .equals(Optional.of(console[0]))), "the pilot's aim is on the flight console at "
+                            + console[0] + ": " + aimed(ctx));
+                    ctx.mc().gameMode.useItemOn(ctx.player(), InteractionHand.MAIN_HAND,
+                            (BlockHitResult) ctx.mc().hitResult);
+                })
+                .thenAwaitScreen(ShipConsoleScreen.class, ARRIVE)
+                .thenScreenshot(SETTLE, "ship-flight-console")
+                .then(0, () -> ctx.mc().setScreen(null))
                 // Held left, the ship turns and the pilot's view turns with it, frame by frame within each tick as
                 // the ship is drawn, never a step at once at the tick.
                 .then(0, () -> {
@@ -321,6 +364,15 @@ public final class ShipFlightClientTests {
         final double east = MovingStructures.toYard(ship, here.add(1, 0, 0)).z - at.z;
         final double south = MovingStructures.toYard(ship, here.add(0, 0, 1)).z - at.z;
         return (float) Math.toDegrees(Math.atan2(-east, south));
+    }
+
+    /* What the player's aim is on now, as a failure says it. */
+    private static String aimed(final ClientTestContext ctx) {
+        return ctx.mc().hitResult instanceof BlockHitResult hit ? hit.getType() + " " + hit.getBlockPos() + " "
+                + ctx.mc().level.getBlockState(hit.getBlockPos()) + " at " + hit.getLocation() + ", the piece "
+                + FormedPieceAim.at(ctx.mc().level, hit.getBlockPos(), hit.getLocation()).map(
+                FormedPieceAim.Aimed::piece).orElse("none") + ", working by " + FormedPieceUses.worksBy(
+                ctx.mc().level, hit.getBlockPos(), hit.getLocation()) : String.valueOf(ctx.mc().hitResult);
     }
 
     /* Where the ship's pivot is in the world. */
