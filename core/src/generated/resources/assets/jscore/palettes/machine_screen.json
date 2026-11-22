@@ -9,6 +9,7 @@
   "faceOff": "#FF787C82",
   "faceOut": "#FFF0AA32",
   "ground": "#FFC6C6C6",
+  "insetInk": "#FFDCE0E6",
   "lampFault": "#FFEF6A5A",
   "lampRun": "#FF5FE07A",
   "lampWait": "#FFF0B23A",

@@ -317,6 +317,9 @@ public final class ComputingClientSetup {
             event.registerItem(ChainMachineItemRenderer.extensions(ChainMachines.modelOf(machine)),
                     ChainMachines.terminalOf(machine).get().asItem());
         }
+        // The CDU's item shows the CDU, in a slot, a hand and the recipe viewers alike.
+        event.registerItem(ChainMachineItemRenderer.extensions(CoolingPlant.CDU_MODEL), CoolingPlant.CDU.get()
+                .asItem());
     }
 
     /*

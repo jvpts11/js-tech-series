@@ -188,6 +188,7 @@ import dev.jstech.tests.clienttest.core.MovingStructureLifeClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureToolsClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.InspectClientTests;
+import dev.jstech.tests.clienttest.core.ItemDrawnByEntityClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.ToolClientTests;
 import dev.jstech.tests.clienttest.core.TooltipClientTests;
@@ -494,6 +495,7 @@ public final class ClientTestSuite {
             TravelClientTests.class,
             WalkPaceClientTests.class,
             WorldChangesClientTests.class,
+            ItemDrawnByEntityClientTests.class,
             ItemStateClientTests.class,
             ToolClientTests.class,
             CameraClientTests.class,

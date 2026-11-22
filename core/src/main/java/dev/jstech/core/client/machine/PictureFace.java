@@ -79,7 +79,7 @@ public final class PictureFace implements IMachineFace {
                 MachineWords.upper(GameText.of(open != null ? open.getTitle()
                         : machine.getBlockState().getBlock().getName())));
         MachineChrome.plates(v, name, plateRoom(this.picture));
-        MachineChrome.lamps(v);
+        MachineChrome.lampsOnDark(v);
         meter(v);
         final FacePicture.Box lcd = this.picture.lcd();
         StandardFace.lcd(v, this.statistics, lcd.x(), lcd.y(), lcd.w(), lcd.h());
@@ -104,7 +104,7 @@ public final class PictureFace implements IMachineFace {
         final int frame = loopFrame(picture, now);
         frame(g, x, y, frames, picture, frame);
         MachineChrome.plates(g, font, x, y, still.name(), plateRoom(picture), still.rating());
-        MachineChrome.lamps(g, font, x, y, MachineStatus.Lamp.RUN);
+        MachineChrome.lamps(g, font, x, y, MachineStatus.Lamp.RUN, true);
         final FacePicture.Meter meter = picture.meter();
         MachineArt.panelMeter(g, font, x + meter.x(), y + meter.y(), meter.w(), meter.h(), still.meter(),
                 StandardFace.MARKS, true);
@@ -208,15 +208,16 @@ public final class PictureFace implements IMachineFace {
         return picture.lcd().x() - PLATE_GAP - MachineScreenLayout.PLATE_X;
     }
 
-    /* The switch, {@code on} or off, and its words on and off where the picture writes them. */
+    /* The switch, {@code on} or off, and its words on and off where the picture writes them, light on its inset. */
     private static void toggle(final GuiGraphics g, final Font font, final int x, final int y,
                                final FacePicture picture, final boolean on) {
         final FacePicture.Toggle toggle = picture.toggle();
+        final int ink = MachineArt.PALETTE.get().insetInk();
         MachineArt.rocker(g, x + toggle.x(), y + toggle.y(), on);
         toggle.on().ifPresent(at -> MachineArt.text(g, font, GameText.resolve(MachineScreenTexts.ON), x + at.x(),
-                y + at.y(), MachineArt.PALETTE.get().title()));
+                y + at.y(), ink));
         toggle.off().ifPresent(at -> MachineArt.text(g, font, GameText.resolve(MachineScreenTexts.OFF), x + at.x(),
-                y + at.y(), MachineArt.PALETTE.get().title()));
+                y + at.y(), ink));
     }
 
     /* The words engraved on its parts that show on frame {@code frame}, each as {@code say} says it. */

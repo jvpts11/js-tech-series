@@ -36,7 +36,7 @@ public final class MachineArt {
             0xFF << 24 | 0xE8C547, 0xFF << 24 | 0x3C2C00, 0xFF << 24 | 0x343740, 0xFF << 24 | 0x7CFF7C,
             0xFF << 24 | 0x182418, 0xFF << 24 | 0x3668D2, 0xFF << 24 | 0xDC1E14, 0xFF << 24 | 0xFFECA0,
             0xFF << 24 | 0xECECE6, 0xFF << 24 | 0x468CEB, 0xFF << 24 | 0xF0AA32, 0xFF << 24 | 0x5ACD6E,
-            0xFF << 24 | 0x787C82, 0xFF << 24 | 0xFFC446, 0xFF << 24 | 0xF0C860));
+            0xFF << 24 | 0x787C82, 0xFF << 24 | 0xFFC446, 0xFF << 24 | 0xF0C860, 0xFF << 24 | 0xDCE0E6));
     private static final float SMALL = MachineScreenLayout.SMALL;
     /* A sight glass's width; an arrow's length, and its shaft's. */
     private static final int GLASS = 8;
@@ -728,12 +728,13 @@ public final class MachineArt {
      * @param faceOff    a face that does neither
      * @param pushLit    a lit pushbutton of a resource
      * @param lcdTrace   an LCD chart's second line, amber beside its green
+     * @param insetInk   letters on a dark inset of a drawn face: its lamps' words, its switch's ON and OFF
      */
     public record Colours(int black, int white, int dark, int ground, int slot, int slotDark, int title, int steel,
                           int aluminium, int meterFace, int lampRun, int lampWait, int lampFault, int classPlate,
                           int classInk,
                           int plateInk, int lcdGlow, int lcdGround, int water, int redstone, int lit,
                           int wheelDigit, int faceIn, int faceOut, int faceBoth, int faceOff, int pushLit,
-                          int lcdTrace) {
+                          int lcdTrace, int insetInk) {
     }
 }

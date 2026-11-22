@@ -100,22 +100,34 @@ public final class MachineChrome {
                 .orElse(MachineWords.upper(MachineScreenTexts.FE));
     }
 
-    /** The three lamps, the one of the machine's state lit, their words engraved beside them. */
+    /** The three lamps, the one of the machine's state lit, their words engraved beside them in the face's steel. */
     public static void lamps(final MachineView view) {
-        lamps(view.g(), view.font(), view.x(0), view.y(0), view.machine().status().lamp());
+        lamps(view.g(), view.font(), view.x(0), view.y(0), view.machine().status().lamp(), false);
     }
 
-    /** The three lamps of a face whose top left stands at ({@code x}, {@code y}) on the screen, {@code lit} lit. */
+    /** The three lamps on a drawn face's dark inset, the one of the machine's state lit, their words light on it. */
+    public static void lampsOnDark(final MachineView view) {
+        lamps(view.g(), view.font(), view.x(0), view.y(0), view.machine().status().lamp(), true);
+    }
+
+    /**
+     * The three lamps of a face whose top left stands at ({@code x}, {@code y}) on the screen, {@code lit} lit: their
+     * words engraved in steel, or {@code onDark}, light on a dark inset, where engraved letters would hardly show.
+     */
     public static void lamps(final GuiGraphics g, final Font font, final int x, final int y,
-                             final MachineStatus.Lamp lit) {
+                             final MachineStatus.Lamp lit, final boolean onDark) {
         final MachineArt.Colours c = MachineArt.PALETTE.get();
         final int[] colours = {c.lampRun(), c.lampWait(), c.lampFault()};
         final List<MachineStatus.Lamp> lamps = List.of(MachineStatus.Lamp.RUN, MachineStatus.Lamp.WAIT,
                 MachineStatus.Lamp.FAULT);
         for (int i = 0; i < lamps.size(); i++) {
             MachineArt.lamp(g, x + LAMP_X, y + LAMP_Y + i * LAMP_PITCH, colours[i], lamps.get(i) == lit);
-            MachineArt.engrave(g, font, MachineArt.fit(font, MachineWords.upper(LAMP_WORDS.get(i)), LAMP_WORD_ROOM),
-                    x + LAMP_WORD_X, y + LAMP_Y + 1 + i * LAMP_PITCH, false);
+            final String word = MachineArt.fit(font, MachineWords.upper(LAMP_WORDS.get(i)), LAMP_WORD_ROOM);
+            if (onDark) {
+                MachineArt.text(g, font, word, x + LAMP_WORD_X, y + LAMP_Y + 1 + i * LAMP_PITCH, c.insetInk());
+            } else {
+                MachineArt.engrave(g, font, word, x + LAMP_WORD_X, y + LAMP_Y + 1 + i * LAMP_PITCH, false);
+            }
         }
     }
 
