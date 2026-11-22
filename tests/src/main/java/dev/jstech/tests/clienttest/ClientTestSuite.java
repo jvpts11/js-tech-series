@@ -187,6 +187,7 @@ import dev.jstech.tests.clienttest.core.MovingStructureClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructurePhysicsClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureLifeClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureToolsClientTests;
+import dev.jstech.tests.clienttest.core.DeckWalkClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.InspectClientTests;
 import dev.jstech.tests.clienttest.core.ItemDrawnByEntityClientTests;
@@ -389,6 +390,7 @@ public final class ClientTestSuite {
             MovingStructurePhysicsClientTests.class,
             MovingStructureLifeClientTests.class,
             MovingStructureToolsClientTests.class,
+            DeckWalkClientTests.class,
             WorldStabilityClientTests.class,
             ManualClientTests.class,
             ManualRecipeViewClientTests.class,

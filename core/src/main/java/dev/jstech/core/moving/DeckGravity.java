@@ -70,6 +70,17 @@ public final class DeckGravity {
         return found;
     }
 
+    /**
+     * Whether one in {@code body}'s field walks in its own frame, its floor down: when it pulls towards its floor and
+     * leans or pitches at all, or stands where its dimension pulls nothing. Level where the world pulls, its floor is
+     * the world's down already, and the world's own walking carries one on it.
+     */
+    @ApiStatus.Internal
+    public static boolean walksIn(final IStructureBody body) {
+        return body.deckGravity() && (SeatLook.tilted(body.frame())
+                || DimensionRulesData.of(body.level()).gravity() < WEIGHTLESS);
+    }
+
     /** The way {@code body}'s deck pulls, in the world: its floor's down, however it is turned, of length one. */
     public static Vec3 down(final IStructureBody body) {
         final StructureFrame frame = body.frame();

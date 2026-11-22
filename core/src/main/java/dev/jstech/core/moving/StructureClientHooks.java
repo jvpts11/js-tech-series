@@ -7,7 +7,9 @@
  */
 package dev.jstech.core.moving;
 
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -69,6 +71,15 @@ public final class StructureClientHooks {
 
         /** The server told the forces on a structure the player looks at. */
         default void forces(final StructureForcesPayload payload) {
+        }
+
+        /**
+         * The game is about to move {@code player} by {@code travel}, its own step: the player's game takes the step
+         * in the frame of the structure whose floor pulls them, if one does; whether it took it.
+         */
+        @ApiStatus.Internal
+        default boolean walk(final Player player, final Runnable travel) {
+            return false;
         }
     }
 }

@@ -9,6 +9,7 @@ package dev.jstech.core.mixin;
 
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureClientHooks;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.moving.YardLayout;
@@ -38,6 +39,19 @@ public abstract class PlayerMixin {
         final Player player = (Player) (Object) this;
         if (player.getVehicle() instanceof StructureSeatEntity seat && seat.lyingHead() != null) {
             player.setPose(Pose.SLEEPING);
+            info.cancel();
+        }
+    }
+
+    /*
+     * In a structure whose floor pulls them, turned or out in space, the player's game takes the game's own step in the
+     * structure's frame, where its blocks stand upright ({@code DeckWalk}): walking, jumping, climbing its ladders and
+     * stepping up its stairs as on the ground.
+     */
+    @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
+    private void jscore$walkInTheDecksFrame(final Vec3 input, final CallbackInfo info) {
+        final Player player = (Player) (Object) this;
+        if (player.level().isClientSide() && StructureClientHooks.get().walk(player, () -> player.travel(input))) {
             info.cancel();
         }
     }

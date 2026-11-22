@@ -43,6 +43,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -257,6 +258,11 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         StructureForcesClient.told(payload);
     }
 
+    @Override
+    public boolean walk(final Player player, final Runnable travel) {
+        return player instanceof LocalPlayer local && DeckWalk.travel(local, travel);
+    }
+
     /*
      * The structure's entity has left: it no longer collides, carries or answers for its plot; its drawing is let go
      * too, unless it is kept drawn where it landed until the land is drawn with its blocks.
@@ -417,14 +423,16 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
 
     /*
      * Carries {@code mover}, the player or what they drive, by the deck it stands on, and pushes it out of the
-     * structures near; a player who is a spectator or goes through blocks is not pushed.
+     * structures near; a player who is a spectator, goes through blocks or walks in a structure's frame is not pushed.
      */
     private static void carried(final Entity mover) {
         final IStructureBody standing = StructureFooting.standingOn(mover);
         if (standing instanceof ClientStructure structure && structure.ready()) {
             StructureFooting.carry(mover, structure);
         }
-        if (mover.noPhysics || mover.isSpectator()) {
+        // One walking in a structure's frame steps against its blocks as they stand there: the world's box of a player
+        // upright on a turned floor reaches into it, and pushed out of it they would be pushed off their own floor.
+        if (mover.noPhysics || mover.isSpectator() || mover instanceof LocalPlayer local && DeckWalk.walks(local)) {
             return;
         }
         for (final IStructureBody body : new ArrayList<>(LevelMovingStructures.of(mover.level())
