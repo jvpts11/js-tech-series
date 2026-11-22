@@ -592,6 +592,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   formed model's doors' leaves are left out of its blocks' shapes. Experimental.
 
 ### Added
+- The MCP surveys the blocks round the player: `blocks_survey` counts the blocks of the chunks in a square
+  round the player's, of a mod or whose id holds some words, by their id, each with the first place it was found, the
+  most first, making the chunks never made as walking there would; for an agent finding where ores and other blocks
+  lie.
 - Walking a turned deck: in a moving structure whose floor pulls towards itself, pitched or rolled more than a
   degree, upside down or out in space, a player walks on its floor as on the ground, its floor down: walking,
   running, jumping, sneaking at its edges, stepping up its stairs and climbing its ladders, the deck carrying them as

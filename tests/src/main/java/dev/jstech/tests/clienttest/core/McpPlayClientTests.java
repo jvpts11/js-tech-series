@@ -585,6 +585,40 @@ public final class McpPlayClientTests {
                         place.getAsJsonObject(), "kind"))), "asked by kind, only places of that kind: " + result)));
     }
 
+    /*
+     * What blocks lie round the player: two sponges laid by the player are counted by their id, the first found one of
+     * them; asked of a mod alone, only that mod's blocks are counted.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void survey_countsTheBlocksRoundThePlayerByTheirId(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final List<BlockPos> laid = List.of(ctx.abs(WALK_TO), ctx.abs(WALK_TO.north()));
+        ctx.afterTest(() -> {
+            McpGame.turn(false);
+            ctx.server().execute(() -> laid.forEach(at -> ctx.serverLevel().setBlockAndUpdate(at,
+                    Blocks.AIR.defaultBlockState())));
+        });
+        pair(ctx, sent, key, port);
+        ctx.thenServer(0, level -> laid.forEach(at -> level.setBlockAndUpdate(at,
+                Blocks.SPONGE.defaultBlockState())));
+        run(ctx, sent, key, port, new Step("blocks_survey", "{\"radius\":1,\"words\":\"minecraft:sponge\"}",
+                result -> {
+                    final JsonObject sponge = result.getAsJsonArray("blocks").asList().stream()
+                            .map(JsonElement::getAsJsonObject).filter(one -> "minecraft:sponge".equals(text(one, "id")))
+                            .findFirst().orElseThrow(() -> new ClientTestFailure("the sponges are found: " + result));
+                    final BlockPos first = new BlockPos(sponge.get("x").getAsInt(), sponge.get("y").getAsInt(),
+                            sponge.get("z").getAsInt());
+                    ctx.assertTrue(sponge.get("count").getAsLong() == laid.size() && laid.contains(first),
+                            "both sponges are counted, the first found one of them: " + sponge);
+                }));
+        run(ctx, sent, key, port, new Step("blocks_survey", "{\"radius\":1,\"mod\":\"jscore\"}",
+                result -> ctx.assertTrue(result.getAsJsonArray("blocks").asList().stream().allMatch(one -> text(
+                        one.getAsJsonObject(), "id").startsWith("jscore:")), "asked of a mod, only its blocks: "
+                        + result)));
+    }
+
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */
     @ClientTest(timeoutTicks = 1600)
     public static void off_takesTheKeysBackFromACallStillActing(final ClientTestContext ctx) {

@@ -83,6 +83,8 @@ public final class McpTexts {
             "No point of the nearest %s can be seen from here: something is in the way.");
     public static final TextKey PLACES_OWN_WORLD_ONLY = TextKey.of("jscore.mcp.places_own_world_only",
             "Only a world of the player's own, which this game runs, tells an agent its places.");
+    public static final TextKey SURVEY_OWN_WORLD_ONLY = TextKey.of("jscore.mcp.survey_own_world_only",
+            "Only a world of the player's own, which this game runs, has its blocks surveyed for an agent.");
     /* The name or the words looked for. */
     public static final TextKey NOT_ON_SCREEN = TextKey.of("jscore.mcp.not_on_screen",
             "Nothing on the screen open is called %s or reads so: screen_tree lists what it shows.");

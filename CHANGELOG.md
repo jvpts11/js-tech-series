@@ -743,6 +743,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Core) The MCP surveys the blocks round the player: `blocks_survey` counts the blocks of the chunks in a square
+  round the player's, of a mod or whose id holds some words, by their id, each with the first place it was found, the
+  most first, making the chunks never made as walking there would; for an agent finding where ores and other blocks
+  lie.
 - (Space) A ship's floor pulls its crew, however it is turned and out in space too: got up from the helm in flight,
   pitched, rolled or at 120 metres a second in deep space, its crew stands and walks its deck to its helm and its
   doors, carried with it, where they floated weightless and were left behind.
