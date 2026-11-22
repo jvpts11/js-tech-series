@@ -44,7 +44,7 @@ it.
 | `look.stretch` | how much of its path it is drawn along, in seconds: as long as its size and as far as it goes in that time, along the way it goes and turned about that line to face the camera, as a spark or a tracer streaks; 0 for a square |
 | `motion.gravity`, `drag`, `buoyancy` | how much of the pull acts (1 falls as a stone); how quickly the air brings it to the wind's speed at sea level, a second; how hard it is lifted at sea level |
 | `motion.moved_by` | `{"gravity": true, "air": true, "wind": true}`: what acts on it |
-| `motion.collide`, `expands`, `medium` | whether it stops at blocks; whether it widens as the air thins, as a plume of gas does, up to six times in a vacuum; `any`, `air` (dies in water) or `water` (bubbles) |
+| `motion.collide`, `expands`, `medium` | whether it stops at blocks, and goes out against a moving structure's (so a puff never stands half through a ship's floor); whether it widens as the air thins, as a plume of gas does, up to six times in a vacuum; `any`, `air` (dies in water) or `water` (bubbles) |
 | `extra` | an arc's `jagged` and `branches`; a mark's or the screen's `radius`; a mark's `fade`, a screen effect's or a beam's time; the screen's `flash`, `shake` and `shock`, 0 to 1; a beam's or an arc's `length` when it is aimed nowhere |
 
 A particle in air drags towards the wind and is lifted by as much as the air is dense, so what is lighter than the

@@ -17,6 +17,7 @@ import dev.jstech.core.effect.EffectPhysics;
 import dev.jstech.core.effect.EffectSettings;
 import dev.jstech.core.effect.Emitter;
 import dev.jstech.core.effect.EmitterShape;
+import dev.jstech.core.moving.StructureCollisions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -36,6 +37,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -78,6 +80,11 @@ public final class EffectEngine {
     private static final int RGB = 0xFFFFFF;
     private static final int ALPHA_SHIFT = 24;
     private static final double LEAST_SPEED = 1e-4;
+    /*
+     * Half the side of the box a particle is against a moving structure's blocks, which are kept in its yard, so the
+     * world's blocks it stops at know nothing of them.
+     */
+    private static final double SPECK = 0.05;
     /* How little a particle may be drawn out and still be drawn as a square. */
     private static final float NO_STRETCH = 1e-4F;
     private static final int ARC_TICKS = 2;
@@ -95,6 +102,15 @@ public final class EffectEngine {
     /** How many particles live now. */
     public static int particles() {
         return STORE.count;
+    }
+
+    /** How many living particles stand inside {@code box}. */
+    public static int within(final AABB box) {
+        int inside = 0;
+        for (int i = 0; i < STORE.count; i++) {
+            inside += box.contains(STORE.x[i], STORE.y[i], STORE.z[i]) ? 1 : 0;
+        }
+        return inside;
     }
 
     /** How far from {@code at} the living particle farthest from it is, in blocks; nought for none. */
@@ -355,6 +371,13 @@ public final class EffectEngine {
             final double nx = STORE.x[i] + v[0] * TICK + along.x;
             final double ny = STORE.y[i] + v[1] * TICK + along.y;
             final double nz = STORE.z[i] + v[2] * TICK + along.z;
+            // One that stops at blocks goes out against a moving structure's: stopped there, as large as a puff of dust
+            // draws, it would stand half through a ship's floor into its cabin.
+            if (motion.collide() && StructureCollisions.overlaps(level, null, new AABB(nx - SPECK, ny - SPECK,
+                    nz - SPECK, nx + SPECK, ny + SPECK, nz + SPECK))) {
+                STORE.remove(i);
+                continue;
+            }
             if (motion.collide() && solid(level, block.set(nx, ny, nz))) {
                 v[0] = 0;
                 v[1] = 0;

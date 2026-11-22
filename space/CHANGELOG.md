@@ -711,7 +711,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The rocket's effects as approved: its engines burn with a bright flame and pouring smoke in air, leaving a
   white trail that thins as the air does on the way up; where the air is nearly gone, any engine shows the short hot
   core and the wide pale blue plume of a nozzle in a vacuum; a stage let go fires its retro rockets; the Moon's dust
-  flies out flat in rays all round a touchdown. The plume burns for the whole climb now, and while the engines brake a
+  flies out flat in rays all round a touchdown, and the dust a lander or a ship raises stops at its hull, never
+  coming up through its floor. The plume burns for the whole climb now, and while the engines brake a
   landing, where before it showed only at lift-off.
 - The telemetry line's model, for the devices and satellites to come: a line of the series' cable block that
   carries data only, every connected stretch of it one ground system of the antennas, receivers, decoders, data
