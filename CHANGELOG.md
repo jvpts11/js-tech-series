@@ -1714,7 +1714,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   turned with the structure about every axis, so a pilot looking ahead along a nose pitched up still looks ahead
   along it; the mouse turns them about the seat's up and across its right, as far up and down as the seat has them,
   past the world's straight up; and the view rolls to keep the seat's up at its top whichever way they look. What
-  they aim at and use is what they see.
+  they aim at and use is what they see. They sit along the seat however the structure leans or pitches, drawn
+  leaning back or forward with it and their eyes along its up, never in the panel ahead or the seat's back, and
+  their view pitches with it smoothly frame by frame, not a step a tick.
 - (Core) What a moving structure shows going: its engines' flames, a rocket's or a jet's, as big as they push; its
   faces glowing hot from the air they head into, in the colour of their heat, wrapped in plasma on a re-entry; and
   white trails behind its engines and wingtips where the air is cold enough. An engine pushing keeps its structure

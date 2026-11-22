@@ -41,6 +41,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Predicate;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -122,6 +123,14 @@ public final class MovingStructureLifeClientTests {
     private static final double MOUSE_DEGREES = 0.15;
     private static final double MOUSE_FAR = 2000;
     private static final double STRAIGHT_UP = 90;
+    /*
+     * A tick of the craft's pitching, in degrees at least, the view drawn half through a tick and how near halfway it
+     * is drawn; how near the seat's up the pilot's eyes stand from where they sit, as a cosine.
+     */
+    private static final double PITCHED_A_TICK = 0.5;
+    private static final float HALF_A_TICK = 0.5F;
+    private static final double EXACT = 0.01;
+    private static final double ALONG = 0.995;
     private static final BlockPos SCENE_FROM = new BlockPos(-6, 2, -16);
     private static final BlockPos SCENE_TO = new BlockPos(6, 12, -4);
 
@@ -310,17 +319,21 @@ public final class MovingStructureLifeClientTests {
 
     /*
      * The pilot's view goes with the craft: looking ahead along it, they still look ahead along it once its nose
-     * pitches up sixty degrees, the view not rolled; the mouse turns them in the seat's frame, thirty degrees down
-     * from the nose; and up as far as straight up from the seat, past the world's straight up, which the game would
-     * stop at.
+     * pitches up sixty degrees, the view drawn pitching between ticks, not a step a tick, and not rolled; they sit up
+     * along the seat, their eyes never in the panel ahead or the seat's back; the mouse turns them in the seat's
+     * frame, thirty degrees down from the nose; and up as far as straight up from the seat, past the world's straight
+     * up, which the game would stop at.
      */
     @ClientTest(timeoutTicks = 2400)
     public static void pilot_theViewPitchesWithTheShipAndTheMouseTurnsItInTheSeat(final ClientTestContext ctx) {
         final MovingStructure[] craft = new MovingStructure[1];
-        ctx.afterTest(() -> ctx.server().execute(() -> {
-            ctx.serverPlayer().stopRiding();
-            clear(ctx);
-        }));
+        ctx.afterTest(() -> {
+            ctx.mc().options.setCameraType(CameraType.FIRST_PERSON);
+            ctx.server().execute(() -> {
+                ctx.serverPlayer().stopRiding();
+                clear(ctx);
+            });
+        });
         ctx.thenServer(0, level -> {
             clear(ctx);
             calm(level);
@@ -348,9 +361,26 @@ public final class MovingStructureLifeClientTests {
                     craft[0].move(new TowardMotion(StructurePose.turned(at.x(), at.y(), at.z(), 1, 0, 0,
                             -Math.toRadians(PITCHED)), SPEED, PITCHING));
                 })
+                .thenWaitUntil(() -> Math.abs(ctx.player().xRotO - ctx.player().getXRot()) > PITCHED_A_TICK
+                        && Math.abs(ctx.player().getViewXRot(HALF_A_TICK) - (ctx.player().xRotO
+                        + ctx.player().getXRot()) / 2) < EXACT, WAIT, "the pilot's view to pitch with the nose "
+                        + "between ticks, halfway through one halfway between them: " + ctx.player().xRotO + " to "
+                        + ctx.player().getXRot() + ", drawn at " + ctx.player().getViewXRot(HALF_A_TICK))
                 .thenWaitUntil(() -> Math.abs(ctx.player().getXRot() + PITCHED) < 1, WAIT, "the pilot's look to "
                         + "pitch up with the nose: " + ctx.player().getXRot())
                 .then(SETTLE, () -> {
+                    final StructureSeatEntity seat = (StructureSeatEntity) ctx.player().getVehicle();
+                    final Vec3 eyes = ctx.player().getEyePosition().subtract(seat.getPassengerRidingPosition(
+                            ctx.player())).normalize();
+                    final StructureFrame up = seat.structure().frame();
+                    ctx.assertTrue(eyes.dot(new Vec3(up.turnX(0, 1, 0), up.turnY(0, 1, 0), up.turnZ(0, 1, 0)))
+                            > ALONG, "the pilot sits up along the seat, their eyes along its up from where they sit, "
+                            + "not the world's: " + eyes);
+                    ctx.mc().options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+                })
+                .thenScreenshot(SETTLE, "pilot-pitched-seen-from-the-front")
+                .then(0, () -> ctx.mc().options.setCameraType(CameraType.FIRST_PERSON))
+                .then(0, () -> {
                     final JsonObject look = PlayRiding.riding(ctx.player()).orElseThrow().getAsJsonObject(
                             PlayRiding.LOOK);
                     ctx.assertTrue(near(look, PlayRiding.YAW, 0) && near(look, PlayRiding.PITCH, 0), "pitched up, "

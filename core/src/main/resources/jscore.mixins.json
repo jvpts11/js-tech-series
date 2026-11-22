@@ -47,6 +47,7 @@
     "InputConstantsMixin",
     "LevelRendererMixin",
     "LivingEntityRendererMixin",
+    "LocalPlayerMixin",
     "MouseHandlerMixin",
     "ParticleEngineMixin",
     "ParticleMixin",

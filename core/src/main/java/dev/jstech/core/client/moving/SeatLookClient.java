@@ -23,6 +23,11 @@ public final class SeatLookClient {
     private SeatLookClient() {
     }
 
+    /** Whether {@code player} sits on a seat of a moving structure, which carries their look as it turns. */
+    public static boolean seated(final LocalPlayer player) {
+        return player.getVehicle() instanceof StructureSeatEntity seat && seat.structure() != null;
+    }
+
     /**
      * Turns {@code player} by the mouse's {@code yaw} and {@code pitch} in the frame of the seat they sit on, when its
      * structure leans or pitches; whether it did, the game's own turn to be done otherwise.

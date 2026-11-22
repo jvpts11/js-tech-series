@@ -279,7 +279,12 @@ public final class StructureSeatEntity extends Entity {
         }
         final Direction head = lyingHead();
         if (head == null) {
-            super.positionRider(passenger, move);
+            final IStructureBody tilting = structure();
+            if (tilting == null || !SeatLook.tilted(tilting.frame())) {
+                super.positionRider(passenger, move);
+            } else {
+                sitAlong(passenger, tilting.frame(), move);
+            }
             return;
         }
         final double x = head.getStepX() * BlockAboard.Seat.LYING_REACH;
@@ -427,6 +432,20 @@ public final class StructureSeatEntity extends Entity {
         xOld = xo;
         yOld = yo;
         zOld = zo;
+    }
+
+    /*
+     * A sitter on a seat its structure leans or pitches sits up along the seat's up, not the world's: their eyes stand
+     * as far along it from where they sit as the game stands them over a level seat, so a pilot pitched up or down
+     * looks out of the cockpit as from a level one, never into its panel ahead or the seat's back behind.
+     */
+    private void sitAlong(final Entity passenger, final StructureFrame frame, final MoveFunction move) {
+        final Vec3 sits = getPassengerRidingPosition(passenger);
+        final Vec3 attached = passenger.getVehicleAttachmentPoint(this);
+        final double eyes = passenger.getEyeHeight() - attached.y;
+        move.accept(passenger, sits.x - attached.x + frame.turnX(0, eyes, 0),
+                sits.y + frame.turnY(0, eyes, 0) - passenger.getEyeHeight(),
+                sits.z - attached.z + frame.turnZ(0, eyes, 0));
     }
 
     private void follow(final IStructureBody body, final boolean first) {
