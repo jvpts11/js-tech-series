@@ -64,12 +64,12 @@ public final class ShipFlightModel {
     /* How far its nose points up, in degrees, for it to be climbing away from the land rather than coming down. */
     private static final double CLIMBS_AWAY = 15.0;
     /*
-     * How fast it turns and pitches at most, in degrees a second, how far its nose goes up or down, and how long its
-     * turn and pitch take to gather to that as its pilot holds and to fall away as they let go, in seconds.
+     * How fast it turns and pitches at most, in degrees a second, and how long its turn and pitch take to gather to
+     * that as its pilot holds and to fall away as they let go, in seconds. Its nose goes up or down as far as its pilot
+     * holds it, over the top and round.
      */
     private static final double TURNS = 80.0;
     private static final double PITCHES = 50.0;
-    private static final double MOST_PITCH = 60.0;
     private static final double TURN_GATHERS = 0.25;
     /* How far it banks into a turn at its fastest, in degrees, as a craft leans into its turns. */
     private static final double MOST_BANK = 35.0;
@@ -173,11 +173,9 @@ public final class ShipFlightModel {
         final double yawRate = toward(now.yawRate(), (held.left() - held.right()) * TURNS * nimble,
                 TURNS / TURN_GATHERS * TICK);
         final double turn = yawRate * TICK;
-        final double lifted = hovering ? toward(pitch, 0, PITCHES * TICK) - pitch
-                : Math.clamp(pitch + toward(now.pitchRate(), (held.up() - held.down()) * PITCHES * nimble,
-                PITCHES / TURN_GATHERS * TICK) * TICK, -MOST_PITCH, MOST_PITCH) - pitch;
-        // What it pitched, its nose stopped at its furthest, is what it pitches at next: none is kept in hand there.
-        final double pitchRate = hovering ? 0 : lifted / TICK;
+        final double pitchRate = hovering ? 0 : toward(now.pitchRate(), (held.up() - held.down()) * PITCHES * nimble,
+                PITCHES / TURN_GATHERS * TICK);
+        final double lifted = hovering ? toward(pitch, 0, PITCHES * TICK) - pitch : pitchRate * TICK;
         // Its gear is down on the land and near it, folded away higher up, hovering there or flying.
         final boolean gearDown = ship.gear() != Gear.NONE && (air.grounded() || air.height() < GEAR_HEIGHT);
         final double reached = boosting && boosted > cruise ? Math.clamp((speed - cruise) / (boosted - cruise), 0, 1)

@@ -300,6 +300,15 @@ class ShipFlightModelTest {
     }
 
     @Test
+    void step_heldUpItsNoseGoesOnUpAsFarAsItsPilotHoldsIt() {
+        final ShipFlightModel.State pitching = fly(SHIP, UP, SPACE, GATHERED);
+        for (final double pitch : new double[] {60, 85, 90}) {
+            assertEquals(PITCHES * ShipFlightModel.TICK, ShipFlightModel.step(pitching, UP, SPACE, SHIP, pitch)
+                    .pitch(), CLOSE, "held up at " + pitch + " degrees, its nose goes on up, over the top and round");
+        }
+    }
+
+    @Test
     void step_letGoItsTurnAndPitchFallAwayOverAQuarterSecond() {
         final ShipFlightModel.Held leftUp = new ShipFlightModel.Held(0, 0, 1, 0, 1, 0, false, true);
         final ShipFlightModel.State turning = fly(SHIP, leftUp, SPACE, GATHERED);
@@ -361,13 +370,6 @@ class ShipFlightModelTest {
         assertEquals(MOST_BANK / 2, ShipFlightModel.bankFor(TURNS, CRUISE_AIR / 2), CLOSE, "half as far flying half"
                 + " as fast");
         assertEquals(0, ShipFlightModel.bankFor(TURNS, 0), CLOSE, "standing still or hovering, it turns level");
-    }
-
-    @Test
-    void step_itsNoseStopsAtSixtyDegrees() {
-        final ShipFlightModel.Held leftUp = new ShipFlightModel.Held(0, 0, 1, 0, 1, 0, false, true);
-        final ShipFlightModel.State turning = fly(SHIP, leftUp, SPACE, GATHERED);
-        assertEquals(0.5, ShipFlightModel.step(turning, leftUp, SPACE, SHIP, 59.5).pitch(), CLOSE);
     }
 
     @Test

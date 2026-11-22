@@ -358,14 +358,14 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                          final StructureFrame frame, final ShipFlightModel.Tick next, final boolean gentle) {
         StructurePose turned = next.turn() == 0 ? now : now.turnedBy(0, 1, 0, Math.toRadians(next.turn()));
         if (next.pitch() != 0) {
-            final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
-            final double across = Math.hypot(way[0], way[2]);
-            if (across > STILL) {
-                turned = turned.turnedBy(-way[2] / across, 0, way[0] / across, Math.toRadians(next.pitch()));
+            final double[] across = levelRight(new StructureFrame(turned, frame.pivotX(), frame.pivotY(),
+                    frame.pivotZ()));
+            if (across.length > 0) {
+                turned = turned.turnedBy(across[0], 0, across[2], Math.toRadians(next.pitch()));
             }
         }
         turned = banked(turned, frame, this.grounded ? 0 : ShipFlightModel.bankFor(next.state().yawRate(),
-                next.state().speed()));
+                next.state().speed()), Math.abs(next.state().pitchRate()) > STILL);
         final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
         final double ahead = next.state().speed() * ShipFlightModel.TICK;
         final double up = (next.state().rise() - next.state().sink()) * ShipFlightModel.TICK;
@@ -445,9 +445,12 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /*
      * Its flight turned {@code turned}, rolled about its nose towards {@code bank} degrees to its left, as a craft
-     * leans into its turns: level again as its turn falls away, on the land, and after docking rolled it.
+     * leans into its turns: level again as its turn falls away, on the land, and after docking rolled it. Over the
+     * top of a loop, upside down while its pilot still {@code pitching}, it is left be, so the loop goes round; let
+     * go, it rights itself.
      */
-    private StructurePose banked(final StructurePose turned, final StructureFrame frame, final double bank) {
+    private StructurePose banked(final StructurePose turned, final StructureFrame frame, final double bank,
+                                 final boolean pitching) {
         final StructureFrame at = new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ());
         final double[] n = nose(at);
         final double[] level = {-n[1] * n[0], 1 - n[1] * n[1], -n[1] * n[2]};
@@ -462,7 +465,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final double ly = level[1] / length;
         final double lz = level[2] / length;
         final double sin = (uy * lz - uz * ly) * n[0] + (uz * lx - ux * lz) * n[1] + (ux * ly - uy * lx) * n[2];
-        final double off = Math.atan2(sin, ux * lx + uy * ly + uz * lz) - Math.toRadians(bank);
+        final double fromLevel = Math.atan2(sin, ux * lx + uy * ly + uz * lz);
+        if (pitching && Math.abs(fromLevel) > Math.PI / 2) {
+            return turned;
+        }
+        final double off = fromLevel - Math.toRadians(bank);
         if (Math.abs(off) < Math.toRadians(LEVEL_WITHIN)) {
             return turned;
         }
@@ -752,6 +759,18 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 : Math.max(EMPTY_OVER, body.worldBox().minY - level.getMaxBuildHeight());
         final boolean empty = density <= 0 || gravity <= 0 || height >= EMPTY_OVER;
         return new ShipFlightModel.Air(density, gravity, empty, this.grounded, height);
+    }
+
+    /*
+     * Its right, across its nose, laid level: what its nose pitches about. Through a loop its right stays put, so its
+     * nose goes up and over the top and round; banked, its pitch stays level. None rolled on its side, its right
+     * straight up or down.
+     */
+    private double[] levelRight(final StructureFrame frame) {
+        final double x = frame.turnX(-this.noseZ, 0, this.noseX);
+        final double z = frame.turnZ(-this.noseZ, 0, this.noseX);
+        final double length = Math.hypot(x, z);
+        return length < STILL ? new double[0] : new double[] {x / length, 0, z / length};
     }
 
     /* Which way its nose points in the world, standing as {@code frame}. */

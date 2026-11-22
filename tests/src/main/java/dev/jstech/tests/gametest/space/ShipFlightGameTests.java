@@ -174,6 +174,13 @@ public final class ShipFlightGameTests {
     private static final double HIGH = 80;
     private static final double LOW = 2;
     /*
+     * Looping: how near straight up its nose comes on the way, and how low it points once over the top, as the up
+     * part of a unit way; how upright it stands again, righted.
+     */
+    private static final double STRAIGHT_UP = 0.98;
+    private static final double OVER_THE_TOP = 0.3;
+    private static final double RIGHTED = 0.9;
+    /*
      * How far over its pattern's lowest corner the sky a ship flies in is cleared from, in blocks: over the dock's
      * fifteen layers and its crane; a chunk's width.
      */
@@ -304,6 +311,35 @@ public final class ShipFlightGameTests {
                 .thenExecute(() -> from[0] = ship[0].pose());
         holdTill(helper, sequence, ship, StructureControls.ControlAxis.UP, () -> helper.assertTrue(
                 ship[0].pose().y() > from[0].y() + 1, "it pitches its nose up and climbs as its pilot holds up"))
+                .thenExecute(() -> {
+                    MovingStructures.takeAway(ship[0]);
+                    keep(helper, false, TURNING_WEST);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Its nose held up goes on up past straight up and over the top, the ship upside down heading back the way it
+     * came, as far as its pilot holds it; let go there, it rights itself and flies on level. Its pitch has no stop.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WITH_ITS_YARD_LOADING)
+    public static void flight_heldUpItsNoseGoesOverTheTopAndLetGoItRightsItself(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final boolean[] straightUp = {false};
+        final GameTestSequence sequence = flying(helper, ship, TURNING_WEST).thenExecute(() -> {
+            aloft(ship[0], HIGH);
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(CRUISING,
+                    0, 1, 0, 0)));
+        });
+        holdTill(helper, sequence, ship, StructureControls.ControlAxis.UP, () -> {
+            final double[] nose = ((ShipFlight) ship[0].motion()).noseIn(ship[0].frame());
+            straightUp[0] |= nose[1] > STRAIGHT_UP;
+            helper.assertTrue(straightUp[0] && nose[2] > 0 && nose[1] < OVER_THE_TOP, "held up, its nose goes past"
+                    + " straight up and over the top, back the way it came: " + nose[0] + ", " + nose[1] + ", "
+                    + nose[2] + (straightUp[0] ? ", straight up on the way" : ""));
+        });
+        cruiseTill(helper, sequence, ship, () -> helper.assertTrue(ship[0].frame().turnY(0, 1, 0) > RIGHTED,
+                "let go upside down, it rights itself: its up " + ship[0].frame().turnY(0, 1, 0)))
                 .thenExecute(() -> {
                     MovingStructures.takeAway(ship[0]);
                     keep(helper, false, TURNING_WEST);

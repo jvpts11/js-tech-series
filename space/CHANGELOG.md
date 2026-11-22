@@ -829,7 +829,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   flight.
 - A ship flies in the spirit of No Man's Sky: it goes where its nose points, with no drift. Its pilot opens
   and closes its throttle, which stays where they leave it, turns it, and pitches its nose up and down with the jump
-  key and C. In the air its air engines push, and in the thin air of the climb and in space its bells;
+  key and C, as far as they hold it, over the top and round; let go upside down in the air, it rights itself. In the
+  air its air engines push, and in the thin air of the climb and in space its bells;
   its wings hold it up, more the faster it goes and less in thinner air, and flying too slowly it sinks. In space it
   flies free, faster. Its weight counts: it is what its parts weigh, and a heavier ship gathers speed more slowly and
   needs more of it to stay up. Its boost, held on left Ctrl until changed, takes it faster across an empty stretch,
