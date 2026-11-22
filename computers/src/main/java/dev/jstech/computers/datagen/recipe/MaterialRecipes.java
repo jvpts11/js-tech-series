@@ -241,13 +241,18 @@ final class MaterialRecipes {
         }
     }
 
-    /* The Induction Furnace's alloys and its furnace work, in their real proportions. */
+    /* The Induction Furnace's alloys and its furnace work, in their real proportions; lead-free solder's balls. */
     private static void alloys(final RecipeOutput output) {
         final ProcessingKind furnace = kind("induction_furnace");
         made(output, furnace, "solder", List.of(ingot(Element.TIN), ingot(Element.LEAD)), List.of(3, 2),
                 of(SeriesAlloys.SOLDER, Forms.WIRE), 5);
         made(output, furnace, "lead_free_solder", List.of(ingot(Element.TIN), ingot(Element.SILVER),
                 nugget(Element.COPPER)), List.of(9, 1, 1), of(SeriesAlloys.LEAD_FREE_SOLDER, Forms.WIRE), 10);
+        // The balls a Packaging Line solders a chip with, cut from the wire at the crafting table, one for one.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, of(SeriesAlloys.LEAD_FREE_SOLDER, Forms.NUGGET))
+                .requires(of(SeriesAlloys.LEAD_FREE_SOLDER, Forms.WIRE))
+                .unlockedBy("has_it", has(of(SeriesAlloys.LEAD_FREE_SOLDER, Forms.WIRE)))
+                .save(output, id("crafting/lead_free_solder_nugget_from_wire"));
         made(output, furnace, "permalloy", List.of(ingot(Element.NICKEL), ingot(Element.IRON)), List.of(4, 1),
                 of(SeriesAlloys.PERMALLOY, Forms.INGOT), 5);
         made(output, furnace, "indium_tin_oxide", List.of(ingot(Element.INDIUM), ingot(Element.TIN)), List.of(9, 1),

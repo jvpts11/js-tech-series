@@ -15,6 +15,7 @@ import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
+import dev.jstech.core.jstechseries.SeriesAlloys;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
@@ -56,8 +57,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * J's Computers' recipes (computers/docs/design/recipes.md): every recipe file loads, no two recipes a machine or a
  * bench could run take the same things, every bench recipe makes one thing, the Crafting Computer is made of an
- * empty Personal Computer and its card, never of one with parts inside, the raw ore of the furnace's metals melts and
- * each Lithography Station's light is made at the bench of the era before.
+ * empty Personal Computer and its card, never of one with parts inside, the raw ore of the furnace's metals melts,
+ * each Lithography Station's light is made at the bench of the era before and lead-free solder's balls are cut from
+ * its wire.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -229,6 +231,19 @@ public final class ComputersRecipesGameTests {
             }
         });
         helper.assertTrue(wrong.isEmpty(), "each light is made at the bench of the era before: not " + wrong);
+        helper.succeed();
+    }
+
+    /* The lead-free solder balls a Packaging Line takes from the Transition on are cut from the wire, one for one. */
+    @GameTest(template = ARENA)
+    public static void solderBalls_areCutFromTheWire(final GameTestHelper helper) {
+        final CraftingInput input = CraftingInput.of(1, 1, List.of(new ItemStack(MaterialUses.item(
+                SeriesAlloys.LEAD_FREE_SOLDER, Forms.WIRE).get())));
+        final ItemStack made = helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input,
+                helper.getLevel()).map(recipe -> recipe.value().assemble(input, helper.getLevel().registryAccess()))
+                .orElse(ItemStack.EMPTY);
+        helper.assertTrue(made.is(MaterialUses.item(SeriesAlloys.LEAD_FREE_SOLDER, Forms.NUGGET).get())
+                && made.getCount() == 1, "a wire of lead-free solder gives one of its balls; got " + made);
         helper.succeed();
     }
 

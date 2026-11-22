@@ -2780,7 +2780,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   metal the furnace melts (tin, lead, zinc, silver, nickel, cobalt and manganese) gives its ingot in the furnace and
   the blast furnace, as the game's raw iron does, so the machines' first step needs no machine. Each Lithography
   Station's light is made at the bench of the era before (the KrF laser at the Vintage bench, the ArF laser at the
-  Legacy's, the EUV source at the Standard's), since an era's own bench takes chips only its own station makes.
+  Legacy's, the EUV source at the Standard's), since an era's own bench takes chips only its own station makes. The
+  lead-free solder balls a Packaging Line takes from the Transition on are cut from its wire at the crafting table,
+  one for one.
 - (Computers) The chips of every microarchitecture: a processor, graphics, hashing or mobile chip of each era's
   dies, and its mask; the Vintage's Layouts, each chip's drawing cut in PVC film, from which the Vintage's
   Lithography Station writes a mask on a mask blank; the masks and finished wafers of the laser diodes and the LEDs.

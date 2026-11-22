@@ -1,0 +1,20 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "jscore:setting",
+      "file": "jscomputers-server",
+      "setting": "survival.own_chain"
+    }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jscore:lead_free_solder_wire"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:lead_free_solder_nugget"
+  }
+}
