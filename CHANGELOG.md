@@ -3511,7 +3511,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   scrubbed or the pad stands free; the hold-down arms' jaws open at T-0 and close again once the pad stands free. What
   is no-go on the board holds the count, the deluge too where a service port's deluge is on automatic and not whole;
   what the player turned off, or that the pad has none of, holds nothing; the crew and the range are the player's own
-  to see to. New block: the Launch Panel.
+  to see to. Once the rocket released is no more in the world, gone up, landed elsewhere, or taken away or broken up
+  before it lifted, the count stands down for the next launch. New block: the Launch Panel.
 - (Space) The launch. On the pad, the loaded tanks' cold propellant boils off their sides as white vapour. At
   ignition the screen shakes for everyone near, the pad steams and smoke rolls out of the trench. At T-0 the rocket
   becomes one moving structure by the exact places of its plan, each block as it is, its parts still formed and nothing

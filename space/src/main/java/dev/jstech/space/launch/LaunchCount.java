@@ -318,9 +318,9 @@ public final class LaunchCount {
         move(server);
         final Phase now = this.phase.get();
         if (now == Phase.RELEASED) {
-            // Once its rocket is off and no more in this world, landed or gone on, the count is free for the next.
-            if (this.lifted.get() && (this.flight.get() == null
-                    || MovingStructures.byId(server, this.flight.get()) == null)) {
+            // Once its rocket is no more in this world, landed or gone on, or taken away or broken up before it lifted,
+            // the count is free for the next.
+            if (this.flight.get() == null || MovingStructures.byId(server, this.flight.get()) == null) {
                 standDown();
                 return;
             }
