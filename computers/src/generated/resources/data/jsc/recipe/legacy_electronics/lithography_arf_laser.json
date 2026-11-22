@@ -11,17 +11,17 @@
     },
     {
       "count": 2,
-      "item": "jscore:glass_lens"
+      "item": "jscore:calcium_fluoride_lens"
     },
     {
       "count": 1,
-      "item": "jsc:etched_board_vintage"
+      "item": "jsc:etched_board_legacy"
     }
   ],
   "outputs": [
     {
       "count": 1,
-      "id": "jsc:lithography_krf_laser"
+      "id": "jsc:lithography_arf_laser"
     }
   ]
 }

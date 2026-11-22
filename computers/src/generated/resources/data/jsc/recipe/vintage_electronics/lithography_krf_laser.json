@@ -1,5 +1,5 @@
 {
-  "type": "jsc:advanced_electronics",
+  "type": "jsc:vintage_electronics",
   "inputs": [
     {
       "count": 1,
@@ -11,21 +11,17 @@
     },
     {
       "count": 2,
-      "item": "jscore:molybdenum_plate"
+      "item": "jscore:glass_lens"
     },
     {
       "count": 1,
-      "item": "jscore:tin_ingot"
-    },
-    {
-      "count": 1,
-      "item": "jsc:etched_board_standard"
+      "item": "jsc:etched_board_vintage"
     }
   ],
   "outputs": [
     {
       "count": 1,
-      "id": "jsc:lithography_euv_source"
+      "id": "jsc:lithography_krf_laser"
     }
   ]
 }

@@ -56,7 +56,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * J's Computers' recipes (computers/docs/design/recipes.md): every recipe file loads, no two recipes a machine or a
  * bench could run take the same things, every bench recipe makes one thing, the Crafting Computer is made of an
- * empty Personal Computer and its card, never of one with parts inside, and the raw ore of the furnace's metals melts.
+ * empty Personal Computer and its card, never of one with parts inside, the raw ore of the furnace's metals melts and
+ * each Lithography Station's light is made at the bench of the era before.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -204,6 +205,30 @@ public final class ComputersRecipesGameTests {
             }
         }
         helper.assertTrue(missing.isEmpty(), "each raw ore melts into its ingot: not " + missing);
+        helper.succeed();
+    }
+
+    /*
+     * Each Lithography Station's light is made at the bench of the era before: the era's own bench takes chips only
+     * its own station makes, so a light made there could never be had.
+     */
+    @GameTest(template = ARENA)
+    public static void lights_areMadeAtTheBenchOfTheEraBefore(final GameTestHelper helper) {
+        final Map<String, ProcessingKind> before = Map.of("lithography_krf_laser", ChainBenches.VINTAGE_PARTS,
+                "lithography_arf_laser", ChainBenches.LEGACY_PARTS,
+                "lithography_euv_source", ChainBenches.STANDARD_PARTS);
+        final List<String> wrong = new ArrayList<>();
+        before.forEach((light, bench) -> {
+            final Item made = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                    light));
+            final boolean there = helper.getLevel().getRecipeManager().getRecipes().stream()
+                    .anyMatch(holder -> holder.value() instanceof ProcessingRecipe recipe && recipe.kind() == bench
+                            && recipe.outputs().stream().anyMatch(output -> output.is(made)));
+            if (!there) {
+                wrong.add(light);
+            }
+        });
+        helper.assertTrue(wrong.isEmpty(), "each light is made at the bench of the era before: not " + wrong);
         helper.succeed();
     }
 

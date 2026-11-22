@@ -228,11 +228,13 @@ final class MachineBlockRecipes {
                 'S', siliconWafer, 'C', cc);
         grid(output, block("lithography_mercury_lamp"), 1, rows("GHG", " C ", " T "), 'G', Items.GLASS,
                 'H', mercuryBucket(), 'C', cc, 'T', transformer);
-        made(output, HardwareEra.LEGACY, block("lithography_krf_laser"), cc, 1, transformer, 2, glassLens, 2,
+        // Each era's light is made at the bench of the era before, of that era's parts: the era's own bench takes
+        // its own chips, which only its own station makes.
+        made(output, HardwareEra.VINTAGE, block("lithography_krf_laser"), cc, 1, transformer, 2, glassLens, 2,
                 board(HardwareEra.VINTAGE), 1);
-        made(output, HardwareEra.TRANSITION, block("lithography_arf_laser"), cc, 1, transformer, 2, fluorideLens, 2,
+        made(output, HardwareEra.LEGACY, block("lithography_arf_laser"), cc, 1, transformer, 2, fluorideLens, 2,
                 board(HardwareEra.LEGACY), 1);
-        made(output, HardwareEra.ADVANCED, block("lithography_euv_source"), cc, 1, transformer, 2, molybdenum, 2,
+        made(output, HardwareEra.STANDARD, block("lithography_euv_source"), cc, 1, transformer, 2, molybdenum, 2,
                 ingot(Element.TIN), 1, board(HardwareEra.STANDARD), 1);
         grid(output, block("plasma_etcher_etch_chamber"), 1, rows("GOG", " V ", " T "), 'G', Items.GLASS, 'O', coil,
                 'V', vc, 'T', transformer);
