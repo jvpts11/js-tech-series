@@ -135,15 +135,19 @@ public final class MachineScreenLayout {
     public static final int OUT_METER_WIDTH = 16;
     public static final int OUT_METER_HEIGHT = 42;
 
-    /** The Upgrades tab: its bays, a row of them, and the bank of the effects' bars. */
+    /**
+     * The Upgrades tab: its bays, a row of them, closer when it holds all four so the fourth keeps clear of the bank,
+     * and the bank of the effects' bars.
+     */
     public static final int BAY_X = 66;
     public static final int BAY_Y = 44;
     public static final int BAY_PITCH = 32;
-    public static final int BAYS = 3;
+    public static final int BAY_PITCH_FOUR = 26;
+    public static final int BAYS = 4;
     public static final int BANK_X = 172;
     public static final int BANK_Y = 37;
     public static final int BANK_WIDTH = 51;
-    public static final int BANK_HEIGHT = 66;
+    public static final int BANK_HEIGHT = 68;
 
     /** The Protection tab: the fuse holder, the battery bay and the key switch of who may use it. */
     public static final int FUSE_X = 62;
@@ -218,9 +222,14 @@ public final class MachineScreenLayout {
         return Math.max(0, (width - WIDTH) / 2);
     }
 
-    /** Where upgrade bay {@code index}'s slot sits, the item inside its frame. */
-    public static GuiLayout.SlotPosition bay(final int index) {
-        return new GuiLayout.SlotPosition(faceX(BAY_X + index * BAY_PITCH) + 1, faceY(BAY_Y) + 1);
+    /** Where the slot of bay {@code index} of the {@code bays} the tab shows sits, the item inside its frame. */
+    public static GuiLayout.SlotPosition bay(final int index, final int bays) {
+        return new GuiLayout.SlotPosition(faceX(bayX(index, bays)) + 1, faceY(BAY_Y) + 1);
+    }
+
+    /** The face's x of upgrade bay {@code index} of the {@code bays} the tab shows. */
+    public static int bayX(final int index, final int bays) {
+        return BAY_X + index * (bays < BAYS ? BAY_PITCH : BAY_PITCH_FOUR);
     }
 
     /** Where the fuse sits in its holder, and the battery in its bay. */

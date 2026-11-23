@@ -110,8 +110,9 @@ public final class MachineMenu extends CoreMenu {
         final List<Slot> bays = new ArrayList<>();
         if (machine instanceof ProcessingMachineBlockEntity processing) {
             final ProcessingMachineBlockEntity.Layout layout = processing.layout();
-            for (int i = 0; i < Math.min(layout.upgrades(), MachineScreenLayout.BAYS); i++) {
-                final GuiLayout.SlotPosition at = MachineScreenLayout.bay(i);
+            final int shown = Math.min(layout.upgrades(), MachineScreenLayout.BAYS);
+            for (int i = 0; i < shown; i++) {
+                final GuiLayout.SlotPosition at = MachineScreenLayout.bay(i, shown);
                 bays.add(new TabSlot(machine.getInventory(), layout.firstUpgrade() + i, at.x() + shift, at.y(),
                         UPGRADES, false));
             }

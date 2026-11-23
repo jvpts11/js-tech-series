@@ -81,6 +81,7 @@ import dev.jstech.tests.clienttest.computers.IsmsClientTests;
 import dev.jstech.tests.clienttest.computers.LargeScalePrinterClientTests;
 import dev.jstech.tests.clienttest.computers.LithographyClientTests;
 import dev.jstech.tests.clienttest.computers.ChainFaceClientTests;
+import dev.jstech.tests.clienttest.computers.ChainUpgradesClientTests;
 import dev.jstech.tests.clienttest.computers.RecipeFacesClientTests;
 import dev.jstech.tests.clienttest.computers.LeftoverProgramsClientTests;
 import dev.jstech.tests.clienttest.computers.LiveInstallClientTests;
@@ -460,6 +461,7 @@ public final class ClientTestSuite {
             MsdClientTests.class,
             LithographyClientTests.class,
             ChainFaceClientTests.class,
+            ChainUpgradesClientTests.class,
             RecipeFacesClientTests.class,
             MultipartModelClientTests.class,
             CableBlockClientTests.class,

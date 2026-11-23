@@ -133,19 +133,23 @@ public final class MachineScreenTexts {
     public static final TextKey EFFECT_YIELD = TextKey.of("jscore.machine.screen.effect.yield", "YIELD x%s");
     public static final TextKey EFFECT_BYPRODUCTS = TextKey.of("jscore.machine.screen.effect.byproducts",
             "BYPROD x%s");
-    public static final TextKey EFFECT_USE = TextKey.of("jscore.machine.screen.effect.use", "USE x%s");
+    public static final TextKey EFFECT_LIQUIDS = TextKey.of("jscore.machine.screen.effect.liquids", "LIQUIDS x%s");
+    public static final TextKey EFFECT_GASES = TextKey.of("jscore.machine.screen.effect.gases", "GASES x%s");
     public static final TextKey EFFECT_HEAT = TextKey.of("jscore.machine.screen.effect.heat", "HEAT x%s");
     public static final TextKey EFFECT_SOUND = TextKey.of("jscore.machine.screen.effect.sound", "SOUND x%s");
     public static final TextKey EFFECT_BUFFER = TextKey.of("jscore.machine.screen.effect.buffer", "BUFFER x%s");
+    public static final TextKey EFFECT_ROOM = TextKey.of("jscore.machine.screen.effect.room", "ROOM x%s");
     public static final TextKey NO_BAYS = TextKey.of("jscore.machine.screen.no_bays", "NO BAYS ON THIS MACHINE");
     public static final TextKey SPD = TextKey.of("jscore.machine.screen.spd", "SPD");
     public static final TextKey PAR = TextKey.of("jscore.machine.screen.par", "PAR");
     public static final TextKey YLD = TextKey.of("jscore.machine.screen.yld", "YLD");
     public static final TextKey BYP = TextKey.of("jscore.machine.screen.byp", "BYP");
-    public static final TextKey USE = TextKey.of("jscore.machine.screen.use", "USE");
+    public static final TextKey LIQ = TextKey.of("jscore.machine.screen.liq", "LIQ");
+    public static final TextKey GAS = TextKey.of("jscore.machine.screen.gas", "GAS");
     public static final TextKey HEA = TextKey.of("jscore.machine.screen.hea", "HEA");
     public static final TextKey SND = TextKey.of("jscore.machine.screen.snd", "SND");
     public static final TextKey BUF = TextKey.of("jscore.machine.screen.buf", "BUF");
+    public static final TextKey CAP = TextKey.of("jscore.machine.screen.cap", "CAP");
     public static final TextKey TIP_BAY = TextKey.of("jscore.machine.screen.tip.bay",
             "An upgrade bay: put an upgrade in it");
     public static final TextKey TIP_BANK = TextKey.of("jscore.machine.screen.tip.bank",

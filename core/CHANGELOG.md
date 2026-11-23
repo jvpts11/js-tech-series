@@ -561,6 +561,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- Four upgrade bays: J's Core's API is at version 92. `MachineScreenLayout.BAYS` is four, and
+  `bay(index, bays)` and `bayX(index, bays)` place a bay among the bays the tab shows, closer by
+  `BAY_PITCH_FOUR` when it shows four; `bay(index)` is gone. `MachineScreenTexts` names the liquids, the gases
+  and the room (`LIQ`, `GAS`, `CAP` and their `EFFECT_` lines) in place of `USE`. Experimental.
 - Machine upgrades by kind and by what they spend: J's Core's API is at version 91. `UpgradeEffect` spends
   liquids and gases each by a factor of its own (`liquids` and `gases`, `liquidSpent` and `gasSpent`, in place of
   `use` and `spent`) and has a `room` factor, what each input and output slot and tank holds, which the processing
@@ -2300,6 +2304,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.
 
 ### Changed
+- A machine's Upgrades tab shows up to four bays, closer together when there are four, so a machine of four
+  upgrade slots shows every one; its bank of bars has a row each for the liquids and the gases a recipe spends, in
+  place of one for both, and one for the room of its slots and tanks.
 - Worlds whose surface is laid by the Core's rules, and whose rock the Core varies, generate three to five
   times faster, the same blocks coming out: a biome's or a noise's test is made only as deep under the floor as the
   rules under it lay anything, not down every block of every column, a biome is read once a column with the new

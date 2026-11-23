@@ -7901,7 +7901,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  type final class
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout layout()
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition battery()
-10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition bay(int)
+92 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition bay(int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition fuse()
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition laneSlot(int, int, int, boolean, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition playerInventory()
@@ -7927,6 +7927,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BATTERY_Y
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BAYS
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BAY_PITCH
+92 dev.jstech.core.machine.MachineScreenLayout  static final int BAY_PITCH_FOUR
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BAY_X
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BAY_Y
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BUTTON_HEIGHT
@@ -8035,6 +8036,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static final int WINDOW_HEIGHT
 10 dev.jstech.core.machine.MachineScreenLayout  static final int WINDOW_TOP
 10 dev.jstech.core.machine.MachineScreenLayout  static int arrowX(int)
+92 dev.jstech.core.machine.MachineScreenLayout  static int bayX(int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int cubeFaceAt(double, double, int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int faceX(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int faceY(int)
@@ -8058,16 +8060,19 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey BOTTOM
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey BUF
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey BYP
+92 dev.jstech.core.machine.MachineScreenTexts  static final TextKey CAP
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey CMP_OUT
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey COMPARATOR
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_BUFFER
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_BYPRODUCTS
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_ENERGY
+92 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_GASES
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_HEAT
+92 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_LIQUIDS
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_PARALLEL
+92 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_ROOM
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_SOUND
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_SPEED
-10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_USE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey EFFECT_YIELD
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey FACE_TITLE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey FAULT
@@ -8079,6 +8084,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey FUSE_ANY
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey FUSE_OK
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey FUSE_RATING
+92 dev.jstech.core.machine.MachineScreenTexts  static final TextKey GAS
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey GUARDING
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey HEA
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey HIGH
@@ -8103,6 +8109,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LINE_HIGH
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LINE_LOW
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LINE_OK
+92 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LIQ
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LOCKED
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LOCK_HINT
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LOW
@@ -8191,7 +8198,6 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey UNHARMED
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey UNPROTECTED
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey UPGRADE_BAYS
-10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey USE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey WAIT
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey WHEEL_HINT
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey WHEEL_HUNDREDS

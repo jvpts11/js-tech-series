@@ -11,8 +11,6 @@ import static dev.jstech.core.machine.MachineScreenLayout.BANK_HEIGHT;
 import static dev.jstech.core.machine.MachineScreenLayout.BANK_WIDTH;
 import static dev.jstech.core.machine.MachineScreenLayout.BANK_X;
 import static dev.jstech.core.machine.MachineScreenLayout.BANK_Y;
-import static dev.jstech.core.machine.MachineScreenLayout.BAY_PITCH;
-import static dev.jstech.core.machine.MachineScreenLayout.BAY_X;
 import static dev.jstech.core.machine.MachineScreenLayout.BAY_Y;
 import static dev.jstech.core.machine.MachineScreenLayout.BAYS;
 import static dev.jstech.core.machine.MachineScreenLayout.SLOT;
@@ -43,7 +41,7 @@ public final class UpgradesTab implements IMachineFace {
     private static final int SUMMARY_PITCH = 8;
     private static final int SUMMARY_LINES = 2;
     private static final int NO_BAYS_Y = 60;
-    private static final int ROW_PITCH = 7;
+    private static final int ROW_PITCH = 6;
     private static final int SEGMENTS = 9;
     private static final int SEGMENT_PITCH = 2;
     private static final int MIDDLE = 32;
@@ -67,7 +65,7 @@ public final class UpgradesTab implements IMachineFace {
         final ProcessingMachineBlockEntity processing = v.machine() instanceof ProcessingMachineBlockEntity each
                 ? each : null;
         for (int k = 0; k < bays; k++) {
-            final int bx = v.x(BAY_X + k * BAY_PITCH);
+            final int bx = v.x(MachineScreenLayout.bayX(k, bays));
             final int by = v.y(BAY_Y);
             MachineArt.bezel(g, bx - 4, by - 4, bx + SLOT + 4, by + SLOT + 14, false);
             MachineArt.slot(g, bx, by);
@@ -88,8 +86,9 @@ public final class UpgradesTab implements IMachineFace {
 
     @Override
     public List<Component> tooltip(final MachineView v, final double x, final double y) {
-        for (int k = 0; k < bays(v); k++) {
-            if (MachineScreenLayout.on(x, y, BAY_X + k * BAY_PITCH, BAY_Y, SLOT, SLOT)) {
+        final int bays = bays(v);
+        for (int k = 0; k < bays; k++) {
+            if (MachineScreenLayout.on(x, y, MachineScreenLayout.bayX(k, bays), BAY_Y, SLOT, SLOT)) {
                 return List.of(GameText.component(MachineScreenTexts.TIP_BAY));
             }
         }
@@ -104,7 +103,7 @@ public final class UpgradesTab implements IMachineFace {
         return List.of();
     }
 
-    /* The bays the machine shows, at most the three the tab holds. */
+    /* The bays the machine shows, at most the four the tab holds. */
     private static int bays(final MachineView v) {
         return v.machine() instanceof ProcessingMachineBlockEntity processing
                 ? Math.min(processing.layout().upgrades(), BAYS) : 0;
@@ -134,10 +133,12 @@ public final class UpgradesTab implements IMachineFace {
         }
         addIf(shown, all, MachineScreenTexts.EFFECT_YIELD, effect.yield());
         addIf(shown, all, MachineScreenTexts.EFFECT_BYPRODUCTS, effect.byproducts());
-        addIf(shown, all, MachineScreenTexts.EFFECT_USE, use(effect));
+        addIf(shown, all, MachineScreenTexts.EFFECT_LIQUIDS, effect.liquids());
+        addIf(shown, all, MachineScreenTexts.EFFECT_GASES, effect.gases());
         addIf(shown, all, MachineScreenTexts.EFFECT_HEAT, effect.heat());
         addIf(shown, all, MachineScreenTexts.EFFECT_SOUND, effect.sound());
         addIf(shown, all, MachineScreenTexts.EFFECT_BUFFER, effect.buffer());
+        addIf(shown, all, MachineScreenTexts.EFFECT_ROOM, effect.room());
         return shown;
     }
 
@@ -145,11 +146,6 @@ public final class UpgradesTab implements IMachineFace {
         if (all || Math.abs(factor - 1.0) > NEUTRAL) {
             shown.add(word.with(times(factor)));
         }
-    }
-
-    /* What a recipe spends of its fluids and matter in one figure, the liquids' or the gases', whichever saves more. */
-    private static double use(final UpgradeEffect effect) {
-        return Math.min(effect.liquids(), effect.gases());
     }
 
     private static String times(final double factor) {
@@ -171,10 +167,12 @@ public final class UpgradesTab implements IMachineFace {
                 new Row(MachineScreenTexts.PAR, effect.parallel() / FULL_PARALLEL * FULL_BAR, c.lampRun()),
                 new Row(MachineScreenTexts.YLD, effect.yield() - 1.0, c.lampRun()),
                 new Row(MachineScreenTexts.BYP, effect.byproducts() - 1.0, c.lampRun()),
-                new Row(MachineScreenTexts.USE, use(effect) - 1.0, c.lampWait()),
+                new Row(MachineScreenTexts.LIQ, effect.liquids() - 1.0, c.lampWait()),
+                new Row(MachineScreenTexts.GAS, effect.gases() - 1.0, c.lampWait()),
                 new Row(MachineScreenTexts.HEA, effect.heat() - 1.0, c.lampWait()),
                 new Row(MachineScreenTexts.SND, effect.sound() - 1.0, c.lampWait()),
-                new Row(MachineScreenTexts.BUF, effect.buffer() - 1.0, c.lampRun()));
+                new Row(MachineScreenTexts.BUF, effect.buffer() - 1.0, c.lampRun()),
+                new Row(MachineScreenTexts.CAP, effect.room() - 1.0, c.lampRun()));
         for (int k = 0; k < rows.size(); k++) {
             final Row row = rows.get(k);
             final int y = y0 + 2 + k * ROW_PITCH;

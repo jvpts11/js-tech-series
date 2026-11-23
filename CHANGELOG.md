@@ -694,6 +694,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- (Core) Four upgrade bays: J's Core's API is at version 92. `MachineScreenLayout.BAYS` is four, and
+  `bay(index, bays)` and `bayX(index, bays)` place a bay among the bays the tab shows, closer by
+  `BAY_PITCH_FOUR` when it shows four; `bay(index)` is gone. `MachineScreenTexts` names the liquids, the gases
+  and the room (`LIQ`, `GAS`, `CAP` and their `EFFECT_` lines) in place of `USE`. Experimental.
 - (Core) Machine upgrades by kind and by what they spend: J's Core's API is at version 91. `UpgradeEffect` spends
   liquids and gases each by a factor of its own (`liquids` and `gases`, `liquidSpent` and `gasSpent`, in place of
   `use` and `spent`) and has a `room` factor, what each input and output slot and tank holds, which the processing
@@ -4366,6 +4370,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Core) A machine's Upgrades tab shows up to four bays, closer together when there are four, so a machine of four
+  upgrade slots shows every one; its bank of bars has a row each for the liquids and the gases a recipe spends, in
+  place of one for both, and one for the room of its slots and tanks.
 - (Computers) Abandoned buildings of real blocks: every block of every building and of the villages' computer shops
   is one a player can get back by breaking it. The Fitting block is gone: the signs are the game's signs with their
   words on them, the lights sea lanterns and lanterns, the benches' wafers, chips and Phi coprocessors item frames
