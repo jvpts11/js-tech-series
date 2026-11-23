@@ -1430,6 +1430,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   faced, so it never credited the job, the output stayed in the machine and the craft failed on its timeout. Two
   interfaces, or two routers, on ports of one formed machine count as one machine too.
 - Pattern Studio: a cell's tooltip says "1 item per run", not "1 items".
+- Autocrafting: a craft is planned however many steps deep it goes, up to 64. The planner stopped at 16 and
+  called the rest missing, so a chip of more than three layers could never be asked for: an Advanced memory chip is
+  33 machine steps from its silicon wafer, four for each of its eight layers and its packaging.
 
 ## [0.5.3a] - 2026-11-04
 

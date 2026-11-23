@@ -27,7 +27,12 @@ import java.util.Set;
  */
 public final class CraftPlanner {
 
-    private static final int MAX_DEPTH = 16;
+    /*
+     * How many steps deep a plan goes before it calls the rest missing. The longest route the series has is a chip's:
+     * an Advanced memory chip is 33 machine steps from its silicon wafer, and its materials have steps of their own
+     * before that; a loop never gets this deep, as a step never asks again for what it is making.
+     */
+    private static final int MAX_DEPTH = 64;
 
     private CraftPlanner() {
     }

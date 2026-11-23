@@ -20,15 +20,22 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.WaferMachineBlockEntity;
 import dev.jstech.computers.chain.machine.WaferWork;
+import dev.jstech.computers.crafting.CraftPlanner;
+import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesChemicals;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.tests.JsTests;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -61,6 +68,9 @@ public final class WaferGameTests {
     /* A Vintage chip's layers, and the chips a memory wafer is cut into. */
     private static final int VINTAGE_LAYERS = 2;
     private static final int MEMORY_CHIPS = 8;
+    /* An Advanced chip's layers, and the machine steps its route takes: four a layer and the packaging. */
+    private static final int ADVANCED_LAYERS = 8;
+    private static final int ADVANCED_STEPS = 4 * ADVANCED_LAYERS + 1;
     private static final int BUCKET = 1_000;
 
     private WaferGameTests() {
@@ -245,6 +255,54 @@ public final class WaferGameTests {
                     "no wafer is started with no mask, a stray block in the mask's slot");
             helper.succeed();
         });
+    }
+
+    /*
+     * An Advanced memory chip is 33 machine steps from its silicon wafer, four for each of its eight layers and its
+     * packaging: the planner follows the whole route back, where it stopped sixteen steps in and called the finished
+     * wafer missing.
+     */
+    @GameTest(template = ARENA)
+    public static void planner_followsAnAdvancedChipBackToItsSiliconWafer(final GameTestHelper helper) {
+        final int era = ChainParts.ERAS.indexOf(HardwareEra.ADVANCED);
+        final Item chip = ChainParts.MEMORY_CHIPS.get(era).get();
+        final Item inProcess = ChainChips.waferInProcess(HardwareEra.ADVANCED).get();
+        final List<ItemStack> states = new ArrayList<>();
+        states.add(new ItemStack(MaterialUses.item(Elements.of(Element.SILICON), Forms.WAFER).get()));
+        for (int layer = 1; layer <= ADVANCED_LAYERS; layer++) {
+            if (layer > 1) {
+                states.add(advanced(inProcess, chip, layer, WaferWork.Step.LITHOGRAPHY));
+            }
+            states.add(advanced(inProcess, chip, layer, WaferWork.Step.ETCH));
+            states.add(advanced(inProcess, chip, layer, WaferWork.Step.IMPLANT));
+            states.add(advanced(inProcess, chip, layer, WaferWork.Step.DEPOSITION));
+        }
+        states.add(advanced(ChainParts.FINISHED_WAFERS.get(era).get(), chip, ADVANCED_LAYERS,
+                WaferWork.Step.PACKAGING));
+        final List<ProcessingPattern> route = new ArrayList<>();
+        for (int i = 0; i + 1 < states.size(); i++) {
+            route.add(step(StorageKey.of(states.get(i)), StorageKey.of(states.get(i + 1)), 1));
+        }
+        final StorageKey chips = StorageKey.of(new ItemStack(chip));
+        route.add(step(StorageKey.of(states.getLast()), chips, MEMORY_CHIPS));
+        final CraftPlanner.Plan plan = CraftPlanner.plan(chips, MEMORY_CHIPS, List.of(), route,
+                Map.of(StorageKey.of(states.getFirst()), 1L));
+        helper.assertTrue(route.size() == ADVANCED_STEPS && plan.feasible(), "eight chips from one silicon wafer over "
+                + route.size() + " steps; missing " + plan.missing());
+        helper.succeed();
+    }
+
+    /* A machine pattern turning one {@code from} into {@code amount} of {@code to}. */
+    private static ProcessingPattern step(final StorageKey from, final StorageKey to, final long amount) {
+        return new ProcessingPattern(List.of(new ProcessingPattern.ProcessingInput(from, 1)),
+                List.of(new ProcessingPattern.ProcessingOutput(to, amount, ProcessingPattern.FULL_CHANCE)), 200);
+    }
+
+    /* An Advanced {@code chip}'s wafer as {@code item} on {@code layer}, going to {@code step}. */
+    private static ItemStack advanced(final Item item, final Item chip, final int layer, final WaferWork.Step step) {
+        final ItemStack wafer = new ItemStack(item);
+        wafer.set(ComputingComponents.WAFER_WORK.get(), new WaferWork(id(chip), layer, ADVANCED_LAYERS, step));
+        return wafer;
     }
 
     /* What each slot of {@code inventory} holds, for a failure to say. */
