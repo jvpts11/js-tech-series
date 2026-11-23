@@ -22,10 +22,17 @@ import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.item.ItemState;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.item.ItemTexts;
+import dev.jstech.core.material.Material;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tool.BuildingTools;
+import java.util.List;
+import java.util.Objects;
+import java.util.OptionalInt;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -33,6 +40,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.ItemLike;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
@@ -49,7 +57,33 @@ import net.neoforged.neoforge.fluids.SimpleFluidContent;
  */
 public final class ItemStateClient {
 
+    /* The colours some items paint their gas's bar in, by the gas; the Core's gas colour for the rest. */
+    private static final List<GasPaint> GAS_PAINTS = new CopyOnWriteArrayList<>();
+
     private ItemStateClient() {
+    }
+
+    /**
+     * Has the bar of the gas {@code item} holds painted in the colour {@code colour} gives that gas, as
+     * {@code 0xAARRGGBB}, or in the Core's gas colour for a gas it gives none: a cylinder's bar in the colour of its
+     * shoulder, say. From the mod's constructor on a player's game.
+     */
+    public static void paintGas(final Supplier<? extends ItemLike> item,
+                                final Function<Material, OptionalInt> colour) {
+        GAS_PAINTS.add(new GasPaint(Objects.requireNonNull(item, "item"), Objects.requireNonNull(colour, "colour")));
+    }
+
+    /** How the bar of {@code gas} in {@code stack} is painted: as its item says, or in the Core's gas colour. */
+    public static TooltipBar.Paint gasPaint(final ItemStack stack, final Material gas) {
+        for (final GasPaint paint : GAS_PAINTS) {
+            if (stack.is(paint.item().get().asItem())) {
+                final OptionalInt colour = paint.colour().apply(gas);
+                if (colour.isPresent()) {
+                    return new TooltipBar.Paint.Colour(colour.getAsInt());
+                }
+            }
+        }
+        return TooltipBar.Paint.GAS;
     }
 
     /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor on a player's game. */
@@ -101,8 +135,8 @@ public final class ItemStateClient {
             final MatterStack gas = stack.get(ItemStates.GAS.get());
             final Text said = gas == null ? ItemTexts.GAS_EMPTY.with(state.gasCapacity())
                     : ItemTexts.GAS.with(gas.material().name(), gas.amount(), state.gasCapacity());
-            tooltip.piece(TooltipBar.of(gas == null ? 0 : gas.amount(), state.gasCapacity(), TooltipBar.Paint.GAS,
-                    grey(said)));
+            tooltip.piece(TooltipBar.of(gas == null ? 0 : gas.amount(), state.gasCapacity(),
+                    gas == null ? TooltipBar.Paint.GAS : gasPaint(stack, gas.material()), grey(said)));
         }
         if (state.holdsItems()) {
             items(stack, state, tooltip);
@@ -156,5 +190,9 @@ public final class ItemStateClient {
 
     private static Component grey(final Text text) {
         return GameText.component(text).copy().withStyle(ChatFormatting.GRAY);
+    }
+
+    /* An item whose gas's bar is painted in the colour it gives each gas. */
+    private record GasPaint(Supplier<? extends ItemLike> item, Function<Material, OptionalInt> colour) {
     }
 }

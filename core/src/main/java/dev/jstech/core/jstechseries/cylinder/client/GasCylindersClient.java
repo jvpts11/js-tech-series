@@ -7,12 +7,16 @@
  */
 package dev.jstech.core.jstechseries.cylinder.client;
 
+import dev.jstech.core.client.item.ItemStateClient;
 import dev.jstech.core.jstechseries.cylinder.GasCylinders;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 
-/** The Gas Cylinder on a player's game: its shoulder, its model's second layer, painted in the colour of its gas. */
+/**
+ * The Gas Cylinder on a player's game: its shoulder, its model's second layer, painted in the colour of its gas, and
+ * its tooltip's bar in the same colour for a gas the European code names, in the Core's gas colour for another.
+ */
 public final class GasCylindersClient {
 
     /* The model's layer the shoulder is drawn in, and what leaves a layer's own colours as they are. */
@@ -26,6 +30,8 @@ public final class GasCylindersClient {
     public static void listen(final IEventBus modBus) {
         modBus.addListener(RegisterColorHandlersEvent.Item.class, event -> event.register(GasCylindersClient::tint,
                 GasCylinders.CYLINDER.get()));
+        // The bar of its tooltip in its shoulder's colour, for a gas the European code names.
+        ItemStateClient.paintGas(GasCylinders.CYLINDER::get, GasCylinders::shoulder);
     }
 
     private static int tint(final ItemStack stack, final int layer) {

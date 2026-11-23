@@ -613,7 +613,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   colour the European code (EN 1089-3) gives the gas inside, from a table kept as data a resource pack can recolour:
   chlorine and fluorine yellow, argon dark green, hydrogen red, oxygen white, nitrogen black, krypton, neon and xenon
   bright green, helium brown, carbon dioxide grey; a gas the code does not name shows its own colour, and an empty
-  cylinder its bare steel. Made at the Crafting Table from seven steel plates and a bronze ingot, its valve; the Core
+  cylinder its bare steel. Its tooltip's bar is its shoulder's colour, or the Core's gas colour for a gas the code
+  does not name. Made at the Crafting Table from seven steel plates and a bronze ingot, its valve; the Core
   uses steel plates and bronze ingots for it.
 - The Gas Vent: a block at a gas line's end that lets out into the air any gas the line brings to the inlet on
   its front, all of it, so a machine whose by-product nobody wants, the Air Separation Unit's nitrogen or the
