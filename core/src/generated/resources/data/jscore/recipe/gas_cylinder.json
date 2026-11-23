@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "c:ingots/bronze"
+    },
+    "P": {
+      "tag": "c:plates/steel"
+    }
+  },
+  "pattern": [
+    "PBP",
+    "P P",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:gas_cylinder"
+  }
+}

@@ -13,6 +13,7 @@ import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.condition.SettingCondition;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.item.SwitchedShapedRecipe;
+import dev.jstech.core.jstechseries.cylinder.GasCylinders;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
@@ -32,6 +33,7 @@ import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SpecialRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
@@ -93,6 +95,13 @@ public final class SeriesRecipes extends RecipeProvider {
                 .pattern("IBI").pattern("IPI").pattern("III")
                 .define('I', Items.IRON_INGOT).define('B', Items.IRON_BARS).define('P', SharedPipes.IRON_GAS_PIPE)
                 .unlockedBy("has_iron_gas_pipe", has(SharedPipes.IRON_GAS_PIPE)).save(output, id("gas_vent"));
+        // A cylinder of steel plates, its bronze valve on top.
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, GasCylinders.CYLINDER.get())
+                .pattern("PBP").pattern("P P").pattern("PPP")
+                .define('P', ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", "plates/steel")))
+                .define('B', ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", "ingots/bronze")))
+                .unlockedBy("has_steel_plate", has(GasCylinders.STEEL_PLATE.get()))
+                .save(output, id("gas_cylinder"));
         // An open-ended spanner of iron, its jaws apart at the top.
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, SharedTools.WRENCH.get())
                 .pattern("I I").pattern(" I ").pattern(" I ")

@@ -217,6 +217,7 @@ import dev.jstech.tests.clienttest.core.SkyClientTests;
 import dev.jstech.tests.clienttest.core.PhysicsClientTests;
 import dev.jstech.tests.clienttest.core.RoomClientTests;
 import dev.jstech.tests.clienttest.core.WindowFitClientTests;
+import dev.jstech.tests.clienttest.core.GasCylinderClientTests;
 import dev.jstech.tests.clienttest.core.TravelClientTests;
 import dev.jstech.tests.clienttest.core.WalkPaceClientTests;
 import dev.jstech.tests.clienttest.core.WorldChangesClientTests;
@@ -499,6 +500,7 @@ public final class ClientTestSuite {
             PhysicsClientTests.class,
             RoomClientTests.class,
             WindowFitClientTests.class,
+            GasCylinderClientTests.class,
             TravelClientTests.class,
             WalkPaceClientTests.class,
             WorldChangesClientTests.class,

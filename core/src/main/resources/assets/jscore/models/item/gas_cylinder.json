@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "jscore:item/gas_cylinder",
+    "layer1": "jscore:item/gas_cylinder_shoulder"
+  }
+}

@@ -172,6 +172,7 @@ import dev.jstech.core.jstechseries.SimplePath;
 import dev.jstech.core.jstechseries.builder.Assembly;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
 import dev.jstech.core.jstechseries.containment.SharedContainment;
+import dev.jstech.core.jstechseries.cylinder.GasCylinders;
 import dev.jstech.core.jstechseries.projector.StructureProjector;
 import dev.jstech.core.jstechseries.persistor.PersistorSettings;
 import dev.jstech.core.jstechseries.persistor.SpacePersistor;
@@ -484,6 +485,7 @@ public final class JsCore {
         NetworkProbe.declare();
         SignalProbe.declare();
         SharedPipes.declare();
+        GasCylinders.declare();
         // What content packs declare in files rather than in Java, read as the game starts, after the catalogue.
         ContentPacks.declare(modEventBus);
         // What the scripts of KubeJS and CraftTweaker reach of the Core, as JsCore.

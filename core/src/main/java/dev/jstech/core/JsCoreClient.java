@@ -113,6 +113,7 @@ import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.jstechseries.energy.client.ClampMeterClient;
 import dev.jstech.core.jstechseries.energy.client.EnergyConvertersClient;
 import dev.jstech.core.jstechseries.fire.client.FireArt;
+import dev.jstech.core.jstechseries.cylinder.client.GasCylindersClient;
 import dev.jstech.core.jstechseries.hazard.client.HazardDevicesClient;
 import dev.jstech.core.jstechseries.builder.client.BuilderClient;
 import dev.jstech.core.jstechseries.persistor.client.PersistorClient;
@@ -156,6 +157,7 @@ public final class JsCoreClient {
         FormedMeshes.listen();
         ClampMeterClient.listen(modEventBus);
         HazardDevicesClient.listen(modEventBus);
+        GasCylindersClient.listen(modEventBus);
         CableColours.listen(modEventBus);
         CableEndScreen.listen(modEventBus);
         CableFlowRenderer.listen(modEventBus);
