@@ -26,7 +26,8 @@ import org.slf4j.Logger;
 /**
  * The wires running through a cable block, each in its lane: the bundle a block of many cables holds, beside the parts
  * on its faces. A lane holds one wire, so a block holds one wire of each line, and a cable that never shares a block
- * holds it alone. The players who see the block are sent the whole bundle, which is small.
+ * holds it alone. Pipes share a block with pipes and cables with cables, never the two. The players who see the block
+ * are sent the whole bundle, which is small.
  */
 public final class Bundle implements IFieldPart {
 
@@ -90,14 +91,22 @@ public final class Bundle implements IFieldPart {
     }
 
     /**
-     * Whether {@code wire} could be laid: its lane is free, and neither it nor what is here already is a cable that
-     * never shares a block.
+     * Whether {@code wire} could be laid: its lane is free, neither it nor what is here already is a cable that never
+     * shares a block, and it is a pipe among pipes or a cable among cables.
      */
     public boolean takes(final Wire wire) {
         if (wire.type().alone()) {
             return isEmpty();
         }
-        return !holdsAlone() && at(wire.slot()) == null;
+        if (holdsAlone() || at(wire.slot()) != null) {
+            return false;
+        }
+        for (final Wire here : this.lanes) {
+            if (here != null && here.type().amongPipes() != wire.type().amongPipes()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Lays {@code wire} in its lane; false when the bundle does not take it. */

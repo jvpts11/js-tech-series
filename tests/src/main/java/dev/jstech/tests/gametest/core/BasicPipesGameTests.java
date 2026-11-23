@@ -7,14 +7,19 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import dev.jstech.core.cable.BundleShape;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CableItem;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.cable.WireFlow;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestFluidEnds;
 import dev.jstech.tests.testkit.TestCables;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -43,6 +48,43 @@ public final class BasicPipesGameTests {
     private static final BlockPos INPUT = new BlockPos(5, 2, 2);
 
     private BasicPipesGameTests() {
+    }
+
+    /**
+     * Pipes of different kinds share a block, each five pixels thick in its own place in the cross, the liquid pipe in
+     * the middle, the gas pipe at the top and the cryogenic pipe on the right; one alone runs through the middle; and
+     * two of one kind never share a block, nor a pipe and a cable.
+     */
+    @GameTest(template = ARENA)
+    public static void pipes_shareABlockEachInItsPlaceInTheCross(final GameTestHelper helper) {
+        final List<BlockPos> row = List.of(new BlockPos(1, 2, 5), new BlockPos(2, 2, 5), new BlockPos(3, 2, 5));
+        for (final BlockPos at : row) {
+            TestCables.lay(helper, at, SharedPipes.COPPER_PIPE);
+            TestCables.lay(helper, at, SharedPipes.IRON_GAS_PIPE);
+            TestCables.lay(helper, at, SharedPipes.VACUUM_JACKETED_PIPE);
+        }
+        final BlockPos alone = new BlockPos(1, 2, 8);
+        TestCables.lay(helper, alone, SharedPipes.IRON_GAS_PIPE);
+        TestCables.lay(helper, alone.east(), SharedPipes.IRON_GAS_PIPE);
+        helper.assertTrue(!CableItem.lay(helper.getLevel(), helper.absolutePos(alone), SharedPipes.IRON_GAS_PIPE.get()),
+                "two gas pipes never share a block");
+        helper.assertTrue(!CableItem.lay(helper.getLevel(), helper.absolutePos(alone),
+                SharedEnergy.INSULATED_COPPER_CABLE.get()), "nor a pipe and a cable");
+        helper.succeedWhen(() -> {
+            final BundleShape shared = TestCables.cable(helper, row.get(1)).shape();
+            helper.assertTrue(!shared.junction(), "three pipes side by side need no junction box");
+            // Along x, a lane's across is z and its up is y, five pixels from one lane to the next.
+            final Set<BundleShape.Box> expected = Set.of(new BundleShape.Box(0, 5.5, 5.5, 16, 10.5, 10.5),
+                    new BundleShape.Box(0, 10.5, 5.5, 16, 15.5, 10.5),
+                    new BundleShape.Box(0, 5.5, 10.5, 16, 10.5, 15.5));
+            final Set<BundleShape.Box> laid = new HashSet<>(jackets(shared));
+            helper.assertTrue(laid.equals(expected), "the liquid pipe in the middle, the gas pipe at the top and the "
+                    + "cryogenic pipe on the right, straight through: " + laid);
+            final List<BundleShape.Box> single = jackets(TestCables.cable(helper, alone).shape());
+            helper.assertTrue(single.equals(List.of(new BundleShape.Box(5.5, 5.5, 5.5, 10.5, 10.5, 10.5),
+                            new BundleShape.Box(10.5, 5.5, 5.5, 16, 10.5, 10.5))),
+                    "a gas pipe alone runs through the middle, its core and its arm east: " + single);
+        });
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
@@ -75,6 +117,11 @@ public final class BasicPipesGameTests {
         for (final BlockPos at : RUN) {
             TestCables.lay(helper, at, SharedPipes.COPPER_PIPE);
         }
+    }
+
+    private static List<BundleShape.Box> jackets(final BundleShape shape) {
+        return shape.pieces().stream().filter(piece -> piece.kind() == BundleShape.Kind.JACKET)
+                .map(BundleShape.Piece::box).toList();
     }
 
     private static WireFlow flow(final GameTestHelper helper, final BlockPos at) {

@@ -30,6 +30,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.Fluid;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -51,17 +52,20 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class CableType {
 
-    /** The thickest a cable is, in pixels: three quarters of a block, a pipe alone in its block. */
+    /** The thickest a cable is, in pixels: three quarters of a block, a cable alone in its block. */
     public static final int THICKEST = 12;
     /*
      * The widest a wire in a lane can be: one pixel less than the lane pitch, so wires in lanes side by side keep a
      * pixel between them, which also keeps a wire in an outer lane inside the block.
      */
     private static final int MOST_PIXELS_IN_A_LANE = Math.min(2 * (8 - Lane.PITCH), Lane.PITCH - 1);
+    /* A pipe in a lane may be as wide as the pitch: the pipes of a cross touch, still inside the block. */
+    private static final int MOST_PIXELS_IN_A_PIPE_LANE = Math.min(2 * (8 - Lane.PITCH), Lane.PITCH);
 
     private final Connection line;
     private final GridKind grid;
     private final @Nullable Lane lane;
+    private final boolean amongPipes;
     private final int thickness;
     private final long throughput;
     private final int range;
@@ -90,12 +94,14 @@ public final class CableType {
         if (!builder.alone && builder.lane == null) {
             throw new IllegalStateException("a cable that shares blocks takes a lane: " + this.line.line());
         }
-        if (!builder.alone && builder.thickness > MOST_PIXELS_IN_A_LANE) {
-            // Past this wires in lanes side by side would touch, and further on stick out of the block.
-            throw new IllegalStateException("a cable that takes a lane is at most " + MOST_PIXELS_IN_A_LANE
-                    + " pixels thick, not " + builder.thickness + ": " + this.line.line());
+        final int most = builder.amongPipes ? MOST_PIXELS_IN_A_PIPE_LANE : MOST_PIXELS_IN_A_LANE;
+        if (!builder.alone && builder.thickness > most) {
+            // Past this wires in lanes side by side would run into one another, and further on stick out of the block.
+            throw new IllegalStateException("a " + (builder.amongPipes ? "pipe" : "cable") + " that takes a lane is "
+                    + "at most " + most + " pixels thick, not " + builder.thickness + ": " + this.line.line());
         }
         this.lane = builder.alone ? null : builder.lane;
+        this.amongPipes = !builder.alone && builder.amongPipes;
         this.straight = builder.straight;
         this.mostJoins = builder.mostJoins;
         this.thickness = builder.thickness;
@@ -160,6 +166,15 @@ public final class CableType {
     /** Whether a block that holds it holds nothing else. */
     public boolean alone() {
         return this.lane == null;
+    }
+
+    /**
+     * Whether it is a pipe laid among pipes: it shares a block with other pipes alone, each in its own lane of their
+     * cross, and never with a cable.
+     */
+    @ApiStatus.Experimental
+    public boolean amongPipes() {
+        return this.amongPipes;
     }
 
     /** How thick it is, in pixels. */
@@ -305,6 +320,7 @@ public final class CableType {
         private GridKind grid = GridKind.DATA;
         private @Nullable Lane lane;
         private boolean alone;
+        private boolean amongPipes;
         private int thickness = STANDARD_THICKNESS;
         private long throughput;
         private int range;
@@ -331,7 +347,7 @@ public final class CableType {
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
-        /* No thicker than three quarters of a block: a pipe alone in its block, as pipes are in every mod. */
+        /* No thicker than three quarters of a block, for a cable alone in its block. */
         private static final int MOST_PIXELS = THICKEST;
 
         private Builder(final Connection line) {
@@ -348,6 +364,18 @@ public final class CableType {
         public Builder lane(final Lane taken) {
             this.lane = Objects.requireNonNull(taken, "taken");
             this.alone = false;
+            this.amongPipes = false;
+            return this;
+        }
+
+        /**
+         * It is a pipe, taking {@code taken} in the cross of a block it shares: it shares a block with other pipes
+         * alone, each in its own lane, and never with a cable, whose lanes are another set.
+         */
+        @ApiStatus.Experimental
+        public Builder pipeLane(final Lane taken) {
+            lane(taken);
+            this.amongPipes = true;
             return this;
         }
 
@@ -355,12 +383,14 @@ public final class CableType {
         public Builder alone() {
             this.alone = true;
             this.lane = null;
+            this.amongPipes = false;
             return this;
         }
 
         /**
          * How thick it is, in pixels; four unless said. A cable that takes a lane is at most four, so wires side by
-         * side keep a pixel between them; one alone in its block, as a pipe, at most twelve.
+         * side keep a pixel between them; a pipe that takes one at most five, the pipes of a cross touching; one
+         * alone in its block at most twelve.
          */
         public Builder thickness(final int pixels) {
             if (pixels <= 0 || pixels > MOST_PIXELS) {

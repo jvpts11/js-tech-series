@@ -37,7 +37,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * What a cable block's model draws in the see-through layer: the glass in its wires' windows, and behind it what each
  * wire carries, a liquid at its level and a gas filling it, in its own colour and moving as the game's flowing water
- * does. A wire's fitting, where it turns, is solid and shows neither. A line of items shows its items otherwise.
+ * does. A wire's fitting, where it turns or branches, is solid and shows neither. A line of items shows its items
+ * otherwise.
  */
 final class CableWindows {
 
@@ -50,18 +51,21 @@ final class CableWindows {
     private static final int RGB = 0xFFFFFF;
     private static final int NO_TINT = -1;
     private static final int BUCKET = 1000;
+    /* The axes as the shape numbers them: x 0, y 1, z 2. */
+    private static final Direction.Axis[] AXES = {Direction.Axis.X, Direction.Axis.Y, Direction.Axis.Z};
 
     private CableWindows() {
     }
 
     /**
-     * Whether {@code piece} is a wire's core where it turns or branches: a cube as wide as the wire, where a straight
-     * wire is one box the length of the block and an arm runs from the core to a face.
+     * Whether {@code piece} is a wire's fitting, where it turns or branches: a cube as wide as the wire joined on two
+     * faces or more, where a straight wire is one box the length of the block and an arm runs from the core to a face.
+     * A core joined on one face or none is where the wire ends, its jacket and its windows running on to its cut end.
      */
-    static boolean isCore(final BundleShape.Piece piece, final int thickness) {
+    static boolean isFitting(final BundleShape.Piece piece, final int thickness) {
         final BundleShape.Box box = piece.box();
         return box.maxX() - box.minX() == thickness && box.maxY() - box.minY() == thickness
-                && box.maxZ() - box.minZ() == thickness;
+                && box.maxZ() - box.minZ() == thickness && Integer.bitCount(piece.hidden()) >= 2;
     }
 
     /** The glass and the flows of {@code key}'s wires. */
@@ -76,7 +80,7 @@ final class CableWindows {
             final Wire wire = drawing.wires().get(piece.strand());
             final CableType type = wire.type();
             final Optional<ResourceLocation> glass = type.window();
-            if (glass.isEmpty() || isCore(piece, type.thickness()) && type.fitting().isPresent()) {
+            if (glass.isEmpty() || isFitting(piece, type.thickness()) && type.fitting().isPresent()) {
                 continue;
             }
             final TextureAtlasSprite pane = atlas.getSprite(glass.get());
@@ -88,24 +92,29 @@ final class CableWindows {
             final WireFlow flow = key.view().of(piece.strand());
             final Look look = flow.isEmpty() ? null : lookOf(type, flow, atlas);
             if (look != null) {
-                fluid(out, piece, isCore(piece, type.thickness()), flow, look);
+                fluid(out, piece, flow, look);
             }
         }
         return List.copyOf(out);
     }
 
     /*
-     * The fluid inside a piece: a box a pixel inside its walls (along the wire too, for a core), as high as the wire is
-     * full when it lies flat.
+     * The fluid inside a piece: a box a pixel inside its walls, and inside its ends where the wire ends, so it runs on
+     * into the next piece where it joins one; as high as the wire is full when it lies flat.
      */
-    private static void fluid(final List<BakedQuad> out, final BundleShape.Piece piece, final boolean core,
-                              final WireFlow flow, final Look look) {
+    private static void fluid(final List<BakedQuad> out, final BundleShape.Piece piece, final WireFlow flow,
+                              final Look look) {
         final BundleShape.Box box = piece.box();
         final double[] min = {box.minX(), box.minY(), box.minZ()};
         final double[] max = {box.maxX(), box.maxY(), box.maxZ()};
         for (int axis = 0; axis < 3; axis++) {
-            if (axis != piece.axis() || core) {
+            final boolean along = axis == piece.axis();
+            if (!along || !piece.hides(Direction.fromAxisAndDirection(AXES[axis],
+                    Direction.AxisDirection.NEGATIVE).get3DDataValue())) {
                 min[axis] += INSET;
+            }
+            if (!along || !piece.hides(Direction.fromAxisAndDirection(AXES[axis],
+                    Direction.AxisDirection.POSITIVE).get3DDataValue())) {
                 max[axis] -= INSET;
             }
         }

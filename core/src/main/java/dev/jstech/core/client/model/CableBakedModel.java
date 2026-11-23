@@ -62,6 +62,8 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
             "block/cable/housing");
     private static final float PIXEL = 1F / 16F;
     private static final float JACKET_SIZE = 32F;
+    /* Where a jacket's cut end starts on its texture, under its long strip. */
+    private static final float CUT_END_V = 16F;
     private static final float HOUSING_SIZE = 16F;
     private static final float SWATCH = 8F;
     private static final float SWATCH_INSET = 2F;
@@ -163,7 +165,7 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
                     case JACKET -> {
                         final Wire wire = drawing.wires().get(piece.strand());
                         // Where a pipe turns or branches, its core is a solid fitting of its own.
-                        final ResourceLocation texture = CableWindows.isCore(piece, wire.type().thickness())
+                        final ResourceLocation texture = CableWindows.isFitting(piece, wire.type().thickness())
                                 ? wire.type().fitting().orElse(wire.type().jacket()) : wire.type().jacket();
                         yield jacket(piece, face, atlas.getSprite(texture), wire.type().thickness());
                     }
@@ -181,7 +183,7 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
     /*
      * A face of a jacket. The texture is laid by where the face lies in the block, as the jacket's texture is drawn:
      * a side with the length along u takes the top left strip, one with the length along v the strip beside it, both
-     * at the length's own place in the block; an end takes the corner square.
+     * at the length's own place in the block; an end takes the cut end, the square under the top left strip.
      */
     static BakedQuad jacket(final BundleShape.Piece piece, final Direction face, final TextureAtlasSprite sprite,
                             final int thickness) {
@@ -191,7 +193,7 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
         final int uAxis = uAxis(face);
         return quad(box, face, sprite, NO_TINT, (corner, position) -> {
             if (normalAxis == axis) {
-                return new float[] {corner[0] * thickness, (1F - corner[1]) * thickness};
+                return new float[] {corner[0] * thickness, CUT_END_V + (1F - corner[1]) * thickness};
             }
             final int across = 3 - axis - normalAxis;
             final float spread = (float) ((position[across] - box.min(across)) / (box.max(across) - box.min(across)))

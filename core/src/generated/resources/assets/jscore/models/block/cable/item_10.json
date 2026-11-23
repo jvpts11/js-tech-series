@@ -68,59 +68,8 @@
         13,
         13
       ]
-    },
-    {
-      "faces": {
-        "down": {
-          "texture": "#glass",
-          "uv": [
-            0.0,
-            0.0,
-            8.0,
-            5.0
-          ]
-        },
-        "north": {
-          "texture": "#glass",
-          "uv": [
-            0.0,
-            0.0,
-            8.0,
-            5.0
-          ]
-        },
-        "south": {
-          "texture": "#glass",
-          "uv": [
-            0.0,
-            0.0,
-            8.0,
-            5.0
-          ]
-        },
-        "up": {
-          "texture": "#glass",
-          "uv": [
-            0.0,
-            0.0,
-            8.0,
-            5.0
-          ]
-        }
-      },
-      "from": [
-        0,
-        3,
-        3
-      ],
-      "to": [
-        16,
-        13,
-        13
-      ]
     }
   ],
-  "render_type": "minecraft:translucent",
   "textures": {
     "particle": "#jacket"
   }

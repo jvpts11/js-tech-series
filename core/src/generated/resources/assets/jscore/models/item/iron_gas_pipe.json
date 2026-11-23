@@ -1,5 +1,5 @@
 {
-  "parent": "jscore:block/cable/item_10",
+  "parent": "jscore:block/cable/item_5",
   "textures": {
     "glass": "jscore:block/cable/iron_gas_pipe_glass",
     "jacket": "jscore:block/cable/iron_gas_pipe"

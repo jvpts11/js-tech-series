@@ -68,8 +68,59 @@
         10.5,
         10.5
       ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            8.0,
+            2.5
+          ]
+        },
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            8.0,
+            2.5
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            8.0,
+            2.5
+          ]
+        },
+        "up": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            8.0,
+            2.5
+          ]
+        }
+      },
+      "from": [
+        0,
+        5.5,
+        5.5
+      ],
+      "to": [
+        16,
+        10.5,
+        10.5
+      ]
     }
   ],
+  "render_type": "minecraft:translucent",
   "textures": {
     "particle": "#jacket"
   }

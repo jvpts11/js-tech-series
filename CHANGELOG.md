@@ -694,6 +694,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- (Core) Pipes among pipes: J's Core's API is at version 89. `CableType.Builder.pipeLane` makes a cable a pipe that
+  takes a lane of the pipes' own cross: it shares a block with other pipes alone, never with a cable, and may be five
+  pixels thick, the pipes of a cross touching; `CableType.amongPipes` says whether a cable is one. The pipes' lanes are
+  checked apart from the cables'. `CableItemModelProvider.WINDOWED_THICKNESS` is now five, the pipes' thickness.
+  Experimental.
 - (Core) A cable block under water: J's Core's API is at version 88. `CableBlock` is a `SimpleWaterloggedBlock`: water
   stands in a cable block, and any other liquid flows round it and leaves it standing.
 - (Core) Which tanks a face moves: J's Core's API is at version 87. `IMatterHandler.givesOut` and `takesIn` say
@@ -1135,9 +1140,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   it plugs into with what it gave and took, what it moved, what its consumers asked, what it lost and its narrowest
   cable. The energy, fluid, matter and item lines all keep it.
 - (Core) The basic pipes: the Copper Pipe for liquids up to 200 °C, the Iron Gas Pipe, and the Vacuum-Jacketed Pipe
-  for cryogenic liquids, thick pipes with sight glasses and solid fittings, made of the game's own materials so a mod
-  used alone carries liquids and gases. A pipe carrying a liquid hotter or colder than it stands bursts after five
-  seconds and spills it. With J's Industrial installed they are its pipes, made with its recipes.
+  for cryogenic liquids, made of the game's own materials so a mod used alone carries liquids and gases. Each is five
+  pixels thick, with the frame's rails along its edges and glass its whole length between them, so what flows shows at
+  its level, a strap across each joint (yellow on the gas pipe; doubled on the cryogenic pipe, whose glass is frosted),
+  a plain fitting where it turns, the bore at an open end and a bolted flange where it meets a block. Pipes of
+  different kinds share a block, each in its own place of their cross (the liquid pipe in the middle, the gas pipe on
+  top, the cryogenic pipe on the right), and a pipe alone in a block runs through its middle; a pipe and a cable never
+  share one. A pipe carrying a liquid hotter or colder than it stands bursts after five seconds and spills it. With
+  J's Industrial installed they are its pipes, made with its recipes.
 - (Core) Sensors that speak redstone: a sensor or a machine says what it reads as readings, each with its span, and
   gives the one chosen in redstone through one capability, `Signals.OUTPUT`, which anything that reads sensors asks; a
   comparator reads it too. A sensor's neighbours are told only when what it gives changes. A mod writes only what its
@@ -5565,6 +5575,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Cables and liquids: a cable block laid in water stands full of it, and a liquid flowing over cables leaves
   them standing. Flowing water, lava or a liquid of the series broke a cable block as it does a torch, cutting every
   wire in it without a word.
+- (Core) Cable ends: the open end of every cable shows the cut end drawn for it, where it showed a piece of its side.
 - (Core) FE Converters: looked at in a world where J's Energy is off, a converter says so first, and that the machines
   take FE straight from its source there, so it is not needed and passes nothing. One put between an FE source and a
   machine left the machine at NO POWER and said nothing.

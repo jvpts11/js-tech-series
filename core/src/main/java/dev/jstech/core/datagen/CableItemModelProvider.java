@@ -18,13 +18,13 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 /**
  * Writes the Core's model of a length of cable as thick as each a cable may be, {@code block/cable/item_<pixels>},
  * which the item of every cable of that thickness, of any mod, is drawn from in its own jacket: a bar across the block,
- * its sides from the jacket's long strip and its ends from its cut end. The windowed pipe's, ten pixels thick, has its
- * glass over its jacket, seen through.
+ * its sides from the jacket's long strip and its ends from its cut end. The windowed pipes', five pixels thick, has
+ * their glass over their jacket, seen through.
  */
 public final class CableItemModelProvider extends BlockModelProvider {
 
-    /** The thickness of a windowed pipe, whose item shows its glass. */
-    public static final int WINDOWED_THICKNESS = 10;
+    /** The thickness of the windowed pipes, whose items show their glass. */
+    public static final int WINDOWED_THICKNESS = 5;
     /* Where the jacket's cut end starts on its texture, under its long strip. */
     private static final float END_V = 8F;
     private static final float LENGTH = 16F;

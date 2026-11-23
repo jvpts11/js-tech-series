@@ -26,8 +26,8 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 /**
  * The basic pipes on a player's game, to set beside the approved art: copper pipes carrying water from an output to an
- * input, round a bend, their fitting solid, the water seen moving through their sight glasses at its level; and the
- * gas and cryogenic pipes beside them.
+ * input, round a bend, their fitting solid, the water seen moving through their glass at its level; the gas and
+ * cryogenic pipes beside them; and the three sharing a row in their cross.
  */
 public final class PipeClientTests {
 
@@ -39,7 +39,19 @@ public final class PipeClientTests {
             new BlockPos(0, FLOOR, 1), new BlockPos(1, FLOOR, 1), new BlockPos(1, FLOOR + 1, 1));
     private static final BlockPos GAS = new BlockPos(-1, FLOOR, 3);
     private static final BlockPos CRYO = new BlockPos(1, FLOOR, 3);
+    /* A row the three pipes share, and where each goes on from its last block, out of its own side. */
+    private static final List<BlockPos> SHARED = List.of(new BlockPos(-2, FLOOR, 2), new BlockPos(-1, FLOOR, 2),
+            new BlockPos(0, FLOOR, 2));
+    private static final BlockPos LIQUID_ON = new BlockPos(1, FLOOR, 2);
+    private static final BlockPos GAS_UP = new BlockPos(0, FLOOR + 1, 2);
+    private static final BlockPos CRYO_RIGHT = new BlockPos(0, FLOOR, 3);
+    /* Where the row is looked at from: close in front, and from above its split, askew. */
+    private static final BlockPos CLOSE = new BlockPos(-1, FLOOR, 0);
+    private static final BlockPos ASKEW = new BlockPos(2, FLOOR + 1, 0);
+    private static final float LOOK_DOWN = 30F;
+    private static final float ASKEW_YAW = 40F;
     private static final int WAIT = 200;
+    private static final int SETTLE = 40;
 
     private PipeClientTests() {
     }
@@ -51,6 +63,26 @@ public final class PipeClientTests {
                 .thenWaitUntil(() -> flowing(ctx), WAIT, "the client to see water in the pipes")
                 .thenScreenshot(10, "pipes-water")
                 .thenServer(0, level -> clear(ctx, level));
+    }
+
+    /**
+     * The three pipes sharing a row in their cross, the liquid pipe in the middle, the gas pipe on top, the cryogenic
+     * pipe on the right; in the last block each goes on out of its own side, the gas pipe up, the cryogenic pipe to its
+     * right, the liquid pipe straight on to its open end.
+     */
+    @ClientTest(timeoutTicks = 400)
+    public static void pipes_shareARowInTheirCrossAndPartEachByItsOwnSide(final ClientTestContext ctx) {
+        ctx.thenTeleport(0, CLOSE, Direction.SOUTH)
+                .then(0, () -> ctx.player().setXRot(LOOK_DOWN))
+                .thenServer(0, level -> buildCross(ctx, level))
+                .thenScreenshot(SETTLE, "pipes-cross")
+                .thenTeleport(0, ASKEW, Direction.SOUTH)
+                .then(0, () -> {
+                    ctx.player().setYRot(ASKEW_YAW);
+                    ctx.player().setXRot(LOOK_DOWN);
+                })
+                .thenScreenshot(SETTLE, "pipes-cross-askew")
+                .thenServer(0, level -> clearCross(ctx, level));
     }
 
     /* Whether the client sees water in the middle pipe. */
@@ -75,6 +107,25 @@ public final class PipeClientTests {
         TestCables.lay(level, ctx.abs(GAS.east()), SharedPipes.IRON_GAS_PIPE.get());
         TestCables.lay(level, ctx.abs(CRYO), SharedPipes.VACUUM_JACKETED_PIPE.get());
         TestCables.lay(level, ctx.abs(CRYO.east()), SharedPipes.VACUUM_JACKETED_PIPE.get());
+    }
+
+    private static void buildCross(final ClientTestContext ctx, final ServerLevel level) {
+        clearCross(ctx, level);
+        for (final BlockPos at : SHARED) {
+            TestCables.lay(level, ctx.abs(at), SharedPipes.COPPER_PIPE.get());
+            TestCables.lay(level, ctx.abs(at), SharedPipes.IRON_GAS_PIPE.get());
+            TestCables.lay(level, ctx.abs(at), SharedPipes.VACUUM_JACKETED_PIPE.get());
+        }
+        TestCables.lay(level, ctx.abs(LIQUID_ON), SharedPipes.COPPER_PIPE.get());
+        TestCables.lay(level, ctx.abs(GAS_UP), SharedPipes.IRON_GAS_PIPE.get());
+        TestCables.lay(level, ctx.abs(CRYO_RIGHT), SharedPipes.VACUUM_JACKETED_PIPE.get());
+    }
+
+    private static void clearCross(final ClientTestContext ctx, final ServerLevel level) {
+        for (final BlockPos at : List.of(SHARED.get(0), SHARED.get(1), SHARED.get(2), LIQUID_ON, GAS_UP,
+                CRYO_RIGHT)) {
+            level.setBlockAndUpdate(ctx.abs(at), Blocks.AIR.defaultBlockState());
+        }
     }
 
     private static void clear(final ClientTestContext ctx, final ServerLevel level) {

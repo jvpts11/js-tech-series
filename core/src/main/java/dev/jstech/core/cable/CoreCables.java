@@ -65,8 +65,9 @@ public final class CoreCables {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CableBlockEntity>> BLOCK_ENTITY =
             CoreItems.CONTENT.blockEntity("cable", CableBlockEntity::new, BLOCK);
 
-    /* The line each lane was found to belong to, checked as cables are first looked at. */
+    /* The line each lane was found to belong to, checked as cables are first looked at; the pipes' lanes apart. */
     private static final Map<Lane, ResourceLocation> LANE_LINES = new HashMap<>();
+    private static final Map<Lane, ResourceLocation> PIPE_LANE_LINES = new HashMap<>();
     private static volatile boolean checked;
 
     private CoreCables() {
@@ -79,7 +80,8 @@ public final class CoreCables {
 
     /**
      * Makes sure no two lines were given one lane: a lane belongs to a line in every block, so two lines in one lane
-     * would take each other's place. Run once, the first time a cable is laid or read.
+     * would take each other's place. Pipes, which never share a block with cables, have lanes of their own. Run once,
+     * the first time a cable is laid or read.
      *
      * @throws IllegalStateException when two lines share a lane
      */
@@ -94,7 +96,8 @@ public final class CoreCables {
             for (final CableType type : REGISTRY) {
                 type.lane().ifPresent(lane -> {
                     final ResourceLocation line = type.line().line();
-                    final ResourceLocation before = LANE_LINES.putIfAbsent(lane, line);
+                    final ResourceLocation before = (type.amongPipes() ? PIPE_LANE_LINES : LANE_LINES)
+                            .putIfAbsent(lane, line);
                     if (before != null && !before.equals(line)) {
                         throw DeclarationError.of(line.getNamespace(), "the line " + line,
                                 "takes the lane " + lane + ", which the line " + before + " already has",

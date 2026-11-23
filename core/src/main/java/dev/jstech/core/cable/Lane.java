@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Across and up are the world's axes, the same for every run along one axis: along x, across is z and up is y;
  * along z, across is x and up is y; up or down, across is x and up is z. Lanes sit {@link #PITCH} pixels apart, so
- * four-pixel wires side by side keep a pixel between them.
+ * four-pixel wires side by side keep a pixel between them and five-pixel pipes touch.
  *
  * <p>Each lane is numbered from 0 to 8 and named, the number and name being what a block keeps its wires by.
  */
