@@ -172,6 +172,22 @@ public final class PatternStudioGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA)
+    public static void studio_opensAMachineFileWithItsName(final GameTestHelper helper) {
+        final HolderLookup.Provider reg = helper.getLevel().registryAccess();
+        final String content = CraftFile.serializeProcessing(CraftFiles.furnaceIron(300)
+                .withName("Iron by furnace", "for the rails"), reg).orElseThrow();
+        final PatternWorkbench studio = new PatternWorkbench();
+        studio.loadMachine(CraftFile.parseProcessing(content, reg).orElseThrow(), "disk", "iron_by_furnace.craft");
+        helper.assertTrue("Iron by furnace".equals(studio.procName()) && "for the rails".equals(studio.procNote()),
+                "a machine recipe saved with a name opens with it: " + studio.procName() + ", " + studio.procNote());
+        // A draft saved before it was named keeps no name, and opens with none: the Name field shows the file's own.
+        final String unnamed = CraftFile.serializeProcessing(CraftFiles.furnaceIron(300), reg).orElseThrow();
+        studio.loadMachine(CraftFile.parseProcessing(unnamed, reg).orElseThrow(), "disk", "iron_ingot.craft");
+        helper.assertTrue(studio.procName().isEmpty(), "an unnamed file opens unnamed: " + studio.procName());
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 300)
     public static void studio_opensFilesAndBurnsDrafts(final GameTestHelper helper) {
         final HolderLookup.Provider reg = helper.getLevel().registryAccess();
