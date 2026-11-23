@@ -32,6 +32,9 @@ import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
+import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.matter.MatterTank;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +100,25 @@ public final class WaferGameTests {
                     "a wafer in process on its first layer of a memory chip, for the etcher");
             helper.assertTrue(machine.getInventory().getStackInSlot(1).is(ChainParts.MEMORY_MASKS.getFirst().get()),
                     "the mask stays in its slot, never used up");
+        });
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void etcher_etchesAnAdvancedLayerWithChlorineAndArgon(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("plasma_etcher"));
+        final Item chip = ChainParts.MEMORY_CHIPS.get(ChainParts.ERAS.indexOf(HardwareEra.ADVANCED)).get();
+        final Item inProcess = ChainChips.waferInProcess(HardwareEra.ADVANCED).get();
+        helper.runAfterDelay(20, () -> {
+            final ChainMachineBlockEntity etcher = machineAt(helper, terminal);
+            etcher.getInventory().insertItem(0, advanced(inProcess, chip, 1, WaferWork.Step.ETCH), false);
+            final List<MatterTank> gas = etcher.matter().inputs(MatterState.GAS);
+            gas.get(0).set(new MatterStack(Elements.of(Element.CHLORINE), 1_000));
+            gas.get(1).set(new MatterStack(Elements.of(Element.ARGON), 100));
+        });
+        helper.succeedWhen(() -> {
+            final WaferWork work = made(machineAt(helper, terminal), inProcess).get(ComputingComponents.WAFER_WORK.get());
+            helper.assertTrue(work != null && work.next() == WaferWork.Step.IMPLANT,
+                    "the Advanced layer etched by its chlorine plasma goes on to the implanter");
         });
     }
 
