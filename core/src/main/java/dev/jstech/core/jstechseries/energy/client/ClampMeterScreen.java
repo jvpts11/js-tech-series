@@ -9,6 +9,7 @@ package dev.jstech.core.jstechseries.energy.client;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.screen.IPanelScreen;
 import dev.jstech.core.energy.Energies;
 import dev.jstech.core.energy.Energy;
 import dev.jstech.core.energy.EnergyClass;
@@ -41,7 +42,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * holster, its display with the reading, and its keys and dial, which set it as on the real instrument. No inventory.
  */
 @PaletteHolder
-public final class ClampMeterScreen extends Screen {
+public final class ClampMeterScreen extends Screen implements IPanelScreen {
 
     private final InteractionHand hand;
     private MeterState state;
@@ -79,6 +80,16 @@ public final class ClampMeterScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public int panelWidth() {
+        return ClampMeterLayout.WIDTH;
+    }
+
+    @Override
+    public int panelHeight() {
+        return ClampMeterLayout.HEIGHT;
     }
 
     @Override

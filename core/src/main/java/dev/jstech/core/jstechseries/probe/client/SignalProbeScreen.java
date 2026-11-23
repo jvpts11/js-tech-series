@@ -10,6 +10,7 @@ package dev.jstech.core.jstechseries.probe.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.screen.IPanelScreen;
 import dev.jstech.core.jstechseries.probe.NetworkProbe;
 import dev.jstech.core.jstechseries.probe.ProbeLayout;
 import dev.jstech.core.jstechseries.probe.SignalProbe;
@@ -45,7 +46,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * that chooses a frequency and points out where it comes from, and its HOLD, SHOW, LIGHT and POWER keys.
  */
 @PaletteHolder
-public final class SignalProbeScreen extends Screen {
+public final class SignalProbeScreen extends Screen implements IPanelScreen {
 
     private final InteractionHand hand;
     private SignalProbeState state;
@@ -86,6 +87,16 @@ public final class SignalProbeScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public int panelWidth() {
+        return ProbeLayout.WIDTH;
+    }
+
+    @Override
+    public int panelHeight() {
+        return ProbeLayout.HEIGHT;
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.screen.IPanelScreen;
 import dev.jstech.core.energy.Energies;
 import dev.jstech.core.energy.Energy;
 import dev.jstech.core.energy.EnergyClass;
@@ -51,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
  * HOLD, SHOW, LIGHT and POWER keys. No inventory.
  */
 @PaletteHolder
-public final class NetworkProbeScreen extends Screen {
+public final class NetworkProbeScreen extends Screen implements IPanelScreen {
 
     private final InteractionHand hand;
     private ProbeState state;
@@ -98,6 +99,16 @@ public final class NetworkProbeScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public int panelWidth() {
+        return ProbeLayout.WIDTH;
+    }
+
+    @Override
+    public int panelHeight() {
+        return ProbeLayout.HEIGHT;
     }
 
     @Override

@@ -2299,6 +2299,9 @@ stable 4
 10 dev.jstech.core.client.gui.screen.IGuiTab  abstract void renderContent(GuiGraphics, int, int, int, int, int, int, float)
 10 dev.jstech.core.client.gui.screen.IGuiTab  default void onDeselected()
 10 dev.jstech.core.client.gui.screen.IGuiTab  default void onSelected()
+90 dev.jstech.core.client.gui.screen.IPanelScreen  type interface
+90 dev.jstech.core.client.gui.screen.IPanelScreen  abstract int panelHeight()
+90 dev.jstech.core.client.gui.screen.IPanelScreen  abstract int panelWidth()
 83 dev.jstech.core.client.gui.screen.IShownParts  type interface
 83 dev.jstech.core.client.gui.screen.IShownParts  abstract List<ShownPart> shownParts()
 10 dev.jstech.core.client.gui.screen.ModalDialog  type final class extends Screen

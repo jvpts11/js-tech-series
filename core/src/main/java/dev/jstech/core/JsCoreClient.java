@@ -45,6 +45,7 @@ import dev.jstech.core.client.studio.StudioClient;
 import dev.jstech.core.client.studio.StudioMcpTools;
 import dev.jstech.core.client.developer.ScreenEditor;
 import dev.jstech.core.client.developer.ScreenInspector;
+import dev.jstech.core.client.gui.WindowFit;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.data.ControlElementBuilders;
 import dev.jstech.core.client.gui.data.CoreElementBuilders;
@@ -235,6 +236,7 @@ public final class JsCoreClient {
         VehicleControls.listen(modEventBus);
         VehiclesClient.listen(modEventBus);
         MovingStructuresClient.listen(modEventBus);
+        WindowFit.listen();
         // While developer mode is on, the mods' assets reloaded as they change, the tools for screens (the inspector
         // on F12, the editor on the screen from it, the new screen on /jstech screen new) and the studio.
         LiveReloadClient.listen();

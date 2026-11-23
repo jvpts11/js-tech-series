@@ -561,6 +561,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- Panel screens fit the window: J's Core's API is at version 90. `IPanelScreen` lets a screen with no menu that
+  draws a panel of a fixed size say how big it is, so that while it is open and the panel does not fit the window the
+  Core lowers the interface scale just enough, as it does for a container screen of the series. Experimental.
 - Pipes among pipes: J's Core's API is at version 89. `CableType.Builder.pipeLane` makes a cable a pipe that
   takes a lane of the pipes' own cross: it shares a block with other pipes alone, never with a cable, and may be five
   pixels thick, the pipes of a cross touching; `CableType.amongPipes` says whether a cable is one. The pipes' lanes are
@@ -2771,6 +2774,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   them standing. Flowing water, lava or a liquid of the series broke a cable block as it does a torch, cutting every
   wire in it without a word.
 - Cable ends: the open end of every cable shows the cut end drawn for it, where it showed a piece of its side.
+- Screens in a small window: a screen of the series bigger than the window at the interface scale, a machine's
+  or a converter's in the game's own 854 by 480 window or on a 1366 by 768 laptop at scale 3, lost its edges, its
+  inventory's last row among them. While such a screen is open the scale is lowered just enough for it to fit, and put
+  back as it closes.
 - FE Converters: looked at in a world where J's Energy is off, a converter says so first, and that the machines
   take FE straight from its source there, so it is not needed and passes nothing. One put between an FE source and a
   machine left the machine at NO POWER and said nothing.

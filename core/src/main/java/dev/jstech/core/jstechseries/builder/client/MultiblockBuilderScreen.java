@@ -10,6 +10,7 @@ package dev.jstech.core.jstechseries.builder.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.screen.IPanelScreen;
 import dev.jstech.core.jstechseries.builder.BuildStatus;
 import dev.jstech.core.jstechseries.builder.BuilderActionPayload;
 import dev.jstech.core.jstechseries.builder.BuilderLayout;
@@ -53,7 +54,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * away, the pad that chooses and builds, and its HOLD, SHOW, LIGHT and POWER keys.
  */
 @PaletteHolder
-public final class MultiblockBuilderScreen extends Screen {
+public final class MultiblockBuilderScreen extends Screen implements IPanelScreen {
 
     private final InteractionHand hand;
     private BuilderState state;
@@ -82,6 +83,16 @@ public final class MultiblockBuilderScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public int panelWidth() {
+        return ProbeLayout.WIDTH;
+    }
+
+    @Override
+    public int panelHeight() {
+        return ProbeLayout.HEIGHT;
     }
 
     @Override
