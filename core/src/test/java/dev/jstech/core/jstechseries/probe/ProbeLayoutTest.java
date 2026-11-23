@@ -33,6 +33,19 @@ class ProbeLayoutTest {
     }
 
     @Test
+    void tabAt_findsEachTabAlongTheDisplaysFootAndNothingAbove() {
+        final int width = (ProbeLayout.DISPLAY_RIGHT - ProbeLayout.DISPLAY_LEFT) / ProbeLayout.PAGES;
+        final int tabY = ProbeLayout.DISPLAY_BOTTOM - ProbeLayout.TABS_HEIGHT + 2;
+        for (int k = 0; k < ProbeLayout.PAGES; k++) {
+            assertEquals(k, ProbeLayout.tabAt(ProbeLayout.DISPLAY_LEFT + k * width + width / 2.0, tabY));
+        }
+        assertEquals(-1, ProbeLayout.tabAt(ProbeLayout.DISPLAY_LEFT + 2, ProbeLayout.DISPLAY_BOTTOM
+                - ProbeLayout.TABS_HEIGHT - 1));
+        assertEquals(-1, ProbeLayout.tabAt(ProbeLayout.DISPLAY_LEFT + 2, ProbeLayout.DISPLAY_BOTTOM));
+        assertEquals(-1, ProbeLayout.tabAt(ProbeLayout.DISPLAY_LEFT - 1, tabY));
+    }
+
+    @Test
     void padAt_findsTheArrowsAndOk() {
         assertEquals(ProbeLayout.Pad.OK, ProbeLayout.padAt(ProbeLayout.PAD_X, ProbeLayout.PAD_Y));
         assertEquals(ProbeLayout.Pad.UP, ProbeLayout.padAt(ProbeLayout.PAD_X, ProbeLayout.PAD_Y - 18));

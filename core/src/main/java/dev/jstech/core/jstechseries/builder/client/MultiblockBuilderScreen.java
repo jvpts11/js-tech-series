@@ -133,7 +133,8 @@ public final class MultiblockBuilderScreen extends Screen {
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
         final double x = mouseX - this.left;
         final double y = mouseY - this.top;
-        final int soft = ProbeLayout.softAt(x, y);
+        // A tab on the display does what the soft key under it does.
+        final int soft = ProbeLayout.softAt(x, y) >= 0 ? ProbeLayout.softAt(x, y) : ProbeLayout.tabAt(x, y);
         if (soft >= 0) {
             if (soft == BACK_KEY) {
                 onClose();

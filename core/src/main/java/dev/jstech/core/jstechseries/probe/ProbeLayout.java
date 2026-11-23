@@ -110,6 +110,19 @@ public final class ProbeLayout {
         return -1;
     }
 
+    /**
+     * The page tab drawn along the display's foot under ({@code x}, {@code y}), or -1 for none: a tab does what the
+     * soft key under it does, as a label that looks pressable should.
+     */
+    public static int tabAt(final double x, final double y) {
+        final int width = (DISPLAY_RIGHT - DISPLAY_LEFT) / PAGES;
+        if (y < DISPLAY_BOTTOM - TABS_HEIGHT || y >= DISPLAY_BOTTOM || x < DISPLAY_LEFT
+                || x >= DISPLAY_LEFT + width * PAGES) {
+            return -1;
+        }
+        return (int) ((x - DISPLAY_LEFT) / width);
+    }
+
     /** Whether ({@code x}, {@code y}) falls on the key whose top left corner is ({@code keyX}, {@code keyY}). */
     public static boolean onKey(final double x, final double y, final int keyX, final int keyY) {
         return x >= keyX && x < keyX + KEY_WIDTH && y >= keyY && y < keyY + KEY_HEIGHT;

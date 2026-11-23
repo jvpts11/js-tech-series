@@ -13,6 +13,7 @@ import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.integration.emi.CoreEmiPlugin;
 import dev.jstech.core.integration.jei.CoreJeiPlugin;
 import dev.jstech.core.jstechseries.builder.BuildStatus;
+import dev.jstech.core.jstechseries.builder.BuilderState;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
 import dev.jstech.core.jstechseries.builder.client.BuilderClient;
 import dev.jstech.core.jstechseries.builder.client.MultiblockBuilderScreen;
@@ -246,7 +247,10 @@ public final class MultiblockToolsClientTests {
                 .then(2, () -> ctx.rightClick(BAKER, Direction.NORTH))
                 .thenAwaitScreen(MultiblockBuilderScreen.class, WAIT)
                 .thenScreenshot(10, "builder-build")
-                .then(0, () -> press(ctx, ProbeLayout.softX(1) + 4, ProbeLayout.SOFT_Y + 4))
+                // The CHOICES tab on the display goes to its page, as the soft key under it does.
+                .then(0, () -> press(ctx, tabX(1), ProbeLayout.DISPLAY_BOTTOM - ProbeLayout.TABS_HEIGHT + 4))
+                .then(2, () -> ctx.assertTrue(ctx.mc().screen instanceof MultiblockBuilderScreen builder
+                        && builder.state().page() == BuilderState.Page.CHOICES, "the CHOICES tab shows its page"))
                 .thenScreenshot(5, "builder-choices")
                 .then(0, () -> press(ctx, ProbeLayout.softX(2) + 4, ProbeLayout.SOFT_Y + 4))
                 .thenScreenshot(5, "builder-source")
@@ -271,6 +275,12 @@ public final class MultiblockToolsClientTests {
                 .thenAwaitScreen(ManualScreen.class, WAIT)
                 .thenScreenshot(20, "manual-multiblock")
                 .then(SETTLE, () -> ctx.mc().setScreen(null));
+    }
+
+    /* The middle of the page tab {@code k} along the display's foot, across the instrument's picture. */
+    private static int tabX(final int k) {
+        final int width = (ProbeLayout.DISPLAY_RIGHT - ProbeLayout.DISPLAY_LEFT) / ProbeLayout.PAGES;
+        return ProbeLayout.DISPLAY_LEFT + k * width + width / 2;
     }
 
     /* Presses the instrument held up at ({@code x}, {@code y}) of its picture, drawn in the middle of the screen. */

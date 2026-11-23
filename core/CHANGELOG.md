@@ -2749,6 +2749,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   a star written with a backslash before it stays a star, where it was read as emphasis and taken off ("*.*"); an
   item of a header's list may hold a comma inside double quotes; and an entry and a manual may share an id, as a
   book's own page in the library does, where the second was left out.
+- Multiblock Builder and Network Probe: a page's tab along the foot of the display switches to that page, as
+  the soft key under it does. The tabs looked pressable and did nothing; only the grey keys under them worked.
 - Live reload in a development run: a build that rewrites the manuals' or the models' files while the game
   reads them again no longer brings the game down. A file taken away in the middle of the read crashed it; the files
   are now read again on the build's next change.
