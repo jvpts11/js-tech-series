@@ -14,6 +14,9 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.os.devices.DeviceMaps;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -25,6 +28,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -123,6 +127,41 @@ public final class DeviceMapGameTests {
     }
 
     /* A port as a Device Manager lists it: its name, and what is plugged into it. */
+    /**
+     * A drive says what cable its port takes and the computer it is linked to: a floppy drive against a Standard
+     * computer links, and one on a Standard peripheral cable, newer than its Vintage port takes, says it is not.
+     */
+    @GameTest(template = ARENA)
+    public static void drive_saysTheCableItTakesAndWhetherItIsLinked(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        world.placeRunningPersonalComputer(COMPUTER);
+        helper.setBlock(COMPUTER.south(), ComputingModule.FLOPPY_DRIVE.get());
+        world.setBlock(COMPUTER.west(), ComputingModule.PERIPHERAL_CABLE);
+        helper.setBlock(COMPUTER.west(2), ComputingModule.FLOPPY_DRIVE.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final BlockPos pc = helper.absolutePos(COMPUTER);
+                    final String computer = GameText.of(helper.getBlockState(COMPUTER).getBlock().getName())
+                            .english();
+                    final List<String> near = described(helper, COMPUTER.south());
+                    helper.assertTrue(near.equals(List.of("Its port takes the Vintage peripheral cable or an older one",
+                                    "Linked to " + computer + " at " + pc.getX() + ", " + pc.getY() + ", "
+                                    + pc.getZ())), "the drive against the computer is linked to it: " + near);
+                    final List<String> far = described(helper, COMPUTER.west(2));
+                    helper.assertTrue(far.equals(List.of("Its port takes the Vintage peripheral cable or an older one",
+                                    "Not linked: no computer reaches it on a cable it takes")),
+                            "the drive on a newer cable says it is not linked and what it takes: " + far);
+                })
+                .thenSucceed();
+    }
+
+    /* What a player looking at the drive at {@code at} reads, in English. */
+    private static List<String> described(final GameTestHelper helper, final BlockPos at) {
+        final List<Text> lines = new ArrayList<>();
+        helper.<MediaReaderBlockEntity>getBlockEntity(at).describe(lines, false);
+        return lines.stream().map(Text::english).toList();
+    }
+
     private static String english(final DeviceMap.Port port) {
         final String name = port.name().english();
         return port.isFree() ? name + ": free" : name + ": " + port.plugged().getFirst().name().english();

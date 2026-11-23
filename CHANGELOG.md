@@ -5554,6 +5554,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) File explorers: the count of what a folder holds counts the stored items' folder with the rest, as every
   icon the window shows.
 - (Computers) MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
+- (Computers) Drives: looked at, a drive says the newest peripheral cable its port takes and the computer it is linked
+  to, or that no computer reaches it on a cable it takes. A Floppy Drive on a Standard computer's own peripheral cable
+  stayed unlinked and nothing said why: its parallel port takes the Vintage peripheral cable or an older one, which a
+  newer computer takes too.
 - (Core) Multiblock Builder: used on any block of a multiblock standing formed, a port or a casing, it is aimed at that
   multiblock's terminal. Only its terminal aimed it; used on another of its blocks, it opened on the multiblock it was
   aimed at before, and its OK built that one.

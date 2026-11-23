@@ -1444,6 +1444,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - File explorers: the count of what a folder holds counts the stored items' folder with the rest, as every
   icon the window shows.
 - MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
+- Drives: looked at, a drive says the newest peripheral cable its port takes and the computer it is linked
+  to, or that no computer reaches it on a cable it takes. A Floppy Drive on a Standard computer's own peripheral cable
+  stayed unlinked and nothing said why: its parallel port takes the Vintage peripheral cable or an older one, which a
+  newer computer takes too.
 - Command Prompt: a network system with no operating space installed says "netgetter install interactor
   puts one on." with one space before "puts", not two.
 - Mainframe Console: a program installed at its prompt shows its bar to the end and says it is in, as at a

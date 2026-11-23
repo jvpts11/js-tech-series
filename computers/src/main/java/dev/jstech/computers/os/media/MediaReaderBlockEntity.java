@@ -26,6 +26,11 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
+import dev.jstech.core.look.IDescribed;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -56,7 +61,8 @@ import java.util.Optional;
  * open tray is not read. The Dock Station is a reader of a kind of its own, its stick port being this slot, with
  * trays for disks besides.
  */
-public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible {
+@TextHolder
+public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible, IDescribed {
 
     /** What the drive sounds like taking a medium in and giving it back. */
     private final MediaBaySounds baySounds = new MediaBaySounds();
@@ -78,6 +84,17 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
     private ItemStack beforeUpdate = ItemStack.EMPTY;
     /** Whether the block is being broken, when the medium leaves without the sound of an eject. */
     private boolean breaking;
+
+    /*
+     * What a player looking at the drive reads: the newest peripheral cable its port takes (a floppy drive's
+     * parallel port takes no newer cable than the Vintage one, whatever computer is at the other end), and the
+     * computer it is linked to, or that none reaches it on a cable it takes.
+     */
+    private static final TextKey TAKES_CABLE = TextKey.of("jsc.media_reader.takes_cable",
+            "Its port takes the %s peripheral cable or an older one");
+    private static final TextKey LINKED_TO = TextKey.of("jsc.media_reader.linked_to", "Linked to %s at %s, %s, %s");
+    private static final TextKey NOT_LINKED = TextKey.of("jsc.media_reader.not_linked",
+            "Not linked: no computer reaches it on a cable it takes");
 
     public MediaReaderBlockEntity(final BlockPos pos, final BlockState state) {
         this(ComputingModule.MEDIA_READER_BE.get(), pos, state);
@@ -145,6 +162,18 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
     @Nullable
     public BlockPos ownerPos() {
         return link.ownerPos();
+    }
+
+    @Override
+    public void describe(final List<Text> lines, final boolean details) {
+        lines.add(TAKES_CABLE.with(driveType().portEra().text()));
+        final BlockPos owner = ownerPos();
+        if (owner == null || level == null) {
+            lines.add(NOT_LINKED.text());
+            return;
+        }
+        lines.add(LINKED_TO.with(GameText.of(level.getBlockState(owner).getBlock().getName()), owner.getX(),
+                owner.getY(), owner.getZ()));
     }
 
     @Override
