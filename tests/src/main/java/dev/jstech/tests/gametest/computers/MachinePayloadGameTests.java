@@ -228,12 +228,16 @@ public final class MachinePayloadGameTests {
                                 List.of())),
                 new PatternStudioStatePayload.Encoder(true, Text.literal("Standard"), Text.literal("DVD-RW"),
                         Text.literal("Writing a.craft"), 42, 2, true, false),
-                true, true, false, true, false, Text.literal("Sent"), 1);
+                true, true, false, true, false,
+                List.of(new PatternStudioStatePayload.Place("1b4e28ba-2fa1-11d2-883f-0016d3cca427",
+                        Text.literal("Ion Implanter"), 8, 9)),
+                Text.literal("Sent"), 1);
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         PatternStudioStatePayload.STREAM_CODEC.encode(buf, state);
         final PatternStudioStatePayload decoded = PatternStudioStatePayload.STREAM_CODEC.decode(buf);
         helper.assertTrue(buf.readableBytes() == 0, "the buffer was fully consumed");
+        helper.assertTrue(decoded.places().equals(state.places()), "the interfaces Load may go into survive");
         helper.assertTrue(decoded.bench().size() == 9 && "minecraft:planks".equals(decoded.bench().get(0).tag())
                 && decoded.bench().get(0).resolved().is(Items.BIRCH_PLANKS)
                 && decoded.bench().get(8).stock() == 96L, "the bench cells survive");

@@ -54,6 +54,10 @@ final class PatternStudioTexts {
     static final TextKey LOADED_INTO = TextKey.of("jsc.pattern_studio.loaded_into", "%s placed in %s");
     static final TextKey NO_INTERFACE_ROOM = TextKey.of("jsc.pattern_studio.no_interface_room",
             "No Crafting Interface this computer drives has room for it, or every one holds it already");
+    static final TextKey INTERFACE_FULL = TextKey.of("jsc.pattern_studio.interface_full",
+            "Not loaded: %s has no room for it, or holds it already");
+    static final TextKey INTERFACE_GONE = TextKey.of("jsc.pattern_studio.interface_gone",
+            "Not loaded: that interface is no longer on this computer's crafting cable; choose another");
     static final TextKey NO_PATTERN_ENCODER = TextKey.of("jsc.pattern_studio.no_pattern_encoder",
             "No Pattern Encoder is linked to this computer");
     static final TextKey ENCODER_BAY_EMPTY =

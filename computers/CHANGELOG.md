@@ -1076,6 +1076,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   place's, holds what is typed. Its place picker is as wide as its longest place, with how full each is beside it.
   The Interfaces tab drops the Machine column, which the interface's name now says, and spreads the rest so no head
   runs into the next.
+- Pattern Studio: the Machine and Multi-stage tabs have an Into row, which opens the Crafting Manager's
+  "Load into" picker with the interfaces the computer drives, each by its machine. Load puts the recipe there, or in
+  the first with room when none is chosen, as before; a chosen one full or gone says so and the recipe goes nowhere
+  else. Load put a machine's recipe in the first interface with room, whatever its machine, so an Advanced chip's etch
+  steps landed on the lithography station's interface.
 
 ### Fixed
 - Abandoned buildings: a working building's racks stand with their UPS charged, as its battery banks are;

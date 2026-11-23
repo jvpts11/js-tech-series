@@ -37,7 +37,7 @@ public record PatternStudioStatePayload(
         List<Stage> stages, String pipeName, String pipeNote, String pipeOpened,
         List<Drive> drives, Encoder encoder,
         boolean craftingComputer, boolean hasCard, boolean romHasBench, boolean romHasProc, boolean romHasPipe,
-        Text status, int tabHint) implements CustomPacketPayload {
+        List<Place> places, Text status, int tabHint) implements CustomPacketPayload {
 
     public static final int MAX_NAME = 64;
     public static final int MAX_NOTE = 256;
@@ -46,6 +46,9 @@ public record PatternStudioStatePayload(
     public static final int MAX_FILES = 64;
     public static final int MAX_DRIVES = 8;
     public static final int MAX_STAGES = PatternWorkbench.MOST_STAGES;
+    public static final int MAX_PLACES = 32;
+    /* A place's id: an interface's UUID, 36 characters written out. */
+    private static final int MAX_PLACE_ID = 36;
 
     /** A bench cell: the ghost item, the tag it accepts, what it resolves to now, and the stock of that. */
     public record BenchCell(ItemStack stack, String tag, ItemStack resolved, long stock) {
@@ -103,6 +106,19 @@ public record PatternStudioStatePayload(
         }
     }
 
+    /**
+     * A Crafting Interface the computer drives, which Load may put a machine or pipeline recipe in: its id, what it is
+     * called, and how many recipes it holds of how many.
+     */
+    public record Place(String id, Text name, int used, int capacity) {
+        static final StreamCodec<RegistryFriendlyByteBuf, Place> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(MAX_PLACE_ID), Place::id,
+                TextCodecs.STREAM_CODEC, Place::name,
+                ByteBufCodecs.VAR_INT, Place::used,
+                ByteBufCodecs.VAR_INT, Place::capacity,
+                Place::new);
+    }
+
     /** The linked Pattern Encoder, or {@code linked == false} when there is none. */
     public record Encoder(boolean linked, Text era, Text media, Text status, int progress, int queued,
                           boolean busy, boolean error) {
@@ -155,6 +171,7 @@ public record PatternStudioStatePayload(
         buf.writeBoolean(p.romHasBench());
         buf.writeBoolean(p.romHasProc());
         buf.writeBoolean(p.romHasPipe());
+        writeList(buf, p.places(), Place.STREAM_CODEC, MAX_PLACES);
         TextCodecs.STREAM_CODEC.encode(buf, p.status());
         buf.writeVarInt(p.tabHint());
     }
@@ -182,11 +199,12 @@ public record PatternStudioStatePayload(
         final boolean romBench = buf.readBoolean();
         final boolean romProc = buf.readBoolean();
         final boolean romPipe = buf.readBoolean();
+        final List<Place> places = readList(buf, Place.STREAM_CODEC, MAX_PLACES);
         final Text status = TextCodecs.STREAM_CODEC.decode(buf);
         final int tabHint = buf.readVarInt();
         return new PatternStudioStatePayload(bench, preview, benchName, benchNote, benchOpened, inputs, outputs,
                 timeout, procName, procNote, procOpened, stages, pipeName, pipeNote, pipeOpened,
-                drives, encoder, cc, hasCard, romBench, romProc, romPipe, status, tabHint);
+                drives, encoder, cc, hasCard, romBench, romProc, romPipe, places, status, tabHint);
     }
 
     private static <T> void writeList(final RegistryFriendlyByteBuf buf, final List<T> list,
@@ -218,6 +236,7 @@ public record PatternStudioStatePayload(
         outputs = List.copyOf(outputs);
         stages = List.copyOf(stages);
         drives = List.copyOf(drives);
+        places = List.copyOf(places);
     }
 
     @Override

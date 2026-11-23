@@ -28,6 +28,9 @@ final class PatternStudioScreenTexts {
     static final TextKey IN_ROM = TextKey.of("jsc.pattern_studio.screen.in_rom", "Loaded");
     static final TextKey CLEAR = TextKey.of("jsc.pattern_studio.screen.clear", "Clear");
     static final TextKey TIMEOUT = TextKey.of("jsc.pattern_studio.screen.timeout", "Timeout");
+    /* Where Load puts a machine or pipeline recipe: the row's word, and the interface chosen with its caret. */
+    static final TextKey INTO_LABEL = TextKey.of("jsc.pattern_studio.screen.into", "Into");
+    static final TextKey INTO_CHOICE = TextKey.of("jsc.pattern_studio.screen.into_choice", "%s ▾");
     static final TextKey NO_STAGES = TextKey.of("jsc.pattern_studio.screen.no_stages", "No stages yet");
     static final TextKey ADD_BENCH = TextKey.of("jsc.pattern_studio.screen.add_bench", "+ Bench");
     static final TextKey ADD_MACHINE = TextKey.of("jsc.pattern_studio.screen.add_machine", "+ Machine");

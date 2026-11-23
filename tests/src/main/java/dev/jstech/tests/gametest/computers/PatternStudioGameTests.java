@@ -21,6 +21,7 @@ import dev.jstech.computers.operation.payload.PatternStudioStatePayload;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
@@ -34,12 +35,15 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The Pattern Studio's workbench on a computer: its drafts survive the machine's save, the Recipe Book lays a
@@ -186,6 +190,53 @@ public final class PatternStudioGameTests {
         studio.loadMachine(CraftFile.parseProcessing(unnamed, reg).orElseThrow(), "disk", "iron_ingot.craft");
         helper.assertTrue(studio.procName().isEmpty(), "an unnamed file opens unnamed: " + studio.procName());
         helper.succeed();
+    }
+
+    /**
+     * Load puts a machine recipe into the interface chosen, not the first with room; with none chosen, the first; a
+     * chosen one gone says so and the recipe goes nowhere.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void studio_loadsIntoTheInterfaceChosen(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        CraftingRig.lay(world, INTERFACE_CABLE);
+        final CraftingInterfacePart first = new CraftingInterfacePart(HardwareEra.STANDARD);
+        final CraftingInterfacePart chosen = new CraftingInterfacePart(HardwareEra.STANDARD);
+        CraftingRig.addPart(world, new CraftingFloor.Site(INTERFACE_CABLE, Direction.EAST), first);
+        CraftingRig.addPart(world, new CraftingFloor.Site(INTERFACE_CABLE, Direction.UP), chosen);
+        helper.setBlock(INTERFACE_CABLE.east(), Blocks.FURNACE);
+        helper.setBlock(INTERFACE_CABLE.above(), Blocks.FURNACE);
+        final PatternWorkbench studio = net.cc().studio();
+        studio.setProcCell(false, 0, new PatternWorkbench.DataCell(StorageKey.of(Items.RAW_IRON), 1, false));
+        studio.setProcCell(true, 0, new PatternWorkbench.DataCell(StorageKey.of(Items.IRON_INGOT), 1, false));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final ServerLevel level = helper.getLevel();
+                    net.cc().forgetFloor();
+                    final String gone = GameText.resolve(PatternStudioPayloads.loadIntoRom(level, net.cc(),
+                            PatternWorkbench.Kind.MACHINE, UUID.randomUUID().toString()));
+                    helper.assertTrue(gone.startsWith("Not loaded: that interface is no longer")
+                            && first.patterns().isEmpty() && chosen.patterns().isEmpty(),
+                            "an interface gone is said gone, and the recipe goes into none: " + gone);
+                    final String loaded = GameText.resolve(PatternStudioPayloads.loadIntoRom(level, net.cc(),
+                            PatternWorkbench.Kind.MACHINE, chosen.id().toString()));
+                    final BlockPos furnace = helper.absolutePos(INTERFACE_CABLE.above());
+                    helper.assertTrue(chosen.patterns().size() == 1 && first.patterns().isEmpty(),
+                            "the recipe goes into the interface chosen, not the first: " + loaded);
+                    helper.assertTrue(loaded.endsWith("placed in Furnace (" + furnace.getX() + ", " + furnace.getY()
+                            + ", " + furnace.getZ() + ")"), "and says so by its machine: " + loaded);
+                    studio.setProcCell(true, 0, new PatternWorkbench.DataCell(StorageKey.of(Items.IRON_NUGGET), 9,
+                            false));
+                    PatternStudioPayloads.loadIntoRom(level, net.cc(), PatternWorkbench.Kind.MACHINE, "");
+                    // The first in the order the cable reaches them, the one chosen above holding room still.
+                    final CraftingInterfacePart firstReached = net.cc().drivenInterfaces().getFirst()
+                            .part(level, CraftingInterfacePart.class);
+                    helper.assertTrue(firstReached != null && firstReached.patterns().stream().anyMatch(held ->
+                                    held.recipe().displayName().contains("Iron Nugget")),
+                            "with none chosen, a recipe goes into the first the cable reaches with room");
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 300)

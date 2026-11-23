@@ -33,6 +33,7 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -103,6 +104,11 @@ import static dev.jstech.computers.client.os.PatternStudioScreenTexts.SAVE_TO_DI
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.STAGE_BENCH;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.STAGE_MACHINE;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.TIMEOUT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.INTO_CHOICE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.INTO_LABEL;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.FIRST_WITH_ROOM;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.PICK_PLACE;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.PLACE_COUNT;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.TO_ENCODER;
 
 /**
@@ -142,6 +148,16 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private static final int PROC_COLS = PatternStudioLayout.PROC_COLS;
     private static final int PROC_ROWS = PatternStudioLayout.PROC_ROWS;
     private static final int REFRESH_EVERY_FRAMES = 60;
+    /* The Into row under the Timeout, and the label before its chooser. */
+    private static final int INTO_ROW = 14;
+    private static final int INTO_LABEL_W = 24;
+    /* The Load into picker: its narrowest, the room round its rows, the gap before a count, its title over them. */
+    private static final int PICKER_MIN_W = 180;
+    private static final int PICKER_ROOM = 22;
+    private static final int PICKER_GAP = 12;
+    private static final int PICKER_TITLE_H = 14;
+    /* The chooser's edges, left clear of its label. */
+    private static final int CHOOSER_EDGES = 6;
     private static final int[] CHANCE_STEPS = {100, 75, 50, 25, 10};
     /** This app's own colours: the encoder's error indicator. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/pattern_studio",
@@ -178,6 +194,12 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private int refreshFrames;
     private int tab;
     private int rail;
+    /*
+     * The interface Load puts a machine or pipeline recipe into, by its id, and what it was called when chosen; none
+     * for the first with room. Kept while the window is open, and told to the server with each Load.
+     */
+    private String into = "";
+    private String intoName = "";
 
     // Geometry of the last frame, so clicks land where the player sees things.
     private int lastX;
@@ -210,6 +232,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private final Label procFlag;
     private final Button procClear;
     private final NameNoteRow procNames;
+    // Machine and multi-stage: where Load puts the recipe.
+    private final Label intoLabel;
+    private final Button intoButton;
     // Multi-stage.
     private final ListView<PatternStudioStatePayload.Stage> stageList;
     private final Label noStages;
@@ -243,6 +268,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private final Label lastsLabel;
     private final AmountStepper lasts;
     private final Label keptHint;
+    private final Popup intoPicker;
+    private final ListView<Integer> intoList;
     private boolean amountForOutput;
     private int amountCell = -1;
 
@@ -281,6 +308,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
         procFlag = root.add(new Label(this::procFlagText).setTone(this::procFlagTone));
         procClear = root.add(new Button(GameText.resolve(CLEAR), () -> send(of(PatternStudioEditPayload.PROC_CLEAR))));
         procNames = root.add(new NameNoteRow(PatternStudioEditPayload.PROC_SET_NAME));
+        intoLabel = root.add(new Label(GameText.resolve(INTO_LABEL), Label.Tone.DIM));
+        intoButton = root.add(new Button(this::intoText, this::openIntoPicker));
 
         stageList = root.add(new ListView<PatternStudioStatePayload.Stage>(this::stages, ROW_H, this::renderStageRow)
                 .setSelectable(true)
@@ -312,7 +341,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         burn = root.add(new Button(GameText.resolve(BURN), () -> barAction(PatternStudioEditPayload.BURN)));
         saveDisk = root.add(new Button(GameText.resolve(SAVE_TO_DISK),
                 () -> barAction(PatternStudioEditPayload.SAVE_TO_DISK)));
-        loadRom = root.add(new Button(this::loadRomLabel, () -> barAction(PatternStudioEditPayload.LOAD_INTO_ROM)));
+        loadRom = root.add(new Button(this::loadRomLabel, this::loadIntoChosen));
         statusLine = root.add(new Label(this::statusText).setTone(this::statusTone));
 
         amount = new AmountStepper();
@@ -329,6 +358,13 @@ public final class PatternStudioApp implements IInventoryBandApp {
         amountPopup.add(keptHint);
         amountPopup.add(amountClear);
         amountPopup.add(amountDone);
+        // The Crafting Manager's own "Load into" picker, with the interfaces alone: a card takes bench recipes.
+        intoList = new ListView<Integer>(this::intoChoices, ROW_H, this::renderIntoRow).setOnClick(this::intoClicked);
+        intoPicker = new Popup(GameText.resolve(PICK_PLACE), PICKER_MIN_W, PICKER_TITLE_H + ROW_H + PAD)
+                .setLayouter(p -> intoList.setBounds(p.x() + PAD, p.contentTop(), p.width() - PAD * 2,
+                        p.bottom() - p.contentTop() - PAD))
+                .setCloseOnOutsideClick(true);
+        intoPicker.add(intoList);
 
         active = this;
         request();
@@ -364,6 +400,12 @@ public final class PatternStudioApp implements IInventoryBandApp {
         }
         active.state = payload;
         active.fileRows = active.buildFileRows();
+        // The interface chosen takes the name it goes by now; one gone keeps its last, and Load says it is gone.
+        for (final PatternStudioStatePayload.Place place : payload.places()) {
+            if (place.id().equals(active.into)) {
+                active.intoName = GameText.resolve(place.name());
+            }
+        }
         final String status = GameText.resolve(payload.status());
         if (!status.isEmpty()) {
             active.status = status;
@@ -534,6 +576,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
         tabs.setBounds(x, y, editorW, TAB_H);
         tabs.setSelected(tab);
+        // The Into row shows on the machine and multi-stage tabs, each laying it out where it goes.
+        intoLabel.setVisible(false);
+        intoButton.setVisible(false);
         layoutBench(x, editorY + spare(editorH, benchHeight()), editorW, loaded && tab == TAB_BENCH);
         layoutMachine(x, editorY + spare(editorH, machineHeight()), editorW, loaded && tab == TAB_MACHINE);
         layoutPipeline(g, x, editorY, editorW, editorH, loaded && tab == TAB_PIPELINE);
@@ -713,7 +758,11 @@ public final class PatternStudioApp implements IInventoryBandApp {
         final int mw = outX - mx - 10;
         timeoutLabel.setBounds(mx, gy + 2, 40, 8);
         timeout.setBounds(mx + 42, gy, Math.max(30, mw - 42), FIELD_H);
-        procFlag.setBounds(mx, gy + 16, mw - 40, 8);
+        // Into under the Timeout, its chooser clear of Clear; what the draft is, a row lower.
+        if (show) {
+            layoutInto(mx, gy + INTO_ROW, 42, Math.max(30, mw - 42 - 40));
+        }
+        procFlag.setBounds(mx, gy + 16 + INTO_ROW, mw - 40, 8);
         procClear.setBounds(mx + mw - 36, gy + 26, 36, BTN_H);
         procNames.layout(x + PAD, gy + PROC_ROWS * CELL + PAD, w - PAD * 2);
 
@@ -813,6 +862,102 @@ public final class PatternStudioApp implements IInventoryBandApp {
         }
     }
 
+    // where Load puts a machine or pipeline recipe
+
+    /* The Into row at {@code x, y}: its word, then the chooser {@code labelW} on, {@code chooserW} wide. */
+    private void layoutInto(final int x, final int y, final int labelW, final int chooserW) {
+        final boolean computer = state != null && state.craftingComputer();
+        intoLabel.setBounds(x, y + 2, labelW - 2, 8);
+        intoButton.setBounds(x + labelW, y, chooserW, BTN_H);
+        intoLabel.setVisible(computer);
+        intoButton.setVisible(computer);
+        intoButton.setEnabled(computer && !state.places().isEmpty());
+    }
+
+    /* The interface chosen, its name cut to the chooser rather than the caret after it; the first with room else. */
+    private String intoText() {
+        final String where = into.isEmpty() ? GameText.resolve(FIRST_WITH_ROOM) : intoName;
+        if (lastFont == null) {
+            return GameText.resolve(INTO_CHOICE.with(Text.literal(where)));
+        }
+        final int room = intoButton.width() - CHOOSER_EDGES
+                - lastFont.width(GameText.resolve(INTO_CHOICE.with(Text.EMPTY)));
+        return GameText.resolve(INTO_CHOICE.with(Text.literal(Texts.clip(lastFont, where, room))));
+    }
+
+    private void openIntoPicker() {
+        intoList.setScroll(0);
+        if (lastFont != null) {
+            intoPicker.setPreferredSize(intoPickerWidth(lastFont),
+                    PICKER_TITLE_H + intoChoices().size() * ROW_H + PAD);
+        }
+        intoPicker.open();
+        intoPicker.placeIn(lastX, lastY, lastW, lastH);
+    }
+
+    /* The first with room (-1), then each interface the computer drives by its number in the state. */
+    private List<Integer> intoChoices() {
+        final List<Integer> out = new ArrayList<>();
+        out.add(-1);
+        if (state != null) {
+            for (int i = 0; i < state.places().size(); i++) {
+                out.add(i);
+            }
+        }
+        return out;
+    }
+
+    private String intoChoiceName(final int choice) {
+        return choice < 0 ? GameText.resolve(FIRST_WITH_ROOM) : GameText.resolve(state.places().get(choice).name());
+    }
+
+    private String intoChoiceCount(final int choice) {
+        final PatternStudioStatePayload.Place place = state.places().get(choice);
+        return GameText.resolve(PLACE_COUNT.with(place.used(), place.capacity()));
+    }
+
+    /* As wide as its longest interface and count, so no name is cut; never narrower than the rest of the desktop's. */
+    private int intoPickerWidth(final Font font) {
+        int widest = 0;
+        for (final int choice : intoChoices()) {
+            final int count = choice < 0 ? 0 : font.width(intoChoiceCount(choice)) + PICKER_GAP;
+            widest = Math.max(widest, font.width(intoChoiceName(choice)) + count);
+        }
+        return Math.max(PICKER_MIN_W, widest + PICKER_ROOM);
+    }
+
+    private void renderIntoRow(final GuiGraphics g, final UiContext ctx, final Integer choice, final int index,
+                               final int x, final int y, final int w, final int h, final boolean hovered,
+                               final boolean selected) {
+        final boolean current = choice < 0 ? into.isEmpty() : state.places().get(choice).id().equals(into);
+        ctx.skin().listRow(g, x, y, w, h, hovered, current);
+        // The interface on the left, how full it is on the right in the dim ink, as the Crafting Manager shows it.
+        final String count = choice < 0 ? "" : intoChoiceCount(choice);
+        final int countW = count.isEmpty() ? 0 : ctx.font().width(count) + PICKER_GAP;
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), intoChoiceName(choice), w - 6 - countW), x + 3, y + 2,
+                ctx.skin().listRowText(current));
+        if (!count.isEmpty()) {
+            Draw.text(g, ctx.font(), count, x + w - 3 - ctx.font().width(count), y + 2, ctx.skin().dim());
+        }
+    }
+
+    private void intoClicked(final int index, final int button, final double mx, final double my) {
+        final List<Integer> choices = intoChoices();
+        if (button != 0 || index < 0 || index >= choices.size()) {
+            return;
+        }
+        final int choice = choices.get(index);
+        into = choice < 0 ? "" : state.places().get(choice).id();
+        intoName = choice < 0 ? "" : intoChoiceName(choice);
+        intoPicker.close();
+    }
+
+    /* Load: a bench recipe into a card's ROM, a machine or pipeline recipe into the interface chosen. */
+    private void loadIntoChosen() {
+        send(PatternStudioEditPayload.text(host, monitorPos, PatternStudioEditPayload.LOAD_INTO_ROM, tab,
+                tab == TAB_BENCH ? "" : into, ""));
+    }
+
     // multi-stage
 
     private int pipelineListH(final int h) {
@@ -834,7 +979,13 @@ public final class PatternStudioApp implements IInventoryBandApp {
         addMachine.setBounds(lx + 69, by, 66, BTN_H);
         removeStage.setBounds(lx + 138, by, 50, BTN_H);
         removeStage.setEnabled(stageList.selected() >= 0);
-        pipeRom.setBounds(lx + 138 + 50 + 4, by + 2, x + w - PAD - (lx + 138 + 50 + 4), 8);
+        // Into beside the stage buttons; "Loaded" at the row's end once an interface holds the pipeline.
+        final int intoX = lx + 138 + 50 + 4;
+        final int right = x + w - PAD;
+        if (show) {
+            layoutInto(intoX, by, INTO_LABEL_W, Math.max(30, right - intoX - INTO_LABEL_W - 50));
+        }
+        pipeRom.setBounds(right - 46, by + 2, 46, 8);
         pipeNames.layout(lx, by + BTN_H + 3, listW);
 
         final boolean empty = state == null || state.stages().isEmpty();
@@ -1074,7 +1225,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     @Override
     public boolean modalActive() {
-        return amountPopup.isOpen();
+        return amountPopup.isOpen() || intoPicker.isOpen();
     }
 
     @Override
@@ -1083,6 +1234,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, 0f);
         if (amountPopup.isOpen()) {
             amountPopup.renderIn(g, ctx, x, y, width, height);
+        }
+        if (intoPicker.isOpen()) {
+            intoPicker.renderIn(g, ctx, x, y, width, height);
         }
     }
 
@@ -1120,6 +1274,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private Panel inputTarget() {
         if (amountPopup.isOpen()) {
             return amountPopup;
+        }
+        if (intoPicker.isOpen()) {
+            return intoPicker;
         }
         return root;
     }

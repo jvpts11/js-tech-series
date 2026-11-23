@@ -19,6 +19,8 @@ import static dev.jstech.computers.operation.payload.PatternStudioTexts.EJECTED;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.ENCODER_BAY_EMPTY;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.ENCODER_QUEUE_FULL;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.ENCODER_WRITING;
+import static dev.jstech.computers.operation.payload.PatternStudioTexts.INTERFACE_FULL;
+import static dev.jstech.computers.operation.payload.PatternStudioTexts.INTERFACE_GONE;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.IN_FOLDER;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.LOADED;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.LOADED_INTO;
@@ -52,6 +54,7 @@ import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.client.ComputerTerminalScreen;
 import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.crafting.AnyTagResolver;
+import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
@@ -60,6 +63,7 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.RecipeBook;
 import dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk;
 import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
+import dev.jstech.computers.operation.payload.crafting.InterfaceNames;
 import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.operation.payload.terminal.TerminalHosts;
@@ -227,7 +231,8 @@ public final class PatternStudioPayloads {
                 tab = opened[0];
             }
             case PatternStudioEditPayload.SAVE_TO_DISK -> status = saveToDisk(level, host, PatternWorkbench.Kind.byId(payload.index()));
-            case PatternStudioEditPayload.LOAD_INTO_ROM -> status = loadIntoRom(level, host, PatternWorkbench.Kind.byId(payload.index()));
+            case PatternStudioEditPayload.LOAD_INTO_ROM -> status = loadIntoRom(level, host,
+                    PatternWorkbench.Kind.byId(payload.index()), payload.text());
             case PatternStudioEditPayload.BURN -> status = burn(level, host, PatternWorkbench.Kind.byId(payload.index()));
             case PatternStudioEditPayload.ENCODER_CANCEL -> {
                 final PatternEncoderBlockEntity enc = encoderOf(level, host);
@@ -438,7 +443,15 @@ public final class PatternStudioPayloads {
         return SAVED.with(fileName);
     }
 
-    private static Text loadIntoRom(final ServerLevel level, final IOsHost host, final PatternWorkbench.Kind kind) {
+    /**
+     * Loads the draft of {@code kind}, as the Studio's Load does: a bench recipe into a card's ROM; a machine or
+     * pipeline recipe into the interface whose id {@code into} names, or the first with room when it names none. A
+     * named interface that is full or gone is said so, and the recipe goes nowhere else.
+     *
+     * @return what the Studio's status line says
+     */
+    public static Text loadIntoRom(final ServerLevel level, final IOsHost host, final PatternWorkbench.Kind kind,
+                                    final String into) {
         if (!(host instanceof CraftingComputerBlockEntity cc)) {
             return ONLY_CRAFTING_COMPUTER.text();
         }
@@ -458,7 +471,7 @@ public final class PatternStudioPayloads {
             CraftFilesOnDisk.reconcileCraftsFolder(cc, level);
             return LOADED.with(p.displayName());
         }
-        // A machine or pipeline recipe goes into the first interface this computer drives with room for it.
+        // A machine or pipeline recipe goes into the interface chosen, or the first this computer drives with room.
         final NetworkRecipe recipe;
         if (kind == PatternWorkbench.Kind.MACHINE) {
             if (!studio.machineComplete()) {
@@ -471,12 +484,33 @@ public final class PatternStudioPayloads {
             }
             recipe = NetworkRecipe.ofMultiStage(studio.multiStagePattern());
         }
-        final CraftingInterfacePart into = cc.loadMachineRecipe(recipe);
-        if (into == null) {
-            return NO_INTERFACE_ROOM.text();
+        final InterfaceNames names = InterfaceNames.of(level, cc.floor());
+        if (into.isEmpty()) {
+            final CraftingInterfacePart first = cc.loadMachineRecipe(recipe);
+            final CraftingFloor.Site site = first == null ? null : siteOf(level, cc, first.id().toString());
+            return first == null ? NO_INTERFACE_ROOM.text()
+                    : LOADED_INTO.with(recipe.displayText(), names.title(first, site));
         }
-        return LOADED_INTO.with(recipe.displayText(), into.name().isEmpty() ? into.partItem().getHoverName()
-                .getString() : into.name());
+        final CraftingFloor.Site site = siteOf(level, cc, into);
+        final CraftingInterfacePart chosen = site == null ? null : site.part(level, CraftingInterfacePart.class);
+        if (chosen == null) {
+            return INTERFACE_GONE.text();
+        }
+        return chosen.place(recipe) ? LOADED_INTO.with(recipe.displayText(), names.title(chosen, site))
+                : INTERFACE_FULL.with(names.title(chosen, site));
+    }
+
+    /* Where the interface of id {@code id} this computer drives stands, or null when it drives none such. */
+    @Nullable
+    private static CraftingFloor.Site siteOf(final ServerLevel level, final CraftingComputerBlockEntity cc,
+                                             final String id) {
+        for (final CraftingFloor.Site site : cc.drivenInterfaces()) {
+            final CraftingInterfacePart part = site.part(level, CraftingInterfacePart.class);
+            if (part != null && part.id().toString().equals(id)) {
+                return site;
+            }
+        }
+        return null;
     }
 
     private static Text burn(final ServerLevel level, final IOsHost host, final PatternWorkbench.Kind kind) {
@@ -662,6 +696,22 @@ public final class PatternStudioPayloads {
                 stages, TextBounds.clip(studio.pipelineName(), PatternStudioStatePayload.MAX_NAME),
                 TextBounds.clip(studio.pipelineNote(), PatternStudioStatePayload.MAX_NOTE),
                 TextBounds.clip(studio.openedFile(PatternWorkbench.Kind.PIPELINE), PatternStudioStatePayload.MAX_NAME),
-                drives, encoder, craftingComputer, hasCard, romBench, romProc, romPipe, status, tabHint);
+                drives, encoder, craftingComputer, hasCard, romBench, romProc, romPipe,
+                host instanceof CraftingComputerBlockEntity cc ? places(level, cc) : List.of(), status, tabHint);
+    }
+
+    /* The interfaces the computer drives, which Load may be pointed at, each named as every window names it. */
+    private static List<PatternStudioStatePayload.Place> places(final ServerLevel level,
+                                                                final CraftingComputerBlockEntity cc) {
+        final InterfaceNames names = InterfaceNames.of(level, cc.floor());
+        final List<PatternStudioStatePayload.Place> places = new ArrayList<>();
+        for (final CraftingFloor.Site site : cc.drivenInterfaces()) {
+            final CraftingInterfacePart part = site.part(level, CraftingInterfacePart.class);
+            if (part != null && places.size() < PatternStudioStatePayload.MAX_PLACES) {
+                places.add(new PatternStudioStatePayload.Place(part.id().toString(), names.title(part, site),
+                        part.patterns().size(), part.capacity()));
+            }
+        }
+        return places;
     }
 }

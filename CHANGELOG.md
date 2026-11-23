@@ -4681,6 +4681,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   runs into the next.
 - (Core) Every list of a desktop moves three rows for each turn of the wheel, as a desktop's lists do, where it moved
   one.
+- (Computers) Pattern Studio: the Machine and Multi-stage tabs have an Into row, which opens the Crafting Manager's
+  "Load into" picker with the interfaces the computer drives, each by its machine. Load puts the recipe there, or in
+  the first with room when none is chosen, as before; a chosen one full or gone says so and the recipe goes nowhere
+  else. Load put a machine's recipe in the first interface with room, whatever its machine, so an Advanced chip's etch
+  steps landed on the lithography station's interface.
 
 ### Fixed
 - (Core) A button's label too long for its face ends in "..", where it ran over the buttons beside it: the Crafting
