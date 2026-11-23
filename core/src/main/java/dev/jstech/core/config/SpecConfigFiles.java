@@ -14,7 +14,9 @@ import dev.jstech.core.config.format.TomlConfigFormat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  */
 final class SpecConfigFiles {
 
+    /* Whether this thread is having NeoForge write a file, so the reading it tells of at once is the Core's own. */
+    private static final ThreadLocal<Boolean> SAVING = ThreadLocal.withInitial(() -> false);
+
     private SpecConfigFiles() {
     }
 
@@ -50,8 +55,8 @@ final class SpecConfigFiles {
             }
         });
         modEventBus.addListener(ModConfigEvent.Reloading.class, event -> {
-            if (event.getConfig().getSpec() == spec.spec()) {
-                take(file, spec);
+            if (event.getConfig().getSpec() == spec.spec() && !SAVING.get()) {
+                retake(file, spec);
             }
         });
         modEventBus.addListener(ModConfigEvent.Unloading.class, event -> {
@@ -135,7 +140,7 @@ final class SpecConfigFiles {
         for (int i = 0; i < open.size(); i++) {
             builder.pop();
         }
-        return new Spec(builder.build(), version, values);
+        return new Spec(builder.build(), version, values, new Writes());
     }
 
     /**
@@ -181,14 +186,35 @@ final class SpecConfigFiles {
 
     /** Takes what NeoForge read; when that needed putting right (an older copy, a value refused), writes it back. */
     private static void take(final ConfigFile file, final Spec spec) {
+        if (file.read(read(file, spec)).rewrite()) {
+            save(file, spec);
+        }
+    }
+
+    /*
+     * Takes what NeoForge read again, unless it is what the Core itself wrote a moment ago. NeoForge reads a file again
+     * on a thread of its own whenever it changes on disk, the Core's own writing too, and a reading that began before
+     * a later writing brings back the values that writing replaced: a setting changed twice in quick succession went
+     * back to the first. Such a reading is let pass and the values now are written again; an edit made to the file is
+     * taken as before.
+     */
+    private static void retake(final ConfigFile file, final Spec spec) {
+        final Map<String, String> read = Writes.compared(read(file, spec));
+        if (!spec.writes().wrote(read)) {
+            take(file, spec);
+        } else if (!spec.writes().last(read)) {
+            save(file, spec);
+        }
+    }
+
+    /* The file's values as NeoForge holds them now, in the shape the file's settings read them in. */
+    private static Map<String, Object> read(final ConfigFile file, final Spec spec) {
         final Map<String, Object> plain = new LinkedHashMap<>();
         plain.put(ConfigFile.VERSION_KEY, spec.version().get());
         for (final ConfigKey<?> key : file.keys()) {
             ConfigTree.put(plain, key.path(), TomlConfigFormat.plainValue(spec.values().get(key.dottedPath()).get()));
         }
-        if (file.read(plain).rewrite()) {
-            save(file, spec);
-        }
+        return plain;
     }
 
     /** Puts the file's values into NeoForge's settings and has NeoForge write the file. */
@@ -203,15 +229,68 @@ final class SpecConfigFiles {
                     (ModConfigSpec.ConfigValue<Object>) spec.values().get(key.dottedPath());
             value.set(TomlConfigFormat.tomlValue(plainNow(file, key)));
         }
-        spec.spec().save();
+        spec.writes().add(Writes.compared(read(file, spec)));
+        // NeoForge tells the file's settings of its own writing at once, with the values just put in.
+        SAVING.set(true);
+        try {
+            spec.spec().save();
+        } finally {
+            SAVING.set(false);
+        }
     }
 
     private static <T> Object plainNow(final ConfigFile file, final ConfigKey<T> key) {
         return key.plain(file.get(key));
     }
 
-    /** NeoForge's settings for one file, with the value of its version and of each of its settings. */
+    /**
+     * NeoForge's settings for one file, with the value of its version and of each of its settings, and what the Core
+     * wrote to it lately.
+     */
     private record Spec(ModConfigSpec spec, ModConfigSpec.ConfigValue<Integer> version,
-                        Map<String, ModConfigSpec.ConfigValue<?>> values) {
+                        Map<String, ModConfigSpec.ConfigValue<?>> values, Writes writes) {
+    }
+
+    /* The values the Core wrote to one file in the last moments, newest last, to know them when NeoForge reads one. */
+    private static final class Writes {
+
+        private final Deque<Written> recent = new ArrayDeque<>();
+
+        /* How long a writing is remembered, and how many at most. */
+        private static final long REMEMBERED_NANOS = 10_000_000_000L;
+        private static final int MOST = 16;
+
+        /* Values to compare by what they say, so a number read back as another kind of number is the same value. */
+        static Map<String, String> compared(final Map<String, Object> plain) {
+            final Map<String, String> out = new LinkedHashMap<>();
+            plain.forEach((name, value) -> out.put(name, String.valueOf(value)));
+            return out;
+        }
+
+        synchronized void add(final Map<String, String> values) {
+            this.recent.addLast(new Written(values, System.nanoTime()));
+            while (this.recent.size() > MOST) {
+                this.recent.removeFirst();
+            }
+        }
+
+        /* Whether the Core wrote {@code values} in the last moments. */
+        synchronized boolean wrote(final Map<String, String> values) {
+            final long now = System.nanoTime();
+            for (final Written written : this.recent) {
+                if (now - written.at() <= REMEMBERED_NANOS && written.values().equals(values)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /* Whether {@code values} are the last the Core wrote. */
+        synchronized boolean last(final Map<String, String> values) {
+            return !this.recent.isEmpty() && this.recent.peekLast().values().equals(values);
+        }
+    }
+
+    private record Written(Map<String, String> values, long at) {
     }
 }

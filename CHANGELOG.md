@@ -5579,6 +5579,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   them standing. Flowing water, lava or a liquid of the series broke a cable block as it does a torch, cutting every
   wire in it without a word.
 - (Core) Cable ends: the open end of every cable shows the cut end drawn for it, where it showed a piece of its side.
+- (Core) Settings changed in quick succession: a setting of a world's or a mod's TOML file changed twice in a moment,
+  from a screen or a command, could go back to the first value, because the game reads the file again on a thread of
+  its own after each writing and a reading begun before the later one brought the earlier values back. Such a reading
+  is now known for the series' own writing and the later values stand; an edit made to the file is taken as before.
 - (Core) Screens in a small window: a screen of the series bigger than the window at the interface scale, a machine's
   or a converter's in the game's own 854 by 480 window or on a 1366 by 768 laptop at scale 3, lost its edges, its
   inventory's last row among them. While such a screen is open the scale is lowered just enough for it to fit, and put
