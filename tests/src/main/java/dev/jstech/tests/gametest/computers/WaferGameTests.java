@@ -122,6 +122,28 @@ public final class WaferGameTests {
         });
     }
 
+    /* The acid an older era's layers left in the etcher stays in its tank and stops no Advanced layer. */
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void etcher_etchesAnAdvancedLayerWithAcidLeftInIt(final GameTestHelper helper) {
+        final ChainMachine machine = machine("plasma_etcher");
+        final BlockPos terminal = formed(helper, machine);
+        final Item chip = ChainParts.MEMORY_CHIPS.get(ChainParts.ERAS.indexOf(HardwareEra.ADVANCED)).get();
+        final Item inProcess = ChainChips.waferInProcess(HardwareEra.ADVANCED).get();
+        helper.runAfterDelay(20, () -> {
+            pour(helper, machine, SeriesChemicals.HYDROFLUORIC_ACID);
+            final ChainMachineBlockEntity etcher = machineAt(helper, terminal);
+            etcher.getInventory().insertItem(0, advanced(inProcess, chip, 1, WaferWork.Step.ETCH), false);
+            final List<MatterTank> gas = etcher.matter().inputs(MatterState.GAS);
+            gas.get(0).set(new MatterStack(Elements.of(Element.CHLORINE), 1_000));
+            gas.get(1).set(new MatterStack(Elements.of(Element.ARGON), 100));
+        });
+        helper.succeedWhen(() -> {
+            final WaferWork work = made(machineAt(helper, terminal), inProcess).get(ComputingComponents.WAFER_WORK.get());
+            helper.assertTrue(work != null && work.next() == WaferWork.Step.IMPLANT,
+                    "the Advanced layer is etched with the old acid still in the tank");
+        });
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 300)
     public static void etcher_etchesTheLayerWithItsAcid(final GameTestHelper helper) {
         final ChainMachine etcher = machine("plasma_etcher");

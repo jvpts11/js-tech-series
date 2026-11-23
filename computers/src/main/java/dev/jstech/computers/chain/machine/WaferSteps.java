@@ -567,28 +567,23 @@ final class WaferSteps {
             missing = true;
         }
 
-        /* The work making {@code out} in the machine's step at {@code worked}'s draw, when it takes all held. */
+        /* The work making {@code out} in the machine's step at {@code worked}'s draw, when it takes every item held. */
         Optional<Processing> make(final ItemStack out, final ChainMachine machine, final ChainMachines.Worked worked) {
-            if (missing || !allTaken()) {
+            if (missing || !allItemsTaken()) {
                 return Optional.empty();
             }
             return Optional.of(new Processing(takes, fluidTakes, List.of(out), List.of(), machine.seconds() * TICKS,
                     worked.joulesATick(), matterTakes, List.of(), List.of(), catalysts));
         }
 
-        private boolean allTaken() {
+        /*
+         * Whether the step takes every item in the slots: a stray item makes nothing. A liquid or a gas the step does
+         * not use stays in its tank and stops nothing, as the acid a pipe keeps an etcher stocked with for an older
+         * era's layers stays there while it etches a newer era's with its gases.
+         */
+        private boolean allItemsTaken() {
             for (int slot = 0; slot < slots.length; slot++) {
                 if (!slots[slot] && !input.items().get(slot).isEmpty()) {
-                    return false;
-                }
-            }
-            for (int tank = 0; tank < tanks.length; tank++) {
-                if (!tanks[tank] && !input.fluids().get(tank).isEmpty()) {
-                    return false;
-                }
-            }
-            for (int tank = 0; tank < matter.length; tank++) {
-                if (!matter[tank] && input.matter().get(tank).map(held -> held.amount() > 0).orElse(false)) {
                     return false;
                 }
             }
