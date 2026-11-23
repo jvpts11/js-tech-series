@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -290,13 +291,15 @@ public final class CraftingPayloads {
                 : planMachineRecipe(recipe, quantity, stock);
         if (machinePlan != null) {
             final Cover cover = coverShortfalls(planner, machinePlan.rows(), patterns, machines, stock,
-                    machinePlan.plainMachine());
+                    machinePlan.plainMachine(), plan -> estimateTicks(level, mainframe, plan));
             final boolean feasible = machinePlan.feasible()
                     || (machinePlan.plainMachine() && cover.covered()
                             && planner.plan(key, quantity, patterns, machines, stock).feasible());
+            // What the tree crafts first takes its own time before the machine's step runs.
+            final int estimate = (int) Math.min(Integer.MAX_VALUE, machinePlan.estimateTicks() + cover.ticks());
             PacketDistributor.sendToPlayer(player, new CraftPlanPayload(
                     result, quantity, machinePlan.rows(), feasible,
-                    feasible ? quantity : machinePlan.maxFeasible(), machinePlan.estimateTicks(),
+                    feasible ? quantity : machinePlan.maxFeasible(), estimate,
                     recipeIndex, options, cover.lines(), machinePlan.stages()));
             return;
         }
@@ -332,20 +335,26 @@ public final class CraftingPayloads {
         return 0;
     }
 
-    /** What the network would craft to cover the short rows, one line each, and whether every one is coverable. */
-    private record Cover(List<Text> lines, boolean covered) {
+    /**
+     * What the network would craft to cover the short rows, one line each, whether every one is coverable, and how
+     * long crafting them first takes, in ticks.
+     */
+    private record Cover(List<Text> lines, boolean covered, long ticks) {
     }
 
     /**
      * One line per short row. A processing run's tree crafts what is short when a pattern makes it
-     * ({@code treeCovers}); a pipeline runs on what is in stock, so its line says to request the thing first.
+     * ({@code treeCovers}), and the time {@code estimate} gives each of those plans adds up; a pipeline runs on what
+     * is in stock, so its line says to request the thing first.
      */
     private static Cover coverShortfalls(final ICraftPlanning planner, final List<CraftPlanPayload.Row> rows,
                                          final List<CraftingPattern> patterns,
                                          final List<ProcessingPattern> machines,
-                                         final Map<StorageKey, Long> stock, final boolean treeCovers) {
+                                         final Map<StorageKey, Long> stock, final boolean treeCovers,
+                                         final ToIntFunction<CraftPlanner.Plan> estimate) {
         final List<Text> lines = new ArrayList<>();
         boolean covered = true;
+        long ticks = 0L;
         for (final CraftPlanPayload.Row row : rows) {
             if (row.satisfied()) {
                 continue;
@@ -361,6 +370,9 @@ public final class CraftingPayloads {
                             : CraftTexts.CRAFT_IT_FIRST.with(shortfall, name, firstStepName(plan)));
                 }
                 covered &= treeCovers;
+                if (treeCovers) {
+                    ticks += estimate.applyAsInt(plan);
+                }
             } else {
                 covered = false;
                 if (lines.size() < CraftPlanPayload.MAX_COVER) {
@@ -368,7 +380,7 @@ public final class CraftingPayloads {
                 }
             }
         }
-        return new Cover(List.copyOf(lines), covered);
+        return new Cover(List.copyOf(lines), covered, ticks);
     }
 
     /** One line per thing a recursive plan found nothing to make (or not enough of in stock). */
