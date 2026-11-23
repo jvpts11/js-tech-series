@@ -32,7 +32,7 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
     private EnergyClass portClass;
     private final long declaredCapacity;
     private long capacity;
-    private final long maxReceive;
+    private long maxReceive;
     private final long maxExtract;
     private final Runnable onChange;
     private long stored;
@@ -122,6 +122,16 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
             this.stored = Math.min(this.stored, capacityNow);
             this.onChange.run();
         }
+    }
+
+    /** The most it takes in a tick. */
+    public long maxReceive() {
+        return this.maxReceive;
+    }
+
+    /** Makes it take up to {@code to} a tick, as upgrades that have its machine draw more have it take more. */
+    public void setMaxReceive(final long to) {
+        this.maxReceive = Math.max(0L, to);
     }
 
     @Override

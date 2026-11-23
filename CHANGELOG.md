@@ -694,6 +694,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- (Core) What a store takes in a tick: J's Core's API is at version 94. `EnergyStore.maxReceive` and
+  `setMaxReceive`, and `FieldEnergyStorage.maxReceive` and `setMaxReceive`, read and change how much a store takes
+  in a tick. Experimental.
 - (Core) Room beyond a stack: J's Core's API is at version 93. `FieldItemHandler.beyondTheStack` lets a slot hold
   more of an item than its stack, as its stack limit says, and saves past the 99 the game saves of one stack;
   `stackLimitOf` reads a slot's limit for a stack. `MatterTank.room` and `MatterTanks.room` make a tank that many
@@ -4763,6 +4766,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Core) A machine whose upgrades have it draw more energy a tick takes that much more in through its port: four
+  motors, which make it draw four times as much, or lines that work several recipes at once, no longer leave it
+  working at half speed once its few seconds' store runs dry.
 - (Core) A button's label too long for its face ends in "..", where it ran over the buttons beside it: the Crafting
   Manager's "into" button, naming a long place, wrote over Load and Load all.
 - (Computers) Abandoned buildings: a working building's racks stand with their UPS charged, as its battery banks are;

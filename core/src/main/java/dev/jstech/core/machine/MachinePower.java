@@ -28,6 +28,7 @@ public final class MachinePower {
     private final @Nullable EnergyStore store;
     private final @Nullable EnergyProtection protection;
     private final long builtCapacity;
+    private final long builtReceive;
 
     private MachinePower(final Energy energy, final @Nullable FieldEnergyStorage fe, final @Nullable EnergyStore store,
                          final @Nullable EnergyProtection protection) {
@@ -36,6 +37,7 @@ public final class MachinePower {
         this.store = store;
         this.protection = protection;
         this.builtCapacity = fe != null ? fe.getMaxEnergyStored() : Objects.requireNonNull(store).declaredCapacity();
+        this.builtReceive = fe != null ? fe.maxReceive() : store.maxReceive();
     }
 
     /** A machine's FE store at work. */
@@ -74,13 +76,21 @@ public final class MachinePower {
         return this.builtCapacity;
     }
 
-    /** Holds as much as {@code effect} makes of what it held as built. */
+    /**
+     * Holds as much as {@code effect} makes of what it held as built, and takes in a tick as much more as it has its
+     * machine draw: motors that make it draw four times the energy, or lines that work two recipes at once, have it
+     * take that much more, or the machine would work slower than they make it.
+     */
     public void enlarge(final UpgradeEffect effect) {
         final long capacity = effect.storage(this.builtCapacity);
+        final double more = Math.max(1.0, effect.energy()) * effect.recipesAtOnce();
+        final long receive = (long) Math.min(Long.MAX_VALUE, Math.ceil(this.builtReceive * more));
         if (this.fe != null) {
             this.fe.setCapacity((int) Math.min(Integer.MAX_VALUE, capacity));
+            this.fe.setMaxReceive((int) Math.min(Integer.MAX_VALUE, receive));
         } else {
             this.store.setCapacity(capacity);
+            this.store.setMaxReceive(receive);
         }
     }
 

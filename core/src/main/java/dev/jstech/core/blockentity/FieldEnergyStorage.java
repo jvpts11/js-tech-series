@@ -118,6 +118,16 @@ public final class FieldEnergyStorage extends EnergyStorage implements IField {
         }
     }
 
+    /** The most it takes at a time. */
+    public int maxReceive() {
+        return maxReceive;
+    }
+
+    /** Makes it take up to {@code to} at a time, as upgrades that have its machine draw more have it take more. */
+    public void setMaxReceive(final int to) {
+        maxReceive = Math.max(0, to);
+    }
+
     /** Sets the stored energy, kept between none and the capacity. */
     public void setEnergyStored(final int amount) {
         final int to = Math.max(0, Math.min(capacity, amount));
