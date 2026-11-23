@@ -118,7 +118,7 @@ public final class MachineUpgradeGameTests {
         final ItemStack many = machine.getInventory().insertItem(first + 1,
                 new ItemStack(TestUpgrades.THRIFT.get(), 8), false);
         helper.assertTrue(many.isEmpty(), "an upgrade of no limit fills its bay");
-        helper.assertTrue(machine.upgrades().parallel() == 1 && machine.upgrades().use() < 0.01,
+        helper.assertTrue(machine.upgrades().parallel() == 1 && machine.upgrades().gases() < 0.01,
                 "and both count: " + machine.upgrades());
         helper.succeed();
     }

@@ -21,6 +21,7 @@ import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SharedUses;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.jstechseries.upgrade.SharedUpgrades;
 import dev.jstech.core.machine.IMachineParameters;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
@@ -123,6 +124,8 @@ public final class IndustrialModule {
     static {
         // Its machines' energy runs along the series' basic cable, J's Core's: it has no energy cable of its own.
         SharedUses.declare(JsIndustrial.MODID, () -> SharedEnergy.INSULATED_COPPER_CABLE);
+        // Its machines take the series' shared upgrades in their upgrade slots.
+        SharedUpgrades.all().forEach(upgrade -> SharedUses.declare(JsIndustrial.MODID, upgrade::get));
     }
 
     // Storage

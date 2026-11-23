@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "P": {
+      "tag": "c:glass_panes"
+    }
+  },
+  "pattern": [
+    "IPI",
+    "IPI",
+    "IPI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:muffler"
+  }
+}

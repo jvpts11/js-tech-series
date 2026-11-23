@@ -100,12 +100,15 @@ class UpgradeEffectTest {
     void combine_addsTheRecipesAtOnceAndMultipliesTheRest() {
         final UpgradeEffect effect = UpgradeEffect.combine(List.of(
                 new UpgradeEffect.Counted(UpgradeEffect.NONE.withParallel(2).withYield(1.5), 2),
-                new UpgradeEffect.Counted(UpgradeEffect.NONE.withUse(0.5).withBuffer(4.0), 1)));
+                new UpgradeEffect.Counted(UpgradeEffect.NONE.withLiquids(0.5).withGases(0.8).withBuffer(4.0)
+                        .withRoom(2.0), 1)));
         assertEquals(4, effect.parallel());
         assertEquals(5, effect.recipesAtOnce());
         assertEquals(2.25, effect.yield(), 1e-9);
-        assertEquals(0.5, effect.use(), 1e-9);
+        assertEquals(0.5, effect.liquids(), 1e-9);
+        assertEquals(0.8, effect.gases(), 1e-9);
         assertEquals(4.0, effect.buffer(), 1e-9);
+        assertEquals(2.0, effect.room(), 1e-9);
     }
 
     @Test
@@ -126,12 +129,28 @@ class UpgradeEffectTest {
     }
 
     @Test
-    void spent_roundsUpAndSpendsNothingOfNothing() {
-        final UpgradeEffect effect = UpgradeEffect.NONE.withUse(0.5);
-        assertEquals(50L, effect.spent(100L));
-        assertEquals(1L, effect.spent(1L));
-        assertEquals(0L, effect.spent(0L));
-        assertEquals(0L, UpgradeEffect.NONE.withUse(0.0).spent(100L));
+    void liquidSpent_roundsUpAndSpendsNothingOfNothing() {
+        final UpgradeEffect effect = UpgradeEffect.NONE.withLiquids(0.5);
+        assertEquals(50L, effect.liquidSpent(100L));
+        assertEquals(1L, effect.liquidSpent(1L));
+        assertEquals(0L, effect.liquidSpent(0L));
+        assertEquals(0L, UpgradeEffect.NONE.withLiquids(0.0).liquidSpent(100L));
+    }
+
+    @Test
+    void gasSpent_isTheGasesOwnSavingNotTheLiquids() {
+        final UpgradeEffect effect = UpgradeEffect.NONE.withGases(0.85);
+        assertEquals(85L, effect.gasSpent(100L));
+        assertEquals(100L, effect.liquidSpent(100L));
+        assertEquals(100L, UpgradeEffect.NONE.withLiquids(0.85).gasSpent(100L));
+    }
+
+    @Test
+    void addGains_addsTheRoomOfSeveralBuffers() {
+        final UpgradeEffect effect = UpgradeEffect.addGains(List.of(
+                new UpgradeEffect.Counted(UpgradeEffect.NONE.withRoom(2.0), 2)));
+        assertEquals(3.0, effect.room(), 1e-9);
+        assertEquals(192L, effect.held(64L));
     }
 
     @Test

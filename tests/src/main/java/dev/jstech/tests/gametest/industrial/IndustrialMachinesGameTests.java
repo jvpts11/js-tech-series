@@ -104,7 +104,7 @@ public final class IndustrialMachinesGameTests {
         helper.assertTrue(effect.speed() == 2.0, "two motors of half again add up to twice as fast, not 2.25: "
                 + effect.speed());
         helper.assertTrue(effect.energy() == 1.5, "and to half again the energy, not 1.5625: " + effect.energy());
-        helper.assertTrue(effect.use() == 0.25, "two savings of half leave a quarter: " + effect.use());
+        helper.assertTrue(effect.liquids() == 0.25, "two savings of half leave a quarter: " + effect.liquids());
         helper.succeed();
     }
 

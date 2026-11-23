@@ -447,14 +447,15 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             return known;
         }
         final List<UpgradeEffect.Counted> each = new ArrayList<>();
-        final Map<Item, Integer> seen = new HashMap<>();
+        final Map<ResourceLocation, Integer> seen = new HashMap<>();
         for (int slot = layout.firstUpgrade(); slot < layout.slots(); slot++) {
             final ItemStack stack = getInventory().getStackInSlot(slot);
             if (stack.getItem() instanceof IUpgrade upgrade) {
-                final int before = seen.getOrDefault(stack.getItem(), 0);
+                final ResourceLocation kind = upgrade.kind(stack);
+                final int before = seen.getOrDefault(kind, 0);
                 final int counted = (int) Math.max(0L, Math.min(stack.getCount(),
                         (long) upgrade.most(stack) - before));
-                seen.put(stack.getItem(), before + counted);
+                seen.put(kind, before + counted);
                 each.add(new UpgradeEffect.Counted(upgrade.effect(stack), counted));
             }
         }
@@ -708,9 +709,33 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         if (!(stack.getItem() instanceof IUpgrade upgrade)) {
             return 0;
         }
-        final long elsewhere = upgradesOf(stack.getItem()) - (getInventory().getStackInSlot(slot).is(stack.getItem())
-                ? getInventory().getStackInSlot(slot).getCount() : 0);
+        final ResourceLocation kind = upgrade.kind(stack);
+        final ItemStack here = getInventory().getStackInSlot(slot);
+        final long elsewhere = upgradesOfKind(kind) - (kindOf(here).filter(kind::equals).isPresent()
+                ? here.getCount() : 0);
         return (int) Math.max(0L, Math.min(Item.ABSOLUTE_MAX_STACK_SIZE, upgrade.most(stack) - elsewhere));
+    }
+
+    /* How many upgrades of {@code kind} its upgrade slots hold together. */
+    private int upgradesOfKind(final ResourceLocation kind) {
+        int count = 0;
+        for (int slot = layout.firstUpgrade(); slot < layout.slots(); slot++) {
+            final ItemStack stack = getInventory().getStackInSlot(slot);
+            if (kindOf(stack).filter(kind::equals).isPresent()) {
+                count += stack.getCount();
+            }
+        }
+        return count;
+    }
+
+    /* The kind of upgrade {@code stack} is; none for what is no upgrade. */
+    private static Optional<ResourceLocation> kindOf(final ItemStack stack) {
+        return stack.getItem() instanceof IUpgrade upgrade ? Optional.of(upgrade.kind(stack)) : Optional.empty();
+    }
+
+    /* What a recipe that spends {@code amount} from {@code tank} spends with {@code effect}: a gas as one, else a liquid. */
+    private static long matterSpent(final UpgradeEffect effect, final MatterTank tank, final long amount) {
+        return tank.state() == MatterState.GAS ? effect.gasSpent(amount) : effect.liquidSpent(amount);
     }
 
     /* {@code amount} for each of {@code times}, held to what a long holds. */
@@ -950,14 +975,14 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                         .getCount() / Math.max(1, take.amount()));
             }
             for (final Take take : work.fluidTakes()) {
-                final long spent = effect.spent(take.amount());
+                final long spent = effect.liquidSpent(take.amount());
                 if (spent > 0) {
                     sets = (int) Math.min(sets, inputTanks.get(take.index()).getFluidAmount() / spent);
                 }
             }
             final List<MatterTank> matterIn = matterInputs();
             for (final Take take : work.matterTakes()) {
-                final long spent = effect.spent(take.amount());
+                final long spent = matterSpent(effect, matterIn.get(take.index()), take.amount());
                 if (spent > 0) {
                     sets = (int) Math.min(sets, matterIn.get(take.index()).held().map(MatterStack::amount)
                             .orElse(0L) / spent);
@@ -1025,13 +1050,15 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                            final RandomSource random) {
             final List<MatterTank> matterIn = matterInputs();
             for (final Take take : work.fluidTakes()) {
-                if (inputTanks.get(take.index()).getFluidAmount() < saturated(effect.spent(take.amount()), times)) {
+                if (inputTanks.get(take.index()).getFluidAmount()
+                        < saturated(effect.liquidSpent(take.amount()), times)) {
                     return -1;
                 }
             }
             for (final Take take : work.matterTakes()) {
-                if (matterIn.get(take.index()).held().map(MatterStack::amount).orElse(0L)
-                        < saturated(effect.spent(take.amount()), times)) {
+                final MatterTank tank = matterIn.get(take.index());
+                if (tank.held().map(MatterStack::amount).orElse(0L)
+                        < saturated(matterSpent(effect, tank, take.amount()), times)) {
                     return -1;
                 }
             }
@@ -1041,11 +1068,11 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             }
             for (final Take take : work.fluidTakes()) {
                 inputTanks.get(take.index()).drainInside((int) Math.min(Integer.MAX_VALUE,
-                        saturated(effect.spent(take.amount()), times)), IFluidHandler.FluidAction.EXECUTE);
+                        saturated(effect.liquidSpent(take.amount()), times)), IFluidHandler.FluidAction.EXECUTE);
             }
             for (final Take take : work.matterTakes()) {
                 final MatterTank tank = matterIn.get(take.index());
-                final long spent = saturated(effect.spent(take.amount()), times);
+                final long spent = saturated(matterSpent(effect, tank, take.amount()), times);
                 tank.held().ifPresent(held -> tank.extract(held.material(), spent, false));
             }
             final List<ItemStack> made = new ArrayList<>();

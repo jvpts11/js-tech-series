@@ -174,6 +174,7 @@ import dev.jstech.core.jstechseries.builder.Assembly;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
 import dev.jstech.core.jstechseries.containment.SharedContainment;
 import dev.jstech.core.jstechseries.cylinder.GasCylinders;
+import dev.jstech.core.jstechseries.upgrade.SharedUpgrades;
 import dev.jstech.core.jstechseries.projector.StructureProjector;
 import dev.jstech.core.jstechseries.persistor.PersistorSettings;
 import dev.jstech.core.jstechseries.persistor.SpacePersistor;
@@ -489,6 +490,8 @@ public final class JsCore {
         // The bronze the Core alloys by hand, and the tin it lays and smelts for it.
         SeriesBronze.declare();
         GasCylinders.declare();
+        // The machine upgrades the series' mods share, shown once a mod whose machines take them says it uses them.
+        SharedUpgrades.declare();
         // What content packs declare in files rather than in Java, read as the game starts, after the catalogue.
         ContentPacks.declare(modEventBus);
         // What the scripts of KubeJS and CraftTweaker reach of the Core, as JsCore.

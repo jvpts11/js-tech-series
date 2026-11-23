@@ -7616,6 +7616,7 @@ stable 4
 10 dev.jstech.core.machine.IRepairKit  abstract int repairsPerSecond(ItemStack)
 10 dev.jstech.core.machine.IUpgrade  type interface
 10 dev.jstech.core.machine.IUpgrade  abstract UpgradeEffect effect(ItemStack)
+91 dev.jstech.core.machine.IUpgrade  default ResourceLocation kind(ItemStack)
 10 dev.jstech.core.machine.IUpgrade  default int most(ItemStack)
 10 dev.jstech.core.machine.IUpgrade  static final int ANY
 12 dev.jstech.core.machine.MachineBlockEntity  type abstract class extends SyncedBlockEntity implements IOwned, IMachineParameters, ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder, IMechanicalHolder, IMultiblockPortHost, IRedstonePortHost, IStructureTerminal
@@ -8569,15 +8570,17 @@ stable 4
 12 dev.jstech.core.machine.Tally  int peek(String, double)
 12 dev.jstech.core.machine.Tally  void clear()
 12 dev.jstech.core.machine.Tally  void restore(Map<String, Double>)
-10 dev.jstech.core.machine.UpgradeEffect  type record(double speed, double energy, int parallel, double yield, double byproducts, double use, double heat, double sound, double buffer)
+91 dev.jstech.core.machine.UpgradeEffect  type record(double speed, double energy, int parallel, double yield, double byproducts, double liquids, double gases, double heat, double sound, double buffer, double room)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withBuffer(double)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withByproducts(double)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withEnergy(double)
+91 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withGases(double)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withHeat(double)
+91 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withLiquids(double)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withParallel(int)
+91 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withRoom(double)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withSound(double)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withSpeed(double)
-10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withUse(double)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withYield(double)
 10 dev.jstech.core.machine.UpgradeEffect  double byproductChance(double)
 10 dev.jstech.core.machine.UpgradeEffect  int made(int, double)
@@ -8585,7 +8588,9 @@ stable 4
 10 dev.jstech.core.machine.UpgradeEffect  int recipesAtOnce()
 10 dev.jstech.core.machine.UpgradeEffect  int ticks(int)
 10 dev.jstech.core.machine.UpgradeEffect  long energyPerTick(long)
-10 dev.jstech.core.machine.UpgradeEffect  long spent(long)
+91 dev.jstech.core.machine.UpgradeEffect  long gasSpent(long)
+91 dev.jstech.core.machine.UpgradeEffect  long held(long)
+91 dev.jstech.core.machine.UpgradeEffect  long liquidSpent(long)
 10 dev.jstech.core.machine.UpgradeEffect  long storage(long)
 10 dev.jstech.core.machine.UpgradeEffect  new(double, double)
 12 dev.jstech.core.machine.UpgradeEffect  static UpgradeEffect addGains(List<Counted>)
@@ -8594,22 +8599,32 @@ stable 4
 10 dev.jstech.core.machine.UpgradeEffect  static final int MOST_PARALLEL
 10 dev.jstech.core.machine.UpgradeEffect.Counted  type record(UpgradeEffect effect, int count)
 10 dev.jstech.core.machine.UpgradeItem  type class extends Item implements IUpgrade
+91 dev.jstech.core.machine.UpgradeItem  ResourceLocation kind(ItemStack)
 10 dev.jstech.core.machine.UpgradeItem  UpgradeEffect effect(ItemStack)
 10 dev.jstech.core.machine.UpgradeItem  int most(ItemStack)
 10 dev.jstech.core.machine.UpgradeItem  new(Properties, UpgradeEffect, int)
+91 dev.jstech.core.machine.UpgradeItem  new(Properties, UpgradeEffect, int, ResourceLocation)
 10 dev.jstech.core.machine.UpgradeItem  void appendHoverText(ItemStack, TooltipContext, List<Component>, TooltipFlag)
 10 dev.jstech.core.machine.UpgradeTexts  type final class
-10 dev.jstech.core.machine.UpgradeTexts  static List<Text> effects(UpgradeEffect)
+91 dev.jstech.core.machine.UpgradeTexts  static List<Line> effects(UpgradeEffect)
+91 dev.jstech.core.machine.UpgradeTexts  static Text most(int)
+91 dev.jstech.core.machine.UpgradeTexts  static final TextKey ANY
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey BUFFER
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey BYPRODUCTS
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey ENERGY
+91 dev.jstech.core.machine.UpgradeTexts  static final TextKey GASES
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey HEAT
+91 dev.jstech.core.machine.UpgradeTexts  static final TextKey LIQUIDS
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey MOST
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey PARALLEL
+91 dev.jstech.core.machine.UpgradeTexts  static final TextKey PARALLEL_ENERGY
+91 dev.jstech.core.machine.UpgradeTexts  static final TextKey PARALLEL_ONE
+91 dev.jstech.core.machine.UpgradeTexts  static final TextKey ROOM
+91 dev.jstech.core.machine.UpgradeTexts  static final TextKey SILENT
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey SOUND
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey SPEED
-10 dev.jstech.core.machine.UpgradeTexts  static final TextKey USE
 10 dev.jstech.core.machine.UpgradeTexts  static final TextKey YIELD
+91 dev.jstech.core.machine.UpgradeTexts.Line  type record(Text text, boolean gain)
 10 dev.jstech.core.machine.WrenchResourcePayload  type record(BlockPos pos, boolean up) implements CustomPacketPayload
 10 dev.jstech.core.machine.WrenchResourcePayload  Type<? extends CustomPacketPayload> type()
 10 dev.jstech.core.machine.WrenchResourcePayload  static final StreamCodec<RegistryFriendlyByteBuf, WrenchResourcePayload> STREAM_CODEC

@@ -694,6 +694,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- (Core) Machine upgrades by kind and by what they spend: J's Core's API is at version 91. `UpgradeEffect` spends
+  liquids and gases each by a factor of its own (`liquids` and `gases`, `liquidSpent` and `gasSpent`, in place of
+  `use` and `spent`) and has a `room` factor, what each input and output slot and tank holds, which the processing
+  machine does not apply yet. `IUpgrade.kind` lets upgrades of one kind share how many fit in one machine, and
+  `UpgradeItem` takes the kind. An upgrade's tooltip says each effect as a share gained, in green, or lost, in red
+  ("+50% speed"), and how many fit in one machine. Experimental.
 - (Core) Panel screens fit the window: J's Core's API is at version 90. `IPanelScreen` lets a screen with no menu that
   draws a panel of a fixed size say how big it is, so that while it is open and the panel does not fit the window the
   Core lowers the interface scale just enough, as it does for a container screen of the series. Experimental.
@@ -770,6 +776,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   cylinder its bare steel. Its tooltip's bar is its shoulder's colour, or the Core's gas colour for a gas the code
   does not name. Made at the Crafting Table from seven steel plates and a bronze ingot, its valve, or from seven
   iron ingots in a world where no mod makes steel plates.
+- (Core) Machine upgrades the series' mods share, real parts put in a machine's upgrade slots and never used up, each
+  made at the Crafting Table: the Brushed, Induction and Brushless Motor (+50% speed, +75% energy, four motors in all
+  in a machine), the Variable Frequency Drive (-20% energy), the Parallel Line and the Advanced Parallel Line (one and
+  two more recipes at once, their energy in proportion), the Gas Recovery Unit (-15% of the gases a recipe spends),
+  the Solvent Recovery Unit (-15% of its liquids), Precision Tooling (+10% of what the machine makes, two in a
+  machine), the Muffler (the machine is silent) and the Byproduct Separator (+50% byproducts). Gains add up and
+  savings multiply. J's Industrial's machines take them, and the Technical Reference has a page for them in its new
+  section, Machines.
 - (Core) Bronze for any mod used alone: three copper ingots and one tin ingot make four bronze ingots at the
   Crafting Table, near real bronze's share of tin. Tin's ore now lies in every world, and raw tin and tin's ore
   smelt in the furnace and the blast furnace, as the game's raw iron and iron ore do.

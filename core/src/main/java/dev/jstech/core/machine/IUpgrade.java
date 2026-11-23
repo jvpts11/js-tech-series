@@ -7,11 +7,13 @@
  */
 package dev.jstech.core.machine;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 /**
  * An item that upgrades a machine when it sits in one of the machine's upgrade slots: every item of a stack counts, up
- * to how many of it fit in one machine.
+ * to how many of its kind fit in one machine.
  */
 public interface IUpgrade {
 
@@ -27,5 +29,13 @@ public interface IUpgrade {
      */
     default int most(final ItemStack stack) {
         return ANY;
+    }
+
+    /**
+     * The kind of upgrade {@code stack} is, whose items share how many fit in one machine: three kinds of motor are one
+     * upgrade, four of them in all. Each item is a kind of its own unless the upgrade says.
+     */
+    default ResourceLocation kind(final ItemStack stack) {
+        return BuiltInRegistries.ITEM.getKey(stack.getItem());
     }
 }

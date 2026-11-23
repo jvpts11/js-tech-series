@@ -20,6 +20,7 @@ import java.util.List;
  * UpgradeEffect.NONE.withSpeed(2.0).withEnergy(1.5)     // twice as fast, half as much energy again
  * UpgradeEffect.NONE.withParallel(1).withEnergy(1.8)    // two recipes at once
  * UpgradeEffect.NONE.withYield(1.25)                    // a quarter more of what it makes
+ * UpgradeEffect.NONE.withGases(0.85)                    // a recipe spends 15% less of its gases
  * }</pre>
  *
  * @param speed      how many times as fast it works
@@ -27,29 +28,31 @@ import java.util.List;
  * @param parallel   how many recipes it works at once besides the first, inputs and room allowing
  * @param yield      how many times what it makes, the part past a whole coming by chance
  * @param byproducts how many times as likely its byproducts come
- * @param use        how many times the fluid and the matter a recipe spends
+ * @param liquids    how many times the fluids and the liquid matter a recipe spends
+ * @param gases      how many times the gases a recipe spends
  * @param heat       how many times the heat it gives off as it works
  * @param sound      how many times as loud it is
  * @param buffer     how many times the energy it stores
+ * @param room       how many times what each of its input and output slots and tanks holds
  */
-public record UpgradeEffect(double speed, double energy, int parallel, double yield, double byproducts, double use,
-                            double heat, double sound, double buffer) {
+public record UpgradeEffect(double speed, double energy, int parallel, double yield, double byproducts,
+                            double liquids, double gases, double heat, double sound, double buffer, double room) {
 
     /** No upgrade at all. */
-    public static final UpgradeEffect NONE = new UpgradeEffect(1.0, 1.0, 0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
+    public static final UpgradeEffect NONE = new UpgradeEffect(1.0, 1.0, 0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
     /** The most recipes at once a machine works besides the first, however many upgrades say more. */
     public static final int MOST_PARALLEL = 1_024;
     /* How many factors an effect has besides its recipes at once. */
-    private static final int FACTORS = 8;
+    private static final int FACTORS = 10;
 
     public UpgradeEffect {
-        if (!(speed > 0.0) || Double.isInfinite(speed)) {
-            throw new IllegalArgumentException("an upgrade has a speed above 0; got " + speed);
+        for (final double above : new double[] {speed, buffer, room}) {
+            if (!(above > 0.0) || Double.isInfinite(above)) {
+                throw new IllegalArgumentException("an upgrade leaves its speed, its buffer and its room above 0; got "
+                        + above);
+            }
         }
-        if (!(buffer > 0.0) || Double.isInfinite(buffer)) {
-            throw new IllegalArgumentException("an upgrade leaves a buffer above 0; got " + buffer);
-        }
-        for (final double factor : new double[] {energy, yield, byproducts, use, heat, sound}) {
+        for (final double factor : new double[] {energy, yield, byproducts, liquids, gases, heat, sound}) {
             if (!(factor >= 0.0) || Double.isInfinite(factor)) {
                 throw new IllegalArgumentException("an upgrade's factors are 0 or more; got " + factor);
             }
@@ -61,37 +64,22 @@ public record UpgradeEffect(double speed, double energy, int parallel, double yi
 
     /** An upgrade of speed and energy alone. */
     public UpgradeEffect(final double speed, final double energy) {
-        this(speed, energy, 0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
+        this(speed, energy, 0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
     }
 
     /** What every upgrade in {@code each} does together, each counted as many times as there are of it. */
     public static UpgradeEffect combine(final List<Counted> each) {
-        double speed = 1.0;
-        double energy = 1.0;
+        final double[] together = new double[FACTORS];
+        Arrays.fill(together, 1.0);
         long parallel = 0L;
-        double yield = 1.0;
-        double byproducts = 1.0;
-        double use = 1.0;
-        double heat = 1.0;
-        double sound = 1.0;
-        double buffer = 1.0;
         for (final Counted counted : each) {
-            final UpgradeEffect effect = counted.effect();
-            final int count = counted.count();
-            speed *= Math.pow(effect.speed(), count);
-            energy *= Math.pow(effect.energy(), count);
-            parallel += (long) effect.parallel() * count;
-            yield *= Math.pow(effect.yield(), count);
-            byproducts *= Math.pow(effect.byproducts(), count);
-            use *= Math.pow(effect.use(), count);
-            heat *= Math.pow(effect.heat(), count);
-            sound *= Math.pow(effect.sound(), count);
-            buffer *= Math.pow(effect.buffer(), count);
+            final double[] factors = counted.effect().factors();
+            for (int k = 0; k < FACTORS; k++) {
+                together[k] *= Math.pow(factors[k], counted.count());
+            }
+            parallel += (long) counted.effect().parallel() * counted.count();
         }
-        // A machine stacked with a great many upgrades must still have an effect: past what a double holds the
-        // product stays at the largest (or, for slowing ones, the smallest) value it can.
-        return new UpgradeEffect(within(speed), finite(energy), (int) Math.min(MOST_PARALLEL, parallel),
-                finite(yield), finite(byproducts), finite(use), finite(heat), finite(sound), within(buffer));
+        return of(together, parallel);
     }
 
     /**
@@ -120,54 +108,62 @@ public record UpgradeEffect(double speed, double energy, int parallel, double yi
         for (int k = 0; k < FACTORS; k++) {
             together[k] = (1.0 + gains[k]) * savings[k];
         }
-        return new UpgradeEffect(within(together[0]), finite(together[1]), (int) Math.min(MOST_PARALLEL, parallel),
-                finite(together[2]), finite(together[3]), finite(together[4]), finite(together[5]),
-                finite(together[6]), within(together[7]));
+        return of(together, parallel);
     }
 
     /** The same, {@code to} times as fast. */
     public UpgradeEffect withSpeed(final double to) {
-        return new UpgradeEffect(to, energy, parallel, yield, byproducts, use, heat, sound, buffer);
+        return new UpgradeEffect(to, energy, parallel, yield, byproducts, liquids, gases, heat, sound, buffer, room);
     }
 
     /** The same, spending {@code to} times the energy a tick. */
     public UpgradeEffect withEnergy(final double to) {
-        return new UpgradeEffect(speed, to, parallel, yield, byproducts, use, heat, sound, buffer);
+        return new UpgradeEffect(speed, to, parallel, yield, byproducts, liquids, gases, heat, sound, buffer, room);
     }
 
     /** The same, working {@code to} recipes at once besides the first. */
     public UpgradeEffect withParallel(final int to) {
-        return new UpgradeEffect(speed, energy, to, yield, byproducts, use, heat, sound, buffer);
+        return new UpgradeEffect(speed, energy, to, yield, byproducts, liquids, gases, heat, sound, buffer, room);
     }
 
     /** The same, making {@code to} times as much. */
     public UpgradeEffect withYield(final double to) {
-        return new UpgradeEffect(speed, energy, parallel, to, byproducts, use, heat, sound, buffer);
+        return new UpgradeEffect(speed, energy, parallel, to, byproducts, liquids, gases, heat, sound, buffer, room);
     }
 
     /** The same, its byproducts {@code to} times as likely. */
     public UpgradeEffect withByproducts(final double to) {
-        return new UpgradeEffect(speed, energy, parallel, yield, to, use, heat, sound, buffer);
+        return new UpgradeEffect(speed, energy, parallel, yield, to, liquids, gases, heat, sound, buffer, room);
     }
 
-    /** The same, a recipe spending {@code to} times its fluid and matter. */
-    public UpgradeEffect withUse(final double to) {
-        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, to, heat, sound, buffer);
+    /** The same, a recipe spending {@code to} times its fluids and its liquid matter. */
+    public UpgradeEffect withLiquids(final double to) {
+        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, to, gases, heat, sound, buffer, room);
+    }
+
+    /** The same, a recipe spending {@code to} times its gases. */
+    public UpgradeEffect withGases(final double to) {
+        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, liquids, to, heat, sound, buffer, room);
     }
 
     /** The same, giving off {@code to} times the heat. */
     public UpgradeEffect withHeat(final double to) {
-        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, use, to, sound, buffer);
+        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, liquids, gases, to, sound, buffer, room);
     }
 
     /** The same, {@code to} times as loud. */
     public UpgradeEffect withSound(final double to) {
-        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, use, heat, to, buffer);
+        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, liquids, gases, heat, to, buffer, room);
     }
 
     /** The same, storing {@code to} times the energy. */
     public UpgradeEffect withBuffer(final double to) {
-        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, use, heat, sound, to);
+        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, liquids, gases, heat, sound, to, room);
+    }
+
+    /** The same, each input and output slot and tank holding {@code to} times as much. */
+    public UpgradeEffect withRoom(final double to) {
+        return new UpgradeEffect(speed, energy, parallel, yield, byproducts, liquids, gases, heat, sound, buffer, to);
     }
 
     /** How many recipes it works at once: the first and the parallel ones. */
@@ -185,9 +181,14 @@ public record UpgradeEffect(double speed, double energy, int parallel, double yi
         return (long) Math.ceil(perTick * energy);
     }
 
-    /** What a recipe that spends {@code amount} of a fluid or of matter spends with this effect, rounded up. */
-    public long spent(final long amount) {
-        return amount <= 0 ? 0L : (long) Math.min(Long.MAX_VALUE, Math.ceil(amount * use));
+    /** What a recipe that spends {@code amount} of a fluid or of liquid matter spends with this effect, rounded up. */
+    public long liquidSpent(final long amount) {
+        return spent(amount, liquids);
+    }
+
+    /** What a recipe that spends {@code amount} of a gas spends with this effect, rounded up. */
+    public long gasSpent(final long amount) {
+        return spent(amount, gases);
     }
 
     /**
@@ -216,9 +217,32 @@ public record UpgradeEffect(double speed, double energy, int parallel, double yi
         return Math.max(1L, (long) Math.min(Long.MAX_VALUE, Math.floor(capacity * buffer)));
     }
 
-    /* Its factors, in the order addGains works them: speed, energy, yield, byproducts, use, heat, sound, buffer. */
+    /** What an input or output slot or tank that holds {@code capacity} holds with this effect, at least one. */
+    public long held(final long capacity) {
+        return Math.max(1L, (long) Math.min(Long.MAX_VALUE, Math.floor(capacity * room)));
+    }
+
+    /*
+     * Its factors, in the order combine and addGains work them: speed, energy, yield, byproducts, liquids, gases, heat,
+     * sound, buffer, room.
+     */
     private double[] factors() {
-        return new double[] {speed, energy, yield, byproducts, use, heat, sound, buffer};
+        return new double[] {speed, energy, yield, byproducts, liquids, gases, heat, sound, buffer, room};
+    }
+
+    /*
+     * The effect of {@code factors}, in the order of factors(), and {@code parallel}. A machine stacked with a great
+     * many upgrades must still have an effect: past what a double holds the product stays at the largest (or, for the
+     * factors that must stay above 0, the smallest) value it can.
+     */
+    private static UpgradeEffect of(final double[] factors, final long parallel) {
+        return new UpgradeEffect(within(factors[0]), finite(factors[1]), (int) Math.min(MOST_PARALLEL, parallel),
+                finite(factors[2]), finite(factors[3]), finite(factors[4]), finite(factors[5]), finite(factors[6]),
+                finite(factors[7]), within(factors[8]), within(factors[9]));
+    }
+
+    private static long spent(final long amount, final double factor) {
+        return amount <= 0 ? 0L : (long) Math.min(Long.MAX_VALUE, Math.ceil(amount * factor));
     }
 
     private static double within(final double factor) {

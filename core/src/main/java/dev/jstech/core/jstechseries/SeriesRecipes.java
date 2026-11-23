@@ -19,6 +19,7 @@ import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.core.jstechseries.tools.PhysicsTool;
 import dev.jstech.core.jstechseries.tools.SharedTools;
+import dev.jstech.core.jstechseries.upgrade.SharedUpgrades;
 import dev.jstech.core.material.Form;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.multipart.MicroblockRecipes;
@@ -108,7 +109,8 @@ public final class SeriesRecipes extends RecipeProvider {
                 .define('I', Items.IRON_INGOT).define('B', Items.IRON_BARS).define('P', SharedPipes.IRON_GAS_PIPE)
                 .unlockedBy("has_iron_gas_pipe", has(SharedPipes.IRON_GAS_PIPE)).save(output, id("gas_vent"));
         tinAndBronze(output);
-        // A cylinder of steel plates, its bronze valve on top; of iron ingots in a world where no mod makes steel plates.
+        upgrades(output);
+        // A cylinder of steel plates, its bronze valve on top; of iron ingots where no mod makes steel plates.
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, GasCylinders.CYLINDER.get())
                 .pattern("PBP").pattern("P P").pattern("PPP")
                 .define('P', STEEL_PLATES).define('B', Forms.INGOT.itemTag(SeriesMaterials.BRONZE))
@@ -168,6 +170,67 @@ public final class SeriesRecipes extends RecipeProvider {
                 .requires(Ingredient.of(Tags.Items.INGOTS_COPPER), SeriesBronze.COPPER_INGOTS)
                 .requires(Forms.INGOT.itemTag(SeriesMaterials.TIN))
                 .unlockedBy("has_tin_ingot", has(tin)).save(output, id("bronze_ingot"));
+    }
+
+    /*
+     * The machine upgrades, at the Crafting Table, of metals any mod's ingots give and the game's redstone, quartz,
+     * glass and diamond, so whichever mod's machines take them can make them.
+     */
+    private static void upgrades(final RecipeOutput output) {
+        final TagKey<Item> iron = Tags.Items.INGOTS_IRON;
+        final TagKey<Item> copper = Tags.Items.INGOTS_COPPER;
+        final TagKey<Item> gold = Tags.Items.INGOTS_GOLD;
+        final TagKey<Item> bronze = Forms.INGOT.itemTag(SeriesMaterials.BRONZE);
+        final TagKey<Item> redstone = Tags.Items.DUSTS_REDSTONE;
+        final TagKey<Item> glass = Tags.Items.GLASS_PANES;
+        // A steel can round copper windings and the redstone of its commutator.
+        upgrade(SharedUpgrades.BRUSHED_MOTOR.get(), "ICI", "CRC", "ICI")
+                .define('I', iron).define('C', copper).define('R', redstone).save(output, id("brushed_motor"));
+        // Copper windings all round, no brushes.
+        upgrade(SharedUpgrades.INDUCTION_MOTOR.get(), "ICI", "CCC", "ICI")
+                .define('I', iron).define('C', copper).save(output, id("induction_motor"));
+        // The windings and their controller, its bell of gold.
+        upgrade(SharedUpgrades.BRUSHLESS_MOTOR.get(), "ICI", "CRC", "GGG")
+                .define('I', iron).define('C', copper).define('R', redstone).define('G', gold)
+                .save(output, id("brushless_motor"));
+        // A box of power electronics: its gold contacts, its redstone, its quartz clock and its copper heat sink.
+        upgrade(SharedUpgrades.VARIABLE_FREQUENCY_DRIVE.get(), "IGI", "RQR", "ICI")
+                .define('I', iron).define('G', gold).define('R', redstone).define('Q', Tags.Items.GEMS_QUARTZ)
+                .define('C', copper).save(output, id("variable_frequency_drive"));
+        // A slat conveyor: iron slats over bronze rollers and its redstone drive, on an iron frame.
+        upgrade(SharedUpgrades.PARALLEL_LINE.get(), "NNN", "BRB", "III")
+                .define('N', Tags.Items.NUGGETS_IRON).define('B', bronze).define('R', redstone).define('I', iron)
+                .save(output, id("parallel_line"));
+        // Two lines on a frame of gold, with a diamond's precision.
+        upgrade(SharedUpgrades.ADVANCED_PARALLEL_LINE.get(), "GGG", "LDL", "GGG")
+                .define('G', gold).define('L', SharedUpgrades.PARALLEL_LINE.get()).define('D', Tags.Items.GEMS_DIAMOND)
+                .save(output, id("advanced_parallel_line"));
+        // A receiver of iron with its sight glass, over a compressor of copper and redstone.
+        upgrade(SharedUpgrades.GAS_RECOVERY_UNIT.get(), "IPI", "CRC", "III")
+                .define('I', iron).define('P', glass).define('C', copper).define('R', redstone)
+                .save(output, id("gas_recovery_unit"));
+        // A glass condenser over a copper still.
+        upgrade(SharedUpgrades.SOLVENT_RECOVERY_UNIT.get(), "PPP", "PCP", "CCC")
+                .define('P', glass).define('C', copper).save(output, id("solvent_recovery_unit"));
+        // A diamond edge, its gold coating, on an iron holder.
+        upgrade(SharedUpgrades.PRECISION_TOOLING.get(), " D ", " G ", "III")
+                .define('D', Tags.Items.GEMS_DIAMOND).define('G', gold).define('I', iron)
+                .save(output, id("precision_tooling"));
+        // An iron shell packed round with glass wool.
+        upgrade(SharedUpgrades.MUFFLER.get(), "IPI", "IPI", "IPI")
+                .define('I', iron).define('P', glass).save(output, id("muffler"));
+        // A cyclone of iron, its bronze valve below.
+        upgrade(SharedUpgrades.BYPRODUCT_SEPARATOR.get(), "III", "I I", " B ")
+                .define('I', iron).define('B', bronze).save(output, id("byproduct_separator"));
+    }
+
+    /* An upgrade's shaped recipe of {@code rows}, unlocked by holding iron. */
+    private static ShapedRecipeBuilder upgrade(final Item upgrade, final String... rows) {
+        final ShapedRecipeBuilder recipe = ShapedRecipeBuilder.shaped(RecipeCategory.MISC, upgrade);
+        for (final String row : rows) {
+            recipe.pattern(row);
+        }
+        return recipe.unlockedBy("has_iron_ingot", has(Tags.Items.INGOTS_IRON));
     }
 
     private static RecipeOutput switched(final RecipeOutput output, final String file, final String setting) {

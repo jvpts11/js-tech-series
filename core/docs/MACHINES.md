@@ -547,8 +547,8 @@ ticks), `energy` how many times the energy a tick it spends (1.5 spends half as 
 upgrade slots counts, and their effects multiply: two upgrades of 1.5 speed make a machine 2.25 times as fast.
 A recipe never takes less than one tick, and the energy a tick is rounded up.
 
-*Added 2026-10-15:* an upgrade has nine effects, each a factor of the machine as it was built (1 for no change)
-but `parallel`, which adds recipes at once:
+*Added 2026-10-15, the liquids, the gases and the room on 2026-11-23:* an upgrade has eleven effects, each a factor of
+the machine as it was built (1 for no change) but `parallel`, which adds recipes at once:
 
 | Effect | What it does |
 | --- | --- |
@@ -557,10 +557,12 @@ but `parallel`, which adds recipes at once:
 | `parallel` | How many recipes it works at once besides the first, as its inputs hold sets and its outputs have room; each spends its own energy |
 | `yield` | How many times the items it makes; the part past a whole comes by chance (1.5 makes one, or two half the time) |
 | `byproducts` | How many times as likely its byproducts come, at most always |
-| `use` | How many times the fluid and the matter a recipe spends, rounded up |
+| `liquids` | How many times the fluids and the liquid matter a recipe spends, rounded up |
+| `gases` | How many times the gases a recipe spends, rounded up |
 | `heat` | How many times the heat it gives off as it works |
 | `sound` | How loud it is; 0 silences it |
 | `buffer` | How many times the energy it stores; taken out, what is past the old size is lost |
+| `room` | How many times what each input and output slot and tank holds; the processing machine does not apply it yet |
 
 An upgrade also says how many of it fit in one machine (`most`), across all its upgrade slots: a bay takes no more,
 and only that many count. With few slots and limits, a machine is fast or thrifty, hardly both. The Core's

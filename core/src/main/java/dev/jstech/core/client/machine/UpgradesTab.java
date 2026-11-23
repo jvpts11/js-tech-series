@@ -134,7 +134,7 @@ public final class UpgradesTab implements IMachineFace {
         }
         addIf(shown, all, MachineScreenTexts.EFFECT_YIELD, effect.yield());
         addIf(shown, all, MachineScreenTexts.EFFECT_BYPRODUCTS, effect.byproducts());
-        addIf(shown, all, MachineScreenTexts.EFFECT_USE, effect.use());
+        addIf(shown, all, MachineScreenTexts.EFFECT_USE, use(effect));
         addIf(shown, all, MachineScreenTexts.EFFECT_HEAT, effect.heat());
         addIf(shown, all, MachineScreenTexts.EFFECT_SOUND, effect.sound());
         addIf(shown, all, MachineScreenTexts.EFFECT_BUFFER, effect.buffer());
@@ -145,6 +145,11 @@ public final class UpgradesTab implements IMachineFace {
         if (all || Math.abs(factor - 1.0) > NEUTRAL) {
             shown.add(word.with(times(factor)));
         }
+    }
+
+    /* What a recipe spends of its fluids and matter in one figure, the liquids' or the gases', whichever saves more. */
+    private static double use(final UpgradeEffect effect) {
+        return Math.min(effect.liquids(), effect.gases());
     }
 
     private static String times(final double factor) {
@@ -166,7 +171,7 @@ public final class UpgradesTab implements IMachineFace {
                 new Row(MachineScreenTexts.PAR, effect.parallel() / FULL_PARALLEL * FULL_BAR, c.lampRun()),
                 new Row(MachineScreenTexts.YLD, effect.yield() - 1.0, c.lampRun()),
                 new Row(MachineScreenTexts.BYP, effect.byproducts() - 1.0, c.lampRun()),
-                new Row(MachineScreenTexts.USE, effect.use() - 1.0, c.lampWait()),
+                new Row(MachineScreenTexts.USE, use(effect) - 1.0, c.lampWait()),
                 new Row(MachineScreenTexts.HEA, effect.heat() - 1.0, c.lampWait()),
                 new Row(MachineScreenTexts.SND, effect.sound() - 1.0, c.lampWait()),
                 new Row(MachineScreenTexts.BUF, effect.buffer() - 1.0, c.lampRun()));

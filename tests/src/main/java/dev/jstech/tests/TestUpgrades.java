@@ -35,7 +35,8 @@ public final class TestUpgrades {
             .named("Test No Byproducts Upgrade").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
     /** Half the fluid and matter a recipe spends. */
     public static final ItemEntry<UpgradeItem> THRIFT = TestSounds.CONTENT.item("test_thrift_upgrade",
-            properties -> new UpgradeItem(properties, UpgradeEffect.NONE.withUse(0.5), IUpgrade.ANY))
+            properties -> new UpgradeItem(properties, UpgradeEffect.NONE.withLiquids(0.5).withGases(0.5),
+                    IUpgrade.ANY))
             .named("Test Thrift Upgrade").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
     /** Twice the energy stored, and silence. */
     public static final ItemEntry<UpgradeItem> BUFFER = TestSounds.CONTENT.item("test_buffer_upgrade",
