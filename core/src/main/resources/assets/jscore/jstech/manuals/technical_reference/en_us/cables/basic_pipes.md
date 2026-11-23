@@ -8,7 +8,7 @@ covers: [jscore:copper_pipe, jscore:iron_gas_pipe, jscore:vacuum_jacketed_pipe]
 
 ## What it is
 
-Three pipes, each holding its block alone, with a sight glass in each block that shows what flows inside at its level, moving the way it goes.
+Three pipes with glass their whole length between the rails of their frame, which shows what flows inside at its level, moving the way it goes. Pipes of different kinds share a block, each in its own place of their cross: the Copper Pipe in the middle, the Iron Gas Pipe on top, the Vacuum-Jacketed Pipe on the right. A pipe alone in a block runs through its middle. A pipe and a cable never share a block.
 
 ## What it is for
 

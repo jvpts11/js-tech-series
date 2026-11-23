@@ -8,7 +8,7 @@ covers: [jscore:copper_pipe, jscore:iron_gas_pipe, jscore:vacuum_jacketed_pipe]
 
 ## O que é
 
-Três canos, cada um sozinho no seu bloco, com um visor de vidro em cada bloco que mostra o que passa dentro no seu nível, correndo para o lado em que vai.
+Três canos com vidro em todo o comprimento entre os trilhos da sua armação, que mostra o que passa dentro no seu nível, correndo para o lado em que vai. Canos de tipos diferentes dividem um bloco, cada um no seu lugar da cruz deles: o Cano de Cobre no meio, o Cano de Gás de Ferro em cima, o Cano com Camisa de Vácuo à direita. Um cano sozinho num bloco passa pelo meio dele. Cano e cabo nunca dividem um bloco.
 
 ## Para que serve
 
