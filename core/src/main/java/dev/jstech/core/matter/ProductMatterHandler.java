@@ -17,8 +17,8 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * A store of matter that lets its own materials alone through, filled only with them and emptied only of them: a
- * machine's tanks of gas or plasma as one of its ports bound to those products gives them out (see
+ * A store of matter that lets its own materials alone through, showing only them, filled only with them and emptied
+ * only of them: a machine's tanks of gas or plasma as one of its ports bound to those products gives them out (see
  * {@link PortProducts}).
  */
 @ApiStatus.Experimental
@@ -46,9 +46,13 @@ public final class ProductMatterHandler implements IMatterHandler {
         return this.inner.tanks();
     }
 
+    /*
+     * What a tank holds when it is one of its own materials; another's is not seen through this port, so whatever
+     * reads the port asks only for what it can empty.
+     */
     @Override
     public Optional<MatterStack> stack(final int tank) {
-        return this.inner.stack(tank);
+        return this.inner.stack(tank).filter(held -> this.materials.contains(held.material().id()));
     }
 
     @Override

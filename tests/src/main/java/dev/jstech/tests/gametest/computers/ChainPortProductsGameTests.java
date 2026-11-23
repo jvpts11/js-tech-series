@@ -17,9 +17,11 @@ import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesChemicals;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.material.Material;
+import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
 import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
@@ -28,9 +30,14 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -99,6 +106,72 @@ public final class ChainPortProductsGameTests {
                             && gases.equals(Set.of(Elements.of(Element.KRYPTON).id(), Elements.of(Element.ARGON).id(),
                                     Elements.of(Element.NITROGEN).id(), Elements.of(Element.OXYGEN).id())),
                             "four outlets, one gas each: krypton, argon, nitrogen, oxygen: " + bound);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A port bound to its products shows those alone: the Electrolytic Cell's hydrogen outlet never shows the chlorine
+     * in its other tank, so an Import Bus on it takes the hydrogen and is not held on a gas that outlet cannot give.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void electrolyticCell_eachGasOutletShowsItsOwnGasAlone(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("electrolytic_cell"));
+        helper.startSequence()
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    final ChainMachineBlockEntity cell = machineAt(helper, terminal);
+                    final List<MatterTank> tanks = cell.matter().outputs(MatterState.GAS);
+                    helper.assertTrue(tanks.size() == 2, "the cell has two gas tanks: " + tanks.size());
+                    tanks.get(0).set(new MatterStack(Elements.of(Element.CHLORINE), POUR));
+                    tanks.get(1).set(new MatterStack(Elements.of(Element.HYDROGEN), POUR));
+                    for (final BlockPos outlet : ports(cell, PortKind.GAS_OUTPUT)) {
+                        final Set<ResourceLocation> own = cell.portProducts(outlet);
+                        final IMatterHandler gas = helper.getLevel().getCapability(MatterCapabilities.GAS, outlet,
+                                Direction.UP);
+                        helper.assertTrue(gas != null, "the outlet opens onto the cell's gas");
+                        for (int tank = 0; tank < gas.tanks(); tank++) {
+                            gas.stack(tank).ifPresent(held -> helper.assertTrue(own.contains(held.material().id()),
+                                    "the outlet of " + own + " shows no " + held.material().id().getPath()));
+                        }
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /* The same for a liquid: the Display Line's mercury inlet never shows the liquid crystal the other one took. */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void displayLine_eachLiquidInletShowsItsOwnLiquidAlone(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("display_line"));
+        final ResourceLocation crystal = ResourceLocation.fromNamespaceAndPath("jscore", "liquid_crystal");
+        helper.startSequence()
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    final ChainMachineBlockEntity line = machineAt(helper, terminal);
+                    final List<BlockPos> inlets = ports(line, PortKind.FLUID_INPUT);
+                    helper.assertTrue(inlets.size() == 2, "the line has two liquid inlets: " + inlets.size());
+                    for (final BlockPos inlet : inlets) {
+                        if (line.portProducts(inlet).contains(crystal)) {
+                            final IFluidHandler liquid = helper.getLevel().getCapability(
+                                    Capabilities.FluidHandler.BLOCK, inlet, Direction.UP);
+                            helper.assertTrue(liquid != null && liquid.fill(new FluidStack(
+                                    BuiltInRegistries.FLUID.get(crystal), (int) POUR), FluidAction.EXECUTE) > 0,
+                                    "the liquid crystal inlet takes liquid crystal");
+                        }
+                    }
+                    for (final BlockPos inlet : inlets) {
+                        final Set<ResourceLocation> own = line.portProducts(inlet);
+                        final IFluidHandler liquid = helper.getLevel().getCapability(Capabilities.FluidHandler.BLOCK,
+                                inlet, Direction.UP);
+                        helper.assertTrue(liquid != null, "the inlet opens onto the line's liquids");
+                        for (int tank = 0; tank < liquid.getTanks(); tank++) {
+                            final FluidStack held = liquid.getFluidInTank(tank);
+                            helper.assertTrue(held.isEmpty()
+                                    || own.contains(BuiltInRegistries.FLUID.getKey(held.getFluid())),
+                                    "the inlet of " + own + " shows no " + BuiltInRegistries.FLUID.getKey(
+                                            held.getFluid()).getPath());
+                        }
+                    }
                 })
                 .thenSucceed();
     }

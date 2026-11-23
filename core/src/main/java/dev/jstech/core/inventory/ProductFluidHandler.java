@@ -17,8 +17,9 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * A fluid handler that lets its own fluids alone through, filled only with them and drained only of them: the tanks
- * of a machine as one of its ports bound to those products gives them out (see {@link PortProducts}).
+ * A fluid handler that lets its own fluids alone through, showing only them, filled only with them and drained only
+ * of them: the tanks of a machine as one of its ports bound to those products gives them out (see
+ * {@link PortProducts}).
  */
 @ApiStatus.Experimental
 public final class ProductFluidHandler implements IFluidHandler {
@@ -40,9 +41,14 @@ public final class ProductFluidHandler implements IFluidHandler {
         return this.inner.getTanks();
     }
 
+    /*
+     * A tank's fluid when it is one of its own; another's is not seen through this port, so whatever reads the port
+     * asks only for what it can drain.
+     */
     @Override
     public FluidStack getFluidInTank(final int tank) {
-        return this.inner.getFluidInTank(tank);
+        final FluidStack held = this.inner.getFluidInTank(tank);
+        return is(held) ? held : FluidStack.EMPTY;
     }
 
     @Override

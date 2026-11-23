@@ -5567,6 +5567,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A machine that takes nothing in works: the Air Separation Unit, which draws the air round it and has no
   inlet, never started, its progress held at nothing with all the power it needed, as a machine looked for its work
   only when something was in it.
+- (Core) A port bound to its products shows those alone, of its gases as of its liquids: the Electrolytic Cell's
+  hydrogen outlet showed the chlorine of its other tank, so an Import Bus on it kept asking for the chlorine it could
+  not take and never took the hydrogen, and the cell, its hydrogen tank full, stopped.
 
 ## [0.5.3a] - 2026-11-04
 
