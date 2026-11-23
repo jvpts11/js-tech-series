@@ -160,9 +160,9 @@ record ProcessingOutputs(FieldItemHandler inventory, int firstSlot, int endSlot,
         return true;
     }
 
-    /* The most of {@code stack} an output slot holds: its own limit, and the stack's size. */
+    /* The most of {@code stack} an output slot holds: the stack's size times the room the machine's upgrades give. */
     private int slotLimit(final int slot, final ItemStack stack) {
-        return Math.min(this.inventory.getSlotLimit(slot), stack.getMaxStackSize());
+        return this.inventory.stackLimitOf(slot, stack);
     }
 
     /* How many of {@code incoming} fit on {@code held} up to {@code limit}; the insert and the dry run share it. */

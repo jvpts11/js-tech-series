@@ -2,13 +2,13 @@
 section: machines
 order: 1
 icon: jscore:brushed_motor
-covers: [jscore:brushed_motor, jscore:induction_motor, jscore:brushless_motor, jscore:variable_frequency_drive, jscore:parallel_line, jscore:advanced_parallel_line, jscore:gas_recovery_unit, jscore:solvent_recovery_unit, jscore:precision_tooling, jscore:muffler, jscore:byproduct_separator]
+covers: [jscore:brushed_motor, jscore:induction_motor, jscore:brushless_motor, jscore:variable_frequency_drive, jscore:parallel_line, jscore:advanced_parallel_line, jscore:gas_recovery_unit, jscore:solvent_recovery_unit, jscore:precision_tooling, jscore:muffler, jscore:expanded_buffers, jscore:byproduct_separator]
 ---
 # Machine Upgrades
 
 ## What it is
 
-Real parts put into a machine's upgrade slots: motors, a drive, extra lanes, recovery units, tooling, a muffler and a separator. They are never used up. Any machine of the series with upgrade slots takes them.
+Real parts put into a machine's upgrade slots: motors, a drive, extra lanes, recovery units, tooling, a muffler, buffers and a separator. They are never used up. Any machine of the series with upgrade slots takes them.
 
 Table: What each does
 
@@ -22,6 +22,7 @@ Table: What each does
 | Solvent Recovery Unit | -15% of the liquids a recipe spends |
 | Precision Tooling | +10% of what the machine makes; up to 2 |
 | Muffler | The machine is silent |
+| Expanded Buffers | Each input and output slot and tank holds twice as much |
 | Byproduct Separator | +50% byproducts |
 
 Gains add up and savings multiply: four motors make a machine three times as fast, and four drives leave it at 41% of its energy.
@@ -44,6 +45,9 @@ Craft each at the Crafting Table from iron, copper, gold and bronze ingots and t
 
 > [!PROBLEM] An upgrade does not go into the slot.
 > That many of it already sit in the machine, or the machine has no upgrade slots.
+
+> [!PROBLEM] Nothing more goes into a slot or a tank after the Expanded Buffers came out.
+> It holds more than it holds without them: the rest stays until the machine uses it, and then it takes in again.
 
 > [!PROBLEM] The machine spends much more energy.
 > Motors and lines cost energy for what they gain. A Variable Frequency Drive takes some of it back.

@@ -561,14 +561,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- Room beyond a stack: J's Core's API is at version 93. `FieldItemHandler.beyondTheStack` lets a slot hold
+  more of an item than its stack, as its stack limit says, and saves past the 99 the game saves of one stack;
+  `stackLimitOf` reads a slot's limit for a stack. `MatterTank.room` and `MatterTanks.room` make a tank that many
+  times the volume it was built with, what it holds kept. The processing machine gives its slots and tanks the
+  room its upgrades say. Experimental.
 - Four upgrade bays: J's Core's API is at version 92. `MachineScreenLayout.BAYS` is four, and
   `bay(index, bays)` and `bayX(index, bays)` place a bay among the bays the tab shows, closer by
   `BAY_PITCH_FOUR` when it shows four; `bay(index)` is gone. `MachineScreenTexts` names the liquids, the gases
   and the room (`LIQ`, `GAS`, `CAP` and their `EFFECT_` lines) in place of `USE`. Experimental.
 - Machine upgrades by kind and by what they spend: J's Core's API is at version 91. `UpgradeEffect` spends
   liquids and gases each by a factor of its own (`liquids` and `gases`, `liquidSpent` and `gasSpent`, in place of
-  `use` and `spent`) and has a `room` factor, what each input and output slot and tank holds, which the processing
-  machine does not apply yet. `IUpgrade.kind` lets upgrades of one kind share how many fit in one machine, and
+  `use` and `spent`) and has a `room` factor, what each input and output slot and tank holds. `IUpgrade.kind` lets upgrades of one kind share how many fit in one machine, and
   `UpgradeItem` takes the kind. An upgrade's tooltip says each effect as a share gained, in green, or lost, in red
   ("+50% speed"), and how many fit in one machine. Experimental.
 - Panel screens fit the window: J's Core's API is at version 90. `IPanelScreen` lets a screen with no menu that
@@ -631,7 +635,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   in a machine), the Variable Frequency Drive (-20% energy), the Parallel Line and the Advanced Parallel Line (one and
   two more recipes at once, their energy in proportion), the Gas Recovery Unit (-15% of the gases a recipe spends),
   the Solvent Recovery Unit (-15% of its liquids), Precision Tooling (+10% of what the machine makes, two in a
-  machine), the Muffler (the machine is silent) and the Byproduct Separator (+50% byproducts). Gains add up and
+  machine), the Muffler (the machine is silent), the Expanded Buffers (each input and output slot and tank holds twice
+  as much; taken out with more inside, the rest stays until it is used) and the Byproduct Separator (+50%
+  byproducts). Gains add up and
   savings multiply. J's Industrial's machines take them, and the Technical Reference has a page for them in its new
   section, Machines.
 - Bronze for any mod used alone: three copper ingots and one tin ingot make four bronze ingots at the

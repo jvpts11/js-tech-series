@@ -49,7 +49,7 @@ public final class FieldFluidTank extends FluidTank implements IField {
 
     /** Fills the tank from inside the block, as a machine puts out what it made, whatever pipes may do. */
     public int fillInside(final FluidStack resource, final FluidAction action) {
-        return super.fill(resource, action);
+        return filled(resource, action);
     }
 
     /** Draws from the tank inside the block, as a machine spends what it was given, whatever pipes may do. */
@@ -60,7 +60,7 @@ public final class FieldFluidTank extends FluidTank implements IField {
 
     @Override
     public int fill(final FluidStack resource, final FluidAction action) {
-        return outputOnly ? 0 : super.fill(resource, action);
+        return outputOnly ? 0 : filled(resource, action);
     }
 
     @Override
@@ -119,5 +119,13 @@ public final class FieldFluidTank extends FluidTank implements IField {
     @Override
     public int menuSlots() {
         return 0;
+    }
+
+    /*
+     * What the tank takes of {@code resource}: nothing once it holds its capacity or more, as a machine's tank does
+     * once an upgrade that gave it room comes out, so what it holds past its capacity is kept, never cut back to it.
+     */
+    private int filled(final FluidStack resource, final FluidAction action) {
+        return !getFluid().isEmpty() && getFluidAmount() >= getCapacity() ? 0 : super.fill(resource, action);
     }
 }

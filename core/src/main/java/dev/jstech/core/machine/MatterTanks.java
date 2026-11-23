@@ -76,6 +76,12 @@ public final class MatterTanks {
         return !this.handlers.isEmpty();
     }
 
+    /** Makes every tank {@code room} times the volume it was built with, what each holds kept. */
+    public void room(final double room) {
+        this.inputs.values().forEach(tanks -> tanks.forEach(tank -> tank.room(room)));
+        this.outputs.values().forEach(tanks -> tanks.forEach(tank -> tank.room(room)));
+    }
+
     private static MatterTank tank(final BlockEntityFields fields, final String key, final MatterSpec spec) {
         final PartField[] declared = new PartField[1];
         final MatterTank tank = new MatterTank(spec.state(), spec.volume(), spec.pressure(),

@@ -2,13 +2,13 @@
 section: machines
 order: 1
 icon: jscore:brushed_motor
-covers: [jscore:brushed_motor, jscore:induction_motor, jscore:brushless_motor, jscore:variable_frequency_drive, jscore:parallel_line, jscore:advanced_parallel_line, jscore:gas_recovery_unit, jscore:solvent_recovery_unit, jscore:precision_tooling, jscore:muffler, jscore:byproduct_separator]
+covers: [jscore:brushed_motor, jscore:induction_motor, jscore:brushless_motor, jscore:variable_frequency_drive, jscore:parallel_line, jscore:advanced_parallel_line, jscore:gas_recovery_unit, jscore:solvent_recovery_unit, jscore:precision_tooling, jscore:muffler, jscore:expanded_buffers, jscore:byproduct_separator]
 ---
 # Upgrades de Máquina
 
 ## O que é
 
-Peças de verdade postas nos slots de upgrade de uma máquina: motores, um inversor, linhas a mais, unidades de recuperação, ferramental, um abafador e um separador. Nunca se gastam. Qualquer máquina da série com slots de upgrade os aceita.
+Peças de verdade postas nos slots de upgrade de uma máquina: motores, um inversor, linhas a mais, unidades de recuperação, ferramental, um abafador, buffers e um separador. Nunca se gastam. Qualquer máquina da série com slots de upgrade os aceita.
 
 Table: O que cada um faz
 
@@ -22,6 +22,7 @@ Table: O que cada um faz
 | Unidade de Recuperação de Solvente | -15% dos líquidos que uma receita gasta |
 | Ferramental de Precisão | +10% do que a máquina faz; até 2 |
 | Abafador | A máquina fica em silêncio |
+| Buffers Expandidos | Cada slot e tanque de entrada e saída guarda o dobro |
 | Separador de Subprodutos | +50% de subprodutos |
 
 Os ganhos se somam e as economias se multiplicam: quatro motores deixam a máquina três vezes mais rápida, e quatro inversores a deixam em 41% da energia.
@@ -44,6 +45,9 @@ Fabrique cada um na bancada com barras de ferro, cobre, ouro e bronze e com reds
 
 > [!PROBLEM] Um upgrade não entra no slot.
 > Já há tantos dele na máquina quantos cabem, ou a máquina não tem slots de upgrade.
+
+> [!PROBLEM] Nada mais entra num slot ou num tanque depois que os Buffers Expandidos saíram.
+> Ele guarda mais do que guarda sem eles: o resto fica até a máquina usar, e então ele volta a receber.
 
 > [!PROBLEM] A máquina gasta muito mais energia.
 > Motores e linhas custam energia pelo que ganham. Um Inversor de Frequência devolve parte dela.

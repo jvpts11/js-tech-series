@@ -562,7 +562,7 @@ the machine as it was built (1 for no change) but `parallel`, which adds recipes
 | `heat` | How many times the heat it gives off as it works |
 | `sound` | How loud it is; 0 silences it |
 | `buffer` | How many times the energy it stores; taken out, what is past the old size is lost |
-| `room` | How many times what each input and output slot and tank holds; the processing machine does not apply it yet |
+| `room` | How many times what each input and output slot and tank holds; taken out, what is past the old size stays until it is used and nothing more goes in |
 
 An upgrade also says how many of it fit in one machine (`most`), across all its upgrade slots: a bay takes no more,
 and only that many count. With few slots and limits, a machine is fast or thrifty, hardly both. The Core's

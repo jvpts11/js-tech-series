@@ -31,10 +31,11 @@ import org.jetbrains.annotations.Nullable;
 public class MatterTank implements IMatterHandler {
 
     private final MatterState state;
-    private final long volume;
+    private final long builtVolume;
     private final long pressure;
-    private final long capacity;
     private final Runnable onChange;
+    private long volume;
+    private long capacity;
     private @Nullable MatterStack held;
     /* The pressures it bursts past and its relief valve opens past, and the valve's rate; 0 for none. */
     private long burstsAt;
@@ -54,10 +55,24 @@ public class MatterTank implements IMatterHandler {
             throw new IllegalArgumentException("a tank has a volume and a pressure, not " + volume + " at "
                     + pressure);
         }
+        this.builtVolume = volume;
         this.volume = volume;
         this.pressure = pressure;
         this.capacity = volume > Long.MAX_VALUE / pressure ? Long.MAX_VALUE : volume * pressure;
         this.onChange = Objects.requireNonNull(onChange, "onChange");
+    }
+
+    /**
+     * Makes it {@code room} times the volume it was built with, at its own pressure, as a machine's tank is while an
+     * upgrade gives it room. What it holds stays as it is, even past what it now holds: once the upgrade comes out
+     * the rest stays until it is used, and nothing more goes in.
+     */
+    public void room(final double room) {
+        if (!(room > 0.0)) {
+            throw new IllegalArgumentException("a tank has some room; got " + room);
+        }
+        this.volume = Math.max(1L, (long) Math.min(Long.MAX_VALUE, Math.floor(this.builtVolume * room)));
+        this.capacity = times(this.pressure);
     }
 
     /** Its volume, in millibuckets. */

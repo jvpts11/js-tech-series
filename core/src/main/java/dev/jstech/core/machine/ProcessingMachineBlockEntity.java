@@ -124,16 +124,21 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         final PartField[] locksField = new PartField[1];
         this.locks = new SlotLocks(layout.firstOutput(), () -> locksField[0].changed());
         locksField[0] = fields().part("Locks", this.locks).save().toClient();
-        getInventory().accepts((slot, stack) -> layout.isInput(slot) && this.locks.allows(slot, stack)
+        // Its inputs and outputs hold what an item's stack holds times the room its upgrades give them.
+        getInventory().beyondTheStack().accepts((slot, stack) -> layout.isInput(slot) && this.locks.allows(slot, stack)
                 || layout.isUpgrade(slot) && stack.getItem() instanceof IUpgrade)
                 .stackLimit((slot, stack) -> layout.isUpgrade(slot) ? upgradeRoom(slot, stack)
-                        : Item.ABSOLUTE_MAX_STACK_SIZE)
+                        : (int) Math.min(Integer.MAX_VALUE, upgradeEffect().held(stack.getMaxStackSize())))
                 .onChange(slot -> {
                     if (layout.isUpgrade(slot)) {
                         this.effect = null;
+                        giveRoom();
                     }
                 })
-                .onLoad(() -> this.effect = null);
+                .onLoad(() -> {
+                    this.effect = null;
+                    giveRoom();
+                });
     }
 
     /**
@@ -713,7 +718,19 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         final ItemStack here = getInventory().getStackInSlot(slot);
         final long elsewhere = upgradesOfKind(kind) - (kindOf(here).filter(kind::equals).isPresent()
                 ? here.getCount() : 0);
-        return (int) Math.max(0L, Math.min(Item.ABSOLUTE_MAX_STACK_SIZE, upgrade.most(stack) - elsewhere));
+        return (int) Math.max(0L, Math.min(stack.getMaxStackSize(), upgrade.most(stack) - elsewhere));
+    }
+
+    /*
+     * Gives its tanks the room its upgrades say, what each holds kept: past what a tank holds once an upgrade comes
+     * out, the rest stays until it is used. Its slots read the same room as they are filled.
+     */
+    private void giveRoom() {
+        final UpgradeEffect upgrades = upgradeEffect();
+        final int capacity = (int) Math.min(Integer.MAX_VALUE, upgrades.held(layout.tankCapacity()));
+        inputTanks.forEach(tank -> tank.setCapacity(capacity));
+        outputTanks.forEach(tank -> tank.setCapacity(capacity));
+        this.matter.room(upgrades.room());
     }
 
     /* How many upgrades of {@code kind} its upgrade slots hold together. */
@@ -733,7 +750,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return stack.getItem() instanceof IUpgrade upgrade ? Optional.of(upgrade.kind(stack)) : Optional.empty();
     }
 
-    /* What a recipe that spends {@code amount} from {@code tank} spends with {@code effect}: a gas as one, else a liquid. */
+    /* What a recipe that spends {@code amount} from {@code tank} spends with {@code effect}: a gas or a liquid. */
     private static long matterSpent(final UpgradeEffect effect, final MatterTank tank, final long amount) {
         return tank.state() == MatterState.GAS ? effect.gasSpent(amount) : effect.liquidSpent(amount);
     }
@@ -871,7 +888,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         for (int slot = first; slot < end; slot++) {
             final ItemStack stack = getInventory().getStackInSlot(slot);
             sum += stack.isEmpty() ? 0.0 : stack.getCount()
-                    / (double) Math.max(1, Math.min(getInventory().getSlotLimit(slot), stack.getMaxStackSize()));
+                    / (double) Math.max(1, getInventory().stackLimitOf(slot, stack));
             count++;
         }
         for (final FieldFluidTank tank : tanks) {

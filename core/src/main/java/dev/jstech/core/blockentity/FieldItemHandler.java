@@ -9,6 +9,9 @@ package dev.jstech.core.blockentity;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,9 +39,15 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
     private BooleanSupplier locked = () -> false;
     private boolean exposed;
     private boolean drops;
+    private boolean beyondTheStack;
 
     /** The vanilla stack size, which a slot limit never exceeds. */
     private static final int STACK = 64;
+    /* The save's keys: the items, each with its slot and, past what the game saves of one stack, how many it holds. */
+    private static final String ITEMS = "Items";
+    private static final String SIZE = "Size";
+    private static final String SLOT = "Slot";
+    private static final String HELD = "Held";
 
     FieldItemHandler(final FieldFlags flags, final int slots) {
         super(slots);
@@ -90,6 +99,21 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
         return this;
     }
 
+    /**
+     * Lets a slot hold more of an item than the item's own stack, as many as {@link #stackLimit} says, as a machine
+     * whose upgrades give its slots more room does. What a slot holds past the most the game saves of one stack is
+     * saved beside it.
+     */
+    public FieldItemHandler beyondTheStack() {
+        beyondTheStack = true;
+        return this;
+    }
+
+    /** The most of {@code stack} slot {@code slot} holds: its own limit, the item's stack and the declared rule. */
+    public int stackLimitOf(final int slot, final ItemStack stack) {
+        return getStackLimit(slot, stack);
+    }
+
     /** Gives nothing out while {@code rule} holds, as a burner keeps the disc it is writing. */
     public FieldItemHandler lockedWhile(final BooleanSupplier rule) {
         locked = rule;
@@ -118,7 +142,9 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
 
     @Override
     public int getSlotLimit(final int slot) {
-        return Math.min(slotLimit, super.getSlotLimit(slot));
+        // Beyond the stack, what the rule gives a stack of the game's size: what the slot holds, read from outside.
+        return beyondTheStack ? Math.max(STACK, stackLimit.applyAsInt(slot, ItemStack.EMPTY))
+                : Math.min(slotLimit, super.getSlotLimit(slot));
     }
 
     @Override
@@ -127,8 +153,45 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
     }
 
     @Override
+    public CompoundTag serializeNBT(final HolderLookup.Provider registries) {
+        final ListTag items = new ListTag();
+        for (int slot = 0; slot < stacks.size(); slot++) {
+            final ItemStack stack = stacks.get(slot);
+            if (!stack.isEmpty()) {
+                final CompoundTag item = new CompoundTag();
+                item.putInt(SLOT, slot);
+                if (stack.getCount() > Item.ABSOLUTE_MAX_STACK_SIZE) {
+                    item.putInt(HELD, stack.getCount());
+                }
+                items.add(stack.copyWithCount(Math.min(stack.getCount(), Item.ABSOLUTE_MAX_STACK_SIZE))
+                        .save(registries, item));
+            }
+        }
+        final CompoundTag saved = new CompoundTag();
+        saved.put(ITEMS, items);
+        saved.putInt(SIZE, stacks.size());
+        return saved;
+    }
+
+    @Override
+    public void deserializeNBT(final HolderLookup.Provider registries, final CompoundTag saved) {
+        setSize(saved.contains(SIZE, Tag.TAG_INT) ? saved.getInt(SIZE) : stacks.size());
+        final ListTag items = saved.getList(ITEMS, Tag.TAG_COMPOUND);
+        for (int i = 0; i < items.size(); i++) {
+            final CompoundTag item = items.getCompound(i);
+            final int slot = item.getInt(SLOT);
+            if (slot >= 0 && slot < stacks.size()) {
+                ItemStack.parse(registries, item).ifPresent(stack -> stacks.set(slot, item.contains(HELD, Tag.TAG_INT)
+                        ? stack.copyWithCount(item.getInt(HELD)) : stack));
+            }
+        }
+        onLoad();
+    }
+
+    @Override
     protected int getStackLimit(final int slot, final ItemStack stack) {
-        return Math.max(0, Math.min(super.getStackLimit(slot, stack), stackLimit.applyAsInt(slot, stack)));
+        final int rule = stackLimit.applyAsInt(slot, stack);
+        return Math.max(0, beyondTheStack ? rule : Math.min(super.getStackLimit(slot, stack), rule));
     }
 
     @Override

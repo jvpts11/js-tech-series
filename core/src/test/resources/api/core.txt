@@ -617,7 +617,9 @@ stable 4
 10 dev.jstech.core.blockentity.FieldFluidTank  void read(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.blockentity.FieldFluidTank  void write(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.blockentity.FieldItemHandler  type final class extends ItemStackHandler implements IField
+93 dev.jstech.core.blockentity.FieldItemHandler  CompoundTag serializeNBT(HolderLookup.Provider)
 10 dev.jstech.core.blockentity.FieldItemHandler  FieldItemHandler accepts(BiPredicate<Integer, ItemStack>)
+93 dev.jstech.core.blockentity.FieldItemHandler  FieldItemHandler beyondTheStack()
 10 dev.jstech.core.blockentity.FieldItemHandler  FieldItemHandler dropsWhenBroken()
 10 dev.jstech.core.blockentity.FieldItemHandler  FieldItemHandler exposed()
 10 dev.jstech.core.blockentity.FieldItemHandler  FieldItemHandler lockedWhile(BooleanSupplier)
@@ -631,6 +633,8 @@ stable 4
 10 dev.jstech.core.blockentity.FieldItemHandler  boolean isItemValid(int, ItemStack)
 10 dev.jstech.core.blockentity.FieldItemHandler  int getSlotLimit(int)
 10 dev.jstech.core.blockentity.FieldItemHandler  int menuSlots()
+93 dev.jstech.core.blockentity.FieldItemHandler  int stackLimitOf(int, ItemStack)
+93 dev.jstech.core.blockentity.FieldItemHandler  void deserializeNBT(HolderLookup.Provider, CompoundTag)
 10 dev.jstech.core.blockentity.FieldItemHandler  void read(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.blockentity.FieldItemHandler  void write(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.blockentity.IFaceGate  type interface
@@ -8388,6 +8392,7 @@ stable 4
 10 dev.jstech.core.machine.MatterTanks  List<MatterTank> outputs(MatterState)
 10 dev.jstech.core.machine.MatterTanks  boolean any()
 10 dev.jstech.core.machine.MatterTanks  static MatterTanks in(BlockEntityFields, List<MatterSpec>)
+93 dev.jstech.core.machine.MatterTanks  void room(double)
 10 dev.jstech.core.machine.MatterTanks.MatterSpec  type record(MatterState state, int inputs, int outputs, long volume, long pressure)
 12 dev.jstech.core.machine.PowerDrawn  type record(Energy energy, long perTick, EnergyClass port)
 12 dev.jstech.core.machine.PowerDrawn  Optional<EnergyClass> portClass()
@@ -9244,6 +9249,7 @@ stable 4
 10 dev.jstech.core.matter.MatterTank  protected boolean takes()
 10 dev.jstech.core.matter.MatterTank  protected void lose()
 10 dev.jstech.core.matter.MatterTank  void load(CompoundTag)
+93 dev.jstech.core.matter.MatterTank  void room(double)
 10 dev.jstech.core.matter.MatterTank  void save(CompoundTag)
 12 dev.jstech.core.matter.PressureBursts  type final class
 12 dev.jstech.core.matter.PressureBursts  static BreachRules.IBroken pipe(long)

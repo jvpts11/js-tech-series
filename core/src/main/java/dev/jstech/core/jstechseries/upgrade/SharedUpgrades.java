@@ -66,6 +66,12 @@ public final class SharedUpgrades {
     /** A silencer: the machine makes no sound. */
     public static final ItemEntry<UpgradeItem> MUFFLER = upgrade("muffler", UpgradeEffect.NONE.withSound(0.0),
             IUpgrade.ANY, null).named("Muffler").register();
+    /**
+     * A bin of drawers: each input and output slot and tank holds twice as much. Taken out with more inside than then
+     * fits, the rest stays until it is used, and nothing more goes in.
+     */
+    public static final ItemEntry<UpgradeItem> EXPANDED_BUFFERS = upgrade("expanded_buffers",
+            UpgradeEffect.NONE.withRoom(2.0), IUpgrade.ANY, null).named("Expanded Buffers").register();
     /** A cyclone that parts the light from the heavy: byproducts half again as likely. */
     public static final ItemEntry<UpgradeItem> BYPRODUCT_SEPARATOR = upgrade("byproduct_separator",
             UpgradeEffect.NONE.withByproducts(1.5), IUpgrade.ANY, null).named("Byproduct Separator").register();
@@ -82,7 +88,7 @@ public final class SharedUpgrades {
     public static List<ItemEntry<UpgradeItem>> all() {
         return List.of(BRUSHED_MOTOR, INDUCTION_MOTOR, BRUSHLESS_MOTOR, VARIABLE_FREQUENCY_DRIVE, PARALLEL_LINE,
                 ADVANCED_PARALLEL_LINE, GAS_RECOVERY_UNIT, SOLVENT_RECOVERY_UNIT, PRECISION_TOOLING, MUFFLER,
-                BYPRODUCT_SEPARATOR);
+                EXPANDED_BUFFERS, BYPRODUCT_SEPARATOR);
     }
 
     /* An upgrade of {@code effect}, {@code most} of its {@code kind} in one machine, drawn flat in the J's Tech tab. */

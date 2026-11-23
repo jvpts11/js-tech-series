@@ -219,6 +219,9 @@ public final class SeriesRecipes extends RecipeProvider {
         // An iron shell packed round with glass wool.
         upgrade(SharedUpgrades.MUFFLER.get(), "IPI", "IPI", "IPI")
                 .define('I', iron).define('P', glass).save(output, id("muffler"));
+        // A bin of iron drawers, their bronze handles.
+        upgrade(SharedUpgrades.EXPANDED_BUFFERS.get(), "IBI", "IBI", "IBI")
+                .define('I', iron).define('B', bronze).save(output, id("expanded_buffers"));
         // A cyclone of iron, its bronze valve below.
         upgrade(SharedUpgrades.BYPRODUCT_SEPARATOR.get(), "III", "I I", " B ")
                 .define('I', iron).define('B', bronze).save(output, id("byproduct_separator"));
