@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "minecraft:iron_bars"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "jscore:iron_gas_pipe"
+    }
+  },
+  "pattern": [
+    "IBI",
+    "IPI",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:gas_vent"
+  }
+}

@@ -638,6 +638,7 @@ public final class JsCore {
         SharedEnergy.listen(modEventBus);
         EnergyConverters.listen(modEventBus);
         SharedContainment.listen(modEventBus);
+        SharedPipes.listen(modEventBus);
         ClientPayloads.listen();
         ClientUpdates.listen();
         CoreCables.listen(modEventBus);

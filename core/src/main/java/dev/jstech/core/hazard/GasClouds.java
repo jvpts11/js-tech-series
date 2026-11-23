@@ -160,6 +160,15 @@ public final class GasClouds {
         });
     }
 
+    /** A puff of {@code gas} as it is drawn: of the gas's colour, or plain cloud for a gas with none. */
+    public static ParticleOptions puff(final Material gas) {
+        return MaterialValues.value(gas, MaterialProperties.COLOUR, false).<ParticleOptions>map(colour -> {
+            final int rgb = Integer.parseInt(colour.substring(1), HEX);
+            return new DustParticleOptions(new Vector3f(channel(rgb, RED), channel(rgb, GREEN), channel(rgb, 0)),
+                    PUFF_SIZE);
+        }).orElse(ParticleTypes.CLOUD);
+    }
+
     /** The share of the air at {@code at} that {@code gas} is, in its clouds or in the sealed room there. */
     public static double shareAt(final ServerLevel level, final BlockPos at, final Material gas) {
         final Vec3 where = Vec3.atCenterOf(at);
@@ -237,17 +246,11 @@ public final class GasClouds {
                 CampfireBlock.LIT);
     }
 
-    /* The cloud drawn as puffs of its gas's colour, or as plain cloud for a gas with none, more the wider it is. */
+    /* The cloud drawn as puffs of its gas, more the wider it is. */
     private static void show(final ServerLevel level, final Cloud cloud, final Material gas) {
-        final ParticleOptions puff = MaterialValues.value(gas, MaterialProperties.COLOUR, false)
-                .<ParticleOptions>map(colour -> {
-                    final int rgb = Integer.parseInt(colour.substring(1), HEX);
-                    return new DustParticleOptions(new Vector3f(channel(rgb, RED), channel(rgb, GREEN),
-                            channel(rgb, 0)), PUFF_SIZE);
-                }).orElse(ParticleTypes.CLOUD);
         final int puffs = (int) Math.min(MOST_PUFFS, Math.ceil(cloud.radius() * PUFFS_A_BLOCK));
         final double spread = cloud.radius() / 2;
-        level.sendParticles(puff, cloud.x(), cloud.y(), cloud.z(), puffs, spread, spread, spread, 0);
+        level.sendParticles(puff(gas), cloud.x(), cloud.y(), cloud.z(), puffs, spread, spread, spread, 0);
     }
 
     /* A channel of {@code rgb}, shifted down by {@code shift} bits, from 0 to 1. */

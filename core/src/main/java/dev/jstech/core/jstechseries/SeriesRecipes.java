@@ -88,6 +88,11 @@ public final class SeriesRecipes extends RecipeProvider {
                 .pattern("III").pattern("GOG").pattern("III")
                 .define('I', Items.IRON_INGOT).define('G', Items.GLASS_PANE).define('O', Items.OBSIDIAN)
                 .unlockedBy("has_obsidian", has(Items.OBSIDIAN)).save(alone, id("vacuum_jacketed_pipe"));
+        // An iron box with the gas pipe's inlet, and a grate on top where the gas goes out.
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, SharedPipes.GAS_VENT.get())
+                .pattern("IBI").pattern("IPI").pattern("III")
+                .define('I', Items.IRON_INGOT).define('B', Items.IRON_BARS).define('P', SharedPipes.IRON_GAS_PIPE)
+                .unlockedBy("has_iron_gas_pipe", has(SharedPipes.IRON_GAS_PIPE)).save(output, id("gas_vent"));
         // An open-ended spanner of iron, its jaws apart at the top.
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, SharedTools.WRENCH.get())
                 .pattern("I I").pattern(" I ").pattern(" I ")

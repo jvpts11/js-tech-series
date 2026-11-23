@@ -40,7 +40,9 @@ public final class GasCloudGameTests {
 
     private static final String ARENA = "empty";
     private static final BlockPos MIDDLE = new BlockPos(3, 3, 3);
-    private static final double NEAR = 16;
+    /* How near where a test let its gas out a cloud's centre is when the cloud is that test's: the arenas beside it,
+       whose clouds it must leave alone, are further. */
+    private static final double NEAR = 3;
 
     private GasCloudGameTests() {
     }

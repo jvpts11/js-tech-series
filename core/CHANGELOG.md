@@ -598,6 +598,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   formed model's doors' leaves are left out of its blocks' shapes. Experimental.
 
 ### Added
+- The Gas Vent: a block at a gas line's end that lets out into the air any gas the line brings to the inlet on
+  its front, all of it, so a machine whose by-product nobody wants, the Air Separation Unit's nitrogen or the
+  Electrolytic Cell's chlorine, never stops full. What it lets out puffs from under its rain cap in the gas's colour
+  and becomes a cloud of the gas above it, which does what the gas does to whoever stands in it: chlorine poisons,
+  nitrogen leaves too little oxygen in a sealed room, hydrogen burns from a flame. Carbon dioxide goes into the world's
+  air as well. Made at the Crafting Table from six iron ingots, iron bars and an Iron Gas Pipe.
 - The MCP surveys the blocks round the player: `blocks_survey` counts the blocks of the chunks in a square
   round the player's, of a mod or whose id holds some words, by their id, each with the first place it was found, the
   most first, making the chunks never made as walking there would; for an agent finding where ores and other blocks

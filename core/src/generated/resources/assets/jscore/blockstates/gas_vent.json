@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jscore:block/gas_vent",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jscore:block/gas_vent"
+    },
+    "facing=south": {
+      "model": "jscore:block/gas_vent",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jscore:block/gas_vent",
+      "y": 270
+    }
+  }
+}
