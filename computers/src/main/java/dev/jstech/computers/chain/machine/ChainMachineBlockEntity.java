@@ -22,6 +22,7 @@ import dev.jstech.core.machine.MachineSounds;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.machine.ProcessingInput;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
+import dev.jstech.core.machine.UpgradeEffect;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
@@ -169,6 +170,12 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     protected MachineSounds sounds() {
         return ChainSounds.work(machine.id()).map(work -> new MachineSounds(null, work, null))
                 .orElse(MachineSounds.SILENT);
+    }
+
+    /* Its upgrades are real parts, as J's Industrial's are: what they gain adds up, what they save multiplies. */
+    @Override
+    protected UpgradeEffect combineUpgrades(final List<UpgradeEffect.Counted> each) {
+        return UpgradeEffect.addGains(each);
     }
 
     /*

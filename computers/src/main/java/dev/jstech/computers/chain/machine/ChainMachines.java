@@ -23,8 +23,10 @@ import dev.jstech.core.content.Device.IMenuFactory;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.IItemLook;
+import dev.jstech.core.jstechseries.SharedUses;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.upgrade.SharedUpgrades;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
@@ -79,8 +81,14 @@ public final class ChainMachines {
     private static final String TEXTURES = "block/chain/machine/";
     /* The game's ticks a second, over which a draw in watts is spent as joules a tick. */
     private static final int TICKS = 20;
+    /* The upgrade slots of a machine of recipes: of the Vintage; of the Legacy and the Transition; from the Standard. */
+    private static final int VINTAGE_UPGRADES = 2;
+    private static final int LEGACY_UPGRADES = 3;
+    private static final int STANDARD_UPGRADES = 4;
 
     static {
+        // Its machines of recipes take the series' shared upgrades in their upgrade slots.
+        SharedUpgrades.all().forEach(upgrade -> SharedUses.declare(JsComputers.MODID, upgrade::get));
         // The Crusher's four outputs: the crushed ore and up to three byproducts, as zinc ore gives indium, germanium
         // and sulfur; the work starts only when all of it fits.
         machine("crusher").named("Crusher").step(8, 2_000).slots(1, 4, 0, 0, 0, 0)
@@ -283,6 +291,19 @@ public final class ChainMachines {
     /** Declares the machines, from the mod's constructor. */
     public static void declare() {
         // Loading the class declares them.
+    }
+
+    /**
+     * The upgrade slots of a machine of recipes of {@code era}: 2 of the Vintage, 3 of the Legacy and the Transition, 4
+     * from the Standard on. A machine that serves every era, {@code null}, is built of Vintage parts and has the
+     * Vintage's; more of it is what makes it faster.
+     */
+    public static int upgradeSlots(final @Nullable Era era) {
+        final int index = era == null ? 0 : HardwareEra.seriesIndex(era);
+        if (index < HardwareEra.seriesIndex(HardwareEra.LEGACY)) {
+            return VINTAGE_UPGRADES;
+        }
+        return index < HardwareEra.seriesIndex(HardwareEra.STANDARD) ? LEGACY_UPGRADES : STANDARD_UPGRADES;
     }
 
     /** Every machine of the chain, in the order the design lists them. */
@@ -505,8 +526,12 @@ public final class ChainMachines {
             return this;
         }
 
-        /* Declares a machine of recipes: its pattern, model, terminal and type, and the kinds of recipe it works. */
+        /*
+         * Declares a machine of recipes: its pattern, model, terminal and type, the kinds of recipe it works, and the
+         * upgrade slots of its era.
+         */
         void declareRecipes() {
+            this.layout = this.layout.withUpgrades(upgradeSlots(era));
             declareWith(this::kinds);
         }
 

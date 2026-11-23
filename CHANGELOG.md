@@ -784,6 +784,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   machine), the Muffler (the machine is silent) and the Byproduct Separator (+50% byproducts). Gains add up and
   savings multiply. J's Industrial's machines take them, and the Technical Reference has a page for them in its new
   section, Machines.
+- (Computers) The chain's machines of recipes take the series' machine upgrades on their Upgrades tab, in slots of
+  their era: 2 for the Vintage and for a machine that serves every era, built of Vintage parts, 3 for the Legacy and
+  the Transition, 4 from the Standard. What the upgrades gain adds up and what they save multiplies. The Cooling
+  Tower, the Chiller and the machines of a work of their own take none.
 - (Core) Bronze for any mod used alone: three copper ingots and one tin ingot make four bronze ingots at the
   Crafting Table, near real bronze's share of tin. Tin's ore now lies in every world, and raw tin and tin's ore
   smelt in the furnace and the blast furnace, as the game's raw iron and iron ore do.
