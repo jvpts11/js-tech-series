@@ -1517,6 +1517,7 @@
   "jscore.containment.sealed": "Sem energia: lacrada, não recebe nada nem deixa nada sair",
   "jscore.containment.upkeep": "Gasta %s enquanto guarda algo",
   "jscore.converter.at_limit": "NO LIMITE",
+  "jscore.converter.energy_off": "A J's Energy está desligada neste mundo: as máquinas pegam FE direto da fonte, então este conversor não é preciso e não passa nada",
   "jscore.converter.ceiling": "TETO",
   "jscore.converter.class": "CLASSE",
   "jscore.converter.class_plate": "%s %s",

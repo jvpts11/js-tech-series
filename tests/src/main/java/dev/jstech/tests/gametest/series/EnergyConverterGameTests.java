@@ -17,11 +17,15 @@ import dev.jstech.core.jstechseries.energy.EnergyConverterBlockEntity;
 import dev.jstech.core.jstechseries.energy.EnergyConverterMenu;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
+import dev.jstech.core.jstechseries.energy.JsEnergySettings;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.energy.VoltageClass;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestEnergyEnds;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.testkit.TestCables;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -122,6 +126,32 @@ public final class EnergyConverterGameTests {
             helper.assertTrue(converter.movedFe() == 0L, "and moves nothing");
             helper.succeed();
         });
+    }
+
+    /**
+     * Looked at in a world where J's Energy is off, a converter says so first: the machines take FE straight from the
+     * source there and it is not needed. Where J's Energy is on, it says nothing of the kind.
+     */
+    @GameTest(template = ARENA)
+    public static void describe_saysJsEnergyIsOffAndItIsNotNeeded(final GameTestHelper helper) {
+        final EnergyConverterBlockEntity converter = converter(helper, EnergyConverters.LOW.get());
+        final boolean was = JsEnergySettings.enabled();
+        try {
+            // Both ways in the same tick, the setting put back before any other test reads it.
+            JsEnergySettings.setEnabled(false);
+            final List<Text> off = new ArrayList<>();
+            converter.describe(off, false);
+            JsEnergySettings.setEnabled(true);
+            final List<Text> on = new ArrayList<>();
+            converter.describe(on, false);
+            helper.assertTrue(!off.isEmpty() && off.getFirst().english().startsWith("J's Energy is off in this world"),
+                    "with J's Energy off it says so first: " + off.stream().map(Text::english).toList());
+            helper.assertTrue(on.stream().noneMatch(line -> line.english().startsWith("J's Energy is off")),
+                    "with J's Energy on it does not: " + on.stream().map(Text::english).toList());
+        } finally {
+            JsEnergySettings.setEnabled(was);
+        }
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

@@ -2749,6 +2749,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   a star written with a backslash before it stays a star, where it was read as emphasis and taken off ("*.*"); an
   item of a header's list may hold a comma inside double quotes; and an entry and a manual may share an id, as a
   book's own page in the library does, where the second was left out.
+- FE Converters: looked at in a world where J's Energy is off, a converter says so first, and that the machines
+  take FE straight from its source there, so it is not needed and passes nothing. One put between an FE source and a
+  machine left the machine at NO POWER and said nothing.
 - Multiblock Builder: used on any block of a multiblock standing formed, a port or a casing, it is aimed at that
   multiblock's terminal. Only its terminal aimed it; used on another of its blocks, it opened on the multiblock it was
   aimed at before, and its OK built that one.

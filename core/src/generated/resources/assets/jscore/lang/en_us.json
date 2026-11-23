@@ -1608,6 +1608,7 @@
   "jscore.converter.class": "CLASS",
   "jscore.converter.class_plate": "%s %s",
   "jscore.converter.configurable_plate": "ENERGY CONVERTER",
+  "jscore.converter.energy_off": "J's Energy is off in this world: machines take FE straight from its source, so this converter is not needed and passes nothing",
   "jscore.converter.fault": "FAULT",
   "jscore.converter.fe": "FE",
   "jscore.converter.fe_per_tick": "%sFE/t",

@@ -5554,6 +5554,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) File explorers: the count of what a folder holds counts the stored items' folder with the rest, as every
   icon the window shows.
 - (Computers) MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
+- (Core) FE Converters: looked at in a world where J's Energy is off, a converter says so first, and that the machines
+  take FE straight from its source there, so it is not needed and passes nothing. One put between an FE source and a
+  machine left the machine at NO POWER and said nothing.
 - (Computers) Drives: looked at, a drive says the newest peripheral cable its port takes and the computer it is linked
   to, or that no computer reaches it on a cable it takes. A Floppy Drive on a Standard computer's own peripheral cable
   stayed unlinked and nothing said why: its parallel port takes the Vintage peripheral cable or an older one, which a

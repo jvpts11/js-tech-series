@@ -22,6 +22,8 @@ import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.energy.WrongClass;
 import dev.jstech.core.look.IDescribed;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Its J's Energy side is a port of its class: a line of another class meets it as any port, burning it, shorting
  * it or blowing the fuse in its way, and while that is so it stops.
  */
+@TextHolder
 public final class EnergyConverterBlockEntity extends SyncedBlockEntity implements IDescribed {
 
     private final @Nullable VoltageClass fixed;
@@ -64,6 +67,13 @@ public final class EnergyConverterBlockEntity extends SyncedBlockEntity implemen
 
     /** Ticks in a second, to turn watts into joules a tick. */
     public static final int TICKS_PER_SECOND = 20;
+    /*
+     * Said of it in a world where J's Energy is off: every block of the series takes FE straight from the source
+     * there, so a converter between them has nothing to turn FE into and passes nothing.
+     */
+    private static final TextKey ENERGY_OFF = TextKey.of("jscore.converter.energy_off",
+            "J's Energy is off in this world: machines take FE straight from its source, so this converter is not"
+                    + " needed and passes nothing");
 
     public EnergyConverterBlockEntity(final BlockPos pos, final BlockState state) {
         super(EnergyConverters.CONVERTER_BE.get(), pos, state);
@@ -209,6 +219,9 @@ public final class EnergyConverterBlockEntity extends SyncedBlockEntity implemen
 
     @Override
     public void describe(final List<Text> lines, final boolean details) {
+        if (!JsEnergySettings.enabled()) {
+            lines.add(ENERGY_OFF.text());
+        }
         lines.add(EnergyConverters.way(this.toJe.get()).text());
         final Energy energy = JsEnergy.ENERGY;
         lines.add(EnergyConverters.LIMIT_LINE.with(energy.rate(limitJoules())));
