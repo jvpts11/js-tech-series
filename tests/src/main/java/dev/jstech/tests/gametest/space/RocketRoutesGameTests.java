@@ -52,6 +52,7 @@ import dev.jstech.testkit.gametest.GameTestPlayers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -403,7 +404,7 @@ public final class RocketRoutesGameTests {
                     helper.assertTrue(box.maxY() - box.minY() + 1 <= LANDER_TALL, "the lander stands on its own legs,"
                             + " no spent stage under it: " + (box.maxY() - box.minY() + 1) + " blocks tall, the"
                             + " descent stage kept " + aboard.landerDescent() + "; " + standing(moon, aboard,
-                            MOON_AND_BACK));
+                            MOON_AND_BACK) + "; " + lowest(moon, box));
                 })
                 .thenExecute(() -> {
                     final MovingStructure lander = at(moon, id);
@@ -790,6 +791,29 @@ public final class RocketRoutesGameTests {
             standing[of]++;
         }
         return standing;
+    }
+
+    /*
+     * The lowest layer of {@code box} with a block in it and what stands there, for a failure to say what holds a
+     * structure's bounds down after its spent stages left.
+     */
+    private static String lowest(final ServerLevel level, final Box box) {
+        for (int y = box.minY(); y <= box.maxY(); y++) {
+            final Map<String, Integer> found = new TreeMap<>();
+            for (int x = box.minX(); x <= box.maxX(); x++) {
+                for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                    final BlockState state = level.getBlockState(new BlockPos(x, y, z));
+                    if (!state.isAir()) {
+                        found.merge(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(), 1, Integer::sum);
+                    }
+                }
+            }
+            if (!found.isEmpty()) {
+                return "its lowest blocks " + (y - box.minY()) + " above its bottom, " + (box.maxY() - y)
+                        + " under its top: " + found;
+            }
+        }
+        return "no block in its bounds";
     }
 
     /* The blocks of each stage still standing in the rocket {@code computer} keeps, for a failure to say. */
