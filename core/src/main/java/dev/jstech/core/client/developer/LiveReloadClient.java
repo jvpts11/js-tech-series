@@ -11,6 +11,7 @@ import dev.jstech.core.client.guide.GuideReloadListener;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.developer.LiveReload;
 import dev.jstech.core.log.CoreLogs;
+import java.io.UncheckedIOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.client.Minecraft;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -67,13 +68,29 @@ public final class LiveReloadClient {
         }
         if (models > 0) {
             LOGGER.info("{} model file(s) changed; reading the models again", models);
-            KitModels.reloadNow();
-            MODEL_RELOADS.incrementAndGet();
+            if (readAgain(KitModels::reloadNow)) {
+                MODEL_RELOADS.incrementAndGet();
+            }
         }
         if (guides > 0) {
             LOGGER.info("{} manual file(s) changed; reading the manuals again", guides);
-            GuideReloadListener.reloadNow();
-            GUIDE_RELOADS.incrementAndGet();
+            if (readAgain(GuideReloadListener::reloadNow)) {
+                GUIDE_RELOADS.incrementAndGet();
+            }
+        }
+    }
+
+    /*
+     * Reads the files again, unless a build is still writing them: one taken away as they are looked through leaves
+     * them as they were, and the build's next file read again, rather than the game brought down with the build.
+     */
+    private static boolean readAgain(final Runnable read) {
+        try {
+            read.run();
+            return true;
+        } catch (final UncheckedIOException changing) {
+            LOGGER.warn("The files changed again while they were read; they are read on their next change", changing);
+            return false;
         }
     }
 }

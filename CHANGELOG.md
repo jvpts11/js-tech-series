@@ -5529,6 +5529,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) File explorers: the count of what a folder holds counts the stored items' folder with the rest, as every
   icon the window shows.
 - (Computers) MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
+- (Core) Live reload in a development run: a build that rewrites the manuals' or the models' files while the game
+  reads them again no longer brings the game down. A file taken away in the middle of the read crashed it; the files
+  are now read again on the build's next change.
 - (Computers) Command Prompt: a network system with no operating space installed says "netgetter install interactor
   puts one on." with one space before "puts", not two.
 - (Computers) Mainframe Console: a program installed at its prompt shows its bar to the end and says it is in, as at a

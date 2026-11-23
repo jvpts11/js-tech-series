@@ -2745,6 +2745,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   a star written with a backslash before it stays a star, where it was read as emphasis and taken off ("*.*"); an
   item of a header's list may hold a comma inside double quotes; and an entry and a manual may share an id, as a
   book's own page in the library does, where the second was left out.
+- Live reload in a development run: a build that rewrites the manuals' or the models' files while the game
+  reads them again no longer brings the game down. A file taken away in the middle of the read crashed it; the files
+  are now read again on the build's next change.
 - Land left behind by anything moving fast into new land is let go again, and the server no longer slows for
   good behind it: the game serves the chunks' waiting tasks nearest first and a chunk no longer wanted last of all, so
   while something kept moving into new land (a ship crossing space or a flat world, both made fast), the tasks of the
