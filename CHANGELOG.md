@@ -757,6 +757,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Computers) A gas named on the network: a full Gas Cylinder, or any item that carries a gas of J's Core, names
+  its gas in a bus's filter and on a Pattern Studio cell, as a bucket names its fluid, so an Export Bus can send that
+  gas out of the network's storage.
 - (Core) The Gas Cylinder: a slim steel cylinder with a bronze valve that carries one gas by hand, as a bucket carries
   a fluid, 10,000 mB (50 litres at 200 times the open air's pressure), one to a stack. Used on a block that gives gas,
   a machine's outlet or a tank, it fills with that block's gas, only the gas it already holds; used while sneaking on a

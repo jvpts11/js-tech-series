@@ -11,8 +11,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.fs.CraftFile;
+import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.util.Utf8Text;
@@ -31,7 +31,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.fluids.FluidUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -93,22 +92,18 @@ public final class PatternWorkbench {
         }
 
         /**
-         * The cell a carried stack places: a fluid container names its fluid and a chemical-carrying item its
-         * chemical (a bucket's worth each), any other stack is an item cell with the stack's count as the amount.
+         * The cell a carried stack places: a container names what it holds, a bucket its fluid, a Gas Cylinder its
+         * gas, a chemical-carrying item its chemical (a bucket's worth each); any other stack is an item cell with the
+         * stack's count as the amount.
          */
         @Nullable
         public static DataCell fromStack(final ItemStack carried) {
             if (carried.isEmpty()) {
                 return null;
             }
-            final Optional<StorageKey> fluid = FluidUtil.getFluidContained(carried)
-                    .filter(f -> !f.isEmpty()).map(StorageKey::of);
-            if (fluid.isPresent()) {
-                return new DataCell(fluid.get(), CONTINUOUS_DEFAULT_AMOUNT, false);
-            }
-            final Optional<StorageKey> chemical = ChemicalBridges.chemicalOf(carried).map(StorageKey::chemical);
-            if (chemical.isPresent()) {
-                return new DataCell(chemical.get(), CONTINUOUS_DEFAULT_AMOUNT, false);
+            final Optional<StorageKey> named = DataContainers.named(carried);
+            if (named.isPresent()) {
+                return new DataCell(named.get(), CONTINUOUS_DEFAULT_AMOUNT, false);
             }
             return new DataCell(StorageKey.of(carried), carried.getCount(), false);
         }

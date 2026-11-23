@@ -17,11 +17,11 @@ import dev.jstech.computers.bus.BusFeature;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Wire;
-import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.IFacePart;
@@ -52,7 +52,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -757,8 +756,8 @@ public abstract sealed class AbstractBusPart implements IFacePart
     }
 
     /**
-     * The storage key filter slot {@code slot} selects, or null for an empty slot. A fluid container selects its fluid
-     * and an item carrying a chemical its chemical.
+     * The storage key filter slot {@code slot} selects, or null for an empty slot. A container selects what it holds,
+     * as a bucket its fluid and a Gas Cylinder its gas ({@link DataContainers#named}); any other stack its item.
      */
     @Nullable
     protected StorageKey keyIn(final int slot) {
@@ -766,12 +765,7 @@ public abstract sealed class AbstractBusPart implements IFacePart
         if (stack.isEmpty()) {
             return null;
         }
-        return FluidUtil.getFluidContained(stack)
-                .filter(f -> !f.isEmpty())
-                .map(StorageKey::of)
-                .or(() -> ChemicalBridges.chemicalOf(stack)
-                        .map(StorageKey::chemical))
-                .orElseGet(() -> StorageKey.of(stack));
+        return DataContainers.named(stack).orElseGet(() -> StorageKey.of(stack));
     }
 
     /* The filter slot listing {@code key}, or -1. */

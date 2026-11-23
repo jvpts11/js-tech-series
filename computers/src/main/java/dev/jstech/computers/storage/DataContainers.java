@@ -58,6 +58,31 @@ public final class DataContainers {
         return ChemicalBridges.itemPortFor(one).map(port -> !port.available().isEmpty()).orElse(false);
     }
 
+    /**
+     * What a carried container names, as a bucket names its fluid: the fluid it holds, the matter of J's Core it holds
+     * (a Gas Cylinder's gas), or the chemical; empty for an item that is no container, or an empty one.
+     */
+    public static Optional<StorageKey> named(final ItemStack stack) {
+        if (stack.isEmpty()) {
+            return Optional.empty();
+        }
+        final ItemStack one = stack.copyWithCount(1);
+        final Optional<StorageKey> fluid = FluidUtil.getFluidContained(one).filter(held -> !held.isEmpty())
+                .map(StorageKey::of);
+        if (fluid.isPresent()) {
+            return fluid;
+        }
+        for (final IMatterHandler matter : matterIn(one)) {
+            for (int tank = 0; tank < matter.tanks(); tank++) {
+                final Optional<MatterStack> held = matter.stack(tank);
+                if (held.isPresent()) {
+                    return Optional.of(StorageKey.matter(matter.state(), held.get().material()));
+                }
+            }
+        }
+        return ChemicalBridges.chemicalOf(one).map(StorageKey::chemical);
+    }
+
     /* J's Core's stores of matter on an item, one for each state it keeps. */
     private static List<IMatterHandler> matterIn(final ItemStack container) {
         final List<IMatterHandler> out = new ArrayList<>();
