@@ -8,12 +8,17 @@
 package dev.jstech.tests.gametest.core;
 
 import com.mojang.authlib.GameProfile;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
+import dev.jstech.core.jstechseries.SeriesAlloys;
+import dev.jstech.core.jstechseries.SeriesBronze;
 import dev.jstech.core.jstechseries.SharedCatalogue;
 import dev.jstech.core.jstechseries.cylinder.GasCylinders;
+import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialProperties;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.MaterialValues;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
@@ -28,10 +33,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.phys.BlockHitResult;
@@ -41,7 +48,8 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The Gas Cylinder: made at the Crafting Table from seven steel plates and a bronze ingot; one to a stack, holding
+ * The Gas Cylinder: made at the Crafting Table from seven steel plates and a bronze ingot, or seven iron ingots in a
+ * world where no mod makes steel plates; one to a stack, holding
  * 10,000 mB of one gas; its shoulder painted by the European code for a gas the code names, in the gas's own colour
  * for one it does not, and bare steel when empty.
  */
@@ -58,17 +66,20 @@ public final class GasCylinderGameTests {
     private GasCylinderGameTests() {
     }
 
+    /**
+     * J's Computers makes steel plates, so in this world the cylinder is of steel; its iron recipe, for a world where
+     * no mod makes steel plates, does not stand.
+     */
     @GameTest(template = ARENA)
-    public static void cylinder_isMadeOfSevenSteelPlatesAndABronzeIngot(final GameTestHelper helper) {
-        final ItemStack plate = new ItemStack(GasCylinders.STEEL_PLATE.get());
-        final ItemStack valve = new ItemStack(GasCylinders.BRONZE_INGOT.get());
-        final List<ItemStack> grid = new ArrayList<>(List.of(plate, valve, plate, plate, ItemStack.EMPTY, plate,
-                plate, plate, plate));
-        final ItemStack made = helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING,
-                CraftingInput.of(3, 3, grid), helper.getLevel()).map(recipe -> recipe.value().assemble(
-                CraftingInput.of(3, 3, grid), helper.getLevel().registryAccess())).orElse(ItemStack.EMPTY);
-        helper.assertTrue(made.is(GasCylinders.CYLINDER.get()), "the plates round a bronze valve make a cylinder: "
-                + made);
+    public static void cylinder_isMadeOfSteelPlatesWhereAModMakesThemAndNotOfIron(final GameTestHelper helper) {
+        final ItemStack valve = new ItemStack(SeriesBronze.BRONZE_INGOT.get());
+        final ItemStack plate = new ItemStack(MaterialUses.item(SeriesAlloys.STEEL, Forms.PLATE).get());
+        helper.assertTrue(crafted(helper, plate, valve).is(GasCylinders.CYLINDER.get()),
+                "the steel plates round a bronze valve make a cylinder");
+        helper.assertTrue(crafted(helper, new ItemStack(Items.IRON_INGOT), valve).isEmpty(),
+                "with steel plates in the world, iron ingots make none");
+        helper.assertTrue(helper.getLevel().getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath(
+                JsCore.MODID, "gas_cylinder_from_iron")).isEmpty(), "the iron recipe does not stand");
         helper.succeed();
     }
 
@@ -136,6 +147,15 @@ public final class GasCylinderGameTests {
         helper.assertTrue(amountIn(argon) == STOCKED && cylinder.stack(0).map(MatterStack::material)
                 .orElse(null) == Elements.of(Element.CHLORINE), "with chlorine in it, it takes no argon");
         helper.succeed();
+    }
+
+    /* What the Crafting Table makes of {@code side} round the cylinder's sides and bottom, {@code valve} on top. */
+    private static ItemStack crafted(final GameTestHelper helper, final ItemStack side, final ItemStack valve) {
+        final CraftingInput input = CraftingInput.of(3, 3, new ArrayList<>(List.of(side, valve, side, side,
+                ItemStack.EMPTY, side, side, side, side)));
+        return helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
+                .map(recipe -> recipe.value().assemble(input, helper.getLevel().registryAccess()))
+                .orElse(ItemStack.EMPTY);
     }
 
     private static void use(final GameTestHelper helper, final ServerPlayer player, final BlockPos relative) {

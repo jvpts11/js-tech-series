@@ -1,32 +1,32 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_ore": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "jscore:bronze_ingot"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_tin_ingot": {
       "conditions": {
         "items": [
           {
-            "items": "#c:ingots/tin"
+            "items": "jscore:tin_ingot"
           }
         ]
       },
       "trigger": "minecraft:inventory_changed"
-    },
-    "has_the_recipe": {
-      "conditions": {
-        "recipe": "jsindustrial:smelting/tin_ore"
-      },
-      "trigger": "minecraft:recipe_unlocked"
     }
   },
   "requirements": [
     [
       "has_the_recipe",
-      "has_ore"
+      "has_tin_ingot"
     ]
   ],
   "rewards": {
     "recipes": [
-      "jsindustrial:smelting/tin_ore"
+      "jscore:bronze_ingot"
     ]
   }
 }

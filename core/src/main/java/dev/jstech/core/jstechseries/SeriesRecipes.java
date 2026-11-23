@@ -19,6 +19,8 @@ import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.core.jstechseries.tools.PhysicsTool;
 import dev.jstech.core.jstechseries.tools.SharedTools;
+import dev.jstech.core.material.Form;
+import dev.jstech.core.material.Forms;
 import dev.jstech.core.multipart.MicroblockRecipes;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -31,17 +33,21 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.data.recipes.SpecialRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.conditions.AndCondition;
 import net.neoforged.neoforge.common.conditions.ICondition;
 import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import net.neoforged.neoforge.common.conditions.NotCondition;
+import net.neoforged.neoforge.common.conditions.TagEmptyCondition;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -58,6 +64,12 @@ public final class SeriesRecipes extends RecipeProvider {
     private static final String INDUSTRIAL_SETTINGS = "jsindustrial-server";
     private static final String INDUSTRIAL_BASIC_LINES = "recipes.industrial_basic_lines";
     private static final int CABLES_A_CRAFT = 6;
+    /* The steel plates any mod files under the common tag, which decide which of the cylinder's recipes stands. */
+    private static final TagKey<Item> STEEL_PLATES = Forms.PLATE.itemTag(SeriesAlloys.STEEL);
+    /* How long the furnace and the blast furnace take, and the experience they give, as for the game's raw iron. */
+    private static final int FURNACE_TICKS = 200;
+    private static final int BLAST_TICKS = 100;
+    private static final float SMELTING_XP = 0.7F;
 
     public SeriesRecipes(final PackOutput output, final CompletableFuture<HolderLookup.Provider> registries) {
         super(output, registries);
@@ -95,13 +107,20 @@ public final class SeriesRecipes extends RecipeProvider {
                 .pattern("IBI").pattern("IPI").pattern("III")
                 .define('I', Items.IRON_INGOT).define('B', Items.IRON_BARS).define('P', SharedPipes.IRON_GAS_PIPE)
                 .unlockedBy("has_iron_gas_pipe", has(SharedPipes.IRON_GAS_PIPE)).save(output, id("gas_vent"));
-        // A cylinder of steel plates, its bronze valve on top.
+        tinAndBronze(output);
+        // A cylinder of steel plates, its bronze valve on top; of iron ingots in a world where no mod makes steel plates.
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, GasCylinders.CYLINDER.get())
                 .pattern("PBP").pattern("P P").pattern("PPP")
-                .define('P', ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", "plates/steel")))
-                .define('B', ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", "ingots/bronze")))
-                .unlockedBy("has_steel_plate", has(GasCylinders.STEEL_PLATE.get()))
-                .save(output, id("gas_cylinder"));
+                .define('P', STEEL_PLATES).define('B', Forms.INGOT.itemTag(SeriesMaterials.BRONZE))
+                .unlockedBy("has_steel_plate", has(STEEL_PLATES))
+                .save(output.withConditions(new NotCondition(new TagEmptyCondition(STEEL_PLATES.location()))),
+                        id("gas_cylinder"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, GasCylinders.CYLINDER.get())
+                .pattern("PBP").pattern("P P").pattern("PPP")
+                .define('P', Items.IRON_INGOT).define('B', Forms.INGOT.itemTag(SeriesMaterials.BRONZE))
+                .unlockedBy("has_bronze_ingot", has(SeriesBronze.BRONZE_INGOT.get()))
+                .save(output.withConditions(new TagEmptyCondition(STEEL_PLATES.location())),
+                        id("gas_cylinder_from_iron"));
         // An open-ended spanner of iron, its jaws apart at the top.
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, SharedTools.WRENCH.get())
                 .pattern("I I").pattern(" I ").pattern(" I ")
@@ -132,6 +151,25 @@ public final class SeriesRecipes extends RecipeProvider {
     }
 
     /* Where a shaped recipe goes made one a setting turns on and off. */
+    /* Tin's raw lumps and ore smelted as the game's raw iron is, and bronze alloyed by hand: 3 copper and 1 tin. */
+    private static void tinAndBronze(final RecipeOutput output) {
+        final Item tin = SeriesBronze.TIN_INGOT.get();
+        for (final Form from : List.of(Forms.RAW, Forms.ORE)) {
+            final Ingredient ingredient = Ingredient.of(from.itemTag(SeriesMaterials.TIN));
+            final String name = "tin_ingot_from_" + from.id().getPath();
+            SimpleCookingRecipeBuilder.smelting(ingredient, RecipeCategory.MISC, tin, SMELTING_XP, FURNACE_TICKS)
+                    .unlockedBy("has_it", has(from.itemTag(SeriesMaterials.TIN)))
+                    .save(output, id("smelting/" + name));
+            SimpleCookingRecipeBuilder.blasting(ingredient, RecipeCategory.MISC, tin, SMELTING_XP, BLAST_TICKS)
+                    .unlockedBy("has_it", has(from.itemTag(SeriesMaterials.TIN)))
+                    .save(output, id("blasting/" + name));
+        }
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, SeriesBronze.BRONZE_INGOT.get(), SeriesBronze.ALLOYED)
+                .requires(Ingredient.of(Tags.Items.INGOTS_COPPER), SeriesBronze.COPPER_INGOTS)
+                .requires(Forms.INGOT.itemTag(SeriesMaterials.TIN))
+                .unlockedBy("has_tin_ingot", has(tin)).save(output, id("bronze_ingot"));
+    }
+
     private static RecipeOutput switched(final RecipeOutput output, final String file, final String setting) {
         return new RecipeOutput() {
             @Override

@@ -31,7 +31,7 @@ Levar um gás na mão de onde ele é feito até onde é usado, e nomear um gás 
 
 ## Como conseguir
 
-Fabrique com sete placas de aço nos lados e no fundo e uma barra de bronze em cima, o registro.
+Fabrique com sete placas de aço nos lados e no fundo e uma barra de bronze em cima, o registro. Num mundo em que nenhum mod faz placas de aço, sete barras de ferro ficam no lugar delas. O bronze sai de três barras de cobre e uma de estanho na bancada, que dão quatro.
 
 ## Como usar
 

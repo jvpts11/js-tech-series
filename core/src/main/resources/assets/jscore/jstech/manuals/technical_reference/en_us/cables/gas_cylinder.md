@@ -31,7 +31,7 @@ Carrying a gas by hand from where it is made to where it is used, and naming a g
 
 ## How to get it
 
-Craft it from seven steel plates round the sides and the bottom and a bronze ingot on top, its valve.
+Craft it from seven steel plates round the sides and the bottom and a bronze ingot on top, its valve. In a world where no mod makes steel plates, seven iron ingots take their place. Bronze is three copper ingots and one tin ingot at the Crafting Table, which make four.
 
 ## How to use it
 

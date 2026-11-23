@@ -1,18 +1,17 @@
 {
   "neoforge:conditions": [
     {
-      "type": "jscore:setting",
-      "file": "jscomputers-server",
-      "setting": "survival.own_chain"
+      "type": "neoforge:tag_empty",
+      "tag": "c:plates/steel"
     }
   ],
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_it": {
+    "has_bronze_ingot": {
       "conditions": {
         "items": [
           {
-            "items": "jscore:tin_raw"
+            "items": "jscore:bronze_ingot"
           }
         ]
       },
@@ -20,7 +19,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "jsc:smelting/tin_from_raw"
+        "recipe": "jscore:gas_cylinder_from_iron"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
@@ -28,12 +27,12 @@
   "requirements": [
     [
       "has_the_recipe",
-      "has_it"
+      "has_bronze_ingot"
     ]
   ],
   "rewards": {
     "recipes": [
-      "jsc:smelting/tin_from_raw"
+      "jscore:gas_cylinder_from_iron"
     ]
   }
 }

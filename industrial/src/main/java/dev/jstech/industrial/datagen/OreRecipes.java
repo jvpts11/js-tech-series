@@ -7,6 +7,7 @@
  */
 package dev.jstech.industrial.datagen;
 
+import dev.jstech.core.jstechseries.SeriesBronze;
 import dev.jstech.core.jstechseries.SeriesMinerals;
 import dev.jstech.core.machine.ProcessingRecipeBuilder;
 import dev.jstech.core.material.Forms;
@@ -48,8 +49,9 @@ public final class OreRecipes {
                     OreLevel.MACERATOR.mainOut())).save(out, MaterialFormRecipes.rl("macerating/" + path + "_ore"));
             MaterialFormRecipes.macerating(Ingredient.of(Forms.RAW.itemTag(metal)), new ItemStack(dust,
                     OreLevel.MACERATOR.mainOut())).save(out, MaterialFormRecipes.rl("macerating/raw_" + path));
-            // The game smelts its own raw iron, copper and gold; the Core's metals are smelted here.
-            if (metal.provided(Forms.RAW).isEmpty()) {
+            // The game smelts its own raw iron, copper and gold, and the Core its tin; the Core's other metals are
+            // smelted here.
+            if (metal.provided(Forms.RAW).isEmpty() && !SeriesBronze.SMELTED.contains(metal)) {
                 smelt(out, Ingredient.of(Forms.RAW.itemTag(metal)), metal, "raw_" + path);
                 smelt(out, Ingredient.of(Forms.ORE.itemTag(metal)), metal, path + "_ore");
             }

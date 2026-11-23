@@ -1,18 +1,11 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "jscore:setting",
-      "file": "jscomputers-server",
-      "setting": "survival.own_chain"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_it": {
       "conditions": {
         "items": [
           {
-            "items": "jscore:tin_raw"
+            "items": "#c:raw_materials/tin"
           }
         ]
       },
@@ -20,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "jsc:blasting/tin_from_raw"
+        "recipe": "jscore:smelting/tin_ingot_from_raw"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
@@ -33,7 +26,7 @@
   ],
   "rewards": {
     "recipes": [
-      "jsc:blasting/tin_from_raw"
+      "jscore:smelting/tin_ingot_from_raw"
     ]
   }
 }

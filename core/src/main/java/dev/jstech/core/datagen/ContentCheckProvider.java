@@ -70,9 +70,11 @@ final class ContentCheckProvider implements DataProvider {
     public CompletableFuture<?> run(final CachedOutput cache) {
         final List<DeclarationError> missing = new ArrayList<>();
         final Set<String> english = english();
-        // The things of the materials' uses are named in code and drawn, tagged and given drops as the game loads.
+        // The things of the materials' uses, and the pieces of their ores over the veins, are named in code and
+        // drawn, tagged and given drops as the game loads.
         final Set<ResourceLocation> madeAsTheGameLoads = new HashSet<>();
         MaterialUses.registered().forEach(thing -> madeAsTheGameLoads.add(thing.id()));
+        madeAsTheGameLoads.addAll(MaterialUses.pieces().values());
         MaterialLiquids.registered().forEach(liquid -> {
             madeAsTheGameLoads.add(liquid.id());
             madeAsTheGameLoads.add(liquid.bucketId());

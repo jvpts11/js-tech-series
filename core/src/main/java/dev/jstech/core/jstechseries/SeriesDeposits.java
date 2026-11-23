@@ -15,7 +15,7 @@ import net.minecraft.tags.BiomeTags;
 /**
  * The veins of the series' shared metals, which stand in for the game's scattered iron, copper and gold while ores lie
  * in veins: iron through the overworld's rock from deep to the hills, copper higher and wider, gold deep and rare,
- * gold in the Nether's netherrack, and tin, laid only once a mod uses tin's ore. Each lays its ore in every rock some
+ * gold in the Nether's netherrack, and tin, whose ore the Core uses for its bronze. Each lays its ore in every rock some
  * installed mod uses it in, the game's own in stone and deepslate.
  */
 public final class SeriesDeposits {

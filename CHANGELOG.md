@@ -768,8 +768,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   chlorine and fluorine yellow, argon dark green, hydrogen red, oxygen white, nitrogen black, krypton, neon and xenon
   bright green, helium brown, carbon dioxide grey; a gas the code does not name shows its own colour, and an empty
   cylinder its bare steel. Its tooltip's bar is its shoulder's colour, or the Core's gas colour for a gas the code
-  does not name. Made at the Crafting Table from seven steel plates and a bronze ingot, its valve; the Core
-  uses steel plates and bronze ingots for it.
+  does not name. Made at the Crafting Table from seven steel plates and a bronze ingot, its valve, or from seven
+  iron ingots in a world where no mod makes steel plates.
+- (Core) Bronze for any mod used alone: three copper ingots and one tin ingot make four bronze ingots at the
+  Crafting Table, near real bronze's share of tin. Tin's ore now lies in every world, and raw tin and tin's ore
+  smelt in the furnace and the blast furnace, as the game's raw iron and iron ore do.
 - (Core) The Gas Vent: a block at a gas line's end that lets out into the air any gas the line brings to the inlet on
   its front, all of it, so a machine whose by-product nobody wants, the Air Separation Unit's nitrogen or the
   Electrolytic Cell's chlorine, never stops full. What it lets out puffs from under its rain cap in the gas's colour
@@ -1522,7 +1525,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   kind declared as data (its materials and their weights, its heights, how often, how large and dense, its biomes and
   rocks), which a data pack can change or add to. A vein crosses rocks and each block takes its rock's own ore, laid
   only where some installed mod uses that ore; the same for the same seed on any number of threads.
-- (Core) The game's iron, copper and gold now lie in veins (the Nether's gold too), with tin once a mod uses it; their
+- (Core) The game's iron, copper and gold now lie in veins (the Nether's gold too), and tin; their
   scattered placement stands aside while veins are on.
 - (Core) Prospecting: an instrument learns which way the veins near it lie and how strongly each shows, never where,
   and standing in one, what it is made of and how large it is.

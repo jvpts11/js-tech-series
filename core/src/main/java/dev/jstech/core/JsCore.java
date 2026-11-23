@@ -165,6 +165,7 @@ import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.item.SwitchedShapedRecipe;
 import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
+import dev.jstech.core.jstechseries.SeriesBronze;
 import dev.jstech.core.jstechseries.SeriesDeposits;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SeriesMods;
@@ -485,6 +486,8 @@ public final class JsCore {
         NetworkProbe.declare();
         SignalProbe.declare();
         SharedPipes.declare();
+        // The bronze the Core alloys by hand, and the tin it lays and smelts for it.
+        SeriesBronze.declare();
         GasCylinders.declare();
         // What content packs declare in files rather than in Java, read as the game starts, after the catalogue.
         ContentPacks.declare(modEventBus);

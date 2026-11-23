@@ -11,13 +11,9 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.jstechseries.JsTechTab;
-import dev.jstech.core.jstechseries.SeriesAlloys;
-import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SharedUses;
-import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialProperties;
-import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.MaterialValues;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
@@ -29,8 +25,6 @@ import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.registry.CoreItems;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.function.Supplier;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -46,11 +40,6 @@ public final class GasCylinders {
     /** What it holds: 50 litres at 200 times the open air's pressure, as a real 50 litre cylinder does. */
     public static final long VOLUME = 50L;
     public static final long PRESSURE = 200L;
-
-    /** The steel plates and the bronze ingot it is made of, which the Core uses for it. */
-    public static final Supplier<Item> STEEL_PLATE = MaterialUses.use(JsCore.MODID, SeriesAlloys.STEEL, Forms.PLATE);
-    public static final Supplier<Item> BRONZE_INGOT = MaterialUses.use(JsCore.MODID, SeriesMaterials.BRONZE,
-            Forms.INGOT);
 
     /** The Gas Cylinder. */
     public static final ItemEntry<GasCylinderItem> CYLINDER = CoreItems.CONTENT.item("gas_cylinder",

@@ -21,6 +21,7 @@ import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesAlloys;
+import dev.jstech.core.jstechseries.SeriesBronze;
 import dev.jstech.core.jstechseries.SeriesChemicals;
 import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.jstechseries.SeriesMinerals;
@@ -135,12 +136,14 @@ final class MaterialRecipes {
      * A crushed ore, or a byproduct's dust, gives one ingot: in the vanilla furnace for the metals it melts, in the
      * Induction Furnace for the refractory ones. Crushed mercury ore, roasted, gives its mercury. The raw ore of a metal
      * the furnace melts gives its ingot too, in the furnace and the blast furnace, as the game's raw iron does: the
-     * metals of the machines' first step exist before any machine, and the Crusher still gives two for one.
+     * metals of the machines' first step exist before any machine, and the Crusher still gives two for one. The raw
+     * metals the game or the Core already smelts (iron, copper and gold; tin) are left to them.
      */
     private static void smelting(final RecipeOutput output) {
         for (final Element element : FURNACE_METALS) {
             final Material metal = Elements.of(element);
-            if (used(metal, Forms.RAW) && used(metal, Forms.INGOT) && metal.provided(Forms.RAW).isEmpty()) {
+            if (used(metal, Forms.RAW) && used(metal, Forms.INGOT) && metal.provided(Forms.RAW).isEmpty()
+                    && !SeriesBronze.SMELTED.contains(metal)) {
                 final String name = element.name().toLowerCase() + "_from_raw";
                 SimpleCookingRecipeBuilder.smelting(Ingredient.of(Forms.RAW.itemTag(metal)), RecipeCategory.MISC,
                                 ingot(element), FURNACE_XP, FURNACE_TICKS)
