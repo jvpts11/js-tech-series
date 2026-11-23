@@ -16,6 +16,8 @@ import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayDeque;
@@ -31,6 +33,7 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -144,7 +147,8 @@ public final class CraftingFloor {
 
     /**
      * The interfaces the Receiving Bus at {@code site} credits: those it was tied to by hand, or, tied by none, those
-     * whose machine is the block it faces.
+     * that feed the machine it faces, which for a formed machine is any of its blocks: the bus on its outlet, the
+     * interface or the routers on its inlets.
      */
     public List<Site> tiedTo(final Site site) {
         final ReceivingBusPart bus = site.part(level, ReceivingBusPart.class);
@@ -163,7 +167,7 @@ public final class CraftingFloor {
         }
         final BlockPos faced = site.faced();
         for (final Site candidate : interfaces) {
-            if (faced.equals(reach(candidate).machine())) {
+            if (sameMachine(faced, reach(candidate).machine())) {
                 out.add(candidate);
             }
         }
@@ -179,6 +183,14 @@ public final class CraftingFloor {
             }
         }
         return out;
+    }
+
+    /**
+     * Whether the blocks at {@code a} and {@code b} are one machine: the same block, or two blocks of one formed
+     * machine, such as its item inlet and its item outlet.
+     */
+    public boolean sameMachine(@Nullable final BlockPos a, @Nullable final BlockPos b) {
+        return a != null && b != null && machineOf(a).equals(machineOf(b));
     }
 
     /* Follows the crafting wire from {@code starts}, gathering the cable blocks, the computers and the parts. */
@@ -309,11 +321,22 @@ public final class CraftingFloor {
             final BlockPos target = router.faced();
             if (machine == null) {
                 machine = target;
-            } else if (!machine.equals(target)) {
+            } else if (!sameMachine(machine, target)) {
                 several = true;
             }
         }
         return new Reach(Mode.CABLE, machine, List.copyOf(routers), reachesAt, shared, several);
+    }
+
+    /*
+     * The machine the block at {@code pos} is part of: a formed multiblock's terminal for any of its blocks (each port
+     * keeps the terminal it belongs to), or the block itself.
+     */
+    private BlockPos machineOf(final BlockPos pos) {
+        final BlockEntity entity = Loaded.blockEntity(level, pos);
+        final BlockPos terminal = entity instanceof MultiblockPartBlockEntity part ? part.terminalPos()
+                : entity instanceof FormedPartBlockEntity formed ? formed.terminal() : null;
+        return terminal != null ? terminal : pos;
     }
 
     private static boolean holdsCrafting(final ServerLevel level, final BlockPos pos) {

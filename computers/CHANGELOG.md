@@ -1418,6 +1418,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
 - Mainframe Console: a program installed at its prompt shows its bar to the end and says it is in, as at a
   Command Prompt, rather than stopping at "Setting up".
+- Autocrafting: a Crafting Receiving Bus on the item outlet of a formed machine, as every chain machine is,
+  ties itself to the Crafting Interface or the routers on the same machine's inlet. It looked only at the very block it
+  faced, so it never credited the job, the output stayed in the machine and the craft failed on its timeout. Two
+  interfaces, or two routers, on ports of one formed machine count as one machine too.
 
 ## [0.5.3a] - 2026-11-04
 

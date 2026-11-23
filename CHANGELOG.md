@@ -5519,6 +5519,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
 - (Computers) Mainframe Console: a program installed at its prompt shows its bar to the end and says it is in, as at a
   Command Prompt, rather than stopping at "Setting up".
+- (Computers) Autocrafting: a Crafting Receiving Bus on the item outlet of a formed machine, as every chain machine is,
+  ties itself to the Crafting Interface or the routers on the same machine's inlet. It looked only at the very block it
+  faced, so it never credited the job, the output stayed in the machine and the craft failed on its timeout. Two
+  interfaces, or two routers, on ports of one formed machine count as one machine too.
 - (Space) The Moon has no air to fade its land: coming down onto it, its ground no longer turns black from a couple of
   hundred blocks up, nor shows as a dome of loaded land ringed in black, the fog the black of its sky closing it in;
   from its ground up, as on the way up past the build limit, the far map goes on from the loaded land to the

@@ -188,9 +188,9 @@ public final class CraftingDispatch {
             return false;
         }
         for (final Slot other : slots.values()) {
-            if (other != slot && slot.reach.machine() != null && slot.reach.machine().equals(other.reach.machine())
+            if (other != slot && slot.floor.sameMachine(slot.reach.machine(), other.reach.machine())
                     && (!other.jobs.isEmpty() || !other.part.owed().isEmpty())) {
-                return false; // two interfaces on one machine take turns
+                return false; // two interfaces on one machine take turns, on two ports of a formed one as well
             }
         }
         if (!exclusive(slot.part, slot.reach)) {

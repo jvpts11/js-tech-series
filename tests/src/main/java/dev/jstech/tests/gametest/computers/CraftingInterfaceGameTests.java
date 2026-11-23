@@ -12,6 +12,7 @@ import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingLog;
 import dev.jstech.computers.crafting.InterfaceRoutes;
@@ -28,6 +29,7 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachineBlockEntity;
 import dev.jstech.tests.TestMachines;
+import dev.jstech.tests.testkit.computers.ChainMachineSite;
 import dev.jstech.tests.testkit.computers.CraftingRig;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
@@ -129,6 +131,29 @@ public final class CraftingInterfaceGameTests {
                             "and its window says so; warnings " + view(world, rig).warnings());
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * A bus against a formed machine's item outlet ties itself to the interface against the same machine's item inlet:
+     * the two ports are different blocks of one machine.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void floor_aBusOnAFormedMachinesOutletTiesToTheInterfaceOnItsInlet(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final ChainMachine machine = ChainMachineSite.machine("deposition_chamber");
+        ChainMachineSite.formed(helper, machine);
+        final BlockPos inlet = ChainMachineSite.place(machine, "item_inlet");
+        final BlockPos outlet = ChainMachineSite.place(machine, "item_outlet");
+        final CraftingFloor.Site feeding = new CraftingFloor.Site(inlet.north(), Direction.SOUTH);
+        final CraftingFloor.Site receiving = new CraftingFloor.Site(outlet.west(), Direction.EAST);
+        CraftingRig.lay(world, feeding.cable(), feeding.cable().west(), receiving.cable().north(), receiving.cable());
+        CraftingRig.addPart(world, feeding, new CraftingInterfacePart(HardwareEra.STANDARD));
+        CraftingRig.addPart(world, receiving, new ReceivingBusPart());
+        helper.succeedWhen(() -> {
+            final CraftingFloor floor = CraftingFloor.through(world.level(), world.absolute(feeding.cable()));
+            helper.assertTrue(floor.tiedTo(abs(world, receiving)).equals(List.of(abs(world, feeding))),
+                    "the bus on the outlet ties itself to the interface on the same machine's inlet");
+        });
     }
 
     /** A computer drives as many interfaces as its cards drive, in the order its cable reaches them; the rest wait. */
