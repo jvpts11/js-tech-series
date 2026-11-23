@@ -393,8 +393,11 @@ public final class ShipFlightGameTests {
                     0)));
         });
         cruise(helper, sequence, ship, HELD).thenExecute(() -> {
+            // What it flew through says why it sank, if it did: its speed and sink, how far west it got, what it met.
             helper.assertTrue(ship[0].pose().y() > from[0].y() + HIGH - 1, "fast enough, its wings hold it up: "
-                    + (ship[0].pose().y() - from[0].y()));
+                    + (ship[0].pose().y() - from[0].y()) + " over where it stood, " + (from[0].x() - ship[0].pose().x())
+                    + " flown west, " + ((ShipFlight) ship[0].motion()).state() + ", "
+                    + ShipGround.meet(helper.getLevel(), ship[0], ship[0].frame()));
             final ShipReadings shown = console(helper, ship[0]).flight();
             helper.assertTrue(!shown.gearDown() && !shown.lifting() && shown.nozzles() == 0 && shown.speed() > 1,
                     "its console shows it flying on its wings, high, its gear up and its nozzles back: " + shown);
