@@ -156,6 +156,8 @@ public final class PatternWorkbench {
     private final DataCell[] procInputs = new DataCell[PROC_GRID];
     private final DataCell[] procOutputs = new DataCell[PROC_GRID];
     private final int[] outputChances = new int[PROC_GRID];
+    /* How many runs one of each input lasts: 1 for an input fed every run, more for one kept in the machine. */
+    private final int[] inputLasts = new int[PROC_GRID];
     private int procTimeout = ProcessingPattern.DEFAULT_TIMEOUT_TICKS;
     private String procName = "";
     private String procNote = "";
@@ -175,6 +177,7 @@ public final class PatternWorkbench {
             anyTags.add("");
         }
         Arrays.fill(outputChances, ProcessingPattern.FULL_CHANCE);
+        Arrays.fill(inputLasts, 1);
     }
 
     //  Bench draft
@@ -304,6 +307,11 @@ public final class PatternWorkbench {
         return cell >= 0 && cell < PROC_GRID ? outputChances[cell] : ProcessingPattern.FULL_CHANCE;
     }
 
+    /** How many runs one of input {@code cell} lasts: 1 for an input fed every run. */
+    public int inputLasts(final int cell) {
+        return cell >= 0 && cell < PROC_GRID ? inputLasts[cell] : 1;
+    }
+
     public int procTimeout() {
         return procTimeout;
     }
@@ -325,6 +333,9 @@ public final class PatternWorkbench {
         if (output && value == null) {
             outputChances[cell] = ProcessingPattern.FULL_CHANCE;
         }
+        if (!output && value == null) {
+            inputLasts[cell] = 1;
+        }
     }
 
     /** Sets a cell's amount per run; a confirmed amount is no longer an estimate. Clears the cell at 0. */
@@ -339,6 +350,13 @@ public final class PatternWorkbench {
     public void setOutputChance(final int cell, final int percent) {
         if (cell >= 0 && cell < PROC_GRID) {
             outputChances[cell] = Math.max(1, Math.min(ProcessingPattern.FULL_CHANCE, percent));
+        }
+    }
+
+    /** Sets how many runs one of input {@code cell} lasts; over 1 it is kept in the machine. */
+    public void setInputLasts(final int cell, final int runs) {
+        if (cell >= 0 && cell < PROC_GRID && procInputs[cell] != null) {
+            inputLasts[cell] = Math.max(1, Math.min(ProcessingPattern.ProcessingInput.MOST_LASTS, runs));
         }
     }
 
@@ -357,6 +375,7 @@ public final class PatternWorkbench {
             procInputs[i] = i < inputs.size() ? counted(inputs.get(i)) : null;
             procOutputs[i] = i < outputs.size() ? counted(outputs.get(i)) : null;
             outputChances[i] = ProcessingPattern.FULL_CHANCE;
+            inputLasts[i] = 1;
         }
     }
 
@@ -383,6 +402,7 @@ public final class PatternWorkbench {
         Arrays.fill(procInputs, null);
         Arrays.fill(procOutputs, null);
         Arrays.fill(outputChances, ProcessingPattern.FULL_CHANCE);
+        Arrays.fill(inputLasts, 1);
         procTimeout = ProcessingPattern.DEFAULT_TIMEOUT_TICKS;
         procName = "";
         procNote = "";
@@ -396,7 +416,7 @@ public final class PatternWorkbench {
         for (int i = 0; i < PROC_GRID; i++) {
             final DataCell in = procInputs[i];
             if (in != null) {
-                ins.add(new ProcessingPattern.ProcessingInput(in.key(), in.amount(), in.estimated()));
+                ins.add(new ProcessingPattern.ProcessingInput(in.key(), in.amount(), in.estimated(), inputLasts[i]));
             }
             final DataCell out = procOutputs[i];
             if (out != null) {
@@ -417,9 +437,11 @@ public final class PatternWorkbench {
         Arrays.fill(procInputs, null);
         Arrays.fill(procOutputs, null);
         Arrays.fill(outputChances, ProcessingPattern.FULL_CHANCE);
+        Arrays.fill(inputLasts, 1);
         int i = 0;
         for (final ProcessingPattern.ProcessingInput in : pattern.inputs()) {
             if (i < PROC_GRID) {
+                inputLasts[i] = in.lasts();
                 procInputs[i++] = new DataCell(in.key(), in.amount(), in.estimated());
             }
         }
@@ -484,6 +506,7 @@ public final class PatternWorkbench {
         Arrays.fill(procInputs, null);
         Arrays.fill(procOutputs, null);
         Arrays.fill(outputChances, ProcessingPattern.FULL_CHANCE);
+        Arrays.fill(inputLasts, 1);
         return true;
     }
 
@@ -597,6 +620,7 @@ public final class PatternWorkbench {
         tag.put("ProcInputs", saveCells(procInputs, ops));
         tag.put("ProcOutputs", saveCells(procOutputs, ops));
         tag.putIntArray("OutputChances", outputChances.clone());
+        tag.putIntArray("InputLasts", inputLasts.clone());
         tag.putInt("ProcTimeout", procTimeout);
         tag.putString("ProcName", procName);
         tag.putString("ProcNote", procNote);
@@ -626,6 +650,12 @@ public final class PatternWorkbench {
         for (int i = 0; i < PROC_GRID; i++) {
             outputChances[i] = i < chances.length && chances[i] >= 1 && chances[i] <= ProcessingPattern.FULL_CHANCE
                     ? chances[i] : ProcessingPattern.FULL_CHANCE;
+        }
+        // A draft saved before inputs could last several runs has none, and every input lasts one.
+        final int[] lasts = tag.getIntArray("InputLasts");
+        for (int i = 0; i < PROC_GRID; i++) {
+            inputLasts[i] = i < lasts.length
+                    ? Math.max(1, Math.min(ProcessingPattern.ProcessingInput.MOST_LASTS, lasts[i])) : 1;
         }
         procTimeout = tag.contains("ProcTimeout") ? Math.max(1, tag.getInt("ProcTimeout"))
                 : ProcessingPattern.DEFAULT_TIMEOUT_TICKS;

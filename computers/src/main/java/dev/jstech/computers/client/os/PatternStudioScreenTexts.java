@@ -80,6 +80,8 @@ final class PatternStudioScreenTexts {
     static final TextKey OUTPUT_AMOUNT =
             TextKey.of("jsc.pattern_studio.screen.output_amount", "Output amount per run");
     static final TextKey INPUT_AMOUNT = TextKey.of("jsc.pattern_studio.screen.input_amount", "Input amount per run");
+    static final TextKey LASTS_RUNS = TextKey.of("jsc.pattern_studio.screen.lasts_runs", "One lasts this many runs");
+    static final TextKey KEPT_HINT = TextKey.of("jsc.pattern_studio.screen.kept_hint", "Over 1: kept in the machine");
 
     // A cell's tooltip.
     static final TextKey ANY_TAG = TextKey.of("jsc.pattern_studio.screen.any_tag", "Any #%s");
@@ -90,6 +92,9 @@ final class PatternStudioScreenTexts {
     static final TextKey PER_RUN_ESTIMATED =
             TextKey.of("jsc.pattern_studio.screen.per_run_estimated", "%s per run (estimated)");
     static final TextKey CHANCE = TextKey.of("jsc.pattern_studio.screen.chance", "Chance: %s");
+    static final TextKey LASTS = TextKey.of("jsc.pattern_studio.screen.lasts", "%s, lasts %s runs");
+    static final TextKey KEPT = TextKey.of("jsc.pattern_studio.screen.kept", "Kept in the machine");
+    static final TextKey ITEM = TextKey.of("jsc.pattern_studio.screen.item", "%s item");
     static final TextKey ITEMS = TextKey.of("jsc.pattern_studio.screen.items", "%s items");
     static final TextKey MILLIBUCKETS = TextKey.of("jsc.pattern_studio.screen.millibuckets", "%s mB");
 

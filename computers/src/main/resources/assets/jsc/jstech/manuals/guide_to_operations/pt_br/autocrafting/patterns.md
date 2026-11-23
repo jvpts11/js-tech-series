@@ -32,6 +32,11 @@ Qualquer outra coisa que sai da máquina é uma saída inesperada. Ela vai para 
 
 Uma entrada pode ser marcada como estimada quando a sua quantidade veio de um medidor que mede por tick, e não do autor do padrão. O Pattern Studio então mostra "por execução (estimada)" depois da quantidade, e a receita continua rodando.
 
+Uma entrada também pode durar várias execuções. Um Ion Implanter gasta um pó dopante a cada oito camadas, e a Lithography Station de ultravioleta extremo uma pepita de estanho a cada quatro. Dê Shift-clique na entrada e escolha "Uma dura quantas execuções": a célula passa a mostrar "/8" no canto de cima, à esquerda, como uma saída mostra a sua chance. Uma entrada assim é mantida na máquina. Enquanto um trabalho roda, a Crafting Interface só põe mais quando a máquina tem menos do que a quantidade, então um pó posto à mão também é usado. Quando a rede planeja uma fabricação, conta um a cada oito execuções em todas as etapas que o usam, e as oito camadas de um wafer gastam um pó entre elas.
+
+> [!DEFINE] Entrada mantida
+> Uma entrada de um padrão de máquina que dura várias execuções: a interface a mantém na máquina e repõe quando a máquina fica sem.
+
 Um padrão de máquina só funciona a partir de uma Interface de Fabricação que o contenha. A interface é descrita em [](jsc:crafting_interfaces).
 
 ## Padrões multietapas

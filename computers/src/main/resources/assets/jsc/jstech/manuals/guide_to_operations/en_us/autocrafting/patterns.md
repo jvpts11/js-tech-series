@@ -32,6 +32,11 @@ Anything else that comes out of the machine is an unexpected output. It goes to 
 
 An input can be marked as estimated when its amount came from a meter that measures per tick, and not from the author of the pattern. The Pattern Studio then shows "per run (estimated)" after the amount, and the recipe still runs.
 
+An input can also last several runs. An Ion Implanter uses one dopant dust for eight layers, and the extreme ultraviolet Lithography Station one tin nugget for four. Shift-click the input and set "One lasts this many runs": the cell then shows "/8" in its top left corner, as an output shows its chance. Such an input is kept in the machine. While a job runs, the Crafting Interface puts more in only when the machine holds less than the amount, so a dust you put in by hand is used too. When the network plans a craft, it counts one for every eight runs over all the steps that use it, so the eight layers of a wafer take one dust between them.
+
+> [!DEFINE] Kept input
+> An input of a machine pattern that lasts several runs: the interface keeps it in the machine and tops it up when the machine runs out.
+
 A machine pattern works only from a Crafting Interface that holds it. The interface is described in [](jsc:crafting_interfaces).
 
 ## Multi-stage patterns

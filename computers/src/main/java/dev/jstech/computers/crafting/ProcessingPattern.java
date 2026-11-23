@@ -12,6 +12,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Sizes;
 import dev.jstech.core.util.Utf8Text;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -19,8 +20,10 @@ import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A processing recipe: what goes into a machine and what is expected out of it, with a player-set timeout, and
@@ -55,20 +58,49 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
      * {@code estimated} amount was worked out from a recipe that meters its input per tick (per-tick usage
      * times the machine's base duration) rather than confirmed by the author; it runs like any other, the
      * flag only lets the GUIs say so until the author edits or confirms it.
+     *
+     * <p>An input that {@code lasts} more than one run is one the machine uses up slowly, as an ion implanter its
+     * dopant dust, one for eight layers: the amount serves that many runs, so it is kept in the machine, topped up
+     * while a job runs whenever the machine holds less, rather than fed with every run.
      */
-    public record ProcessingInput(StorageKey key, long amount, boolean estimated) {
+    public record ProcessingInput(StorageKey key, long amount, boolean estimated, int lasts) {
+
+        /** The most runs one input can last. */
+        public static final int MOST_LASTS = 1024;
+
         public ProcessingInput {
             amount = Math.max(1L, Math.min(MOST_AMOUNT, amount));
+            lasts = Math.max(1, Math.min(MOST_LASTS, lasts));
+        }
+
+        public ProcessingInput(final StorageKey key, final long amount, final boolean estimated) {
+            this(key, amount, estimated, 1);
         }
 
         public ProcessingInput(final StorageKey key, final long amount) {
-            this(key, amount, false);
+            this(key, amount, false, 1);
+        }
+
+        /** Whether it is kept in the machine, lasting more than one run. */
+        public boolean kept() {
+            return lasts > 1;
+        }
+
+        /** What {@code runs} runs use of it: the amount each run, or, kept, the amount for every {@code lasts}. */
+        public long need(final long runs) {
+            return Sizes.times(amount, kept() ? Sizes.ceilDiv(runs, lasts) : runs);
+        }
+
+        /** The same input lasting {@code runs} runs. */
+        public ProcessingInput lasting(final int runs) {
+            return new ProcessingInput(key, amount, estimated, runs);
         }
 
         public static final Codec<ProcessingInput> CODEC = RecordCodecBuilder.create(i -> i.group(
                 StorageKey.CODEC.fieldOf("key").forGetter(ProcessingInput::key),
                 Codec.LONG.fieldOf("amount").forGetter(ProcessingInput::amount),
-                Codec.BOOL.optionalFieldOf("estimated", false).forGetter(ProcessingInput::estimated)
+                Codec.BOOL.optionalFieldOf("estimated", false).forGetter(ProcessingInput::estimated),
+                Codec.INT.optionalFieldOf("lasts", 1).forGetter(ProcessingInput::lasts)
         ).apply(i, ProcessingInput::new));
 
         public static final StreamCodec<RegistryFriendlyByteBuf, ProcessingInput> STREAM_CODEC =
@@ -76,6 +108,7 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
                         StorageKey.STREAM_CODEC, ProcessingInput::key,
                         ByteBufCodecs.VAR_LONG, ProcessingInput::amount,
                         ByteBufCodecs.BOOL, ProcessingInput::estimated,
+                        ByteBufCodecs.VAR_INT, ProcessingInput::lasts,
                         ProcessingInput::new);
     }
 
@@ -162,6 +195,56 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
         return totals;
     }
 
+    /** Its inputs' keys, each once, in the order they are declared. */
+    public List<StorageKey> inputKeys() {
+        final Set<StorageKey> keys = new LinkedHashSet<>();
+        for (final ProcessingInput in : inputs) {
+            keys.add(in.key());
+        }
+        return List.copyOf(keys);
+    }
+
+    /** What {@code runs} runs use of {@code key}, over every input of it; a kept one only once for every few runs. */
+    public long need(final StorageKey key, final long runs) {
+        long total = 0L;
+        for (final ProcessingInput in : inputs) {
+            if (in.key().equals(key)) {
+                total = Sizes.plus(total, in.need(runs));
+            }
+        }
+        return total;
+    }
+
+    /** The most of {@code most} runs that {@code have} of {@code key} covers. */
+    public long runsCovered(final StorageKey key, final long have, final long most) {
+        long low = 0L;
+        long high = Math.max(0L, most);
+        while (low < high) {
+            final long mid = low + (high - low + 1) / 2;
+            if (need(key, mid) <= have) {
+                low = mid;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return low;
+    }
+
+    /** The one input of {@code key} when it is kept in the machine and no other input asks for that key; else none. */
+    @Nullable
+    public ProcessingInput keptInput(final StorageKey key) {
+        ProcessingInput found = null;
+        for (final ProcessingInput in : inputs) {
+            if (in.key().equals(key)) {
+                if (found != null || !in.kept()) {
+                    return null;
+                }
+                found = in;
+            }
+        }
+        return found;
+    }
+
     /** The primary (first) output, what a craft of this pattern aims to produce; null if none declared. */
     @Nullable
     public ProcessingOutput primaryOutput() {
@@ -180,7 +263,11 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
     public String identity() {
         final StringBuilder line = new StringBuilder();
         for (final ProcessingInput in : inputs) {
-            line.append(in.key().id()).append('*').append(in.amount()).append(';');
+            line.append(in.key().id()).append('*').append(in.amount());
+            if (in.kept()) {
+                line.append('/').append(in.lasts());
+            }
+            line.append(';');
         }
         line.append("->");
         for (final ProcessingOutput out : outputs) {

@@ -234,9 +234,10 @@ public final class CraftPlanMath {
         final List<CraftPlanPayload.Row> rows = new ArrayList<>();
         long maxRuns = Long.MAX_VALUE;
         for (final var in : first.inputs()) {
-            final long need = Sizes.times(in.amount(), runs);
+            final long need = in.need(runs);
             final long have = stock.getOrDefault(in.key(), 0L);
-            maxRuns = Math.min(maxRuns, have / Math.max(1, in.amount()));
+            // A kept input lasts several runs, so what is held covers that many more of them.
+            maxRuns = Math.min(maxRuns, Sizes.times(have / Math.max(1, in.amount()), in.lasts()));
             rows.add(new CraftPlanPayload.Row(in.key(), need, Math.min(have, need)));
         }
         final long maxFirst = maxRuns == Long.MAX_VALUE ? 0 : maxRuns * perRun;

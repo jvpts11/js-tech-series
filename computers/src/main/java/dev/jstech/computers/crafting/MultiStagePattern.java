@@ -157,8 +157,8 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
             final Stage next = stages.get(i + 1);
             final long runsOfNext = Sizes.ceilDiv(demand[i + 1], Math.max(1, outputPerRun(next)));
             final StorageKey produced = outputKey(stages.get(i));
-            final long consumedPerRun = produced == null ? 0 : inputPerRun(next, produced);
-            demand[i] = consumedPerRun > 0 ? runsOfNext * consumedPerRun : demand[i + 1];
+            final long consumed = produced == null ? 0 : inputOver(next, produced, runsOfNext);
+            demand[i] = consumed > 0 ? consumed : demand[i + 1];
         }
         return demand;
     }
@@ -180,17 +180,11 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
         return out == null ? null : out.key();
     }
 
-    /** How much of {@code key} one run of {@code stage} consumes (0 when the stage does not use it). */
-    private static long inputPerRun(final Stage stage, final StorageKey key) {
+    /** How much of {@code key} {@code runs} runs of {@code stage} consume (0 when the stage does not use it). */
+    private static long inputOver(final Stage stage, final StorageKey key, final long runs) {
         if (stage.bench().isPresent()) {
-            return stage.bench().get().ingredientTotals().getOrDefault(key, 0L);
+            return Sizes.times(stage.bench().get().ingredientTotals().getOrDefault(key, 0L), runs);
         }
-        long total = 0;
-        for (final ProcessingPattern.ProcessingInput in : stage.proc().map(ProcessingPattern::inputs).orElse(List.of())) {
-            if (in.key().equals(key)) {
-                total += in.amount();
-            }
-        }
-        return total;
+        return stage.proc().map(machine -> machine.need(key, runs)).orElse(0L);
     }
 }

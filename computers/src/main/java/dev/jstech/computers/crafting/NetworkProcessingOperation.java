@@ -534,11 +534,14 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         return ports;
     }
 
-    /** Whether every input of the lots committed so far has reached the machine in full. */
+    /**
+     * Whether every input of the lots committed so far has reached the machine in full. An input kept in the machine
+     * is not counted lot by lot: it is topped up apart, and a lot never waits for it.
+     */
     private boolean fullyDelivered() {
         final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
         for (int i = 0; i < inputs.size(); i++) {
-            if (delivered[i] < lotsFed * inputs.get(i).amount()) {
+            if (!inputs.get(i).kept() && delivered[i] < lotsFed * inputs.get(i).amount()) {
                 return false;
             }
         }
@@ -555,6 +558,10 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
      * only averages it, so the whole request's worth can run out before the last lot is done. A machine that has run
      * dry of one and made no progress for a couple of feed cycles while the request is still short gets another lot's
      * worth of it, so it never stalls on its last lot.
+     *
+     * <p>An input kept in the machine, one that lasts several runs, is owed whatever the machine holds less than its
+     * amount, whatever was fed before: the machine is read, not counted, so a dust put in by hand or used by another
+     * job is seen as it is.
      */
     private long deliverOwed(final IDataPort[] ports, final long budgetWeight) {
         final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
@@ -562,9 +569,9 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         for (int i = 0; i < inputs.size() && movedWeight < budgetWeight; i++) {
             final ProcessingPattern.ProcessingInput in = inputs.get(i);
             final long lots = in.key().isItem() ? lotsFed : Math.max(lotsFed, lotsNeeded());
-            long owed = lots * in.amount() - delivered[i];
-            if (owed <= 0 && !in.key().isItem() && produced < requested && idleTicks >= STARVED_TICKS
-                    && ports[i].count(in.key()) <= 0) {
+            long owed = in.kept() ? in.amount() - ports[i].count(in.key()) : lots * in.amount() - delivered[i];
+            if (owed <= 0 && !in.kept() && !in.key().isItem() && produced < requested
+                    && idleTicks >= STARVED_TICKS && ports[i].count(in.key()) <= 0) {
                 owed = in.amount();
             }
             if (owed <= 0) {

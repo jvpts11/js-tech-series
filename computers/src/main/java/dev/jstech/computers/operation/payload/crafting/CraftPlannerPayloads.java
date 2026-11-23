@@ -23,7 +23,6 @@ import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -172,6 +171,7 @@ public final class CraftPlannerPayloads {
             return;
         }
         Map<StorageKey, Long> inputs = null;
+        ProcessingPattern machine = null;
         long perRun = 1;
         for (final var cp : patterns) {
             if (StorageKey.of(cp.result()).equals(key)) {
@@ -184,11 +184,8 @@ public final class CraftPlannerPayloads {
             for (final var pp : machines) {
                 final var o = pp.primaryOutput();
                 if (o != null && o.key().equals(key)) {
-                    final Map<StorageKey, Long> merged = new LinkedHashMap<>();
-                    for (final var pi : pp.inputs()) {
-                        merged.merge(pi.key(), pi.amount(), Long::sum);
-                    }
-                    inputs = merged;
+                    machine = pp;
+                    inputs = pp.ingredientTotals();
                     perRun = Math.max(1, o.amount());
                     break;
                 }
@@ -201,7 +198,9 @@ public final class CraftPlannerPayloads {
         }
         final long runs = Math.max(1, Sizes.ceilDiv(need, perRun));
         for (final Map.Entry<StorageKey, Long> e : inputs.entrySet()) {
-            treeWalk(e.getKey(), Sizes.times(e.getValue(), runs), depth + 1, patterns, machines, out, visiting);
+            // A machine's kept input is needed only once for every few runs it lasts.
+            final long under = machine != null ? machine.need(e.getKey(), runs) : Sizes.times(e.getValue(), runs);
+            treeWalk(e.getKey(), under, depth + 1, patterns, machines, out, visiting);
         }
         visiting.remove(key);
     }

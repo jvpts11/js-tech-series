@@ -69,6 +69,11 @@ import static dev.jstech.computers.client.os.PatternStudioScreenTexts.HINT_BENCH
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.HINT_MACHINE;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.HINT_PIPELINE;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.INPUT_AMOUNT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ITEM;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.KEPT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.KEPT_HINT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.LASTS;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.LASTS_RUNS;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.INVENTORY;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.IN_RECIPE_ROM;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.IN_ROM;
@@ -128,6 +133,10 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private static final int PAD = PatternStudioLayout.PAD;
     private static final int FIELD_H = PatternStudioLayout.FIELD_H;
     private static final int BTN_H = 12;
+    /* The amount popup: an output's amount alone, or an input's with the runs one of it lasts under it. */
+    private static final int AMOUNT_POPUP_W = 150;
+    private static final int AMOUNT_POPUP_H = 60;
+    private static final int LASTING_POPUP_H = 92;
     private static final int BAR_BTN_W = 62;
     private static final int NAME_LABEL_W = 28;
     private static final int PROC_COLS = PatternStudioLayout.PROC_COLS;
@@ -231,6 +240,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private final AmountStepper amount;
     private final Button amountClear;
     private final Button amountDone;
+    private final Label lastsLabel;
+    private final AmountStepper lasts;
+    private final Label keptHint;
     private boolean amountForOutput;
     private int amountCell = -1;
 
@@ -306,8 +318,15 @@ public final class PatternStudioApp implements IInventoryBandApp {
         amount = new AmountStepper();
         amountClear = new Button(GameText.resolve(CLEAR), () -> commitAmount(0L));
         amountDone = new Button(GameText.resolve(DONE), () -> commitAmount(amount.amount()));
-        amountPopup = new Popup(this::amountTitle, 150, 60).setLayouter(this::layoutAmountPopup);
+        lastsLabel = new Label(GameText.resolve(LASTS_RUNS));
+        lasts = new AmountStepper().setRange(1, ProcessingPattern.ProcessingInput.MOST_LASTS);
+        keptHint = new Label(GameText.resolve(KEPT_HINT), Label.Tone.DIM);
+        amountPopup = new Popup(this::amountTitle, AMOUNT_POPUP_W, AMOUNT_POPUP_H)
+                .setLayouter(this::layoutAmountPopup);
         amountPopup.add(amount);
+        amountPopup.add(lastsLabel);
+        amountPopup.add(lasts);
+        amountPopup.add(keptHint);
         amountPopup.add(amountClear);
         amountPopup.add(amountDone);
 
@@ -721,6 +740,10 @@ public final class PatternStudioApp implements IInventoryBandApp {
         if (output && cell.chance() < ProcessingPattern.FULL_CHANCE) {
             Draw.text(g, ctx.font(), cell.chance() + "%", cx + 1, cy + 1, ctx.skin().accent());
         }
+        // An input kept in the machine shows the runs one lasts in the same corner, as an output its chance.
+        if (!output && cell.lasts() > 1) {
+            Draw.text(g, ctx.font(), "/" + cell.lasts(), cx + 1, cy + 1, ctx.skin().accent());
+        }
     }
 
     private boolean procCellMarked(final boolean output, final int index) {
@@ -740,6 +763,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
             amountForOutput = output;
             amountCell = index;
             amount.setAmount(cell.cell().amount());
+            lasts.setAmount(cell.lasts());
+            amountPopup.setPreferredSize(AMOUNT_POPUP_W, output ? AMOUNT_POPUP_H : LASTING_POPUP_H);
             amountPopup.open();
             amountPopup.placeIn(lastX, lastY, lastW, lastH);
         } else if (button == 1) {
@@ -1067,6 +1092,14 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private void layoutAmountPopup(final Popup p) {
         amount.setBounds(p.x() + 5, p.y() + 18, p.width() - 10, BTN_H);
+        // An input also says how many runs one of it lasts; an output never lasts more than its run.
+        final boolean input = !amountForOutput;
+        lastsLabel.setVisible(input);
+        lasts.setVisible(input);
+        keptHint.setVisible(input);
+        lastsLabel.setBounds(p.x() + 5, p.y() + 34, p.width() - 10, ROW_H);
+        lasts.setBounds(p.x() + 5, p.y() + 45, p.width() - 10, BTN_H);
+        keptHint.setBounds(p.x() + 5, p.y() + 61, p.width() - 10, ROW_H);
         amountClear.setBounds(p.x() + 5, p.bottom() - BTN_H - 5, 44, BTN_H);
         amountDone.setBounds(p.right() - 49, p.bottom() - BTN_H - 5, 44, BTN_H);
     }
@@ -1075,6 +1108,10 @@ public final class PatternStudioApp implements IInventoryBandApp {
         send(PatternStudioEditPayload.number(host, monitorPos,
                 amountForOutput ? PatternStudioEditPayload.PROC_SET_OUTPUT_AMOUNT : PatternStudioEditPayload.PROC_SET_INPUT_AMOUNT,
                 amountCell, value));
+        if (!amountForOutput && value > 0) {
+            send(PatternStudioEditPayload.number(host, monitorPos, PatternStudioEditPayload.PROC_SET_INPUT_LASTS,
+                    amountCell, lasts.amount()));
+        }
         amountPopup.close();
     }
 
@@ -1156,8 +1193,14 @@ public final class PatternStudioApp implements IInventoryBandApp {
                     return;
                 }
                 lines.add(cell.cell().key().displayName());
-                lines.add(GameText.component((cell.cell().estimated() ? PER_RUN_ESTIMATED : PER_RUN)
-                        .with(amountLabel(cell.cell().key(), cell.cell().amount()))).withStyle(ChatFormatting.GRAY));
+                final String each = amountLabel(cell.cell().key(), cell.cell().amount());
+                if (c.kind() == 1 && cell.lasts() > 1) {
+                    lines.add(GameText.component(LASTS.with(each, cell.lasts())).withStyle(ChatFormatting.GRAY));
+                    lines.add(GameText.component(KEPT).withStyle(ChatFormatting.GRAY));
+                } else {
+                    lines.add(GameText.component((cell.cell().estimated() ? PER_RUN_ESTIMATED : PER_RUN).with(each))
+                            .withStyle(ChatFormatting.GRAY));
+                }
                 if (c.kind() == 2 && cell.chance() < ProcessingPattern.FULL_CHANCE) {
                     lines.add(GameText.component(CHANCE.with(cell.chance() + "%")).withStyle(ChatFormatting.GRAY));
                 }
@@ -1267,7 +1310,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private static String amountLabel(final StorageKey key, final long amount) {
-        return GameText.resolve((key.isItem() ? ITEMS : MILLIBUCKETS).with(amount));
+        return GameText.resolve((key.isItem() ? (amount == 1 ? ITEM : ITEMS) : MILLIBUCKETS).with(amount));
     }
 
     @Nullable

@@ -250,6 +250,8 @@ public final class CraftPlanner {
         private final List<Step> steps = new ArrayList<>();
         private final Map<StorageKey, Long> rawConsumption = new LinkedHashMap<>();
         private final Map<StorageKey, Long> missing = new LinkedHashMap<>();
+        /* The runs what was taken of each kept input still lasts, which later steps use before taking more. */
+        private final Map<ProcessingPattern.ProcessingInput, Long> lasting = new HashMap<>();
         private final boolean machineFirst;
 
         private State(final Recipes recipes, final Map<StorageKey, Long> stock, final boolean machineFirst) {
@@ -290,18 +292,31 @@ public final class CraftPlanner {
             final long perRun = pattern != null ? Math.max(1, pattern.result().getCount())
                     : Math.max(1, machine.primaryOutput().amount());
             final long runs = Sizes.ceilDiv(deficit, perRun);
-            final Map<StorageKey, Long> ingredients = pattern != null
-                    ? pattern.ingredientTotals() : machineInputs(machine);
 
             // Secure every ingredient before this step executes (dependency order).
             chain.add(key);
             long feasibleRuns = runs;
-            for (final Map.Entry<StorageKey, Long> ingredient : ingredients.entrySet()) {
-                final long need = Sizes.times(ingredient.getValue(), runs);
-                final long got = produce(ingredient.getKey(), need, depth + 1, chain, false);
-                if (got < need) {
-                    // Short on this ingredient: only the runs it fully covers can execute.
-                    feasibleRuns = Math.min(feasibleRuns, got / ingredient.getValue());
+            if (pattern != null) {
+                for (final Map.Entry<StorageKey, Long> ingredient : pattern.ingredientTotals().entrySet()) {
+                    final long need = Sizes.times(ingredient.getValue(), runs);
+                    final long got = produce(ingredient.getKey(), need, depth + 1, chain, false);
+                    if (got < need) {
+                        // Short on this ingredient: only the runs it fully covers can execute.
+                        feasibleRuns = Math.min(feasibleRuns, got / ingredient.getValue());
+                    }
+                }
+            } else {
+                for (final StorageKey ingredient : machine.inputKeys()) {
+                    final ProcessingPattern.ProcessingInput kept = machine.keptInput(ingredient);
+                    if (kept != null) {
+                        feasibleRuns = Math.min(feasibleRuns, keep(kept, runs, depth, chain));
+                        continue;
+                    }
+                    final long need = machine.need(ingredient, runs);
+                    final long got = produce(ingredient, need, depth + 1, chain, false);
+                    if (got < need) {
+                        feasibleRuns = Math.min(feasibleRuns, machine.runsCovered(ingredient, got, runs));
+                    }
                 }
             }
             chain.remove(key);
@@ -335,13 +350,22 @@ public final class CraftPlanner {
             return recipes.machines().get(key);
         }
 
-        /** A machine pattern's inputs per run, duplicates merged, in declaration order. */
-        private static Map<StorageKey, Long> machineInputs(final ProcessingPattern machine) {
-            final Map<StorageKey, Long> totals = new LinkedHashMap<>();
-            for (final ProcessingPattern.ProcessingInput in : machine.inputs()) {
-                totals.merge(in.key(), in.amount(), Long::sum);
-            }
-            return totals;
+        /*
+         * How many of {@code runs} an input kept in the machine covers. What earlier steps took of it still lasts the
+         * runs they did not use, as the machine keeps it between jobs: eight layers of one wafer, each a pattern of
+         * its own, take one dopant dust between them, not one each.
+         */
+        private long keep(final ProcessingPattern.ProcessingInput kept, final long runs, final int depth,
+                          final Set<StorageKey> chain) {
+            final long credit = lasting.getOrDefault(kept, 0L);
+            final long fromCredit = Math.min(credit, runs);
+            final long left = runs - fromCredit;
+            final long need = kept.need(left);
+            final long got = need > 0 ? produce(kept.key(), need, depth + 1, chain, false) : 0L;
+            final long gotRuns = Sizes.times(got / kept.amount(), kept.lasts());
+            final long covered = Math.min(left, gotRuns);
+            lasting.put(kept, credit - fromCredit + gotRuns - covered);
+            return fromCredit + covered;
         }
 
         private static long takeFrom(final Map<StorageKey, Long> pool, final StorageKey key, final long want) {

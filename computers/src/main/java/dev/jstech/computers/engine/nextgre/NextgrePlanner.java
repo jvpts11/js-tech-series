@@ -622,7 +622,8 @@ public final class NextgrePlanner {
                 final List<Integer> under = new ArrayList<>();
                 final List<Pull> drawn = new ArrayList<>();
                 for (final Map.Entry<StorageKey, Long> ingredient : new LinkedHashMap<>(ingredients).entrySet()) {
-                    final long need = ingredient.getValue() * step.runs();
+                    final long need = step.isMachine() ? step.machine().need(ingredient.getKey(), step.runs())
+                            : ingredient.getValue() * step.runs();
                     // What the network holds goes first, as the planner takes it; the rest was made by a step before.
                     final long held = Math.min(need, rawLeft.getOrDefault(ingredient.getKey(), 0L));
                     if (held > 0L) {

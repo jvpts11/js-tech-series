@@ -4219,6 +4219,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The Prebuilder is heard as it is seen at work: its press as the lift brings the empty case up and again
   as the built computer sinks into the base, a servo as each arm sets off for a part and as it carries it over, and
   each part clicking into its seat, all on the moments its drawn work reaches.
+- (Computers) Autocrafting: a machine pattern's input can last several runs, as an Ion Implanter's dopant dust lasts
+  eight layers and the EUV station's tin four. In the Pattern Studio, Shift-click an input and set "One lasts this many
+  runs"; the cell shows the runs in its corner, as an output shows its chance. Such an input is kept in the machine:
+  while a job runs, the Crafting Interface puts more in only when the machine holds less than its amount, reading the
+  machine rather than counting what it fed, so one put in by hand is used too. The planner takes one for every few
+  runs it lasts, across the steps of a craft, so the eight layers of a wafer take one dust between them, not eight.
+  A pattern file written before keeps every input lasting one run.
 - (Core) A sound of the world played on the player's game alone: `AudioEngine.playAt` plays a declared sound at a point
   in its channel, for a moment only the player's game knows, as a machine's drawn moving parts reach a point of
   their work.
@@ -5523,6 +5530,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   ties itself to the Crafting Interface or the routers on the same machine's inlet. It looked only at the very block it
   faced, so it never credited the job, the output stayed in the machine and the craft failed on its timeout. Two
   interfaces, or two routers, on ports of one formed machine count as one machine too.
+- (Computers) Pattern Studio: a cell's tooltip says "1 item per run", not "1 items".
 - (Space) The Moon has no air to fade its land: coming down onto it, its ground no longer turns black from a couple of
   hundred blocks up, nor shows as a dome of loaded land ringed in black, the fog the black of its sky closing it in;
   from its ground up, as on the way up past the build limit, the far map goes on from the loaded land to the

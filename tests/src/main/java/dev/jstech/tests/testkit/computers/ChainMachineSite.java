@@ -48,7 +48,12 @@ public final class ChainMachineSite {
      * its terminal's place.
      */
     public static BlockPos formed(final GameTestHelper helper, final ChainMachine machine) {
-        final BlockPos terminal = build(helper, machine);
+        return formed(helper, machine, CORNER);
+    }
+
+    /** The same, its front west corner at {@code corner}, for an arena with other things at {@link #CORNER}. */
+    public static BlockPos formed(final GameTestHelper helper, final ChainMachine machine, final BlockPos corner) {
+        final BlockPos terminal = build(helper, machine, corner);
         helper.assertTrue(stands(helper, machine, terminal), machine.id() + " stands whole");
         return terminal;
     }
@@ -61,13 +66,18 @@ public final class ChainMachineSite {
 
     /** Lays {@code machine}'s blocks at {@link #CORNER} facing north, its own terminal at its place; that place. */
     public static BlockPos build(final GameTestHelper helper, final ChainMachine machine) {
-        BlockPos terminal = CORNER;
+        return build(helper, machine, CORNER);
+    }
+
+    /** The same, its front west corner at {@code corner}. */
+    public static BlockPos build(final GameTestHelper helper, final ChainMachine machine, final BlockPos corner) {
+        BlockPos terminal = corner;
         final List<List<String>> layers = machine.layers();
         for (int y = 0; y < layers.size(); y++) {
             for (int z = 0; z < layers.get(y).size(); z++) {
                 final String row = layers.get(y).get(z);
                 for (int x = 0; x < row.length(); x++) {
-                    final BlockPos at = CORNER.offset(x, y, z);
+                    final BlockPos at = corner.offset(x, y, z);
                     final char letter = row.charAt(x);
                     if (letter == '#') {
                         terminal = at;

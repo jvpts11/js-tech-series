@@ -197,6 +197,8 @@ public final class PatternStudioPayloads {
             // Held to an int's range before narrowing, so a number past it does not wrap round to another.
             case PatternStudioEditPayload.PROC_SET_CHANCE ->
                     studio.setOutputChance(payload.index(), asInt(payload.value()));
+            case PatternStudioEditPayload.PROC_SET_INPUT_LASTS ->
+                    studio.setInputLasts(payload.index(), asInt(payload.value()));
             case PatternStudioEditPayload.PROC_SET_TIMEOUT -> studio.setProcTimeout(asInt(payload.value()));
             case PatternStudioEditPayload.PROC_SET_NAME -> studio.setProcName(payload.text(), payload.text2());
             case PatternStudioEditPayload.PROC_CLEAR -> studio.clearMachine();
@@ -549,7 +551,7 @@ public final class PatternStudioPayloads {
             final PatternWorkbench.DataCell in = studio.procInput(i);
             if (in != null) {
                 inputs.add(new PatternStudioStatePayload.ProcCell(i, in, ProcessingPattern.FULL_CHANCE,
-                        stock.getOrDefault(in.key(), 0L)));
+                        stock.getOrDefault(in.key(), 0L), studio.inputLasts(i)));
             }
             final PatternWorkbench.DataCell out = studio.procOutput(i);
             if (out != null) {

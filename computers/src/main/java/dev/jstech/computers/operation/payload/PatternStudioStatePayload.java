@@ -57,14 +57,23 @@ public record PatternStudioStatePayload(
                 BenchCell::new);
     }
 
-    /** A machine-draft cell at grid index {@code index}: its data, the chance (outputs) and the stock behind it. */
-    public record ProcCell(int index, PatternWorkbench.DataCell cell, int chance, long stock) {
+    /**
+     * A machine-draft cell at grid index {@code index}: its data, the chance (outputs), the stock behind it and how
+     * many runs one of it lasts (inputs; over 1 it is kept in the machine).
+     */
+    public record ProcCell(int index, PatternWorkbench.DataCell cell, int chance, long stock, int lasts) {
         static final StreamCodec<RegistryFriendlyByteBuf, ProcCell> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, ProcCell::index,
                 PatternWorkbench.DataCell.STREAM_CODEC, ProcCell::cell,
                 ByteBufCodecs.VAR_INT, ProcCell::chance,
                 ByteBufCodecs.VAR_LONG, ProcCell::stock,
+                ByteBufCodecs.VAR_INT, ProcCell::lasts,
                 ProcCell::new);
+
+        /** A cell lasting one run, as every output and most inputs do. */
+        public ProcCell(final int index, final PatternWorkbench.DataCell cell, final int chance, final long stock) {
+            this(index, cell, chance, stock, 1);
+        }
     }
 
     /** A pipeline stage as listed: what it makes and whether it runs on a bench or a machine. */

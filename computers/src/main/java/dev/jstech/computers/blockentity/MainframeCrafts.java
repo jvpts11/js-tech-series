@@ -27,7 +27,6 @@ import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -416,12 +415,8 @@ final class MainframeCrafts {
         final NetworkStorage storage = NetworkStorage.of(serverLevel, mainframe.networkUuid());
         final ProcessingPattern.ProcessingOutput primary = machine.primaryOutput();
         final long runs = Sizes.ceilDiv(quantity, primary == null ? 1 : Math.max(1, primary.amount()));
-        final Map<StorageKey, Long> need = new HashMap<>();
-        for (final ProcessingPattern.ProcessingInput in : machine.inputs()) {
-            need.merge(in.key(), in.amount() * runs, Long::sum);
-        }
-        for (final Map.Entry<StorageKey, Long> entry : need.entrySet()) {
-            if (storage.count(entry.getKey()) < entry.getValue()) {
+        for (final StorageKey key : machine.inputKeys()) {
+            if (storage.count(key) < machine.need(key, runs)) {
                 return false;
             }
         }
