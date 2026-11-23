@@ -92,7 +92,7 @@ public final class CableItem extends Item {
             return false;
         }
         // Laying the wire tells the neighbours (CableBlockEntity.lay); placed without, they would look at an empty one.
-        if (!level.setBlock(pos, CoreCables.BLOCK.get().defaultBlockState(), Block.UPDATE_CLIENTS)) {
+        if (!level.setBlock(pos, CoreCables.BLOCK.get().placedAt(level, pos), Block.UPDATE_CLIENTS)) {
             return false;
         }
         if (level.getBlockEntity(pos) instanceof CableBlockEntity cable && cable.lay(wire)) {

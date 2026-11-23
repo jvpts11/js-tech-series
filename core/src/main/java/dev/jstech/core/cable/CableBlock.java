@@ -32,15 +32,20 @@ import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -58,7 +63,7 @@ import org.jetbrains.annotations.Nullable;
  * its last piece. Its state shows the light its parts give and whether any needs its tick ({@link PartStates}), and
  * its redstone is its parts', face by face ({@link PartRedstone}).
  */
-public final class CableBlock extends Block implements EntityBlock {
+public final class CableBlock extends Block implements EntityBlock, SimpleWaterloggedBlock {
 
     public static final MapCodec<CableBlock> CODEC = simpleCodec(CableBlock::new);
     /* A block whose entity is not there yet, or has not been told its wires yet, has the shape of a wire's core. */
@@ -67,7 +72,17 @@ public final class CableBlock extends Block implements EntityBlock {
     public CableBlock(final Properties properties) {
         super(properties);
         registerDefaultState(this.stateDefinition.any().setValue(PartStates.LIGHT, 0)
-                .setValue(PartStates.TICKING, false));
+                .setValue(PartStates.TICKING, false).setValue(BlockStateProperties.WATERLOGGED, false));
+    }
+
+    /**
+     * The state a new cable block takes at {@code pos}: under water, full of it. Water stands in a cable block and
+     * flows through it as through a fence; any other liquid flows round it and leaves it standing, where it broke the
+     * block as it does a torch and cut its wires without a word.
+     */
+    BlockState placedAt(final LevelReader level, final BlockPos pos) {
+        return defaultBlockState().setValue(BlockStateProperties.WATERLOGGED,
+                level.getFluidState(pos).getType() == Fluids.WATER);
     }
 
     /** Where a player's look runs within reach, from the eyes. */
@@ -121,7 +136,23 @@ public final class CableBlock extends Block implements EntityBlock {
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(PartStates.LIGHT, PartStates.TICKING);
+        builder.add(PartStates.LIGHT, PartStates.TICKING, BlockStateProperties.WATERLOGGED);
+    }
+
+    @Override
+    protected FluidState getFluidState(final BlockState state) {
+        return state.getValue(BlockStateProperties.WATERLOGGED) ? Fluids.WATER.getSource(false)
+                : super.getFluidState(state);
+    }
+
+    /* The water standing in it keeps flowing on, as a waterlogged block's does. */
+    @Override
+    protected BlockState updateShape(final BlockState state, final Direction direction, final BlockState neighbour,
+                                     final LevelAccessor level, final BlockPos pos, final BlockPos neighbourPos) {
+        if (state.getValue(BlockStateProperties.WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+        }
+        return super.updateShape(state, direction, neighbour, level, pos, neighbourPos);
     }
 
     @Override

@@ -27,6 +27,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
@@ -48,6 +50,34 @@ public final class CableLayingGameTests {
     private static final int STACK = 16;
 
     private CableLayingGameTests() {
+    }
+
+    /**
+     * A cable block laid in water stands full of it, and a liquid flowing over cables leaves them standing: water and
+     * lava broke them as they do a torch, cutting their wires without a word.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void liquid_flowingOverCablesLeavesThemStandingAndWaterStandsInThem(final GameTestHelper helper) {
+        final CableType cable = SharedEnergy.INSULATED_COPPER_CABLE.get();
+        final BlockPos inWater = new BlockPos(1, 2, 1);
+        final BlockPos underWater = new BlockPos(1, 2, 4);
+        final BlockPos underLava = new BlockPos(5, 2, 4);
+        helper.setBlock(inWater, Blocks.WATER);
+        helper.assertTrue(CableItem.lay(helper.getLevel(), helper.absolutePos(inWater), cable), "laid in water");
+        helper.assertTrue(CableItem.lay(helper.getLevel(), helper.absolutePos(underWater), cable)
+                && CableItem.lay(helper.getLevel(), helper.absolutePos(underLava), cable), "laid in the open");
+        helper.setBlock(underWater.above(), Blocks.WATER);
+        helper.setBlock(underLava.above(), Blocks.LAVA);
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(helper.getBlockState(inWater).getValue(BlockStateProperties.WATERLOGGED)
+                    && helper.getBlockState(inWater).getFluidState().is(Fluids.WATER),
+                    "the cable block laid in water stands full of it");
+            helper.assertTrue(helper.getBlockEntity(underWater) instanceof CableBlockEntity,
+                    "water flowing over a cable leaves it standing");
+            helper.assertTrue(helper.getBlockEntity(underLava) instanceof CableBlockEntity,
+                    "and so does lava");
+            helper.succeed();
+        });
     }
 
     @GameTest(template = ARENA)

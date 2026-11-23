@@ -561,6 +561,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- A cable block under water: J's Core's API is at version 88. `CableBlock` is a `SimpleWaterloggedBlock`: water
+  stands in a cable block, and any other liquid flows round it and leaves it standing.
 - Which tanks a face moves: J's Core's API is at version 87. `IMatterHandler.givesOut` and `takesIn` say
   whether a tank gives out what it holds and whether it takes in, both true by default; a machine's tanks of matter
   answer as its outputs and its inputs, and `FaceMatterHandler` shows through a face only the tanks it can move.
@@ -2749,6 +2751,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   a star written with a backslash before it stays a star, where it was read as emphasis and taken off ("*.*"); an
   item of a header's list may hold a comma inside double quotes; and an entry and a manual may share an id, as a
   book's own page in the library does, where the second was left out.
+- Cables and liquids: a cable block laid in water stands full of it, and a liquid flowing over cables leaves
+  them standing. Flowing water, lava or a liquid of the series broke a cable block as it does a torch, cutting every
+  wire in it without a word.
 - FE Converters: looked at in a world where J's Energy is off, a converter says so first, and that the machines
   take FE straight from its source there, so it is not needed and passes nothing. One put between an FE source and a
   machine left the machine at NO POWER and said nothing.

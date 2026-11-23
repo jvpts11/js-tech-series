@@ -762,7 +762,7 @@ stable 4
 10 dev.jstech.core.cable.BundleShape.Strand  type record(Lane lane, int thickness, int links, int plugs, boolean ringed)
 10 dev.jstech.core.cable.BundleShape.Strand  boolean crosses(int)
 10 dev.jstech.core.cable.BundleShape.Strand  int linkCount()
-10 dev.jstech.core.cable.CableBlock  type final class extends Block implements EntityBlock
+88 dev.jstech.core.cable.CableBlock  type final class extends Block implements EntityBlock, SimpleWaterloggedBlock
 10 dev.jstech.core.cable.CableBlock  <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level, BlockState, BlockEntityType<T>)
 10 dev.jstech.core.cable.CableBlock  BlockEntity newBlockEntity(BlockPos, BlockState)
 10 dev.jstech.core.cable.CableBlock  ItemStack getCloneItemStack(BlockState, HitResult, LevelReader, BlockPos, Player)
