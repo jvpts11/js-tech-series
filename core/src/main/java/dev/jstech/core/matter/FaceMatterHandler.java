@@ -47,9 +47,26 @@ public final class FaceMatterHandler implements IMatterHandler {
         return this.inner.tanks();
     }
 
+    /*
+     * What a tank holds when the face can move it, out of a tank that gives or into one that takes; another is not
+     * seen through this face, so a machine's outlet shows its outputs alone and whatever reads it asks only for what
+     * it can empty.
+     */
     @Override
     public Optional<MatterStack> stack(final int tank) {
-        return this.inner.stack(tank);
+        return givesOut(tank) || takesIn(tank) ? this.inner.stack(tank) : Optional.empty();
+    }
+
+    @ApiStatus.Experimental
+    @Override
+    public boolean givesOut(final int tank) {
+        return this.mode.givesOut() && this.inner.givesOut(tank);
+    }
+
+    @ApiStatus.Experimental
+    @Override
+    public boolean takesIn(final int tank) {
+        return this.mode.takesIn() && this.inner.takesIn(tank);
     }
 
     @Override

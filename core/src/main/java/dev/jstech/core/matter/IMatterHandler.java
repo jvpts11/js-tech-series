@@ -10,6 +10,7 @@ package dev.jstech.core.matter;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MatterState;
 import java.util.Optional;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A block's or an item's store of one state of matter that is neither solid nor liquid, as the Core's capabilities of
@@ -46,4 +47,22 @@ public interface IMatterHandler {
 
     /** Takes out up to {@code amount} of whatever it gives first; says what came out, or would. */
     Optional<MatterStack> extractAny(long amount, boolean simulate);
+
+    /**
+     * Whether tank {@code tank} gives out what it holds, as a machine's output does; a face that only gives shows the
+     * tanks that do alone. A store whose every tank both takes and gives answers true, the default.
+     */
+    @ApiStatus.Experimental
+    default boolean givesOut(final int tank) {
+        return true;
+    }
+
+    /**
+     * Whether tank {@code tank} takes in, as a machine's input does; a face that only takes shows the tanks that do
+     * alone. A store whose every tank both takes and gives answers true, the default.
+     */
+    @ApiStatus.Experimental
+    default boolean takesIn(final int tank) {
+        return true;
+    }
 }

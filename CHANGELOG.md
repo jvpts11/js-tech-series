@@ -694,6 +694,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's piece by its name: J's Core's API is at version 81. `FormedPieceAim.named` gives the piece
   of a given name of the formed model a block stands in, with the box round it, wherever in the model the block
   stands. Experimental.
+- (Core) Which tanks a face moves: J's Core's API is at version 87. `IMatterHandler.givesOut` and `takesIn` say
+  whether a tank gives out what it holds and whether it takes in, both true by default; a machine's tanks of matter
+  answer as its outputs and its inputs, and `FaceMatterHandler` shows through a face only the tanks it can move.
+  Experimental.
 - (Core) A structure's own gravity: J's Core's API is at version 86. `MovingStructure.deckGravity(true)` has a moving
   structure pull what stands in it towards its own floor however it is turned, as a ship's artificial gravity keeps
   its floor down through a dive, a roll or a loop; it is kept in its save and goes with it to another dimension, and
@@ -5578,6 +5582,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A port bound to its products shows those alone, of its gases as of its liquids: the Electrolytic Cell's
   hydrogen outlet showed the chlorine of its other tank, so an Import Bus on it kept asking for the chlorine it could
   not take and never took the hydrogen, and the cell, its hydrogen tank full, stopped.
+- (Core) A machine's gas outlet shows what its outputs hold alone, and its gas inlet what its inputs hold: the
+  Chemical Reactor's outlet showed the gas waiting in its input too, which it cannot give, so an Import Bus on it would
+  ask for that gas and take nothing.
 
 ## [0.5.3a] - 2026-11-04
 

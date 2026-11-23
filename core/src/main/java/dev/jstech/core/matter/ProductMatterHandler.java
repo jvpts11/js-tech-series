@@ -60,6 +60,18 @@ public final class ProductMatterHandler implements IMatterHandler {
         return this.inner.capacity(tank);
     }
 
+    @ApiStatus.Experimental
+    @Override
+    public boolean givesOut(final int tank) {
+        return this.inner.givesOut(tank);
+    }
+
+    @ApiStatus.Experimental
+    @Override
+    public boolean takesIn(final int tank) {
+        return this.inner.takesIn(tank);
+    }
+
     @Override
     public double pressureNow(final int tank) {
         return this.inner.pressureNow(tank);

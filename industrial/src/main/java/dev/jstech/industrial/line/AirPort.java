@@ -129,6 +129,17 @@ public final class AirPort {
             return tank < own() ? this.others.capacity(tank) : AirPort.this.tank.capacity();
         }
 
+        /* The owner's tanks give as they give; the receiver only takes the air in. */
+        @Override
+        public boolean givesOut(final int tank) {
+            return tank < own() && this.others.givesOut(tank);
+        }
+
+        @Override
+        public boolean takesIn(final int tank) {
+            return tank >= own() || this.others.takesIn(tank);
+        }
+
         @Override
         public double pressureNow(final int tank) {
             return tank < own() ? this.others.pressureNow(tank) : AirPort.this.tank.pressureNow();

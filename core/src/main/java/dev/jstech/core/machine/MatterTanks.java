@@ -161,6 +161,18 @@ public final class MatterTanks {
             return at(tank).capacity();
         }
 
+        /* Its outputs give, its inputs, which come first, do not. */
+        @Override
+        public boolean givesOut(final int tank) {
+            return tank >= inputs(this.state).size();
+        }
+
+        /* Its inputs take, its outputs do not. */
+        @Override
+        public boolean takesIn(final int tank) {
+            return tank < inputs(this.state).size();
+        }
+
         @Override
         public double pressureNow(final int tank) {
             return at(tank).pressureNow();

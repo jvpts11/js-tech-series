@@ -139,6 +139,29 @@ public final class ChainPortProductsGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * A port bound to no product shows the tanks it can move alone: the Chemical Reactor's gas outlet shows what its
+     * output holds and not the gas waiting in its input, which it cannot give, and its gas inlet the other way round.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void chemicalReactor_eachGasPortShowsItsOwnSideAlone(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("chemical_reactor"));
+        final Material waiting = Elements.of(Element.HYDROGEN);
+        final Material made = SeriesChemicals.HYDROGEN_CHLORIDE;
+        helper.startSequence()
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    final ChainMachineBlockEntity reactor = machineAt(helper, terminal);
+                    reactor.matter().inputs(MatterState.GAS).getFirst().set(new MatterStack(waiting, POUR));
+                    reactor.matter().outputs(MatterState.GAS).getFirst().set(new MatterStack(made, POUR));
+                    helper.assertTrue(shown(helper, ports(reactor, PortKind.GAS_OUTPUT)).equals(Set.of(made.id())),
+                            "the outlet shows the gas it gives alone");
+                    helper.assertTrue(shown(helper, ports(reactor, PortKind.GAS_INPUT)).equals(Set.of(waiting.id())),
+                            "and the inlet the gas waiting in the input alone");
+                })
+                .thenSucceed();
+    }
+
     /* The same for a liquid: the Display Line's mercury inlet never shows the liquid crystal the other one took. */
     @GameTest(template = ARENA, timeoutTicks = 100)
     public static void displayLine_eachLiquidInletShowsItsOwnLiquidAlone(final GameTestHelper helper) {
@@ -174,6 +197,19 @@ public final class ChainPortProductsGameTests {
                     }
                 })
                 .thenSucceed();
+    }
+
+    /* The gases the gas capability of each of {@code ports} shows, from any face. */
+    private static Set<ResourceLocation> shown(final GameTestHelper helper, final List<BlockPos> ports) {
+        final Set<ResourceLocation> out = new HashSet<>();
+        for (final BlockPos port : ports) {
+            final IMatterHandler gas = helper.getLevel().getCapability(MatterCapabilities.GAS, port, Direction.UP);
+            helper.assertTrue(gas != null, "the port at " + port + " opens onto the machine's gas");
+            for (int tank = 0; tank < gas.tanks(); tank++) {
+                gas.stack(tank).ifPresent(held -> out.add(held.material().id()));
+            }
+        }
+        return out;
     }
 
     /* Where {@code machine}'s ports of {@code kind} stand, in the world. */
