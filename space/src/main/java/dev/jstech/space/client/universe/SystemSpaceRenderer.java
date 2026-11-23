@@ -60,8 +60,12 @@ import org.joml.Vector3d;
  */
 public final class SystemSpaceRenderer {
 
-    /* The Sun's picture, the series' round one in place of the game's (assets/minecraft), its disc half as wide. */
-    private static final double SUN_PICTURE = 2;
+    /*
+     * How much wider than its disc the Sun's picture is drawn: the series' round one in place of the game's
+     * (assets/minecraft) holds its disc, 9 pixels in radius, in the middle of a picture 32 pixels in half-width, so
+     * the disc is the Sun's true size and its faint corona spreads round it.
+     */
+    private static final double SUN_PICTURE = 32.0 / 9.0;
     /*
      * How wide a world's point is, half of it, in radians across the eye: over a third of a degree across, larger
      * than any star round it; how near the edge of the drawing it is set; and the channels of its colour.
