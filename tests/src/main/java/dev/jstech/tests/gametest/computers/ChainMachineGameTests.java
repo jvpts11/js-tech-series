@@ -30,6 +30,9 @@ import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.MaterialUses;
+import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestComputerEnergy;
@@ -219,6 +222,20 @@ public final class ChainMachineGameTests {
                             "fed through its power entry, it works");
                 })
                 .thenSucceed();
+    }
+
+    /** The Air Separation Unit takes nothing in: it works on the air round it, which no inlet gives. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void airSeparation_separatesTheAirRoundIt(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("air_separation_unit"));
+        helper.succeedWhen(() -> {
+            long argon = 0L;
+            for (final MatterTank tank : machineAt(helper, terminal).matter().outputs(MatterState.GAS)) {
+                argon += tank.held().filter(held -> held.material().equals(Elements.of(Element.ARGON)))
+                        .map(MatterStack::amount).orElse(0L);
+            }
+            helper.assertTrue(argon >= 9, "a step of the air round it gives nine millibuckets of argon; " + argon);
+        });
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200, batch = ENERGY)

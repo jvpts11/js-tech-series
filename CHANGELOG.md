@@ -5564,6 +5564,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   reasons no longer open with "Stopped:" after STOPPED, which cut them short.
 - (Core) Structure Projector: its list of multiblocks goes a row for each notch the wheel turns, however many one turn
   brings, where it went one row a turn; and a name too long for it ends in "..." where it was cut off short.
+- (Core) A machine that takes nothing in works: the Air Separation Unit, which draws the air round it and has no
+  inlet, never started, its progress held at nothing with all the power it needed, as a machine looked for its work
+  only when something was in it.
 
 ## [0.5.3a] - 2026-11-04
 

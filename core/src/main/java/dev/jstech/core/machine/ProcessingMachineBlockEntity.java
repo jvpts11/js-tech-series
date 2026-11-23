@@ -772,6 +772,11 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return all;
     }
 
+    /* Whether it takes anything in at all: a slot, a tank or a tank of matter for its inputs. */
+    private boolean takesInputs() {
+        return layout.inputs() > 0 || !inputTanks.isEmpty() || !matterInputs().isEmpty();
+    }
+
     /* Its output tanks of matter, every state's. */
     private List<MatterTank> matterOutputs() {
         final List<MatterTank> all = new ArrayList<>();
@@ -885,7 +890,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         private MachineStatus work(final ServerLevel level, final UpgradeEffect effect, final double share) {
             final ProcessingInput input = input(this.index);
             locked = false;
-            final Optional<Processing> found = input.isEmpty() ? Optional.empty() : process(level, input);
+            // A machine that takes nothing in, as an air separation unit drawing the air round it, works with none.
+            final Optional<Processing> found = input.isEmpty() && takesInputs() ? Optional.empty()
+                    : process(level, input);
             final int held = found.map(each -> setsHeld(each, effect)).orElse(0);
             if (held <= 0) {
                 reset();
