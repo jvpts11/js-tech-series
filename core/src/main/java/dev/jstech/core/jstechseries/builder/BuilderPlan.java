@@ -12,8 +12,11 @@ import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.multiblock.BuildOrder;
 import dev.jstech.core.multiblock.FormedPartBlock;
+import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.IStructureShape;
+import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockBlocks;
+import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PatternById;
 import dev.jstech.core.multiblock.Projectables;
@@ -31,6 +34,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -77,13 +81,22 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
     }
 
     /**
-     * Whether the builder can be aimed at what stands at {@code at}: a multiblock's terminal, or a projector showing
-     * one.
+     * Where the builder is aimed when used on what stands at {@code at}: a multiblock's terminal; the terminal of the
+     * multiblock standing formed that {@code at} is a block of, a port or a casing, rather than the last one aimed at;
+     * or a projector showing one. None for anything else. A block that keeps no word of its terminal is looked up in
+     * the server's formed structures, and the player's game hears of the aim with the item.
      */
-    public static boolean aimable(final Level level, final BlockPos at) {
+    public static Optional<BlockPos> aimAt(final Level level, final BlockPos at) {
         final BlockEntity entity = level.getBlockEntity(at);
-        return entity instanceof MachineBlockEntity machine && machine.structure() != null
-                || entity instanceof StructureProjectorBlockEntity projector && projector.shape().isPresent();
+        final BlockPos kept = entity instanceof MultiblockPartBlockEntity part ? part.terminalPos()
+                : entity instanceof FormedPartBlockEntity formed ? formed.terminal() : null;
+        final BlockPos terminal = kept != null || !(level instanceof ServerLevel server) ? kept
+                : LevelStructures.of(server).terminalHolding(at);
+        final BlockPos target = terminal != null ? terminal : at;
+        final BlockEntity aimed = terminal != null ? level.getBlockEntity(terminal) : entity;
+        return aimed instanceof MachineBlockEntity machine && machine.structure() != null
+                || aimed instanceof StructureProjectorBlockEntity projector && projector.shape().isPresent()
+                ? Optional.of(target) : Optional.empty();
     }
 
     /** How many places already hold the right block, its terminal's apart: every one of a multiblock formed. */

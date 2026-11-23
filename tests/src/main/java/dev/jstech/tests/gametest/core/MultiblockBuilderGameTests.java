@@ -191,6 +191,31 @@ public final class MultiblockBuilderGameTests {
         helper.succeed();
     }
 
+    /**
+     * Used on a block of a multiblock standing formed, not its terminal, the builder is aimed at that multiblock's
+     * terminal: it no longer opens on the one it was aimed at before.
+     */
+    @GameTest(template = ARENA, timeoutTicks = TIME)
+    public static void item_usedOnABlockOfAFormedMultiblockIsAimedAtItsTerminal(final GameTestHelper helper) {
+        final FakePlayer player = builder(helper, "part");
+        player.getInventory().add(new ItemStack(Items.IRON_BLOCK, 64));
+        BuildJobs.start(player, helper.absolutePos(TERMINAL), BuilderState.DEFAULT);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(helper.getBlockEntity(TERMINAL) instanceof MachineBlockEntity machine
+                    && machine.structure() != null && machine.structure().formed(), "built, it forms");
+            final BlockPos terminal = helper.absolutePos(TERMINAL);
+            final BlockPos part = plan(helper, player, BuilderState.DEFAULT).view().places().stream()
+                    .filter(place -> !place.ghost().terminal()).findFirst().orElseThrow().pos();
+            final ItemStack stack = new ItemStack(MultiblockBuilder.ITEM.get());
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+            final InteractionResult used = stack.onItemUseFirst(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(part), Direction.UP, part, false)));
+            helper.assertTrue(used.consumesAction() && MultiblockBuilder.aim(stack, player).equals(
+                    Optional.of(terminal)), "used on its block at " + part + ", it is aimed at the terminal "
+                    + terminal + "; aimed at " + MultiblockBuilder.aim(stack, player));
+        });
+    }
+
     @GameTest(template = ARENA)
     public static void item_isAimedAtATerminalItIsUsedOn(final GameTestHelper helper) {
         final FakePlayer player = builder(helper, "aim");

@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.jstechseries.builder;
 
+import java.util.Optional;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -32,10 +34,11 @@ public final class MultiblockBuilderItem extends Item {
     @Override
     public InteractionResult onItemUseFirst(final ItemStack stack, final UseOnContext context) {
         final Level level = context.getLevel();
-        if (!BuilderPlan.aimable(level, context.getClickedPos())) {
+        final Optional<BlockPos> aim = BuilderPlan.aimAt(level, context.getClickedPos());
+        if (aim.isEmpty()) {
             return InteractionResult.PASS;
         }
-        stack.set(MultiblockBuilder.AIM.get(), GlobalPos.of(level.dimension(), context.getClickedPos().immutable()));
+        stack.set(MultiblockBuilder.AIM.get(), GlobalPos.of(level.dimension(), aim.get().immutable()));
         if (level.isClientSide()) {
             MultiblockBuilder.open(context.getHand());
         }

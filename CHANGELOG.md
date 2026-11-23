@@ -5554,6 +5554,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) File explorers: the count of what a folder holds counts the stored items' folder with the rest, as every
   icon the window shows.
 - (Computers) MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
+- (Core) Multiblock Builder: used on any block of a multiblock standing formed, a port or a casing, it is aimed at that
+  multiblock's terminal. Only its terminal aimed it; used on another of its blocks, it opened on the multiblock it was
+  aimed at before, and its OK built that one.
 - (Core) Multiblock Builder and Network Probe: a page's tab along the foot of the display switches to that page, as
   the soft key under it does. The tabs looked pressable and did nothing; only the grey keys under them worked.
 - (Core) Live reload in a development run: a build that rewrites the manuals' or the models' files while the game
