@@ -46,7 +46,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -119,23 +118,13 @@ public final class CraftManagerPayloads {
         return buildCraftManagerState(cc, level, Text.EMPTY, false);
     }
 
-    /** What a place is called in a window: a card by its name and slot, an interface by its name. */
-    public static Text placeTitle(final CraftPlaces.Place place) {
+    /** What a place is called in a window: a card by its name and slot, an interface as {@code names} calls it. */
+    public static Text placeTitle(final InterfaceNames names, final CraftPlaces.Place place) {
         if (place.isCard()) {
             return CraftTexts.CARD_PLACE.with(GameText.of(place.card().getHoverName()),
                     place.slot() - CraftingComputerBlockEntity.PCIE_SLOTS_START + 1);
         }
-        return interfaceTitle(place.part(), place.site());
-    }
-
-    /** What an interface is called in a window: its name, or its kind and where it is when it has none. */
-    public static Text interfaceTitle(final CraftingInterfacePart part, @Nullable final CraftingFloor.Site site) {
-        if (!part.name().isEmpty()) {
-            return Text.literal(part.name());
-        }
-        final BlockPos at = site == null ? BlockPos.ZERO : site.cable();
-        return CraftTexts.INTERFACE_AT.with(GameText.of(part.partItem().getHoverName()), at.getX(), at.getY(),
-                at.getZ());
+        return names.title(place.part(), place.site());
     }
 
     private static void handleRequestCraftManager(final RequestCraftManagerPayload payload, final ServerPlayer player,
@@ -267,14 +256,15 @@ public final class CraftManagerPayloads {
             final boolean fits = to.isCard() == recipe.bench().isPresent() && to.used() < to.capacity()
                     && to.recipes().stream().noneMatch(held -> held.sameRecipe(recipe));
             final boolean taken = fits && from.take(entry) != null;
+            final InterfaceNames names = InterfaceNames.of(level, cc.floor());
             if (taken && to.put(recipe)) {
-                status = CraftTexts.MOVED.with(recipe.displayText(), placeTitle(to));
+                status = CraftTexts.MOVED.with(recipe.displayText(), placeTitle(names, to));
             } else {
                 // A place that would not take it, holding it on another card already, leaves it where it was.
                 if (taken) {
                     from.put(recipe);
                 }
-                status = CraftTexts.NOT_MOVED.with(placeTitle(to));
+                status = CraftTexts.NOT_MOVED.with(placeTitle(names, to));
             }
         }
         cc.setChanged();
@@ -376,6 +366,7 @@ public final class CraftManagerPayloads {
         final MainframeBlockEntity mainframe = cc.networkUuid() == null ? null
                 : NetworkLookup.resolveMainframe(level, cc.networkUuid());
         final CraftingFloor floor = cc.floor();
+        final InterfaceNames names = InterfaceNames.of(level, floor);
         for (int p = 0; p < places.all().size(); p++) {
             final CraftPlaces.Place place = places.all().get(p);
             final List<CraftManagerStatePayload.WireRomEntry> entries = new ArrayList<>();
@@ -390,10 +381,10 @@ public final class CraftManagerPayloads {
             }
             final int drives = place.isCard() && HardwareRegistry.card(place.card()) instanceof CraftingCardSpec card
                     ? card.interfaces() : 0;
-            wirePlaces.add(new CraftManagerStatePayload.WirePlace(place.isCard(), placeTitle(place), place.used(),
-                    place.capacity(), drives, entries));
+            wirePlaces.add(new CraftManagerStatePayload.WirePlace(place.isCard(), placeTitle(names, place),
+                    place.used(), place.capacity(), drives, entries));
             if (!place.isCard() && floor != null) {
-                interfaces.add(interfaceRow(level, p, place, floor, mainframe));
+                interfaces.add(interfaceRow(names, p, place, floor, mainframe));
             }
         }
         final int waiting = floor == null ? 0 : floor.interfaces().size() - floor.driven().size();
@@ -403,12 +394,10 @@ public final class CraftManagerPayloads {
 
     /* One interface as the Interfaces tab lists it: its machine, how full it is, its mode and what it is doing. */
     private static CraftManagerStatePayload.WireInterface interfaceRow(
-            final ServerLevel level, final int index, final CraftPlaces.Place place, final CraftingFloor floor,
+            final InterfaceNames names, final int index, final CraftPlaces.Place place, final CraftingFloor floor,
             @Nullable final MainframeBlockEntity mainframe) {
         final CraftingInterfacePart part = place.part();
         final CraftingFloor.Reach reach = floor.reach(place.site());
-        final Text machine = reach.machine() == null ? Text.EMPTY
-                : GameText.of(level.getBlockState(reach.machine()).getBlock().getName());
         final List<NetworkProcessingOperation> running = mainframe == null ? List.of()
                 : mainframe.craftJobsOn(part.id());
         final byte state;
@@ -427,7 +416,7 @@ public final class CraftManagerPayloads {
         } else {
             state = CraftManagerStatePayload.IDLE;
         }
-        return new CraftManagerStatePayload.WireInterface(index, interfaceTitle(part, place.site()), machine,
+        return new CraftManagerStatePayload.WireInterface(index, names.title(part, place.site()),
                 part.patterns().size(), part.capacity(), CraftingDispatch.exclusive(part, reach), state, detail,
                 part.maxJobs());
     }

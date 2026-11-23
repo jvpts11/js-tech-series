@@ -23,7 +23,9 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.InterfaceView;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.crafting.CraftingViews;
+import dev.jstech.computers.operation.payload.crafting.InterfaceNames;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
@@ -153,6 +155,47 @@ public final class CraftingInterfaceGameTests {
             final CraftingFloor floor = CraftingFloor.through(world.level(), world.absolute(feeding.cable()));
             helper.assertTrue(floor.tiedTo(abs(world, receiving)).equals(List.of(abs(world, feeding))),
                     "the bus on the outlet ties itself to the interface on the same machine's inlet");
+        });
+    }
+
+    /**
+     * A window calls an interface by the machine it feeds: a formed machine by its own name, not its port's nor its
+     * terminal's; two machines of a kind each with its place; one a player named by that name; one facing no machine
+     * by its kind and its place.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void names_anInterfaceIsCalledByTheMachineItFeeds(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final ChainMachine machine = ChainMachineSite.machine("deposition_chamber");
+        ChainMachineSite.formed(helper, machine);
+        final BlockPos line = ChainMachineSite.place(machine, "item_inlet").north();
+        final CraftingFloor.Site feeding = new CraftingFloor.Site(line, Direction.SOUTH);
+        final CraftingFloor.Site bare = new CraftingFloor.Site(line.east(), Direction.NORTH);
+        final CraftingFloor.Site firstFurnace = new CraftingFloor.Site(line.east(2), Direction.NORTH);
+        final CraftingFloor.Site named = new CraftingFloor.Site(line.east(3), Direction.NORTH);
+        final CraftingFloor.Site secondFurnace = new CraftingFloor.Site(line.east(4), Direction.NORTH);
+        CraftingRig.lay(world, line, line.east(), line.east(2), line.east(3), line.east(4));
+        helper.setBlock(firstFurnace.faced(), Blocks.FURNACE);
+        helper.setBlock(secondFurnace.faced(), Blocks.FURNACE);
+        helper.setBlock(named.faced(), Blocks.FURNACE);
+        for (final CraftingFloor.Site site : List.of(feeding, bare, firstFurnace, named, secondFurnace)) {
+            CraftingRig.addPart(world, site, new CraftingInterfacePart(HardwareEra.STANDARD));
+        }
+        abs(world, named).part(world.level(), CraftingInterfacePart.class).setName("Spare kiln");
+        helper.succeedWhen(() -> {
+            final InterfaceNames names = InterfaceNames.of(world.level(),
+                    CraftingFloor.through(world.level(), world.absolute(line)));
+            final BlockPos first = world.absolute(firstFurnace.faced());
+            final BlockPos second = world.absolute(secondFurnace.faced());
+            final BlockPos cable = world.absolute(bare.cable());
+            check(helper, world, names, feeding, "Deposition Chamber");
+            check(helper, world, names, firstFurnace, "Furnace (" + first.getX() + ", " + first.getY() + ", "
+                    + first.getZ() + ")");
+            check(helper, world, names, secondFurnace, "Furnace (" + second.getX() + ", " + second.getY() + ", "
+                    + second.getZ() + ")");
+            check(helper, world, names, named, "Spare kiln");
+            check(helper, world, names, bare, "Crafting Interface (" + cable.getX() + ", " + cable.getY() + ", "
+                    + cable.getZ() + ")");
         });
     }
 
@@ -844,6 +887,15 @@ public final class CraftingInterfaceGameTests {
 
     private static CraftingFloor.Site abs(final TestWorldBuilder world, final CraftingFloor.Site site) {
         return new CraftingFloor.Site(world.absolute(site.cable()), site.face());
+    }
+
+    /* That the interface on {@code site} is called {@code expected}. */
+    private static void check(final GameTestHelper helper, final TestWorldBuilder world, final InterfaceNames names,
+                              final CraftingFloor.Site site, final String expected) {
+        final CraftingFloor.Site at = abs(world, site);
+        final String called = GameText.resolve(names.title(at.part(world.level(), CraftingInterfacePart.class), at));
+        helper.assertTrue(expected.equals(called), "the interface on " + site + " is called " + expected + ", not "
+                + called);
     }
 
     private static InterfaceView view(final TestWorldBuilder world, final CraftingRig rig) {

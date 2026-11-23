@@ -53,7 +53,7 @@ final class CraftingManagerTexts {
     static final TextKey SUMMARY_ONE = TextKey.of("jsc.crafting_manager.summary_one",
             "Interfaces %s of %s · 1 Crafting Card");
     static final TextKey INTERFACE_COLUMN = TextKey.of("jsc.crafting_manager.interface_column", "INTERFACE");
-    static final TextKey MACHINE_COLUMN = TextKey.of("jsc.crafting_manager.machine_column", "MACHINE");
+    static final TextKey SEARCH_RECIPES = TextKey.of("jsc.crafting_manager.search_recipes", "Search recipes");
     static final TextKey PATTERNS_COLUMN = TextKey.of("jsc.crafting_manager.patterns_column", "PATTERNS");
     static final TextKey MODE_COLUMN = TextKey.of("jsc.crafting_manager.mode_column", "MODE");
     static final TextKey STATE_COLUMN = TextKey.of("jsc.crafting_manager.state_column", "STATE");

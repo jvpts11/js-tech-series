@@ -45,6 +45,9 @@ public final class ListView<T> extends UiComponent {
     private int paddingX;
     private int paddingY;
 
+    /* The rows a turn of the wheel moves the list by, as a desktop's lists go. */
+    private static final int ROWS_PER_NOTCH = 3;
+
     public ListView(final Supplier<List<T>> items, final int rowHeight, final IRowRenderer<T> renderer) {
         this.items = items;
         this.rowHeight = Math.max(1, rowHeight);
@@ -162,7 +165,7 @@ public final class ListView<T> extends UiComponent {
 
     @Override
     public boolean mouseScrolled(final double mx, final double my, final double delta) {
-        scroll = Math.max(0, scroll + (delta > 0 ? -1 : 1));
+        scroll = Math.max(0, scroll + (delta > 0 ? -ROWS_PER_NOTCH : ROWS_PER_NOTCH));
         clampScroll(items.get().size());
         return true;
     }

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.datagen;
 
+import dev.jstech.computers.chain.machine.ChainMachine;
+import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.datagen.advancement.JscAdvancementTabs;
 import dev.jstech.computers.datagen.recipe.ComputersRecipes;
 import dev.jstech.computers.os.OsBootstrap;
@@ -38,7 +40,8 @@ public final class JscDataGenerators {
     public static void onGatherData(final GatherDataEvent event) {
         final ContentData data = ContentData.gather(event, ComputingContent.CONTENT)
                 .alsoNaming(JscDataGenerators::systemsAndPrograms)
-                .alsoNaming(JscAdvancementTabs::translations);
+                .alsoNaming(JscAdvancementTabs::translations)
+                .alsoNaming(JscDataGenerators::chainMachines);
         data.server(new JscAdvancementProvider(data.output(), data.lookup(), data.existingFiles()));
         data.server(new ConditionalAdvancementProvider(data.output(), data.lookup(), JscAdvancementTabs::all));
         data.server(new ComputersRecipes(data.output(), data.lookup()));
@@ -50,6 +53,13 @@ public final class JscDataGenerators {
      * Every system's and every program's name, and what each program does in one line, from the one registry they
      * are declared in: shown on an install disc, in the package manager and in the installed-programs list.
      */
+    /* Each chain machine's own name, which a window calls the machine by, apart from its terminal block's. */
+    private static void chainMachines(final BiConsumer<String, String> add) {
+        for (final ChainMachine machine : ChainMachines.all()) {
+            add.accept(machine.nameKey().key(), machine.nameKey().english());
+        }
+    }
+
     private static void systemsAndPrograms(final BiConsumer<String, String> add) {
         for (final OsDef os : OsBootstrap.builtinOses()) {
             add.accept(os.titleKey(), os.displayName());

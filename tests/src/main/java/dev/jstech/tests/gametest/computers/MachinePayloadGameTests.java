@@ -68,9 +68,9 @@ public final class MachinePayloadGameTests {
                 new CraftManagerStatePayload.WirePlace(true, Text.literal("Crafting Card, slot 1"), 2, 5, 5, rom),
                 new CraftManagerStatePayload.WirePlace(false, Text.literal("Kiln A"), 2, 9, 0, held));
         final List<CraftManagerStatePayload.WireInterface> interfaces = List.of(
-                new CraftManagerStatePayload.WireInterface(1, Text.literal("Kiln A"), Text.literal("Test kiln"), 2,
-                        9, false, CraftManagerStatePayload.RUNNING, Text.literal("Stone x4"), 0),
-                new CraftManagerStatePayload.WireInterface(2, Text.literal("Press"), Text.EMPTY, 0, 3, true,
+                new CraftManagerStatePayload.WireInterface(1, Text.literal("Kiln A"), 2, 9, false,
+                        CraftManagerStatePayload.RUNNING, Text.literal("Stone x4"), 0),
+                new CraftManagerStatePayload.WireInterface(2, Text.literal("Press"), 0, 3, true,
                         CraftManagerStatePayload.NO_MACHINE, Text.EMPTY, 2));
         final CraftManagerStatePayload payload = new CraftManagerStatePayload("media:42",
                 Text.literal("Floppy (A:)"), List.of("alpha.craft", "beta.craft"), places, true,
@@ -128,8 +128,8 @@ public final class MachinePayloadGameTests {
         }
         final List<CraftManagerStatePayload.WireInterface> interfaces = new ArrayList<>();
         for (int i = 0; i < CraftManagerStatePayload.MAX_INTERFACES; i++) {
-            interfaces.add(new CraftManagerStatePayload.WireInterface(i, Text.literal("i" + i), Text.literal("m" + i),
-                    i % 9, 9, i % 2 == 0, (byte) (i % 5), Text.literal("d" + i), i % 4));
+            interfaces.add(new CraftManagerStatePayload.WireInterface(i, Text.literal("i" + i), i % 9, 9,
+                    i % 2 == 0, (byte) (i % 5), Text.literal("d" + i), i % 4));
         }
         final CraftManagerStatePayload payload = new CraftManagerStatePayload("media:1", Text.literal("Disc"),
                 List.of(), places, true, Text.EMPTY, false, interfaces, 36, 3);

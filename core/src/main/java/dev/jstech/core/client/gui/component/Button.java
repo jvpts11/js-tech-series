@@ -29,6 +29,8 @@ public final class Button extends UiComponent {
     private int labelInsetRight;
     private boolean focusable;
 
+    private static final String CUT = "..";
+
     public Button(final String label, final Runnable onPress) {
         this(() -> label, onPress);
     }
@@ -80,7 +82,8 @@ public final class Button extends UiComponent {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
-        final String text = label.get();
+        // A label longer than the face ends in "..", never running over the buttons beside it.
+        final String text = fitted(ctx, label.get());
         final boolean lit = hovered(ctx) || isFocused();
         if (labelScale == 1f && labelInsetRight == 0) {
             ctx.skin().button(g, ctx.font(), x(), y(), width(), height(), text, lit, pressed, primary, enabled());
@@ -151,5 +154,22 @@ public final class Button extends UiComponent {
     @Override
     public Component narrationUsage() {
         return Narration.PRESS;
+    }
+
+    /*
+     * As much of {@code text} as the face holds at the label's scale, ending in ".." when it was cut: only a label
+     * wider than the whole face, which would run over the buttons beside it, is cut; one that fills it edge to edge
+     * stays whole.
+     */
+    private String fitted(final UiContext ctx, final String text) {
+        final int room = Math.round((width() - labelInsetRight) / labelScale);
+        if (ctx.skin().textWidth(ctx.font(), text) <= room) {
+            return text;
+        }
+        String out = text;
+        while (!out.isEmpty() && ctx.skin().textWidth(ctx.font(), out + CUT) > room) {
+            out = out.substring(0, out.length() - 1);
+        }
+        return out.stripTrailing() + CUT;
     }
 }

@@ -2421,8 +2421,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   next of them is served first. They took turns by the tick, so a block that gives out its batch only now and then, as
   a machine does once a second, fed the same end every time while the others waited: a CDU's chilled water reached
   only some of the racks along its pipe.
+- Every list of a desktop moves three rows for each turn of the wheel, as a desktop's lists do, where it moved
+  one.
 
 ### Fixed
+- A button's label too long for its face ends in "..", where it ran over the buttons beside it: the Crafting
+  Manager's "into" button, naming a long place, wrote over Load and Load all.
 - A model's glass is drawn after everything solid behind it: through a docked ship's canopy its cockpit shows, its walls, seats and consoles, no longer the ground beyond the ship, which showed where the glass had been drawn before the cockpit's parts behind it.
 - A player sits on the seat a formed model draws, the piece "seat" that works by the block sat on, not on the
   middle of that block: a cockpit's pilot sat half a block off the ship's middle line, looking at its console from

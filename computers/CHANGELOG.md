@@ -1067,6 +1067,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lost.
 - The Advanced High Performance Cluster Management Computer has its recipe, from the Advanced High
   Performance Personal Computer and a Fabric DPU, as every other case's has.
+- Autocrafting: a Crafting Interface is called by the machine it feeds in every window, the Crafting
+  Manager's lists and pickers and the windows of the routers and Receiving Buses: a formed machine by its own name
+  ("Ion Implanter"), not by the port the interface faces ("Item Inlet"); two machines of a kind each with its place,
+  "Plasma Etcher (19, 122, 316)". One a player named keeps its name, and one facing no machine is called by its place
+  as before.
+- Crafting Manager: a search on the "This computer" line narrows the recipes to those whose name, or whose
+  place's, holds what is typed. Its place picker is as wide as its longest place, with how full each is beside it.
+  The Interfaces tab drops the Machine column, which the interface's name now says, and spreads the rest so no head
+  runs into the next.
 
 ### Fixed
 - Abandoned buildings: a working building's racks stand with their UPS charged, as its battery banks are;

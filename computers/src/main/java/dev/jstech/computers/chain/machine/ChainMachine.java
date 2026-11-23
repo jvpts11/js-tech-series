@@ -10,6 +10,7 @@ package dev.jstech.computers.chain.machine;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity.Layout;
+import dev.jstech.core.text.TextKey;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +40,9 @@ import org.jetbrains.annotations.Nullable;
 public record ChainMachine(String id, String english, @Nullable Era era, int seconds, int watts, Layout layout,
                            List<List<String>> layers, Map<Character, String> legend, boolean linked) {
 
+    /* How the key of a machine's name begins; its id ends it. */
+    private static final String NAME_KEY = JsComputers.MODID + ".chain_machine.";
+
     public ChainMachine {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(english, "english");
@@ -46,6 +50,14 @@ public record ChainMachine(String id, String english, @Nullable Era era, int sec
         layers = layers.stream().map(List::copyOf).toList();
         // In the order it is written, so what reads it (the manual's pages among them) reads it the same every run.
         legend = Collections.unmodifiableMap(new LinkedHashMap<>(legend));
+    }
+
+    /**
+     * What it is called in a window, in the player's language: "Plasma Etcher", where its terminal block is the
+     * "Plasma Etcher Terminal".
+     */
+    public TextKey nameKey() {
+        return TextKey.of(NAME_KEY + id, english);
     }
 
     /** The id of its shape, as J's Core keeps it. */

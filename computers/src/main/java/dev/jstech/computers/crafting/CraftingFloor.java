@@ -193,6 +193,16 @@ public final class CraftingFloor {
         return a != null && b != null && machineOf(a).equals(machineOf(b));
     }
 
+    /**
+     * The machine the part at {@code site} reaches: a formed machine's terminal, whichever of its ports the part faces,
+     * or the block itself; null when it reaches none.
+     */
+    @Nullable
+    public BlockPos machineFed(final Site site) {
+        final BlockPos faced = reach(site).machine();
+        return faced == null ? null : machineOf(faced);
+    }
+
     /* Follows the crafting wire from {@code starts}, gathering the cable blocks, the computers and the parts. */
     private static CraftingFloor scan(final ServerLevel level, final List<BlockPos> starts) {
         final CableType crafting = ComputingModule.CRAFTING_CABLE.get();

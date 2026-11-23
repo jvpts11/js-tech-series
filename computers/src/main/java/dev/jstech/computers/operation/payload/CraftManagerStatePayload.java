@@ -117,8 +117,7 @@ public record CraftManagerStatePayload(String mediaVolumeKey, Text mediaLabel, L
      * One interface on the Interfaces tab.
      *
      * @param place     its place's number, which an action names it by
-     * @param name      what it is called
-     * @param machine   the machine it feeds, or empty
+     * @param name      what it is called: the machine it feeds, unless a player named it
      * @param patterns  how many patterns it holds
      * @param capacity  how many it holds at most
      * @param exclusive whether it runs one recipe at a time
@@ -126,8 +125,8 @@ public record CraftManagerStatePayload(String mediaVolumeKey, Text mediaLabel, L
      * @param detail    what it runs now, for a running interface
      * @param maxJobs   the most jobs at once, 0 for as many as come
      */
-    public record WireInterface(int place, Text name, Text machine, int patterns, int capacity, boolean exclusive,
-                                byte state, Text detail, int maxJobs) {
+    public record WireInterface(int place, Text name, int patterns, int capacity, boolean exclusive, byte state,
+                                Text detail, int maxJobs) {
     }
 
     private static void write(final RegistryFriendlyByteBuf buf, final CraftManagerStatePayload p) {
@@ -163,7 +162,6 @@ public record CraftManagerStatePayload(String mediaVolumeKey, Text mediaLabel, L
         for (final WireInterface face : interfaces) {
             buf.writeVarInt(face.place());
             TextCodecs.STREAM_CODEC.encode(buf, face.name());
-            TextCodecs.STREAM_CODEC.encode(buf, face.machine());
             buf.writeVarInt(face.patterns());
             buf.writeVarInt(face.capacity());
             buf.writeBoolean(face.exclusive());
@@ -206,8 +204,8 @@ public record CraftManagerStatePayload(String mediaVolumeKey, Text mediaLabel, L
         final List<WireInterface> interfaces = new ArrayList<>();
         for (int i = 0; i < interfaceCount; i++) {
             interfaces.add(new WireInterface(buf.readVarInt(), TextCodecs.STREAM_CODEC.decode(buf),
-                    TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(), buf.readBoolean(),
-                    buf.readByte(), TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt()));
+                    buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readByte(),
+                    TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt()));
         }
         final int budget = buf.readVarInt();
         final int waiting = buf.readVarInt();

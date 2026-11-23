@@ -281,8 +281,10 @@ public final class CraftingViews {
         final List<CraftingView.Line> lines = new ArrayList<>();
         final CraftingFloor.Site self = new CraftingFloor.Site(cable, face);
         final OwnCable own = ownCable(level, self);
-        lines.add(line(CABLE_OF, own == null ? Text.literal(NONE)
-                : CraftManagerPayloads.interfaceTitle(own.part(), own.site()), CABLE_OF_NOTE.text()));
+        // The interface whose cable it is, named among the interfaces on its own crafting cable.
+        final Text ownName = own == null ? Text.literal(NONE) : InterfaceNames.of(level,
+                CraftingFloor.through(level, own.site().cable())).title(own.part(), own.site());
+        lines.add(line(CABLE_OF, ownName, CABLE_OF_NOTE.text()));
         lines.add(feeds(level, self, router));
         if (own == null) {
             lines.add(box(CraftingView.BAD, OFF_CABLE.text()));
@@ -310,7 +312,7 @@ public final class CraftingViews {
                     final Text other = otherTaker(level, own.reach(), self, in.key());
                     if (other != null) {
                         warnings.add(box(CraftingView.INFO, ALSO_TAKEN.with(GameText.of(in.key().displayName()),
-                                other, CraftManagerPayloads.interfaceTitle(own.part(), own.site()))));
+                                other, ownName)));
                     }
                 }
             }
@@ -335,11 +337,12 @@ public final class CraftingViews {
             lines.add(line(TIED_TO, Text.literal(NONE), Text.EMPTY));
             lines.add(box(CraftingView.BAD, NOT_TIED.text()));
         } else {
+            final InterfaceNames called = InterfaceNames.of(level, floor);
             final List<Text> names = new ArrayList<>();
             for (final CraftingFloor.Site site : tied) {
                 final CraftingInterfacePart part = site.part(level, CraftingInterfacePart.class);
                 if (part != null) {
-                    names.add(CraftManagerPayloads.interfaceTitle(part, site));
+                    names.add(called.title(part, site));
                 }
             }
             final boolean byHand = !bus.tiedByHand().isEmpty();
@@ -439,10 +442,11 @@ public final class CraftingViews {
     private static List<CraftingView.Pick> picks(final ServerLevel level, final CraftingFloor floor,
                                                  final ReceivingBusPart bus) {
         final List<CraftingView.Pick> picks = new ArrayList<>();
+        final InterfaceNames names = InterfaceNames.of(level, floor);
         for (final CraftingFloor.Site site : floor.interfaces()) {
             final CraftingInterfacePart part = site.part(level, CraftingInterfacePart.class);
             if (part != null) {
-                picks.add(new CraftingView.Pick(CraftManagerPayloads.interfaceTitle(part, site), shortId(part.id()),
+                picks.add(new CraftingView.Pick(names.title(part, site), shortId(part.id()),
                         bus.tiedByHand().contains(part.id())));
             }
         }

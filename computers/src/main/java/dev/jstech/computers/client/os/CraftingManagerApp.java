@@ -25,6 +25,7 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.Popup;
+import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static dev.jstech.computers.client.os.CraftingManagerTexts.BENCH_RECIPES;
@@ -64,7 +66,6 @@ import static dev.jstech.computers.client.os.CraftingManagerTexts.JOBS_COLUMN;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.KIND_NOTE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.LOAD;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.LOAD_ALL;
-import static dev.jstech.computers.client.os.CraftingManagerTexts.MACHINE_COLUMN;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.MEDIA;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.MODE_COLUMN;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.MOVE_TO;
@@ -84,6 +85,7 @@ import static dev.jstech.computers.client.os.CraftingManagerTexts.PLACE_COUNT;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.RECIPES_TAB;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.REMOVE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.RESUME;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.SEARCH_RECIPES;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.STATE_COLUMN;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.SUMMARY;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.SUMMARY_ONE;
@@ -130,6 +132,9 @@ public final class CraftingManagerApp implements IDesktopApp {
     private int lastMouseX;
     private int lastMouseY;
     private int lastW;
+    /* The font the window was last drawn with, which the place picker is sized by; none before the first frame. */
+    @Nullable
+    private Font lastFont;
     /*
      * Frames since the state was last asked for. The window outlives the screen it was opened on (a machine's open
      * windows come back with their program instances when the monitor is entered again), so the state is re-asked for
@@ -142,6 +147,8 @@ public final class CraftingManagerApp implements IDesktopApp {
     private final Label warnLabel;
     private final Label mediaHeader;
     private final Label romHeader;
+    /* Narrows the places list to the recipes whose name, or whose place's name, holds what is typed. */
+    private final SearchField search;
     private final ListView<String> mediaList;
     private final Label mediaEmpty;
     private final ListView<Row> placeList;
@@ -177,8 +184,26 @@ public final class CraftingManagerApp implements IDesktopApp {
     private static final int I_ROW_H = 14;
     private static final int MOST_JOBS = 16;
     private static final int REFRESH_EVERY_FRAMES = 40;
-    /* Where each column of the Interfaces tab starts, as a share of the window's width. */
-    private static final double[] COLUMNS = {0.0, 0.16, 0.32, 0.41, 0.60, 0.81, 0.88};
+    /*
+     * Where each column of the Interfaces tab starts, as a share of the window's width: the interface, called by the
+     * machine it feeds, its patterns, mode, state and jobs, then its pause button; each wide enough for its head.
+     */
+    private static final double[] COLUMNS = {0.0, 0.28, 0.42, 0.61, 0.81, 0.88};
+    private static final int MODE_COL = 2;
+    private static final int STATE_COL = 3;
+    private static final int JOBS_COL = 4;
+    private static final int PAUSE_COL = 5;
+    /* The rows a turn of the wheel moves a list by, as each list of the desktop does. */
+    private static final int ROWS_PER_NOTCH = 3;
+    private static final int SEARCH_MAX = 48;
+    /* The place picker: its narrowest, the room round its rows, and the gap between a place and its count. */
+    private static final int PICKER_MIN_W = 180;
+    private static final int PICKER_ROOM = 22;
+    private static final int PICKER_GAP = 12;
+    /* The popup's title over the picker's rows: where its children start below its top. */
+    private static final int PICKER_TITLE_H = 14;
+    /* The "into" button's edges, left clear of its label. */
+    private static final int INTO_EDGES = 6;
 
     private static CraftingManagerApp active;
 
@@ -190,6 +215,8 @@ public final class CraftingManagerApp implements IDesktopApp {
         mediaHeader = root.add(new Label(() -> GameText.resolve(mediaVolumeKey.isEmpty() ? NO_REMOVABLE_MEDIA.text()
                 : MEDIA.with(mediaLabel)), Label.Tone.DIM));
         romHeader = root.add(new Label(GameText.resolve(THIS_COMPUTER), Label.Tone.DIM));
+        search = root.add(new SearchField(SEARCH_MAX));
+        search.setPlaceholder(GameText.resolve(SEARCH_RECIPES));
         mediaList = root.add(new ListView<String>(() -> mediaFiles, ROW_H, this::renderMediaRow)
                 .setPadding(1)
                 .setOnClick((index, button, mx, my) -> toggle(selectedMedia, index)));
@@ -209,7 +236,7 @@ public final class CraftingManagerApp implements IDesktopApp {
         moveButton = root.add(new Button(GameText.resolve(MOVE_TO), () -> openPicker(true)));
         pickerList = new ListView<Integer>(this::pickerChoices, ROW_H, this::renderPickerRow)
                 .setOnClick(this::pickerClicked);
-        placePicker = new Popup(() -> GameText.resolve(pickingMove ? PICK_MOVE : PICK_PLACE), 180, 120)
+        placePicker = new Popup(() -> GameText.resolve(pickingMove ? PICK_MOVE : PICK_PLACE), PICKER_MIN_W, 120)
                 .setLayouter(this::layoutPicker)
                 .setCloseOnOutsideClick(true);
         placePicker.add(pickerList);
@@ -218,8 +245,8 @@ public final class CraftingManagerApp implements IDesktopApp {
         noInterfacesLabel = root.add(new Label(GameText.resolve(NO_INTERFACES), Label.Tone.DIM));
         summaryLabel = root.add(new Label(this::summaryText, Label.Tone.DIM));
         interfaceColumns = root.add(new ColumnHeader(List.of(GameText.resolve(INTERFACE_COLUMN),
-                GameText.resolve(MACHINE_COLUMN), GameText.resolve(PATTERNS_COLUMN), GameText.resolve(MODE_COLUMN),
-                GameText.resolve(STATE_COLUMN), GameText.resolve(JOBS_COLUMN))).setSortable(false));
+                GameText.resolve(PATTERNS_COLUMN), GameText.resolve(MODE_COLUMN), GameText.resolve(STATE_COLUMN),
+                GameText.resolve(JOBS_COLUMN))).setSortable(false));
         interfaceList = root.add(new ListView<WireInterface>(() -> interfaces, I_ROW_H, this::renderInterfaceRow)
                 .setOnClick(this::interfaceRowClicked));
         cardsHeader = root.add(new Label(GameText.resolve(CARDS), Label.Tone.DIM));
@@ -315,6 +342,7 @@ public final class CraftingManagerApp implements IDesktopApp {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         lastW = width;
+        lastFont = font;
         if (++refreshFrames >= REFRESH_EVERY_FRAMES) {
             refreshFrames = 0;
             request();
@@ -388,7 +416,7 @@ public final class CraftingManagerApp implements IDesktopApp {
         if (root.mouseScrolled(lastMouseX, lastMouseY, delta)) {
             return true;
         }
-        final int step = delta > 0 ? -1 : 1;
+        final int step = delta > 0 ? -ROWS_PER_NOTCH : ROWS_PER_NOTCH;
         if (tab == 1) {
             interfaceList.setScroll(interfaceList.scroll() + step);
         } else if (rows().size() > mediaFiles.size()) {
@@ -405,6 +433,17 @@ public final class CraftingManagerApp implements IDesktopApp {
             return placePicker.keyPressed(key, scanCode, modifiers);
         }
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** Its search takes typing while it has the keyboard. */
+    @Override
+    public boolean takesTyping() {
+        return !placePicker.isOpen() && IDesktopApp.typingIn(root);
+    }
+
+    @Override
+    public boolean charTyped(final char c) {
+        return !placePicker.isOpen() && root.charTyped(c);
     }
 
     public boolean isLoaded() {
@@ -496,7 +535,7 @@ public final class CraftingManagerApp implements IDesktopApp {
     /** Centre of the Interfaces tab's pause button on row {@code index}. */
     public int[] pauseButtonCenter(final int index) {
         final int[] rect = interfaceList.rowRect(index);
-        final int bx = columnX(rect[0], lastW, 6);
+        final int bx = columnX(rect[0], lastW, PAUSE_COL);
         return new int[] {bx + (rect[0] + lastW - PAD - bx) / 2, rect[1] + I_ROW_H / 2};
     }
 
@@ -523,8 +562,11 @@ public final class CraftingManagerApp implements IDesktopApp {
         final int rightX = leftX + leftW + PAD;
         mediaHeader.setVisible(recipes);
         mediaHeader.setBounds(leftX + 3, top + 2, leftW - 6, 8);
+        // "This computer" on the left of its band, the search on its right half.
         romHeader.setVisible(recipes);
-        romHeader.setBounds(rightX + 3, top + 2, rightW - 6, 8);
+        romHeader.setBounds(rightX + 3, top + 2, rightW / 2 - 6, 8);
+        search.setVisible(recipes);
+        search.setBounds(rightX + rightW / 2, top, rightW - rightW / 2, HEADER_H);
         mediaList.setVisible(recipes);
         mediaList.setBounds(leftX, listTop, leftW, listH);
         mediaEmpty.setVisible(recipes && mediaFiles.isEmpty());
@@ -568,7 +610,7 @@ public final class CraftingManagerApp implements IDesktopApp {
         interfaceColumns.setVisible(show && !interfaces.isEmpty());
         interfaceColumns.setBounds(x + 1, cy + 14, width - 2, 12);
         interfaceColumns.setColumnX(columnX(x, width, 0), columnX(x, width, 1), columnX(x, width, 2),
-                columnX(x, width, 3), columnX(x, width, 4), columnX(x, width, 5));
+                columnX(x, width, 3), columnX(x, width, 4));
         interfaceList.setVisible(show && !interfaces.isEmpty());
         interfaceList.setBounds(x + PAD, listY, width - PAD * 2, Math.max(I_ROW_H, cardsY - 12 - listY));
         cardsHeader.setVisible(show);
@@ -581,16 +623,33 @@ public final class CraftingManagerApp implements IDesktopApp {
         hintLabel.setBounds(x + PAD, cy + ch - PAD - 8, width - PAD * 2, 8);
     }
 
-    /* The places list as rows: each place's header, then what it holds. */
+    /*
+     * The places list as rows: each place's header, then what it holds. A search keeps a place whose name holds it
+     * whole, and of the others the recipes whose names hold it, under their place's header; a place with none of
+     * them goes.
+     */
     private List<Row> rows() {
+        final String query = search.query();
         final List<Row> out = new ArrayList<>();
         for (int p = 0; p < places.size(); p++) {
-            out.add(new Row(p, null));
-            for (final WireRomEntry entry : places.get(p).entries()) {
-                out.add(new Row(p, entry));
+            final WirePlace place = places.get(p);
+            final boolean wholePlace = query.isEmpty() || matches(place.title(), query);
+            final List<Row> held = new ArrayList<>();
+            for (final WireRomEntry entry : place.entries()) {
+                if (wholePlace || matches(entry.name(), query)) {
+                    held.add(new Row(p, entry));
+                }
+            }
+            if (wholePlace || !held.isEmpty()) {
+                out.add(new Row(p, null));
+                out.addAll(held);
             }
         }
         return out;
+    }
+
+    private static boolean matches(final Text text, final String query) {
+        return GameText.resolve(text).toLowerCase(Locale.ROOT).contains(query);
     }
 
     private List<WirePlace> cards() {
@@ -608,9 +667,15 @@ public final class CraftingManagerApp implements IDesktopApp {
         return GameText.resolve((cards == 1 ? SUMMARY_ONE : SUMMARY).with(interfaces.size(), budget, cards));
     }
 
+    /* "into" and the place, its name cut to the button rather than the caret after it: it stays a chooser. */
     private String intoLabel() {
-        final Text where = into < 0 || into >= places.size() ? FIRST_WITH_ROOM.text() : places.get(into).title();
-        return GameText.resolve(INTO.with(where));
+        final String where = GameText.resolve(into < 0 || into >= places.size() ? FIRST_WITH_ROOM.text()
+                : places.get(into).title());
+        if (lastFont == null) {
+            return GameText.resolve(INTO.with(Text.literal(where)));
+        }
+        final int room = intoButton.width() - INTO_EDGES - lastFont.width(GameText.resolve(INTO.with(Text.EMPTY)));
+        return GameText.resolve(INTO.with(Text.literal(Texts.clip(lastFont, where, room))));
     }
 
     private void renderMediaRow(final GuiGraphics g, final UiContext ctx, final String file, final int index,
@@ -674,10 +739,32 @@ public final class CraftingManagerApp implements IDesktopApp {
                                  final boolean selected) {
         final boolean current = !pickingMove && place == into;
         ctx.skin().listRow(g, x, y, w, h, hovered, current);
-        final String label = place < 0 ? GameText.resolve(FIRST_WITH_ROOM)
-                : GameText.resolve(places.get(place).title()) + "  " + GameText.resolve(PLACE_COUNT.with(
-                        places.get(place).used(), places.get(place).capacity()));
-        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), label, w - 6), x + 3, y + 2, ctx.skin().listRowText(current));
+        // The place on the left, how full it is on the right in the dim ink, as the places list's headers show it.
+        final String count = place < 0 ? "" : pickerCount(place);
+        final int countW = count.isEmpty() ? 0 : ctx.font().width(count) + PICKER_GAP;
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), pickerName(place), w - 6 - countW), x + 3, y + 2,
+                ctx.skin().listRowText(current));
+        if (!count.isEmpty()) {
+            Draw.text(g, ctx.font(), count, x + w - 3 - ctx.font().width(count), y + 2, ctx.skin().dim());
+        }
+    }
+
+    private String pickerName(final int place) {
+        return place < 0 ? GameText.resolve(FIRST_WITH_ROOM) : GameText.resolve(places.get(place).title());
+    }
+
+    private String pickerCount(final int place) {
+        return GameText.resolve(PLACE_COUNT.with(places.get(place).used(), places.get(place).capacity()));
+    }
+
+    /* As wide as its longest place and count, so no name is cut; never narrower than it was, nor wider than room. */
+    private int pickerWidth(final Font font) {
+        int widest = 0;
+        for (final int place : pickerChoices()) {
+            final int count = place < 0 ? 0 : font.width(pickerCount(place)) + PICKER_GAP;
+            widest = Math.max(widest, font.width(pickerName(place)) + count);
+        }
+        return Math.max(PICKER_MIN_W, widest + PICKER_ROOM);
     }
 
     private void pickerClicked(final int index, final int button, final double mx, final double my) {
@@ -700,6 +787,10 @@ public final class CraftingManagerApp implements IDesktopApp {
     private void openPicker(final boolean move) {
         pickingMove = move;
         pickerList.setScroll(0);
+        if (lastFont != null) {
+            // Room for every choice under the title; the window cuts it shorter and narrower when it is small.
+            placePicker.setPreferredSize(pickerWidth(lastFont), PICKER_TITLE_H + pickerChoices().size() * ROW_H + PAD);
+        }
         placePicker.open();
         placePicker.placeIn(intoButton.x() - 20, intoButton.y() - 130, lastW, 130);
     }
@@ -715,18 +806,17 @@ public final class CraftingManagerApp implements IDesktopApp {
         ctx.skin().listRow(g, x, y, w, h, hovered, false);
         final int ty = y + 3;
         final String[] cells = {
-                GameText.resolve(row.name()), GameText.resolve(row.machine()),
-                GameText.resolve(PATTERNS.with(row.patterns(), row.capacity())),
+                GameText.resolve(row.name()), GameText.resolve(PATTERNS.with(row.patterns(), row.capacity())),
                 GameText.resolve(row.exclusive() ? EXCLUSIVE : NOT_EXCLUSIVE), stateText(row),
                 row.maxJobs() == 0 ? GameText.resolve(JOBS_AUTO) : Integer.toString(row.maxJobs()),
         };
         for (int c = 0; c < cells.length; c++) {
             final int cx = columnX(x - PAD, lastW, c);
             final int room = columnX(x - PAD, lastW, c + 1) - cx - 3;
-            final int colour = c == 4 ? stateColour(row) : c == 0 ? ctx.skin().text() : ctx.skin().dim();
+            final int colour = c == STATE_COL ? stateColour(row) : c == 0 ? ctx.skin().text() : ctx.skin().dim();
             Texts.small(g, font, Texts.clip(font, cells[c], Texts.smallFits(room)), cx, ty, colour);
         }
-        final int bx = columnX(x - PAD, lastW, 6);
+        final int bx = columnX(x - PAD, lastW, PAUSE_COL);
         final int bw = x + w - bx - 2;
         final boolean paused = row.state() == CraftManagerStatePayload.PAUSED;
         ctx.skin().button(g, font, bx, y + 1, bw, h - 2, Texts.clip(font, GameText.resolve(paused ? RESUME : PAUSE),
@@ -758,13 +848,13 @@ public final class CraftingManagerApp implements IDesktopApp {
         final WireInterface row = interfaces.get(index);
         final int[] rect = interfaceList.rowRect(index);
         final int left = rect[0] - PAD;
-        if (mx >= columnX(left, lastW, 6)) {
+        if (mx >= columnX(left, lastW, PAUSE_COL)) {
             send(row, SetCraftInterfacePayload.PAUSED, row.state() == CraftManagerStatePayload.PAUSED ? 0 : 1);
-        } else if (mx >= columnX(left, lastW, 5)) {
+        } else if (mx >= columnX(left, lastW, JOBS_COL)) {
             final int jobs = button == 1 ? Math.max(0, row.maxJobs() - 1)
                     : row.maxJobs() >= MOST_JOBS ? 0 : row.maxJobs() + 1;
             send(row, SetCraftInterfacePayload.MAX_JOBS, jobs);
-        } else if (mx >= columnX(left, lastW, 3) && mx < columnX(left, lastW, 4)) {
+        } else if (mx >= columnX(left, lastW, MODE_COL) && mx < columnX(left, lastW, STATE_COL)) {
             send(row, SetCraftInterfacePayload.EXCLUSIVE, row.exclusive() ? 0 : 1);
         }
     }

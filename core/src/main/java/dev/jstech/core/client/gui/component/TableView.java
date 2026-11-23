@@ -33,6 +33,8 @@ public final class TableView<R> extends UiComponent {
     public static final int HEAD = 14;
     public static final int ROW = 16;
     private static final int ICON = 20;
+    /* The rows a turn of the wheel moves the table by, as a desktop's lists go. */
+    private static final int ROWS_PER_NOTCH = 3;
 
     /**
      * @param model    the table
@@ -82,7 +84,7 @@ public final class TableView<R> extends UiComponent {
 
     @Override
     public boolean mouseScrolled(final double mx, final double my, final double delta) {
-        scroll = Math.max(0, scroll - (int) Math.signum(delta));
+        scroll = Math.max(0, scroll - (int) Math.signum(delta) * ROWS_PER_NOTCH);
         return true;
     }
 
