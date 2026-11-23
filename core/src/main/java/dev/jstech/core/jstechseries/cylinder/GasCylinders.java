@@ -53,8 +53,8 @@ public final class GasCylinders {
             Forms.INGOT);
 
     /** The Gas Cylinder. */
-    public static final ItemEntry<Item> CYLINDER = CoreItems.CONTENT.item("gas_cylinder", Item::new)
-            .named("Gas Cylinder").holdsGas(VOLUME, PRESSURE).look(IItemLook.HANDMADE)
+    public static final ItemEntry<GasCylinderItem> CYLINDER = CoreItems.CONTENT.item("gas_cylinder",
+                    GasCylinderItem::new).named("Gas Cylinder").holdsGas(VOLUME, PRESSURE).look(IItemLook.HANDMADE)
             .tab(JsTechTab.BLOCKS_AND_TOOLS).register();
 
     /** The shoulder's colour for each gas the European code names, and for an empty cylinder. */

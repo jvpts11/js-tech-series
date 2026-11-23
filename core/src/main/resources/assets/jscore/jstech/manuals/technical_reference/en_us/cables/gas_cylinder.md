@@ -35,9 +35,14 @@ Craft it from seven steel plates round the sides and the bottom and a bronze ing
 
 ## How to use it
 
-1. Its shoulder and its tooltip say which gas it holds, and its tooltip's bar how full it is.
+1. Use it on a block that gives gas, a machine's gas outlet or a tank: it fills with that block's gas.
+2. Sneak and use it on a block that takes gas, a machine's gas inlet or a tank: it empties into it.
+3. Its shoulder and its tooltip say which gas it holds, and its tooltip's bar how full it is.
 
 ## What can go wrong
+
+> [!PROBLEM] It takes nothing from a block full of gas.
+> It carries one gas at a time: with gas inside, it fills only from the same gas. Empty it first.
 
 > [!PROBLEM] The shoulder shows a colour the table does not list.
 > The gas inside is one the European code does not name: the shoulder takes the gas's own colour.

@@ -607,7 +607,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ### Added
 - The Gas Cylinder: a slim steel cylinder with a bronze valve that carries one gas by hand, as a bucket carries
-  a fluid, 10,000 mB (50 litres at 200 times the open air's pressure), one to a stack. Its shoulder is painted the
+  a fluid, 10,000 mB (50 litres at 200 times the open air's pressure), one to a stack. Used on a block that gives gas,
+  a machine's outlet or a tank, it fills with that block's gas, only the gas it already holds; used while sneaking on a
+  block that takes gas it empties into it, before the block opens its screen. Its shoulder is painted the
   colour the European code (EN 1089-3) gives the gas inside, from a table kept as data a resource pack can recolour:
   chlorine and fluorine yellow, argon dark green, hydrogen red, oxygen white, nitrogen black, krypton, neon and xenon
   bright green, helium brown, carbon dioxide grey; a gas the code does not name shows its own colour, and an empty

@@ -35,9 +35,14 @@ Fabrique com sete placas de aço nos lados e no fundo e uma barra de bronze em c
 
 ## Como usar
 
-1. O ombro e a dica dizem qual gás ele leva, e a barra da dica quanto está cheio.
+1. Use-o num bloco que dá gás, a saída de gás de uma máquina ou um tanque: ele enche com o gás desse bloco.
+2. Agachado, use-o num bloco que recebe gás, a entrada de gás de uma máquina ou um tanque: ele esvazia nele.
+3. O ombro e a dica dizem qual gás ele leva, e a barra da dica quanto está cheio.
 
 ## O que pode dar errado
+
+> [!PROBLEM] Ele não pega nada de um bloco cheio de gás.
+> Ele leva um gás de cada vez: com gás dentro, só enche do mesmo gás. Esvazie-o antes.
 
 > [!PROBLEM] O ombro mostra uma cor que a tabela não lista.
 > O gás dentro é um que o código europeu não nomeia: o ombro fica com a cor do próprio gás.
