@@ -232,6 +232,12 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     /** Made as many as the ingredients in the network stretched to, which was fewer than asked for. */
     private static final TextKey NOT_ENOUGH_INGREDIENTS = TextKey.of("jsc.operation.failure.not_enough_ingredients",
             "the ingredients for the %s ran out");
+    /** A machine step's machine stopped taking what it was fed: the machine, the step's number of all, its recipe. */
+    private static final TextKey STEP_STOPPED = TextKey.of("jsc.operation.failure.step_stopped",
+            "%s stopped taking anything at step %s of %s, %s");
+    /** A machine step no Crafting Interface held: the step's number of all, its recipe. */
+    private static final TextKey STEP_UNHELD = TextKey.of("jsc.operation.failure.step_unheld",
+            "no Crafting Interface held step %s of %s, %s");
 
     private static final int STALL_LIMIT = 100;
 
@@ -286,6 +292,12 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     private boolean cancelled;
     private byte status = OperationRecord.STATUS_FAILED;
     private OperationFailure cause = OperationFailure.NONE;
+    /*
+     * The first machine step that settled short and the machine it ran on, empty when it had none: what the craft
+     * says it failed on, rather than that its ingredients ran out.
+     */
+    private int shortStep = -1;
+    private String shortMachine = "";
     private OperationPriority priority = OperationPriority.DEFAULT;
     private Runnable onSettle;
     /*
@@ -401,6 +413,10 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             final CraftPlanner.Step step = plan.steps().get(run.step);
             runsDone[run.step] = Math.min(step.runs(), run.op.produced() / Math.max(1L, step.perRun()));
             stepFinished[run.step] = level.getGameTime();
+            if (runsDone[run.step] < step.runs() && shortStep < 0) {
+                shortStep = run.step;
+                shortMachine = run.op.machineName();
+            }
             return true;
         });
 
@@ -994,6 +1010,14 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         if (timedOut) {
             // Waited as long as it was allowed to for ingredients another Operation was holding.
             cause = OperationFailure.of(NetworkSelectOperation.HELD_BY_ANOTHER, resultKey.displayName().getString());
+        } else if ((status == OperationRecord.STATUS_PARTIAL || status == OperationRecord.STATUS_FAILED)
+                && shortStep >= 0) {
+            // A machine step fell short: the craft names it, its machine and why, as its window shows them.
+            final String number = String.valueOf(shortStep + 1);
+            final String of = String.valueOf(plan.steps().size());
+            final String recipe = plan.steps().get(shortStep).name();
+            cause = shortMachine.isEmpty() ? OperationFailure.of(STEP_UNHELD, number, of, recipe)
+                    : OperationFailure.of(STEP_STOPPED, shortMachine, number, of, recipe);
         } else if (status == OperationRecord.STATUS_PARTIAL || status == OperationRecord.STATUS_FAILED) {
             cause = OperationFailure.of(NOT_ENOUGH_INGREDIENTS, resultKey.displayName().getString());
         }
@@ -1273,13 +1297,14 @@ public final class NetworkCraftOperation implements IPersistentOperation {
              * A step is streaming when it is actually being worked now: a machine step with a running operation,
              * or a bench step that has started and is not currently yielding to the machine steps.
              */
+            // A step that settled short failed; one not reached yet waits its turn.
             final byte state = runsDone[i] >= step.runs() ? OperationRecord.SubRow.SUB_COMPLETED
+                    : i == shortStep ? OperationRecord.SubRow.SUB_FAILED
                     : isRunningStep(i) || (!step.isMachine() && !waiting && machineRuns.isEmpty() && runsDone[i] > 0)
                         ? OperationRecord.SubRow.SUB_STREAMING
-                    : OperationRecord.SubRow.SUB_READING;
-            subs.add(new OperationRecord.SubRow(
-                    step.resultName() + " x" + step.produced(),
-                    step.runs(), runsDone[i], state));
+                    : OperationRecord.SubRow.SUB_PENDING;
+            // Each step by its recipe's name: the steps of a chip's route all make the same wafer in process.
+            subs.add(new OperationRecord.SubRow(step.name(), step.runs(), runsDone[i], state));
         }
         return subs;
     }

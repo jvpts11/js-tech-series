@@ -189,6 +189,11 @@ final class NetworkInteractorTexts {
     static final TextKey SUB_STREAMING = TextKey.of("jsc.interactor.ops.sub_streaming", "streaming");
     static final TextKey SUB_DONE = TextKey.of("jsc.interactor.ops.sub_done", "done");
     static final TextKey SUB_QUEUED = TextKey.of("jsc.interactor.ops.sub_queued", "queued");
+    /* A craft's step: its runs made of all, and the word for where it has got to. */
+    static final TextKey STEP_STATE = TextKey.of("jsc.interactor.ops.step_state", "%s/%s %s");
+    static final TextKey STEP_FAILED = TextKey.of("jsc.interactor.ops.step_failed", "failed");
+    static final TextKey STEP_RUNNING = TextKey.of("jsc.interactor.ops.step_running", "running");
+    static final TextKey STEP_WAITING = TextKey.of("jsc.interactor.ops.step_waiting", "waiting");
     static final TextKey OPS_CAPTION = TextKey.of("jsc.interactor.ops.caption", "%s live · %s recent");
     static final TextKey SUPERCOMPUTER_SLOTS =
             TextKey.of("jsc.interactor.ops.supercomputer_slots", "Supercomputer: %s / %s parallel crafts");

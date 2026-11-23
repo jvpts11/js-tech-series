@@ -39,6 +39,7 @@ import dev.jstech.computers.hardware.QueueSpeeds;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.MemberOperation;
+import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkIndex;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
@@ -84,6 +85,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -537,7 +539,7 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
                 : settled.withSettled(level.getGameTime(), level.getDayTime());
         operationLog.addFirst(record);
         while (operationLog.size() > OPERATION_LOG_MAX) {
-            operationLog.removeLast();
+            dropOldestRecord();
         }
         setChanged();
         if (level instanceof ServerLevel serverLevel) {
@@ -1843,5 +1845,20 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
      */
     public void stepReached(final String axis, final String step) {
         services.stepReached(axis, step);
+    }
+
+    /*
+     * Lets go of one record of the full log: the oldest a bus ran on its own, so a craft or a move a player asked for
+     * stays in view however busy the buses are; with none of those, the oldest of all.
+     */
+    private void dropOldestRecord() {
+        final Iterator<OperationRecord> oldestFirst = operationLog.descendingIterator();
+        while (oldestFirst.hasNext()) {
+            if (MoveLabels.fromBus(oldestFirst.next().by())) {
+                oldestFirst.remove();
+                return;
+            }
+        }
+        operationLog.removeLast();
     }
 }

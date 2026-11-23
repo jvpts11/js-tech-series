@@ -8,6 +8,8 @@
 package dev.jstech.computers.operation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +35,20 @@ class MoveLabelsTest {
     @Test
     void bus_quotesItsNameWhenNamed() {
         assertEquals("Export Bus \"ores\"", MoveLabels.bus("Export Bus", " ores "));
+    }
+
+    @Test
+    void fromBus_knowsABusNamedOrNot() {
+        assertTrue(MoveLabels.fromBus(MoveLabels.bus(MoveLabels.IMPORT_BUS, "")));
+        assertTrue(MoveLabels.fromBus(MoveLabels.bus(MoveLabels.EXPORT_BUS, "ores")));
+    }
+
+    @Test
+    void fromBus_isFalseForWhatAPlayerAsks() {
+        assertFalse(MoveLabels.fromBus(MoveLabels.via("lab-pc", MoveLabels.INTERACTOR)));
+        assertFalse(MoveLabels.fromBus(MoveLabels.IQL));
+        assertFalse(MoveLabels.fromBus("Import Busy"));
+        assertFalse(MoveLabels.fromBus(""));
     }
 
     @Test

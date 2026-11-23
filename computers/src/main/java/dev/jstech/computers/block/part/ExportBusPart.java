@@ -115,7 +115,7 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
             if (want <= 0L || !firstFor(level, network, key.id()) || storage.count(key) <= 0L) {
                 continue;
             }
-            activeOp = mainframe.networkOperations().export(key, want, dest, MoveLabels.bus("Export Bus", name()));
+            activeOp = mainframe.networkOperations().export(key, want, dest, MoveLabels.bus(MoveLabels.EXPORT_BUS, name()));
             if (activeOp != null) {
                 TracePoints.exported(level, network, name(), key, want);
                 sentKey = key;

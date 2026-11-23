@@ -69,6 +69,7 @@ final class TerminalUpkeepTexts {
     static final TextKey READING = TextKey.of("jsc.terminal.operation.reading", "READING");
     static final TextKey STREAMING = TextKey.of("jsc.terminal.operation.streaming", "STREAMING");
     static final TextKey SUB_DONE = TextKey.of("jsc.terminal.operation.done", "DONE");
+    static final TextKey SUB_FAILED = TextKey.of("jsc.terminal.operation.failed", "FAILED");
     static final TextKey QUEUED = TextKey.of("jsc.terminal.operation.queued", "QUEUED");
 
     // The Programs heading.

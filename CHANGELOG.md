@@ -4686,6 +4686,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the first with room when none is chosen, as before; a chosen one full or gone says so and the recipe goes nowhere
   else. Load put a machine's recipe in the first interface with room, whatever its machine, so an Advanced chip's etch
   steps landed on the lithography station's interface.
+- (Computers) Autocrafting: a craft that fails says why under its status in the Network Interactor, as every other
+  Operation's reason shows: a machine step that fell short names its machine, the step's number of all and its recipe,
+  "Plasma Etcher (19, 122, 316) stopped taking anything at step 2 of 33, Adv memory L1 etch", where it said its
+  ingredients ran out. Its steps are listed numbered and by their recipes' names, with their runs and done, running,
+  waiting or failed; an Advanced chip's thirty-three steps all read "Wafer in Process (Advanced) x1" before, and the
+  list kept thirty-two of them. The log of recent Operations lets go of the oldest a bus ran first, so a craft asked
+  for stays in it however busy the buses are.
 
 ### Fixed
 - (Core) A button's label too long for its face ends in "..", where it ran over the buttons beside it: the Crafting

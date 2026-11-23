@@ -183,12 +183,14 @@ final class TerminalOperationPopup {
             case OperationRecord.SubRow.SUB_READING -> TerminalUpkeepTexts.READING;
             case OperationRecord.SubRow.SUB_STREAMING -> TerminalUpkeepTexts.STREAMING;
             case OperationRecord.SubRow.SUB_COMPLETED -> TerminalUpkeepTexts.SUB_DONE;
+            case OperationRecord.SubRow.SUB_FAILED -> TerminalUpkeepTexts.SUB_FAILED;
             default -> TerminalUpkeepTexts.QUEUED;
         });
         final int color = switch (sub.state()) {
             case OperationRecord.SubRow.SUB_READING -> JsTechTheme.amber();
             case OperationRecord.SubRow.SUB_STREAMING -> JsTechTheme.accent2();
             case OperationRecord.SubRow.SUB_COMPLETED -> JsTechTheme.green();
+            case OperationRecord.SubRow.SUB_FAILED -> JsTechTheme.red();
             default -> JsTechTheme.dim();
         };
         Draw.text(g, screen.tabFont(), state, px + POPUP_W - screen.tabFont().width(state) - 6, my,

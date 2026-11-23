@@ -14,6 +14,7 @@ import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -104,6 +105,7 @@ final class InteractorOps {
             case 1 -> NetworkInteractorTexts.SUB_READING;
             case 2 -> NetworkInteractorTexts.SUB_STREAMING;
             case 3 -> NetworkInteractorTexts.SUB_DONE;
+            case OperationRecord.SubRow.SUB_FAILED -> NetworkInteractorTexts.STEP_FAILED;
             default -> NetworkInteractorTexts.SUB_QUEUED;
         });
     }
@@ -234,6 +236,15 @@ final class InteractorOps {
         py += 10;
         Texts.small(g, font, statusLong(op.status()), px, py, statusColor(op.status()));
         py += 12;
+        if (!FederatedOperation.KIND.equals(op.kind()) && op.failureText().isPresent()) {
+            // Why it ended as it did, in the status's colour, under it: a craft names its step and its machine.
+            for (final FormattedText line : font.getSplitter().splitLines(op.failureText().get().getString(),
+                    Texts.smallFits(dw - 10), Style.EMPTY)) {
+                Texts.small(g, font, line.getString(), px, py, statusColor(op.status()));
+                py += 9;
+            }
+            py += 3;
+        }
         if (FederatedOperation.KIND.equals(op.kind())) {
             // Where a crossing has got to: on the line, waiting for the far side, or what became of it.
             py = app.sectionRuleIn(g, font, px, py, dw, GameText.resolve(NetworkInteractorTexts.CROSSING_TO
@@ -244,6 +255,11 @@ final class InteractorOps {
                 Texts.small(g, font, line.getString(), px, py, app.panelSkin().text());
                 py += 9;
             }
+            return;
+        }
+        if (!op.subs().isEmpty() && op.type() == OperationRecord.TYPE_CRAFT) {
+            py = app.sectionRuleIn(g, font, px, py, dw, GameText.resolve(NetworkInteractorTexts.SUBOPERATIONS));
+            renderCraftSteps(g, font, op.subs(), px, py, dw, dy + dh);
             return;
         }
         if (!op.subs().isEmpty()) {
@@ -271,5 +287,47 @@ final class InteractorOps {
                 py += 9;
             }
         }
+    }
+
+    /*
+     * A craft's steps, one a line from {@code py} down to {@code bottom}: its number and its recipe's name on the
+     * left, its runs and where it has got to on the right, done in green, failed in red, running in amber.
+     */
+    private void renderCraftSteps(final GuiGraphics g, final Font font, final List<OperationRecord.SubRow> steps,
+                                  final int px, final int top, final int dw, final int bottom) {
+        final InteractorPalette.Colours c = InteractorPalette.get();
+        final int numberW = Texts.smallWidth(font, "00 ");
+        int py = top;
+        for (int i = 0; i < steps.size() && py <= bottom - 9; i++) {
+            final OperationRecord.SubRow step = steps.get(i);
+            final String state = GameText.resolve(NetworkInteractorTexts.STEP_STATE.with(step.moved(),
+                    step.planned(), GameText.resolve(stepWord(step.state()))));
+            final int stateW = Texts.smallWidth(font, state);
+            final int colour = switch (step.state()) {
+                case OperationRecord.SubRow.SUB_COMPLETED -> c.online();
+                case OperationRecord.SubRow.SUB_FAILED -> c.opFailed();
+                case OperationRecord.SubRow.SUB_STREAMING -> c.opPending();
+                default -> app.panelSkin().dim();
+            };
+            Texts.small(g, font, String.valueOf(i + 1), px, py, app.panelSkin().dim());
+            Texts.small(g, font, Texts.trim(font, step.server(), Texts.smallFits(dw - 14 - numberW - stateW)),
+                    px + numberW, py, step.state() == OperationRecord.SubRow.SUB_FAILED ? c.opFailed()
+                            : app.panelSkin().text());
+            Texts.small(g, font, state, px + dw - 10 - stateW, py, colour);
+            py += 9;
+        }
+    }
+
+    /*
+     * A craft step's word for where it has got to. A craft logged before its steps were told apart marked the ones
+     * not reached as reading: they wait.
+     */
+    private static TextKey stepWord(final byte state) {
+        return switch (state) {
+            case OperationRecord.SubRow.SUB_COMPLETED -> NetworkInteractorTexts.SUB_DONE;
+            case OperationRecord.SubRow.SUB_FAILED -> NetworkInteractorTexts.STEP_FAILED;
+            case OperationRecord.SubRow.SUB_STREAMING -> NetworkInteractorTexts.STEP_RUNNING;
+            default -> NetworkInteractorTexts.STEP_WAITING;
+        };
     }
 }

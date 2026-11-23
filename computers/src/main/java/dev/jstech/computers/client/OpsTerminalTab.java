@@ -153,6 +153,7 @@ final class OpsTerminalTab extends AbstractTerminalTab {
             case OperationRecord.SubRow.SUB_COMPLETED -> statusColor(OperationRecord.STATUS_COMPLETED);
             case OperationRecord.SubRow.SUB_STREAMING -> statusColor(OperationRecord.STATUS_PROCESSING);
             case OperationRecord.SubRow.SUB_READING -> statusColor(OperationRecord.STATUS_WAITING);
+            case OperationRecord.SubRow.SUB_FAILED -> statusColor(OperationRecord.STATUS_FAILED);
             default -> DIM();
         };
     }

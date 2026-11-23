@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.NetworkStorage;
@@ -50,6 +51,7 @@ public final class ProcessingCraftGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 4;
     private static final String NO_INTERFACE = "jsc.operation.failure.no_interface";
+    private static final String STEP_STOPPED = "jsc.operation.failure.step_stopped";
 
     private ProcessingCraftGameTests() {
     }
@@ -114,6 +116,41 @@ public final class ProcessingCraftGameTests {
                             "its cause says no interface holds the recipe; got " + op.get().toRecord().cause());
                     helper.assertTrue(net.storage(helper).count(storageKey(Items.COBBLESTONE)) == 16,
                             "no machine ran, so the inputs are all still in the network");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A craft whose machine step falls short says why: the machine that stopped taking, which step of how many and
+     * the step's recipe; and that step's row is called by its recipe and says it failed.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void craft_aStepThatFallsShortNamesItsMachineAndItsStep(final GameTestHelper helper) {
+        final Network net = buildCraftingNetwork(helper);
+        final CraftingRig rig = kilnRig(helper, net);
+        final AtomicReference<NetworkCraftOperation> craft = new AtomicReference<>();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.COBBLESTONE, 16);
+                    kiln(rig).setHeld(true);
+                    rig.hold(cobblePattern(6).withName("Fire the stone", ""));
+                })
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    craft.set(net.mainframe().submitNetworkCraft(storageKey(Items.STONE), 4, false, "test"));
+                    helper.assertTrue(craft.get() != null, "the craft is planned through the kiln's recipe");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(craft.get().isDone(), "the craft settles"))
+                .thenExecute(() -> {
+                    final OperationRecord record = craft.get().toRecord();
+                    final List<String> said = record.cause().arguments();
+                    helper.assertTrue(STEP_STOPPED.equals(record.cause().key()) && said.size() == 4
+                                    && !said.get(0).isEmpty() && said.subList(1, 4).equals(List.of("1", "1",
+                                    "Fire the stone")),
+                            "the craft says which machine stopped at which step: " + record.cause());
+                    final OperationRecord.SubRow step = record.subs().getFirst();
+                    helper.assertTrue("Fire the stone".equals(step.server())
+                                    && step.state() == OperationRecord.SubRow.SUB_FAILED,
+                            "the step is called by its recipe and failed: " + record.subs());
                 })
                 .thenSucceed();
     }

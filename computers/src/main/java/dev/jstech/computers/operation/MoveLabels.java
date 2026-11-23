@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -30,6 +31,10 @@ public final class MoveLabels {
     public static final String CLUSTER_MANAGER = "Cluster Manager";
     /** The network app of a portable device. */
     public static final String NETWORK_APP = "Network app";
+    /** The buses, which move things on their own rather than when a player asks. */
+    public static final String IMPORT_BUS = "Import Bus";
+    public static final String EXPORT_BUS = "Export Bus";
+    private static final List<String> BUS_KINDS = List.of(IMPORT_BUS, EXPORT_BUS);
 
     /**
      * A program written by the player, named by the script that asked.
@@ -62,6 +67,16 @@ public final class MoveLabels {
             return kind;
         }
         return kind + " \"" + name.strip() + "\"";
+    }
+
+    /** Whether {@code label} is a bus's: an Operation no player asked for, which a bus runs on its own. */
+    public static boolean fromBus(final String label) {
+        for (final String kind : BUS_KINDS) {
+            if (label.equals(kind) || label.startsWith(kind + " \"")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

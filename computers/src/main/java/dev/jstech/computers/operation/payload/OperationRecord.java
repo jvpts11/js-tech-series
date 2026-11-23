@@ -138,7 +138,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
     public static final byte STATUS_DISCARDED = 8;
 
     public static final int MAX_MOVES = 32;
-    public static final int MAX_SUBS = 32;
+    /* As many steps as a craft is planned deep, so a chip's whole route shows. */
+    public static final int MAX_SUBS = 64;
 
     /* As much of each of another mod's Operation's words as a row keeps: an id, a name, a line of arguments. */
     public static final int MAX_KIND_BYTES = 128;
@@ -320,6 +321,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         public static final byte SUB_READING = 1;
         public static final byte SUB_STREAMING = 2;
         public static final byte SUB_COMPLETED = 3;
+        /* A craft's step that settled short: its machine stopped taking, or no interface held it. */
+        public static final byte SUB_FAILED = 4;
 
         public static final StreamCodec<RegistryFriendlyByteBuf, SubRow> STREAM_CODEC =
                 StreamCodec.composite(

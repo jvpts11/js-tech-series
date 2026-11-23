@@ -13,6 +13,7 @@ import dev.jstech.computers.block.part.CraftingRouterPart;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.crafting.InterfaceNames;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.StorageKey;
@@ -231,6 +232,15 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     @Nullable
     public CraftingFloor.Site site() {
         return site;
+    }
+
+    /**
+     * The machine it is fed through its interface, as every window names it (a formed machine by its own name), or
+     * empty while it has no interface: what a craft says when this, one of its steps, falls short.
+     */
+    public String machineName() {
+        final CraftingInterfacePart part = site == null ? null : site.part(level, CraftingInterfacePart.class);
+        return part == null || floor == null ? "" : InterfaceNames.of(level, floor).title(part, site).english();
     }
 
     /** The order this job was first fed in, against the other jobs and what settled ones are still owed. */

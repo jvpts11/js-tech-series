@@ -76,6 +76,11 @@ public final class CraftPlanner {
             return resultText().english();
         }
 
+        /** What the step is called: its recipe's name, which tells apart steps that make the same thing. */
+        public String name() {
+            return machine != null ? machine.displayName() : pattern.displayName();
+        }
+
         /** What the step makes, named in the language of whoever reads it. */
         public Text resultText() {
             final StorageKey key = resultKey();

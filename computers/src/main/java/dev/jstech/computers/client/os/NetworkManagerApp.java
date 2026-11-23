@@ -1764,6 +1764,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         return switch (state) {
             case OperationRecord.SubRow.SUB_COMPLETED, OperationRecord.SubRow.SUB_STREAMING -> colours().good();
             case OperationRecord.SubRow.SUB_READING -> colours().warn();
+            case OperationRecord.SubRow.SUB_FAILED -> colours().bad();
             default -> skin.dim();
         };
     }
