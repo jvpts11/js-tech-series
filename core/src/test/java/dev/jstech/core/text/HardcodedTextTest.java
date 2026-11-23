@@ -131,9 +131,7 @@ class HardcodedTextTest {
      */
     private static final Map<String, Data> DATA = Map.ofEntries(
             data(COMPUTERS + "block/MonitorBlock.java", 1, "a live medium's host name, after the system it boots"),
-            data(COMPUTERS + "block/part/ExportBusPart.java", 1, ORIGIN),
-            data(COMPUTERS + "block/part/ImportBusPart.java", 1, ORIGIN),
-            data(COMPUTERS + "operation/MoveLabels.java", 2, ORIGIN),
+            data(COMPUTERS + "operation/MoveLabels.java", 4, ORIGIN),
             data(COMPUTERS + "engine/prophet/ProphetEngine.java", 1, ORIGIN),
             data(COMPUTERS + "client/BootSplashArt.java", 5, LOGO),
             data(COMPUTERS + "client/DiskCheckArt.java", 1, PRODUCTS),
