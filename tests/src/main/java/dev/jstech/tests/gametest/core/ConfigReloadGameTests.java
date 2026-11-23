@@ -15,6 +15,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.fml.config.ModConfigs;
@@ -34,8 +35,12 @@ public final class ConfigReloadGameTests {
     private static final String ARENA = "empty";
     private static final String BATCH = "jscore_config_reload";
     private static final String FILE_NAME = "jscomputers-server.toml";
-    /* The ticks NeoForge's watcher, on the clock, has to see each change: the test's ticks run faster than that. */
-    private static final int PATIENT = 6000;
+    /*
+     * The ticks NeoForge's watcher, on the clock, has to see each change. Alone in its batch the server runs some
+     * thousands of ticks a second, so this is about half a minute there and much longer at the game's own pace; the
+     * test is over as soon as each reading has been taken.
+     */
+    private static final int PATIENT = 200_000;
 
     private ConfigReloadGameTests() {
     }
@@ -78,9 +83,14 @@ public final class ConfigReloadGameTests {
         return new String(read(path), StandardCharsets.UTF_8);
     }
 
+    /*
+     * Writes the file whole at once, as NeoForge writes it: a file written in place may be read half written, and
+     * NeoForge puts a file it cannot read back to its defaults.
+     */
     private static void write(final Path path, final byte[] bytes) {
         try {
-            Files.write(path, bytes);
+            final Path written = Files.write(path.resolveSibling(path.getFileName() + ".new"), bytes);
+            Files.move(written, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
