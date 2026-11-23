@@ -1433,6 +1433,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Autocrafting: a craft is planned however many steps deep it goes, up to 64. The planner stopped at 16 and
   called the rest missing, so a chip of more than three layers could never be asked for: an Advanced memory chip is
   33 machine steps from its silicon wafer, four for each of its eight layers and its packaging.
+- Portable devices: a device switched on draws nothing on that tick. Picked up on a tick when a step of
+  drawing fell due, a new one came out a step short of full, as if it had been on for that step.
 
 ## [0.5.3a] - 2026-11-04
 

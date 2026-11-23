@@ -105,6 +105,25 @@ public final class PortableGameTests {
         helper.succeed();
     }
 
+    /*
+     * A device switched on draws nothing on that tick, even one where a step of drawing falls due: it has been on for
+     * no time. Carried on such a tick, a new one came out a step short of full.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 2 * Portables.DRAW_EVERY + 20)
+    public static void portable_switchedOnOnADrawingTickComesFull(final GameTestHelper helper) {
+        final ServerPlayer player = player(helper, NEAR);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(helper.getLevel().getGameTime() % Portables.DRAW_EVERY == 0,
+                        "a tick when a step of drawing falls due"))
+                .thenExecute(() -> {
+                    final ItemStack phone = carry(player, PortableItems.QPHONE.get());
+                    helper.assertTrue(Portables.isOn(phone), "it switches on");
+                    helper.assertValueEqual(Portables.battery(phone, PortableModel.QPHONE),
+                            PortableBattery.capacity(PortableModel.QPHONE), "full");
+                })
+                .thenSucceed();
+    }
+
     /** A device on draws its battery while carried, in steps, and switches off when it is flat. */
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void portable_drawsItsBatteryAndSwitchesOffFlat(final GameTestHelper helper) {

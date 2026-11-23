@@ -5534,6 +5534,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) Autocrafting: a craft is planned however many steps deep it goes, up to 64. The planner stopped at 16 and
   called the rest missing, so a chip of more than three layers could never be asked for: an Advanced memory chip is
   33 machine steps from its silicon wafer, four for each of its eight layers and its packaging.
+- (Computers) Portable devices: a device switched on draws nothing on that tick. Picked up on a tick when a step of
+  drawing fell due, a new one came out a step short of full, as if it had been on for that step.
 - (Space) The Moon has no air to fade its land: coming down onto it, its ground no longer turns black from a couple of
   hundred blocks up, nor shows as a dome of loaded land ringed in black, the fog the black of its sky closing it in;
   from its ground up, as on the way up past the build limit, the far map goes on from the loaded land to the

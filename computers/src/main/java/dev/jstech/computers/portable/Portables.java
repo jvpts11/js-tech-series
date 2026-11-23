@@ -134,13 +134,15 @@ public final class Portables {
         if (now % LOOK_EVERY == 0 || state.seenAt() == 0L) {
             devices.seen(id, now, player.getUUID());
         }
-        if (!isOn(stack)) {
+        final boolean wasOn = isOn(stack);
+        if (!wasOn) {
             switchOn(stack, model, now);
             if (!isOn(stack)) {
                 return;
             }
         }
-        if (now % DRAW_EVERY == 0) {
+        // Switched on this tick, it has been on for no time: the step of drawing waits for the next one due.
+        if (wasOn && now % DRAW_EVERY == 0) {
             final int left = battery(stack, model) - DRAW_EVERY * PortableBattery.DRAWN_A_TICK;
             setBattery(stack, model, left);
             if (left <= 0) {
