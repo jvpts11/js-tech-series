@@ -159,7 +159,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: gametest-logs
-          path: run/logs/
+          path: run/gametest/logs/
           if-no-files-found: ignore
 
   gametests-without-computercraft:
@@ -191,5 +191,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: gametest-logs-without-computercraft
-          path: run/logs/
+          path: run/gametest/logs/
           if-no-files-found: ignore

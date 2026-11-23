@@ -172,10 +172,11 @@ neoForge {
         }
 
         // Launches GameTestServer, runs all registered gametests, then exits. By default the server crashes
-        // when no gametests are provided.
+        // when no gametests are provided. It runs in a folder of its own: the settings its tests change are written
+        // to its config folder, and a development client open on run/ would read them again into the world it plays.
         gameTestServer {
             type = "gameTestServer"
-            gameDirectory = rootProject.file('run')
+            gameDirectory = rootProject.file('run/gametest')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             systemProperty 'jsc.gametests.computercraft', withoutComputerCraft ? 'absent' : 'present'
             // -PgtOnly=<TestClass or word>[,...] runs only those GameTests (see GameTestSelection).
