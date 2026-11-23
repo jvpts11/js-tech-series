@@ -4010,7 +4010,7 @@
   "jsc.console.not_installed": "%s is not installed - try: install %s",
   "jsc.console.one_drive": "%s drive",
   "jsc.console.program": "PROGRAM",
-  "jsc.console.puts_one_on": "%s  puts one on.",
+  "jsc.console.puts_one_on": "%s puts one on.",
   "jsc.console.removing": "Removing %s  %s%%  (Ctrl+C to cancel)",
   "jsc.console.scrolled": "scrolled +%s",
   "jsc.console.setting_up": "Setting up %s  %s%%  (Ctrl+C to cancel)",

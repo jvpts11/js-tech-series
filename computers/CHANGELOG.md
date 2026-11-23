@@ -1423,6 +1423,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - File explorers: the count of what a folder holds counts the stored items' folder with the rest, as every
   icon the window shows.
 - MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
+- Command Prompt: a network system with no operating space installed says "netgetter install interactor
+  puts one on." with one space before "puts", not two.
 - Mainframe Console: a program installed at its prompt shows its bar to the end and says it is in, as at a
   Command Prompt, rather than stopping at "Setting up".
 - Autocrafting: a Crafting Receiving Bus on the item outlet of a formed machine, as every chain machine is,

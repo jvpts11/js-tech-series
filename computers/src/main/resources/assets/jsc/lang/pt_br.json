@@ -3496,7 +3496,7 @@
   "jsc.console.not_installed": "%s não está instalado - tente: install %s",
   "jsc.console.one_drive": "%s unidade",
   "jsc.console.program": "PROGRAMA",
-  "jsc.console.puts_one_on": "%s  instala um.",
+  "jsc.console.puts_one_on": "%s instala um.",
   "jsc.console.removing": "Removendo %s  %s%%  (Ctrl+C para cancelar)",
   "jsc.console.scrolled": "rolado +%s",
   "jsc.console.setting_up": "Configurando %s  %s%%  (Ctrl+C para cancelar)",
