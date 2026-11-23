@@ -5,7 +5,7 @@ icon: jsc:export_bus
 ---
 # Filtros, tags e correspondência
 
-Um filtro é a lista das coisas que um barramento recebe ordem de mover. Ele tem cinco espaços, e cada espaço guarda um item, um fluido ou uma substância química. Um recipiente de fluido cheio seleciona o seu fluido.
+Um filtro é a lista das coisas que um barramento recebe ordem de mover. Ele tem cinco espaços, e cada espaço guarda um item, um fluido, um gás ou uma substância química. Um recipiente de fluido cheio seleciona o seu fluido, e um Cilindro de Gás cheio o seu gás ([](jscore:gas_cylinder)).
 
 As duas opções da lista são SÓ ESTES e EXCETO ESTES. SÓ ESTES move o que a lista nomeia. EXCETO ESTES move tudo o que a lista não nomeia.
 

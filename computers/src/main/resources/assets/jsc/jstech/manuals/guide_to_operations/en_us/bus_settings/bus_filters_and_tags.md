@@ -5,7 +5,7 @@ icon: jsc:export_bus
 ---
 # Filters, tags and matching
 
-A filter is the list of things a bus is told to move. It has five slots, and each slot holds one item, one fluid or one chemical. A filled fluid container selects its fluid.
+A filter is the list of things a bus is told to move. It has five slots, and each slot holds one item, one fluid, one gas or one chemical. A filled fluid container selects its fluid, and a full Gas Cylinder its gas ([](jscore:gas_cylinder)).
 
 The two options for the list are ONLY THESE and ALL BUT THESE. ONLY THESE moves what the list names. ALL BUT THESE moves everything the list does not name.
 

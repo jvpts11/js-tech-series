@@ -23,6 +23,10 @@ Table: Recipientes e a rede
 
 Tirar fluido funciona ao contrário. Um balde só é preenchido com o equivalente a um balde cheio. Qualquer fluido que a rede não conseguiu pegar volta para o recipiente.
 
+## Gases
+
+Os gases do J's Core, o cloro de uma Célula Eletrolítica ou o nitrogênio de uma Unidade de Separação de Ar, são guardados do mesmo jeito, em millibaldes. Um Cilindro de Gás leva um deles na mão ([](jscore:gas_cylinder)). Ponha um cheio na rede e o gás entra. Um cheio também nomeia o seu gás onde você escolhe uma coisa, no filtro de um barramento ou numa célula do Pattern Studio, como um balde nomeia o seu fluido.
+
 ## Substâncias químicas
 
 > [!DEFINE] Substância química

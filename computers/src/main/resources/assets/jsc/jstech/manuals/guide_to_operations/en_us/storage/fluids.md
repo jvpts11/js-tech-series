@@ -23,6 +23,10 @@ Table: Containers and the network
 
 Taking fluid out works the other way. A bucket is filled only with a full bucket's worth. Any fluid the network could not take goes back into the container.
 
+## Gases
+
+The gases of J's Core, the chlorine of an Electrolytic Cell or the nitrogen of an Air Separation Unit, are kept the same way, in millibuckets. A Gas Cylinder carries one by hand ([](jscore:gas_cylinder)). Put a full one into the network and its gas goes in. A full one also names its gas wherever you choose a thing, in a bus's filter or on a Pattern Studio cell, as a bucket names its fluid.
+
 ## Chemicals
 
 > [!DEFINE] Chemical
