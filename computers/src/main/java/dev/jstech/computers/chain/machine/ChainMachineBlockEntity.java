@@ -23,6 +23,7 @@ import dev.jstech.core.machine.MachineSounds;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.machine.ProcessingInput;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
+import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.UpgradeEffect;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterStack;
@@ -44,9 +45,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -200,6 +203,25 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
             }
         }
         return Optional.empty();
+    }
+
+    /* A tool its recipes keep in the machine and never use up, as a mould stays in a moulder while it works. */
+    @Override
+    public boolean usesAsTool(final ItemStack stack) {
+        if (level == null || stack.isEmpty()) {
+            return false;
+        }
+        for (final Worked worked : ChainMachines.workedBy(machine)) {
+            for (final RecipeHolder<ProcessingRecipe> holder : level.getRecipeManager()
+                    .getAllRecipesFor(worked.kind().type())) {
+                for (final SizedIngredient catalyst : holder.value().catalysts()) {
+                    if (catalyst.ingredient().test(stack)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /* Its shape was checked again: its entries draw nothing while it stands, and themselves again once apart. */

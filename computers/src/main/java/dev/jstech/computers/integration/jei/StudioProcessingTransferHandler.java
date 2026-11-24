@@ -75,8 +75,17 @@ public final class StudioProcessingTransferHandler implements IUniversalRecipeTr
         final boolean perTick = ChemicalBridges.perTickUsage(recipe);
         final List<PatternWorkbench.DataCell> inputs = cells(recipeSlotsView, RecipeIngredientRole.INPUT, perTick);
         final List<PatternWorkbench.DataCell> outputs = cells(recipeSlotsView, RecipeIngredientRole.OUTPUT, false);
+        // What the recipe needs in the machine and never uses up, a mask or a mould, comes after its inputs, as a
+        // tool each job lends the machine.
+        final List<Integer> tools = new ArrayList<>();
+        for (final PatternWorkbench.DataCell tool : cells(recipeSlotsView, RecipeIngredientRole.CATALYST, false)) {
+            if (inputs.size() < PatternWorkbench.PROC_GRID) {
+                tools.add(inputs.size());
+                inputs.add(tool);
+            }
+        }
         PacketDistributor.sendToServer(new SetProcessingPatternPayload(studio.host(), studio.monitorPos(), inputs,
-                outputs));
+                outputs, tools));
         studio.showTab(PatternStudioApp.TAB_MACHINE);
         return null;
     }

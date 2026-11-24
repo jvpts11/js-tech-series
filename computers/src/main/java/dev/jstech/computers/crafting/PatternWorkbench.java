@@ -366,11 +366,25 @@ public final class PatternWorkbench {
 
     /** Replaces the whole machine draft with the given cells (a recipe transfer). Chances reset to guaranteed. */
     public void applyProcessingCells(final List<DataCell> inputs, final List<DataCell> outputs) {
+        applyProcessingCells(inputs, outputs, List.of());
+    }
+
+    /**
+     * The same, the inputs at {@code tools} being tools the machine never uses up, a mask or a mould: kept in the
+     * machine for as many runs as an input lasts, which a job lends it and takes back when it ends.
+     */
+    public void applyProcessingCells(final List<DataCell> inputs, final List<DataCell> outputs,
+                                     final List<Integer> tools) {
         for (int i = 0; i < PROC_GRID; i++) {
             procInputs[i] = i < inputs.size() ? counted(inputs.get(i)) : null;
             procOutputs[i] = i < outputs.size() ? counted(outputs.get(i)) : null;
             outputChances[i] = ProcessingPattern.FULL_CHANCE;
             inputLasts[i] = 1;
+        }
+        for (final int tool : tools) {
+            if (tool >= 0 && tool < PROC_GRID && procInputs[tool] != null) {
+                inputLasts[tool] = ProcessingPattern.ProcessingInput.MOST_LASTS;
+            }
         }
     }
 

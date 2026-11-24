@@ -697,6 +697,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) What a store takes in a tick: J's Core's API is at version 94. `EnergyStore.maxReceive` and
   `setMaxReceive`, and `FieldEnergyStorage.maxReceive` and `setMaxReceive`, read and change how much a store takes
   in a tick. Experimental.
+- (Core) A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
+  machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
+  ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.
 - (Core) A row of bins under a machine's face: J's Core's API is at version 96. `FacePicture.tray` describes a row of
   outputs a machine's screen shows under its window, as a sorter's bins, with its name, its slots and the mark under
   each, and `MachineBlockEntity.tray` says a machine has one: the screen grows by the row and its player's inventory
@@ -4394,6 +4397,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) Autocrafting: a job lends its machine the tool its recipe keeps in it, a mask or a mould, and takes it
+  back to the network when it ends, so one Lithography Station exposes every chip, each job bringing its own mask; a
+  station kept the first mask it was fed and could serve no other chip. A recipe brought from the recipe viewer into
+  the Pattern Studio keeps its tool in the machine, which the viewer now shows as the station's catalyst.
 - (Computers) Chip classes: the Packaging Line tests a wafer's dies and sorts them into a row of seven bins under its
   window, the plain chips and classes A to F, as a fab grades its dies. A wafer gives as many plain chips as before and
   as many again of each class its chip has, from two to six, so no model costs more wafers. Each model of a family

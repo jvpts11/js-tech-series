@@ -564,6 +564,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - What a store takes in a tick: J's Core's API is at version 94. `EnergyStore.maxReceive` and
   `setMaxReceive`, and `FieldEnergyStorage.maxReceive` and `setMaxReceive`, read and change how much a store takes
   in a tick. Experimental.
+- A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
+  machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
+  ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.
 - A row of bins under a machine's face: J's Core's API is at version 96. `FacePicture.tray` describes a row of
   outputs a machine's screen shows under its window, as a sorter's bins, with its name, its slots and the mark under
   each, and `MachineBlockEntity.tray` says a machine has one: the screen grows by the row and its player's inventory

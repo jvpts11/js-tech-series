@@ -50,6 +50,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.wrapper.EmptyItemHandler;
 import net.neoforged.neoforge.items.wrapper.RangedWrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -356,6 +357,16 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
 
     public Layout layout() {
         return layout;
+    }
+
+    /**
+     * Whether it works with {@code stack} as a tool it never uses up, a mask or a mould: what a job that brings one
+     * takes back when it ends, so the machine serves the next job, whose recipe may bring another. None unless the
+     * machine says.
+     */
+    @ApiStatus.Experimental
+    public boolean usesAsTool(final ItemStack stack) {
+        return false;
     }
 
     /** How far through its work its first lane is, in ticks. */

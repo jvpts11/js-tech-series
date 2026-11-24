@@ -178,6 +178,23 @@ public final class KeptInputGameTests {
         helper.succeed();
     }
 
+    /**
+     * A recipe brought from the viewer with a tool, a mask its machine never uses up, keeps the tool in the machine for
+     * as many runs as an input lasts, so each job lends it; its other inputs are fed with every run.
+     */
+    @GameTest(template = ARENA)
+    public static void studio_aToolFromTheViewerIsKeptInTheMachine(final GameTestHelper helper) {
+        final PatternWorkbench studio = new PatternWorkbench();
+        studio.applyProcessingCells(List.of(new PatternWorkbench.DataCell(key(Items.COBBLESTONE), 1, false),
+                new PatternWorkbench.DataCell(key(ChainParts.MEMORY_MASKS.getFirst().get()), 1, false)),
+                List.of(new PatternWorkbench.DataCell(key(Items.STONE), 1, false)), List.of(1, 7, -1));
+        helper.assertTrue(studio.inputLasts(0) == 1, "the cobblestone is fed every run");
+        helper.assertTrue(studio.inputLasts(1) == ProcessingPattern.ProcessingInput.MOST_LASTS
+                && studio.processingPattern().inputs().get(1).kept(), "the mask is kept, lent to each job");
+        helper.assertTrue(studio.inputLasts(7) == 1, "a tool where no input stands is nothing");
+        helper.succeed();
+    }
+
     /* Cobblestone to stone to smooth stone to bricks, each step taking a redstone that lasts {@code lasts} runs. */
     private static List<ProcessingPattern> chain(final int lasts) {
         final Item[] steps = {Items.COBBLESTONE, Items.STONE, Items.SMOOTH_STONE, Items.STONE_BRICKS};

@@ -25,6 +25,7 @@ import mezz.jei.api.gui.widgets.IRecipeExtrasBuilder;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.gui.GuiGraphics;
@@ -110,7 +111,10 @@ final class DeclaredCategory<T> implements IRecipeCategory<T> {
         for (final RecipeView.Slot slot : page.slots()) {
             final int x = slot.x() + SLOT_INSET;
             final int y = slot.y() + SLOT_INSET;
+            // What the machine needs and never uses up is the viewer's catalyst, so a pattern made from the page knows
+            // it for a tool to lend each job.
             final IRecipeSlotBuilder made = slot.role() == RecipeView.Role.OUTPUT ? builder.addOutputSlot(x, y)
+                    : slot.role() == RecipeView.Role.CATALYST ? builder.addSlot(RecipeIngredientRole.CATALYST, x, y)
                     : builder.addInputSlot(x, y);
             // A page on a machine's face has its slots in the face's own ports and glasses; an icon has no frame.
             if (page.face().isEmpty() && slot.framed()) {

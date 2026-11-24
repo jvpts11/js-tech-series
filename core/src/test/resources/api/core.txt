@@ -8458,6 +8458,7 @@ stable 4
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  ProcessingInput input(int)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  SlotLocks locks()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  UpgradeEffect upgradeEffect()
+97 dev.jstech.core.machine.ProcessingMachineBlockEntity  boolean usesAsTool(ItemStack)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  int getMaxProgress()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  int getProgress()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  int maxProgress(int)

@@ -21,11 +21,12 @@ import java.util.List;
 /**
  * Client to server: a recipe the player transferred from the recipe viewer into the Pattern Studio's machine
  * draft on the computer at {@code host}: its inputs and outputs as data cells (item, fluid or chemical, with an
- * amount and whether that amount is an estimate), in display order.
+ * amount and whether that amount is an estimate), in display order, and which of its inputs are tools the machine
+ * never uses up (a mask, a mould), kept in the machine and lent to each job.
  */
 public record SetProcessingPatternPayload(BlockPos host, BlockPos monitorPos,
                                           List<PatternWorkbench.DataCell> inputs,
-                                          List<PatternWorkbench.DataCell> outputs)
+                                          List<PatternWorkbench.DataCell> outputs, List<Integer> tools)
         implements CustomPacketPayload {
 
     public static final Type<SetProcessingPatternPayload> TYPE =
@@ -41,12 +42,22 @@ public record SetProcessingPatternPayload(BlockPos host, BlockPos monitorPos,
                     SetProcessingPatternPayload::inputs,
                     PatternWorkbench.DataCell.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_CELLS)),
                     SetProcessingPatternPayload::outputs,
+                    ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(MAX_CELLS)),
+                    SetProcessingPatternPayload::tools,
                     SetProcessingPatternPayload::new);
 
     /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
     public SetProcessingPatternPayload {
         inputs = List.copyOf(inputs);
         outputs = List.copyOf(outputs);
+        tools = List.copyOf(tools);
+    }
+
+    /** A transfer with no tools among its inputs. */
+    public SetProcessingPatternPayload(final BlockPos host, final BlockPos monitorPos,
+                                       final List<PatternWorkbench.DataCell> inputs,
+                                       final List<PatternWorkbench.DataCell> outputs) {
+        this(host, monitorPos, inputs, outputs, List.of());
     }
 
     @Override

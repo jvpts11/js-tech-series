@@ -19,6 +19,7 @@ import dev.jstech.computers.chain.machine.MaskWriting;
 import dev.jstech.computers.chain.machine.WaferPages;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.client.recipeview.RecipeFaces;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -170,6 +171,8 @@ public final class ChainRecipePages {
             }
             if (machine.layout().isOutput(port.slot())) {
                 view.output(port.x(), port.y(), held);
+            } else if (WaferPages.tool(held.getFirst())) {
+                view.catalyst(port.x(), port.y(), held).tooltip(ProcessingRecipeViews.catalyst());
             } else {
                 view.input(port.x(), port.y(), held);
             }

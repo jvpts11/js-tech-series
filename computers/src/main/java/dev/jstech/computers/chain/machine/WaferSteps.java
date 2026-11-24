@@ -94,6 +94,11 @@ final class WaferSteps {
         };
     }
 
+    /** Whether {@code stack} is a mask a Lithography Station exposes a layer through, a chip's or a light's. */
+    static boolean isMask(final ItemStack stack) {
+        return Mask.of(stack) != null;
+    }
+
     /** How many layers a wafer of {@code era}'s chips has. */
     static int layers(final Era era) {
         return LAYERS[ChainParts.ERAS.indexOf(era)];

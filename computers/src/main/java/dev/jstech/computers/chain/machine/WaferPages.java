@@ -223,6 +223,14 @@ public final class WaferPages {
     }
 
     /**
+     * Whether {@code stack} on a page is a tool its machine never uses up, a mask: a recipe viewer shows it as the
+     * machine's catalyst, and a pattern made from the page has each job lend it.
+     */
+    public static boolean tool(final ItemStack stack) {
+        return WaferSteps.isMask(stack);
+    }
+
+    /**
      * What a page's machine puts in its row of bins, bin by bin: on a packaging page, the plain chips it shows, then
      * as many of each class {@code recipes} ask of the chip; on any other, what its first output holds.
      */

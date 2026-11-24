@@ -19,9 +19,10 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 
 /**
- * What a job fed one of the series' machines and no recipe used, taken back out of the machine's inputs into where the
- * job draws from: items from its input slots, liquids from its input tanks, gases and the other states of matter from
- * its input tanks of them. Each move asks first how much the destination takes, so nothing taken out is lost.
+ * What a job leaves in one of the series' machines, taken back out of the machine's inputs into where the job draws
+ * from: what it fed and no recipe used, or a tool it lent the machine; items from its input slots, liquids from its
+ * input tanks, gases and the other states of matter from its input tanks of them. Each move asks first how much the
+ * destination takes, so nothing taken out is lost.
  */
 final class MachineLeftovers {
 

@@ -83,6 +83,12 @@ public class WaferMachineBlockEntity extends ChainMachineBlockEntity {
         return out;
     }
 
+    /* A mask is a station's tool: it exposes every layer through it and never uses it up. */
+    @Override
+    public boolean usesAsTool(final ItemStack stack) {
+        return WaferSteps.isMask(stack) || super.usesAsTool(stack);
+    }
+
     /* A station is listed for the computers that look for theirs while it is in the world. */
     @Override
     public void onLoad() {

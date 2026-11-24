@@ -294,14 +294,17 @@ public final class PatternStudioPayloads {
         host.setChanged();
     }
 
-    /** Fills the machine draft from a recipe viewer's transfer: its inputs and outputs, whatever machine made it. */
+    /**
+     * Fills the machine draft from a recipe viewer's transfer: its inputs and outputs, whatever machine made it, the
+     * inputs at {@code tools} kept in the machine as the tools it never uses up.
+     */
     public static void applyProcessingCells(final IOsHost host, final List<PatternWorkbench.DataCell> inputs,
-                                            final List<PatternWorkbench.DataCell> outputs) {
+                                            final List<PatternWorkbench.DataCell> outputs, final List<Integer> tools) {
         final PatternWorkbench studio = host.studio();
         if (studio == null) {
             return;
         }
-        studio.applyProcessingCells(inputs, outputs);
+        studio.applyProcessingCells(inputs, outputs, tools);
         studio.forget(PatternWorkbench.Kind.MACHINE);
         host.setChanged();
     }

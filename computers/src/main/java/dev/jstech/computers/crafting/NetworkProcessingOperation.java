@@ -97,6 +97,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     private boolean blocked;
     private boolean placed;
     private int idleTicks;
+    private int settleTicks;
     private int feedCooldown;
     private byte status = OperationRecord.STATUS_FAILED;
     private OperationFailure cause = OperationFailure.NONE;
@@ -117,6 +118,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     private static final int STARVED_TICKS = 2 * FEED_INTERVAL;
     /** The most lots that go in on one feed, as far as the machine takes them. */
     private static final int MOST_LOTS = 64;
+    /** The longest a job that lent its machine a tool waits, done, for the machine to stop and give the tool back. */
+    private static final int SETTLE_TICKS = 40;
 
     public NetworkProcessingOperation(final ServerLevel level, final NetworkUuid network,
                                       final ProcessingPattern pattern, final long requested,
@@ -153,6 +156,12 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
             return;
         }
         if (produced >= requested) {
+            // Its machine still says it works for a tick or two after the step it was credited ends: a job that lent
+            // it a tool waits for it to stop, so the tool can be taken back.
+            if (settleTicks < SETTLE_TICKS && lentATool() && machineWorking()) {
+                settleTicks++;
+                return;
+            }
             status = OperationRecord.STATUS_COMPLETED;
             finish();
             return;
@@ -519,13 +528,30 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
                 .map(machine -> machine.status() == MachineStatus.WORKING).orElse(false);
     }
 
+    /* Whether its recipe lends its machine a tool, a kept input the machine never uses up. */
+    private boolean lentATool() {
+        if (floor == null || site == null || !(CraftingDispatch.machineAt(level, floor.reach(site).machine())
+                .orElse(null) instanceof ProcessingMachineBlockEntity machine)) {
+            return false;
+        }
+        for (final ProcessingPattern.ProcessingInput in : pattern.inputs()) {
+            if (in.kept() && in.key().isItem() && machine.usesAsTool(in.key().prototype())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /*
-     * A job that gives up takes back out of its machine what it fed and no recipe used, so the next job finds the
-     * machine as it would have found it, and an exact recipe is never stuck behind a lot left half fed. Not while the
-     * machine works a step, whose inputs are that step's; not while another job runs on the same interface, whose
-     * inputs may be the same things; and an input meant to stay in the machine, one that lasts many runs, stays.
+     * Takes back out of its machine what a job that ends leaves there. Its tools first, a mask or a mould the machine
+     * never uses up: the job lent them, so one machine serves every recipe, the next job bringing its own. And a job
+     * that gave up ({@code leftovers}) takes back what it fed and no recipe used, so the next job finds the machine as
+     * it would have found it, and an exact recipe is never stuck behind a lot left half fed. Not while the machine
+     * works a step, whose inputs are that step's; not while another job runs on the same interface, which on a machine
+     * of the series is a job of the same recipe, needing the same tools; and an input that lasts many runs and is used
+     * up, a dopant dust, stays for the runs it still has.
      */
-    private void takeBackLeftovers() {
+    private void takeBack(final boolean leftovers) {
         if (floor == null || site == null || interfaceId == null || machineWorking()
                 || !(CraftingDispatch.machineAt(level, floor.reach(site).machine()).orElse(null)
                         instanceof ProcessingMachineBlockEntity machine)) {
@@ -538,7 +564,12 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
         for (int i = 0; i < inputs.size(); i++) {
             final ProcessingPattern.ProcessingInput in = inputs.get(i);
-            if (!in.kept() && delivered[i] > 0) {
+            if (in.kept()) {
+                // A tool may have come with an earlier job of the same recipe: whichever job ends last takes it.
+                if (in.key().isItem() && machine.usesAsTool(in.key().prototype())) {
+                    MachineLeftovers.takeBack(machine, in.key(), in.amount(), io);
+                }
+            } else if (leftovers && delivered[i] > 0) {
                 delivered[i] -= MachineLeftovers.takeBack(machine, in.key(), delivered[i], io);
             }
         }
@@ -668,8 +699,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         }
         done = true;
         waiting = false;
-        if (status != OperationRecord.STATUS_COMPLETED && fedAny()) {
-            takeBackLeftovers();
+        if (fedAny()) {
+            takeBack(status != OperationRecord.STATUS_COMPLETED);
         }
         final CraftingInterfacePart part = site == null ? null : site.part(level, CraftingInterfacePart.class);
         if (part != null) {

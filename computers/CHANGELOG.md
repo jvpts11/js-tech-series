@@ -934,6 +934,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   A pattern file written before keeps every input lasting one run.
 
 ### Changed
+- Autocrafting: a job lends its machine the tool its recipe keeps in it, a mask or a mould, and takes it
+  back to the network when it ends, so one Lithography Station exposes every chip, each job bringing its own mask; a
+  station kept the first mask it was fed and could serve no other chip. A recipe brought from the recipe viewer into
+  the Pattern Studio keeps its tool in the machine, which the viewer now shows as the station's catalyst.
 - Chip classes: the Packaging Line tests a wafer's dies and sorts them into a row of seven bins under its
   window, the plain chips and classes A to F, as a fab grades its dies. A wafer gives as many plain chips as before and
   as many again of each class its chip has, from two to six, so no model costs more wafers. Each model of a family

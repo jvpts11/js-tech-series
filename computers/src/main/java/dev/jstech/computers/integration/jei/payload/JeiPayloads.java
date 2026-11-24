@@ -66,7 +66,7 @@ public final class JeiPayloads {
         if (host == null) {
             return;
         }
-        PatternStudioPayloads.applyProcessingCells(host, payload.inputs(), payload.outputs());
+        PatternStudioPayloads.applyProcessingCells(host, payload.inputs(), payload.outputs(), payload.tools());
         PacketDistributor.sendToPlayer(player,
                 PatternStudioPayloads.buildState(level, host, PLACED_IN_MACHINE_DRAFT.text(), 1));
     }
