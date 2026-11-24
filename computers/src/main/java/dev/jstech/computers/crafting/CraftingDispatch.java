@@ -116,6 +116,30 @@ public final class CraftingDispatch {
         return part.exclusive(reach.mode() == CraftingFloor.Mode.CABLE);
     }
 
+    /**
+     * How many machines can run {@code pattern} on the crafting networks of {@code computers}, each through an
+     * interface that is driven, not paused, and holds the recipe with a way in for every input: a craft shares a
+     * machine step's runs among them. Two interfaces on one machine count once, since they take turns.
+     */
+    public static int machinesFor(final ServerLevel level, final List<BlockPos> computers,
+                                  final ProcessingPattern pattern) {
+        final List<Slot> found = new ArrayList<>();
+        for (final CraftingFloor floor : floors(level, computers)) {
+            for (final CraftingFloor.Site site : floor.driven()) {
+                final CraftingInterfacePart part = site.part(level, CraftingInterfacePart.class);
+                if (part == null || part.paused()) {
+                    continue;
+                }
+                final Slot slot = new Slot(floor, site, part, floor.reach(site), floor.drivenBy(site));
+                if (runs(level, slot, pattern) && found.stream().noneMatch(other -> other.floor == floor
+                        && floor.sameMachine(slot.reach.machine(), other.reach.machine()))) {
+                    found.add(slot);
+                }
+            }
+        }
+        return found.size();
+    }
+
     private void assign(final ServerLevel level, final List<CraftingFloor> floors,
                         final List<NetworkProcessingOperation> jobs) {
         final Map<CraftingFloor.Site, Slot> slots = new LinkedHashMap<>();

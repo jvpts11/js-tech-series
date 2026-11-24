@@ -107,8 +107,9 @@ public final class MekanismHardwareMatrixGameTests {
          * One CPU, no GPU: one Mainframe queue. Crafting is a subnet independent of the Mainframe's operation
          * queues, so the single queue does NOT gate crafts or their machine stages. Two machine crafts on one
          * Crafting Computer both run (each parks on its machine while the other takes the computer for bench work),
-         * and each launches its own machine step, gated by the Crafting Computer's threads (T2 card = 2) and the
-         * machines present, not by the queue. With two infusers, both machine steps run at once even on one queue.
+         * and each shares its own machine step between the two infusers, a share on each, gated by the Crafting
+         * Computer's threads (T2 card = 2) and the machines present, not by the queue. All four shares run at once
+         * even on one queue.
          * (The Mainframe queue count is for distinct operations and throughput; a Supercomputer is what scales
          * distinct crafts across computers, see supercomputer_unlocksParallelCrafting.)
          */
@@ -132,8 +133,9 @@ public final class MekanismHardwareMatrixGameTests {
                     final List<OperationRecord> records = rig.net().mainframe().activeOperationRecords();
                     helper.assertTrue(count(records, frame, OperationRecord.STATUS_PROCESSING) == 2,
                             "both crafts run on one queue: crafting is a subnet, not gated by the Mainframe queue; active=" + records);
-                    helper.assertTrue(count(records, infused, OperationRecord.STATUS_PROCESSING) == 2,
-                            "both machine steps run at once on the two infusers, gated by the computer's threads not the queue; active=" + records);
+                    helper.assertTrue(count(records, infused, OperationRecord.STATUS_PROCESSING) == 4,
+                            "each craft shares its machine step between the two infusers, and the four shares run at"
+                                    + " once, gated by the computer's threads not the queue; active=" + records);
                     helper.assertTrue(count(records, infused, OperationRecord.STATUS_PENDING) == 0,
                             "no machine step is held PENDING by the single queue; active=" + records);
                 })
@@ -145,8 +147,9 @@ public final class MekanismHardwareMatrixGameTests {
         /*
          * The same two crafts and two infusers, now on a Mainframe with a GPU (two queues). Because crafting is a
          * subnet independent of the Mainframe queues, the extra queue changes nothing for the crafts: both still
-         * run and both machine steps run at once, exactly as on one queue (see oneQueue_stillRunsBothMachineCrafts
-         * AndTheirStages). The GPU adds a queue for distinct operations and throughput, not for crafts or stages.
+         * run and the four shares of their machine steps run at once, exactly as on one queue (see
+         * oneQueue_stillRunsBothMachineCraftsAndTheirStages). The GPU adds a queue for distinct operations and
+         * throughput, not for crafts or stages.
          */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
@@ -169,8 +172,8 @@ public final class MekanismHardwareMatrixGameTests {
                     MekanismRig.power(helper);
                     MekanismRig.power(helper.getLevel(), helper.absolutePos(MekanismRig.MACHINE_B));
                     final List<OperationRecord> records = rig.net().mainframe().activeOperationRecords();
-                    helper.assertTrue(count(records, infused, OperationRecord.STATUS_PROCESSING) == 2,
-                            "both machine steps must run, one per queue on its own machine; active=" + records);
+                    helper.assertTrue(count(records, infused, OperationRecord.STATUS_PROCESSING) == 4,
+                            "both machine steps must run, a share of each on each infuser; active=" + records);
                     helper.assertTrue(count(records, frame, OperationRecord.STATUS_PENDING) == 0,
                             "no craft may be left PENDING with two queues; active=" + records);
                 })

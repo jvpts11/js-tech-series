@@ -28,6 +28,7 @@ import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
+import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
@@ -314,10 +315,11 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      */
     private final List<MachineRun> machineRuns = new ArrayList<>();
     /*
-     * Each machine step is launched at most once (its own operation feeds all of its runs); a step that fell
-     * short because its machine broke or timed out is not retried.
+     * How many of each machine step's runs went to processing operations. A step goes out once, its runs shared
+     * among the machines that can run it, an operation each, so two kilns of one recipe each fire half the stone;
+     * a share that fell short because its machine broke or timed out is not retried.
      */
-    private final boolean[] launched;
+    private final long[] runsLaunched;
     /*
      * True while the claimed computer or cluster slots are let go during the machine steps (the machines, not
      * the computer, are working); the craft claims a computer again once every step clears and bench work remains.
@@ -334,13 +336,15 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     /* Who wants to know when this settles, beside the one who asked for it. */
     private final List<Consumer<NetworkCraftOperation>> observers = new ArrayList<>();
 
-    /** One running machine step: which plan step it is and the processing operation executing it. */
+    /** One running share of a machine step: which plan step, how many of its runs, and the operation running them. */
     private static final class MachineRun {
         final int step;
+        final long runs;
         final NetworkProcessingOperation op;
 
-        MachineRun(final int step, final NetworkProcessingOperation op) {
+        MachineRun(final int step, final long runs, final NetworkProcessingOperation op) {
             this.step = step;
+            this.runs = runs;
             this.op = op;
         }
     }
@@ -391,7 +395,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         this.requesterLabel = requesterLabel;
         this.embeddedPattern = embeddedPattern;
         this.runsDone = new long[plan.steps().size()];
-        this.launched = new boolean[plan.steps().size()];
+        this.runsLaunched = new long[plan.steps().size()];
         if (plan.steps().isEmpty()) {
             finish();
         }
@@ -403,17 +407,22 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             return;
         }
         /*
-         * Collect finished machine steps: their output was delivered to the network, so count what each made. A
-         * step that fell short (its machine broke or timed out) is not retried; it contributes what it managed.
+         * Collect the finished shares of machine steps: their output was delivered to the network, so count what each
+         * made. A share that fell short (its machine broke or timed out) is not retried; it adds what it managed.
          */
         machineRuns.removeIf(run -> {
             if (!run.op.isDone()) {
                 return false;
             }
             final CraftPlanner.Step step = plan.steps().get(run.step);
-            runsDone[run.step] = Math.min(step.runs(), run.op.produced() / Math.max(1L, step.perRun()));
-            stepFinished[run.step] = level.getGameTime();
-            if (runsDone[run.step] < step.runs() && shortStep < 0) {
+            final long made = Math.min(run.runs, run.op.produced() / Math.max(1L, step.perRun()));
+            runsDone[run.step] = Math.min(step.runs(), runsDone[run.step] + made);
+            // A step shared among machines ends when its last share does.
+            if (machineRuns.stream().noneMatch(other -> other != run && other.step == run.step
+                    && !other.op.isDone())) {
+                stepFinished[run.step] = level.getGameTime();
+            }
+            if (made < run.runs && shortStep < 0) {
                 shortStep = run.step;
                 shortMachine = run.op.machineName();
             }
@@ -542,14 +551,15 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     }
 
     /**
-     * Starts a processing operation for every machine step whose inputs are ready, up to this craft's stage
-     * ceiling. A step is ready when the pool holds at least one run of each of its intermediate inputs (raws stay
-     * locked and available); each step is launched at most once, feeds from and delivers to this craft's isolated
-     * pool through {@link #poolIo()}, so a chain pipelines through the pool without ever putting an intermediate
-     * into shared network storage (which would confuse another craft's planner) and independent steps run at once.
-     * The ceiling is the executing computers' summed crafting-thread count, not the Mainframe's operation queues:
-     * a craft orchestrates its own stages with its Crafting Computer's hardware, independent of how many distinct
-     * operations the Mainframe runs at once.
+     * Starts processing operations for every machine step whose inputs are ready, up to this craft's stage ceiling.
+     * A step is ready when the pool holds at least one run of each of its intermediate inputs (raws stay locked and
+     * available); its runs are shared among the machines that can run it, an operation each, as many as the ceiling
+     * leaves room for, so two kilns of one recipe each fire half the stone. Each operation feeds from and delivers
+     * to this craft's isolated pool through {@link #poolIo()}, so a chain pipelines through the pool without ever
+     * putting an intermediate into shared network storage (which would confuse another craft's planner) and
+     * independent steps run at once. The ceiling is the executing computers' summed crafting-thread count, not the
+     * Mainframe's operation queues: a craft orchestrates its own stages with its Crafting Computer's hardware,
+     * independent of how many distinct operations the Mainframe runs at once.
      */
     private boolean startReadyMachineSteps() {
         if (mainframe == null) {
@@ -558,18 +568,27 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         final int cap = routing.capped(Math.max(1, aliveThreads()));
         for (int i = 0; i < plan.steps().size() && machineRuns.size() < cap; i++) {
             final CraftPlanner.Step step = plan.steps().get(i);
-            if (!step.isMachine() || launched[i] || runsDone[i] >= step.runs() || !machineInputsReady(step)) {
+            if (!step.isMachine() || runsLaunched[i] >= step.runs() || runsDone[i] >= step.runs()
+                    || !machineInputsReady(step)) {
                 continue;
             }
-            final NetworkProcessingOperation op =
-                    mainframe.submitNetworkProcessing(step.machine(), step.produced(), requesterLabel, poolIo());
-            if (op == null) {
-                continue;
+            final long runs = step.runs() - runsLaunched[i];
+            final int machines = (int) Math.max(1L, Math.min(Math.min(runs, cap - machineRuns.size()),
+                    CraftingDispatch.machinesFor(level, mainframe.craftingComputerPositions(), step.machine())));
+            for (int share = 0; share < machines; share++) {
+                final long shareRuns = runs / machines + (share < runs % machines ? 1 : 0);
+                final NetworkProcessingOperation op = mainframe.submitNetworkProcessing(step.machine(),
+                        Sizes.times(shareRuns, step.perRun()), requesterLabel, poolIo());
+                if (op == null) {
+                    break;
+                }
+                op.setPriority(priority); // a stage of this craft reports the craft's level
+                machineRuns.add(new MachineRun(i, shareRuns, op));
+                runsLaunched[i] += shareRuns;
+                if (stepStarted[i] < 0) {
+                    stepStarted[i] = level.getGameTime();
+                }
             }
-            op.setPriority(priority); // a stage of this craft reports the craft's level
-            machineRuns.add(new MachineRun(i, op));
-            launched[i] = true;
-            stepStarted[i] = level.getGameTime();
         }
         return !machineRuns.isEmpty();
     }

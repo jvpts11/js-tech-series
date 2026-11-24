@@ -12,10 +12,13 @@ import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
+import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingLog;
 import dev.jstech.computers.crafting.InterfaceRoutes;
+import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
@@ -28,6 +31,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.upgrade.SharedUpgrades;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachineBlockEntity;
 import dev.jstech.tests.TestMachines;
@@ -68,6 +72,12 @@ public final class CraftingInterfaceGameTests {
     private static final BlockPos MAINFRAME = new BlockPos(1, 2, 2);
     /* Where the second kiln stands, beside the first rig's. */
     private static final BlockPos SECOND_KILN = new BlockPos(4, 2, 5);
+    /* A Crusher with its front west corner at (2,1,5): its item outlet on its front at (3,1,5), its inlet on top. */
+    private static final BlockPos CRUSHER_CORNER = new BlockPos(2, 1, 5);
+    private static final CraftingFloor.Site CRUSHER_FEEDING = new CraftingFloor.Site(new BlockPos(3, 4, 6),
+            Direction.DOWN);
+    private static final CraftingFloor.Site CRUSHER_RECEIVING = new CraftingFloor.Site(new BlockPos(3, 1, 4),
+            Direction.SOUTH);
 
     private CraftingInterfaceGameTests() {
     }
@@ -448,6 +458,80 @@ public final class CraftingInterfaceGameTests {
                     final TestMachineBlockEntity other = world.blockEntity(SECOND_KILN, TestMachineBlockEntity.class);
                     helper.assertTrue(kiln(rig).made() == 8 && other.made() == 8, "each kiln made eight");
                 })
+                .thenSucceed();
+    }
+
+    /** A craft shares a machine step among the machines holding its recipe: of sixteen stone, each kiln fires eight. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void jobs_aCraftSharesAStepBetweenTwoMachinesOfItsRecipe(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+        final CraftingInterfacePart second = secondKiln(world);
+        final ProcessingPattern cobble = CraftingRig.pattern(Items.COBBLESTONE, Items.STONE, 200);
+        final AtomicReference<NetworkCraftOperation> craft = new AtomicReference<>();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.COBBLESTONE, 64);
+                    rig.hold(cobble);
+                    second.place(NetworkRecipe.ofProcessing(cobble));
+                    net.cc().forgetFloor();
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    craft.set(net.mainframe().submitNetworkCraft(StorageKey.of(Items.STONE), 16, false, "shared"));
+                    helper.assertTrue(craft.get() != null, "the craft is planned through the kilns' recipe");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(craft.get().isDone(), "the craft settles"))
+                .thenExecute(() -> {
+                    final OperationRecord record = craft.get().toRecord();
+                    helper.assertTrue(record.status() == OperationRecord.STATUS_COMPLETED,
+                            "the craft completes: " + record.cause());
+                    helper.assertTrue(stored(helper, Items.STONE) == 16, "sixteen stone in the network, not "
+                            + stored(helper, Items.STONE));
+                    final TestMachineBlockEntity other = world.blockEntity(SECOND_KILN, TestMachineBlockEntity.class);
+                    helper.assertTrue(kiln(rig).made() == 8 && other.made() == 8, "each kiln fired eight, not "
+                            + kiln(rig).made() + " and " + other.made());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A machine with a Parallel Line works two lots of a job at once: the interface puts both ferrites into the
+     * Crusher, so the first the bus credits is the four inductors of both, where a plain Crusher's would be two.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 900)
+    public static void jobs_aParallelLineWorksTwoLotsOfAJobAtOnce(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final BlockPos terminal = ChainMachineSite.formed(helper, ChainMachineSite.machine("crusher"), CRUSHER_CORNER);
+        // From the computer's side, down to a bus on the Crusher's front outlet and over to an interface on its roof.
+        CraftingRig.lay(world, new BlockPos(5, 2, 3), new BlockPos(5, 2, 4), new BlockPos(4, 2, 4),
+                new BlockPos(3, 2, 4), CRUSHER_RECEIVING.cable(), new BlockPos(3, 3, 4), new BlockPos(3, 4, 4),
+                new BlockPos(3, 4, 5), CRUSHER_FEEDING.cable());
+        final CraftingInterfacePart part = CraftingRig.addPart(world, CRUSHER_FEEDING,
+                new CraftingInterfacePart(HardwareEra.STANDARD));
+        CraftingRig.addPart(world, CRUSHER_RECEIVING, new ReceivingBusPart());
+        final ProcessingPattern crush = new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(ChainParts.FERRITE.get()), 1)),
+                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(ChainParts.INDUCTOR.get()), 2,
+                        ProcessingPattern.FULL_CHANCE)), 600);
+        final AtomicReference<NetworkProcessingOperation> op = new AtomicReference<>();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(ChainMachineSite.machineAt(helper, terminal).formed(),
+                        "the crusher forms"))
+                .thenExecute(() -> {
+                    final ChainMachineBlockEntity crusher = ChainMachineSite.machineAt(helper, terminal);
+                    crusher.getInventory().insertItem(crusher.layout().firstUpgrade(),
+                            new ItemStack(SharedUpgrades.PARALLEL_LINE.get()), false);
+                    net.seed(ChainParts.FERRITE.get(), 2);
+                    helper.assertTrue(part.place(NetworkRecipe.ofProcessing(crush)), "the interface takes the recipe");
+                    net.cc().forgetFloor();
+                })
+                .thenExecuteAfter(SETTLE, () -> op.set(net.mainframe().submitNetworkProcessing(crush, 4, "parallel")))
+                .thenWaitUntil(() -> helper.assertTrue(op.get().produced() > 0, "the crusher gives back"))
+                .thenExecute(() -> helper.assertTrue(op.get().produced() == 4,
+                        "both ferrites came out in one go, four inductors, not " + op.get().produced()))
+                .thenWaitUntil(() -> helper.assertTrue(done(op.get()), "the job completes"))
                 .thenSucceed();
     }
 

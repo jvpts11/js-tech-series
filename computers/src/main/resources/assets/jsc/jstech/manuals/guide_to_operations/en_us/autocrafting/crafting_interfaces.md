@@ -42,6 +42,8 @@ Table: The modes of an interface
 
 MAX JOBS sets how many jobs the interface runs at once, from 0 to 64 jobs. Auto (0) lets the interface take as many jobs as its machine accepts. A paused interface takes no new job. You name the interface too, with a name of up to 32 characters.
 
+The same pattern can be in the interfaces of several machines. A craft then shares that step among those machines, one share for each, as far as its computer's threads go. Two kilns with the same recipe each fire half the stone.
+
 An interface is driven when a Crafting Computer drives the cable it sits on. A card drives the interfaces of its cable in cable order.
 
 Interfaces beyond what the cards can drive wait, driven by no computer, until another card goes in. The screen reads "Driven by a Crafting Computer" or "Driven by no Crafting Computer".

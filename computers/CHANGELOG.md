@@ -932,6 +932,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   A pattern file written before keeps every input lasting one run.
 
 ### Changed
+- Autocrafting on many machines: a craft shares a machine step among the machines whose Crafting
+  Interfaces hold its recipe, a share each, as far as its Crafting Computer's threads go, so two kilns of one recipe
+  each fire half the stone where one fired it all while the other stood idle.
 - Abandoned buildings of real blocks: every block of every building and of the villages' computer shops
   is one a player can get back by breaking it. The Fitting block is gone: the signs are the game's signs with their
   words on them, the lights sea lanterns and lanterns, the benches' wafers, chips and Phi coprocessors item frames

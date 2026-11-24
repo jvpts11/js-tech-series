@@ -4379,6 +4379,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) Autocrafting on many machines: a craft shares a machine step among the machines whose Crafting
+  Interfaces hold its recipe, a share each, as far as its Crafting Computer's threads go, so two kilns of one recipe
+  each fire half the stone where one fired it all while the other stood idle.
 - (Core) A machine's Upgrades tab shows up to four bays, closer together when there are four, so a machine of four
   upgrade slots shows every one; its bank of bars has a row each for the liquids and the gases a recipe spends, in
   place of one for both, and one for the room of its slots and tanks.

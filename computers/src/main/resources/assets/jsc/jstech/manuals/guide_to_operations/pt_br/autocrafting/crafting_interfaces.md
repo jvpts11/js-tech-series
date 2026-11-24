@@ -42,6 +42,8 @@ Table: Os modos de uma interface
 
 MÁX. JOBS define quantas tarefas a interface roda ao mesmo tempo, de 0 a 64 tarefas. Auto (0) faz a interface aceitar quantas tarefas a máquina aceitar. Uma interface pausada não aceita nova tarefa. Você também dá um nome à interface, com até 32 caracteres.
 
+O mesmo padrão pode ficar nas interfaces de várias máquinas. Uma fabricação então divide essa etapa entre essas máquinas, uma parte para cada, até onde vão as threads do seu computador. Dois fornos com a mesma receita queimam cada um metade da pedra.
+
 Uma interface é comandada quando um Computador de Fabricação comanda o cabo em que ela está. Uma placa comanda as interfaces do seu cabo na ordem do cabo.
 
 Interfaces além do que as placas conseguem comandar esperam, sem nenhum computador comandá-las, até que outra placa seja colocada. A tela mostra "Comandada por um Computador de Fabricação" ou "Comandada por nenhum Computador de Fabricação".
