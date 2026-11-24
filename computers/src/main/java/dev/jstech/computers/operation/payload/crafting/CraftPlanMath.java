@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload.crafting;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.CraftPlanner;
+import dev.jstech.computers.crafting.CraftPlanning;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
@@ -63,6 +64,13 @@ public final class CraftPlanMath {
             if (recipe.usesMachine()) {
                 final MachinePlan plan = planMachineRecipe(recipe, quantity, stock);
                 if (plan == null) {
+                    /*
+                     * Still a card, one that cannot deliver: a card left out would shift every card after it, and the
+                     * one the player picks would run another recipe than the one it shows.
+                     */
+                    out.add(new RecipeChoice(recipe.displayText(), recipe.proc().isPresent()
+                            ? RecipeChoice.KIND_PROCESSING : RecipeChoice.KIND_MULTI_STAGE, List.of(), 1, 0,
+                            List.of(), false));
                     continue;
                 }
                 rows = plan.rows();
@@ -89,8 +97,10 @@ public final class CraftPlanMath {
                     rows.add(new CraftPlanPayload.Row(in.getKey(), need,
                             Math.min(stock.getOrDefault(in.getKey(), 0L), need)));
                 }
-                final var patterns = mainframe.patternsPreferring(bench);
-                final var plan = planner.plan(key, quantity, patterns, machines, stock);
+                // Planned the way a craft of this card is, with this pattern the only one making the result.
+                final var plan = planner.plan(key, quantity,
+                        CraftPlanning.benchesFor(key, bench, null, mainframe.networkPatterns()),
+                        CraftPlanning.machinesFor(key, bench, null, machines), stock);
                 estimate = estimateTicks(level, mainframe, plan);
                 stages = Math.max(1, plan.steps().size());
                 feasible = plan.feasible();
@@ -111,7 +121,10 @@ public final class CraftPlanMath {
             }
             // A processing run whose short inputs something makes runs as one tree, so it is feasible after all.
             if (!feasible && recipe.proc().isPresent() && shortCraftable) {
-                feasible = planner.plan(key, quantity, mainframe.networkPatterns(), machines, stock).feasible();
+                final ProcessingPattern proc = recipe.proc().get();
+                feasible = planner.plan(key, quantity,
+                        CraftPlanning.benchesFor(key, null, proc, mainframe.networkPatterns()),
+                        CraftPlanning.machinesFor(key, null, proc, machines), stock).feasible();
             }
             out.add(new RecipeChoice(recipe.displayText(), kind, machineNames, stages,
                     estimate, inputs, feasible));

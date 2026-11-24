@@ -270,6 +270,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private static final int POPUP_H_ADV = 172;
     private static final int ADV_ROWS = 4; // visible PULL-FROM rows
     private static final long MAX_TYPED_QTY = 999_999_999L;
+    /* The lines the details panel gives what makes an item and what it is used in, whatever their count. */
+    private static final int RECIPE_ROWS = 3;
 
     // Craft popup (MC-NET style): a quantity dialog + a live plan (need/have) before crafting.
     private static final int CRAFT_W = 196;
@@ -1783,9 +1785,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         Texts.small(g, font, Texts.clip(font, storedLine(e), Texts.smallFits(dw - 10)), px, py, skin.dim());
         py += 10;
         final ItemRecipesPayload known = recipesFor(key);
-        py = detailList(g, font, px, py, dw, GameText.resolve(MADE_BY), known == null ? List.of("...")
+        py = fixedList(g, font, px, py, dw, GameText.resolve(MADE_BY), known == null ? List.of("...")
                 : resolveAll(known.madeBy()));
-        py = detailList(g, font, px, py, dw, GameText.resolve(USED_IN), known == null ? List.of("...")
+        py = fixedList(g, font, px, py, dw, GameText.resolve(USED_IN), known == null ? List.of("...")
                 : resolveAll(known.usedIn()));
         if (withButtons) {
             final int bw = Math.max(30, (dw - 10 - 8 - 14) / 2);
@@ -2026,6 +2028,28 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             vy += 8;
         }
         return vy + 2;
+    }
+
+    /*
+     * A section of {@link #RECIPE_ROWS} lines whatever it holds: the first values, the last line saying how many more
+     * there are, blank lines under a short one, so the item's buttons below it stay where the hand expects them.
+     */
+    private int fixedList(final GuiGraphics g, final Font font, final int px, final int py, final int dw,
+                          final String label, final List<String> values) {
+        final int vy = sectionRule(g, font, px, py, dw, label);
+        if (values.isEmpty()) {
+            Texts.small(g, font, GameText.resolve(NONE), px + 2, vy, skin.dim());
+        }
+        final int shown = values.size() > RECIPE_ROWS ? RECIPE_ROWS - 1 : values.size();
+        for (int i = 0; i < shown; i++) {
+            Texts.small(g, font, Texts.clip(font, values.get(i), Texts.smallFits(dw - 14)), px + 2, vy + i * 8,
+                    skin.text());
+        }
+        if (values.size() > RECIPE_ROWS) {
+            Texts.small(g, font, GameText.resolve(MORE.with(values.size() - shown)), px + 2, vy + shown * 8,
+                    skin.dim());
+        }
+        return vy + RECIPE_ROWS * 8 + 2;
     }
 
     /** The item's tags as namespaced ids (sorted), for the details panel TAGS section. */
@@ -2380,6 +2404,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 selected.clear();
             }
             gridPressed = true;
+        }
+        if (onGridZone) {
+            // A click on the grid puts the keyboard down from the search, on the grid, where C crafts what it is on.
+            root.focus(null);
         }
         // A click that no field took leaves the keyboard on the grid.
     }

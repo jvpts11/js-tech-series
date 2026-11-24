@@ -858,10 +858,9 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
      * The single craft entry point every OS surface (the terminal, the Network Interactor, and the CLI/IQL)
      * routes a request through, so all three behave the same. If a machine recipe on the network produces
      * {@code key} directly, that recipe runs (a processing run, or a multi-stage pipeline); otherwise a recursive
-     * bench-and-machine craft is planned. When a machine recipe's own inputs are not all in stock and other
-     * patterns can make them, the whole tree runs as one craft with the machine as a step; if nothing can make a
-     * missing input, the bare machine run delivers what the network does hold. {@code partial} applies only to
-     * the recursive fallback (a machine run always delivers what it can). {@code onSettle}, if given, fires when
+     * bench-and-machine craft is planned. When a machine recipe's own inputs are not all in stock, the whole tree
+     * runs as one craft with the machine as a step; a tree that does not close fails saying what raw thing it is
+     * short of, or with {@code partial} makes what it can. {@code onSettle}, if given, fires when
      * the resulting operation settles. Returns the operation, or null if nothing on the network makes {@code key}.
      */
     @Nullable
@@ -873,8 +872,9 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
 
     /**
      * As above, run through one particular recipe: {@code recipe} indexes {@link #recipesFor}. A processing
-     * recipe runs the machine (or the whole tree when an input is short and something makes it), a multi-stage
-     * one runs its pipeline, and a bench one is planned recursively with that pattern first. An index out of
+     * recipe runs the machine (or the whole tree when an input is short, with that machine making the result), a
+     * multi-stage one runs its pipeline, and a bench one is planned recursively making the result only that way. An
+     * index out of
      * range runs the machine's own choice, the way the five-argument form does.
      */
     @Nullable

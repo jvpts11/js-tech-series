@@ -10,6 +10,7 @@ package dev.jstech.computers.crafting;
 import dev.jstech.computers.storage.StorageKey;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -60,5 +61,47 @@ public final class CraftPlanning {
             plan = CraftPlanner.plan(key, target, patterns, machines, stock);
         }
         return new Planned(plan, target);
+    }
+
+    /**
+     * {@code patterns} as a plan reads them where the player picked how {@code key} itself is made: {@code bench} the
+     * only bench pattern making it, and none at all where a {@code machine} was picked. All of them where neither was.
+     */
+    public static List<CraftingPattern> benchesFor(final StorageKey key, @Nullable final CraftingPattern bench,
+                                                   @Nullable final ProcessingPattern machine,
+                                                   final List<CraftingPattern> patterns) {
+        if (bench == null && machine == null) {
+            return patterns;
+        }
+        final List<CraftingPattern> out = new ArrayList<>();
+        if (bench != null) {
+            out.add(bench);
+        }
+        for (final CraftingPattern pattern : patterns) {
+            if (!key.equals(StorageKey.of(pattern.result()))) {
+                out.add(pattern);
+            }
+        }
+        return out;
+    }
+
+    /** The same for the machine patterns: {@code machine} the only one making {@code key}, none where a bench was. */
+    public static List<ProcessingPattern> machinesFor(final StorageKey key, @Nullable final CraftingPattern bench,
+                                                      @Nullable final ProcessingPattern machine,
+                                                      final List<ProcessingPattern> machines) {
+        if (bench == null && machine == null) {
+            return machines;
+        }
+        final List<ProcessingPattern> out = new ArrayList<>();
+        if (machine != null) {
+            out.add(machine);
+        }
+        for (final ProcessingPattern other : machines) {
+            final ProcessingPattern.ProcessingOutput made = other.primaryOutput();
+            if (made == null || !key.equals(made.key())) {
+                out.add(other);
+            }
+        }
+        return out;
     }
 }

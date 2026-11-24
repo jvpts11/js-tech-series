@@ -8900,6 +8900,7 @@
   "jsc.operation.failure.settled_failed": "failed",
   "jsc.operation.failure.settled_partial": "delivered %s of %s",
   "jsc.operation.failure.settled_resource_locked": "timed out waiting on a locked resource",
+  "jsc.operation.failure.short_of": "short of %s %s, which nothing on the network makes",
   "jsc.operation.failure.stage_failed": "stage %s of %s failed",
   "jsc.operation.failure.stage_would_not_start": "stage %s of %s could not be started",
   "jsc.operation.failure.step_stopped": "%s stopped taking anything at step %s of %s, %s",

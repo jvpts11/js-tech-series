@@ -7554,6 +7554,7 @@
   "jsc.operation.failure.update.not_done": "a placa não conseguiu fazer isso com o %s: nada a mudar, caro demais ou níveis de menos",
   "jsc.operation.failure.no_stages": "o padrão não tem estágios",
   "jsc.operation.failure.no_way_to_make_it": "nada na rede sabe fazer %s",
+  "jsc.operation.failure.short_of": "faltam %s de %s, que nada na rede faz",
   "jsc.operation.failure.not_enough_ingredients": "os ingredientes para %s acabaram",
   "jsc.operation.failure.step_stopped": "%s parou de aceitar no passo %s de %s, %s",
   "jsc.operation.failure.step_unheld": "nenhuma Interface de Fabricação guardava o passo %s de %s, %s",

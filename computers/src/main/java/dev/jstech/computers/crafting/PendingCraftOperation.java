@@ -43,6 +43,10 @@ public final class PendingCraftOperation implements INetworkOperation {
     private static final TextKey NO_WAY_TO_MAKE_IT = TextKey.of("jsc.operation.failure.no_way_to_make_it",
             "nothing on the network knows how to make %s");
 
+    /** The way to make it comes down to a raw thing the network lacks and nothing on it makes. */
+    private static final TextKey SHORT_OF = TextKey.of("jsc.operation.failure.short_of",
+            "short of %s %s, which nothing on the network makes");
+
     /** There is a way to make it, but no computer on the network free to carry the plan out. */
     private static final TextKey NO_CRAFTING_COMPUTER = TextKey.of("jsc.operation.failure.no_crafting_computer",
             "no crafting computer was free to make the %s");
@@ -61,6 +65,8 @@ public final class PendingCraftOperation implements INetworkOperation {
     private boolean abandoned;
     private boolean failed;
     private OperationFailure cause = OperationFailure.NONE;
+    /* What the request fell short of and nothing makes, worked out where planning found no way; read on delivery. */
+    private volatile Map<StorageKey, Long> shortage = Map.of();
     @Nullable
     private NetworkCraftOperation delivered;
     @Nullable
@@ -81,8 +87,14 @@ public final class PendingCraftOperation implements INetworkOperation {
      */
     public void start(final OperationDispatch dispatch, final List<CraftingPattern> patterns,
                       final List<ProcessingPattern> machines, final Map<StorageKey, Long> stock) {
-        start(dispatch, () -> new CraftPlanning.Routed(
-                CraftPlanning.plan(key, demand, partial, patterns, machines, stock), CraftRouting.NONE), null);
+        start(dispatch, () -> {
+            final CraftPlanning.Planned planned = CraftPlanning.plan(key, demand, partial, patterns, machines, stock);
+            if (planned == null) {
+                // Why not, for the failure to say: the raw things the whole request comes down to and nothing makes.
+                shortage = CraftPlanner.plan(key, demand, patterns, machines, stock).unmakeable();
+            }
+            return new CraftPlanning.Routed(planned, CraftRouting.NONE);
+        }, null);
     }
 
     /**
@@ -119,7 +131,14 @@ public final class PendingCraftOperation implements INetworkOperation {
         final CraftRouting routing = routed.routing();
         if (planned == null) {
             failed = true;
-            cause = OperationFailure.of(NO_WAY_TO_MAKE_IT, key.displayName().getString());
+            final Map<StorageKey, Long> lacking = shortage;
+            if (lacking.isEmpty()) {
+                cause = OperationFailure.of(NO_WAY_TO_MAKE_IT, key.displayName().getString());
+            } else {
+                final Map.Entry<StorageKey, Long> first = lacking.entrySet().iterator().next();
+                cause = OperationFailure.of(SHORT_OF, Long.toString(first.getValue()),
+                        first.getKey().displayName().getString());
+            }
             settle();
             return;
         }

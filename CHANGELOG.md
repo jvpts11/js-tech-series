@@ -4387,6 +4387,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) Autocrafting: where several recipes make the same thing, a craft makes it the first way that closes, so
+  zinc ingots smelted from zinc dust ground from zinc ingots no longer stop a plan that has the raw zinc; and the craft
+  dialog opens on the first recipe that can deliver, not on one that loops back on itself.
+- (Computers) Autocrafting: a craft asked of a machine whose inputs are short builds the whole tree, or, where the tree
+  does not close, fails saying what raw thing the network is short of and nothing on it makes, instead of running the
+  machine's step alone on what is in stock and timing out. With a partial craft allowed it makes what it can.
+- (Computers) Network Interactor: what makes an item and what it is used in take three lines each in the details
+  panel, a last line saying how many more, so the Request and Craft buttons below them stay in one place.
 - (Core) Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
   cables beside them still show. They still move only near the player.
 - (Computers) The manual's page on building a chain machine says how many upgrades a machine takes by its era:
@@ -4783,6 +4791,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) Craft dialog: a short ingredient is named by the raw thing behind it that nothing makes, not as
+  "Missing 2 Polysilicon Rod - nothing on the network makes it" when a pattern makes polysilicon and the chlorine is
+  what is short.
+- (Computers) Craft dialog: every recipe of an item has its card, one the dialog cannot describe too, so the card
+  picked is the recipe that runs; one left out had moved every card after it onto the next recipe. A recipe picked
+  there is the only way the craft makes the result itself, as the dialog showed it.
+- (Computers) Network Interactor: a click on an item puts the keyboard down from the search, so C opens its craft
+  instead of typing into the search.
 - (Core) A machine whose upgrades have it draw more energy a tick takes that much more in through its port: four
   motors, which make it draw four times as much, or lines that work several recipes at once, no longer leave it
   working at half speed once its few seconds' store runs dry.

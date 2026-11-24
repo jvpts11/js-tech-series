@@ -197,7 +197,7 @@ public final class PortableNetwork {
                             final StorageKey key, final long amount) {
         final NetworkUuid network = networkOf(level, device);
         if (network != null && key.isItem()) {
-            CraftingPayloads.sendPlan(player, level, network, key.stack(1), Math.max(1L, amount), -1, count -> 0);
+            CraftingPayloads.sendPlan(player, level, network, key.stack(1), Math.max(1L, amount), -1, count -> -1);
         }
     }
 

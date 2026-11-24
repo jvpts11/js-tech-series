@@ -14,7 +14,9 @@ import dev.jstech.core.util.Sizes;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -98,10 +100,11 @@ public final class CraftPlanner {
     }
 
     /**
-     * The bill of materials for a request.
+     * The bill of materials for a request. {@code missing} holds everything a plan falls short of, made things too;
+     * {@code unmakeable} only what the stock lacks and nothing on the network makes, the raw shortage behind it.
      */
     public record Plan(List<Step> steps, Map<StorageKey, Long> rawConsumption,
-                       Map<StorageKey, Long> missing, long produced) {
+                       Map<StorageKey, Long> missing, long produced, Map<StorageKey, Long> unmakeable) {
 
         public boolean feasible() {
             return missing.isEmpty();
@@ -138,7 +141,7 @@ public final class CraftPlanner {
         final State state = new State(recipes, stock, machineFirst);
         final long covered = state.produce(resultKey, quantity, 0, new HashSet<>(), true);
         return new Plan(mergeMachineSteps(state.steps), Map.copyOf(state.rawConsumption),
-                Map.copyOf(state.missing), covered);
+                Map.copyOf(state.missing), covered, Map.copyOf(state.unmakeable));
     }
 
     /**
@@ -229,25 +232,53 @@ public final class CraftPlanner {
     }
 
     /**
-     * The recipes of a planning call by what they make, the first of the list winning a tie as a scan would, so a
-     * lookup costs one hash instead of a pass over every pattern.
+     * The recipes of a planning call by what they make, each list in the order it was given, so a lookup costs one hash
+     * instead of a pass over every pattern.
      */
-    private record Recipes(Map<StorageKey, CraftingPattern> benches, Map<StorageKey, ProcessingPattern> machines) {
+    private record Recipes(Map<StorageKey, List<CraftingPattern>> benches,
+                           Map<StorageKey, List<ProcessingPattern>> machines) {
 
         static Recipes of(final List<CraftingPattern> patterns, final List<ProcessingPattern> machines) {
-            final Map<StorageKey, CraftingPattern> benches = new HashMap<>();
+            final Map<StorageKey, List<CraftingPattern>> benches = new HashMap<>();
             for (final CraftingPattern pattern : patterns) {
-                benches.putIfAbsent(StorageKey.of(pattern.result()), pattern);
+                final List<CraftingPattern> ways = benches.computeIfAbsent(StorageKey.of(pattern.result()),
+                        key -> new ArrayList<>());
+                if (!ways.contains(pattern)) {
+                    ways.add(pattern);
+                }
             }
-            final Map<StorageKey, ProcessingPattern> byOutput = new HashMap<>();
+            final Map<StorageKey, List<ProcessingPattern>> byOutput = new HashMap<>();
             for (final ProcessingPattern machine : machines) {
                 final ProcessingPattern.ProcessingOutput primary = machine.primaryOutput();
                 if (primary != null && !machine.inputs().isEmpty()) {
-                    byOutput.putIfAbsent(primary.key(), machine);
+                    final List<ProcessingPattern> ways = byOutput.computeIfAbsent(primary.key(),
+                            key -> new ArrayList<>());
+                    if (!ways.contains(machine)) {
+                        ways.add(machine);
+                    }
                 }
             }
             return new Recipes(benches, byOutput);
         }
+
+        /* The ways to make {@code key}: its bench patterns, then its machine ones, or the machines first. */
+        List<Way> ways(final StorageKey key, final boolean machineFirst) {
+            final List<Way> benchWays = new ArrayList<>();
+            for (final CraftingPattern pattern : benches.getOrDefault(key, List.of())) {
+                benchWays.add(new Way(pattern, null));
+            }
+            final List<Way> machineWays = new ArrayList<>();
+            for (final ProcessingPattern machine : machines.getOrDefault(key, List.of())) {
+                machineWays.add(new Way(null, machine));
+            }
+            final List<Way> out = new ArrayList<>(machineFirst ? machineWays : benchWays);
+            out.addAll(machineFirst ? benchWays : machineWays);
+            return out;
+        }
+    }
+
+    /* One way to make a thing: a bench pattern or a machine pattern. */
+    private record Way(@Nullable CraftingPattern pattern, @Nullable ProcessingPattern machine) {
     }
 
     /**
@@ -260,8 +291,11 @@ public final class CraftPlanner {
         private final List<Step> steps = new ArrayList<>();
         private final Map<StorageKey, Long> rawConsumption = new LinkedHashMap<>();
         private final Map<StorageKey, Long> missing = new LinkedHashMap<>();
+        private final Map<StorageKey, Long> unmakeable = new LinkedHashMap<>();
         /* The runs what was taken of each kept input still lasts, which later steps use before taking more. */
         private final Map<ProcessingPattern.ProcessingInput, Long> lasting = new HashMap<>();
+        /* How to take back each change made so far, the last first: a way tried and found short is taken back. */
+        private final Deque<Runnable> undo = new ArrayDeque<>();
         private final boolean machineFirst;
 
         private State(final Recipes recipes, final Map<StorageKey, Long> stock, final boolean machineFirst) {
@@ -278,27 +312,60 @@ public final class CraftPlanner {
                 deficit -= takeFrom(intermediates, key, deficit);
                 final long fromStock = takeFrom(remainingStock, key, deficit);
                 if (fromStock > 0) {
-                    rawConsumption.merge(key, fromStock, Long::sum);
+                    add(rawConsumption, key, fromStock);
                     deficit -= fromStock;
                 }
             }
             if (deficit <= 0) {
                 return quantity;
             }
-
-            /*
-             * A bench pattern wins; otherwise a machine pattern whose primary output is the key (the other way round
-             * when the machines go first).
-             */
-            final ProcessingPattern firstMachine = machineFirst ? machineFor(key) : null;
-            final CraftingPattern pattern = firstMachine != null ? null : patternFor(key);
-            final ProcessingPattern machine = firstMachine != null ? firstMachine
-                    : pattern == null ? machineFor(key) : null;
-            if ((pattern == null && machine == null) || depth >= MAX_DEPTH || chain.contains(key)) {
-                missing.merge(key, deficit, Long::sum);
+            final boolean looped = depth >= MAX_DEPTH || chain.contains(key);
+            final List<Way> ways = looped ? List.of() : recipes.ways(key, machineFirst);
+            if (ways.isEmpty()) {
+                add(missing, key, deficit);
+                if (!looped) {
+                    add(unmakeable, key, deficit);
+                }
                 return quantity - deficit;
             }
+            return quantity - deficit + bestOf(ways, key, deficit, depth, chain);
+        }
 
+        /*
+         * Makes {@code deficit} of {@code key} the first of {@code ways} that covers all of it, or, where none does,
+         * the one that covers most. Each way is tried on the plan as it stands and taken back before the next is tried,
+         * so a way that loops back on itself (zinc ingots from zinc dust made of zinc ingots) gives way to one from
+         * stock.
+         */
+        private long bestOf(final List<Way> ways, final StorageKey key, final long deficit, final int depth,
+                            final Set<StorageKey> chain) {
+            if (ways.size() == 1) {
+                return make(ways.getFirst(), key, deficit, depth, chain);
+            }
+            final int before = undo.size();
+            Way best = ways.getFirst();
+            long bestMade = -1;
+            for (final Way way : ways) {
+                final long made = make(way, key, deficit, depth, chain);
+                if (made >= deficit) {
+                    return made;
+                }
+                if (made > bestMade) {
+                    bestMade = made;
+                    best = way;
+                }
+                while (undo.size() > before) {
+                    undo.pop().run();
+                }
+            }
+            return make(best, key, deficit, depth, chain);
+        }
+
+        /* Makes as much of {@code deficit} of {@code key} as {@code way} can, and says how much that is. */
+        private long make(final Way way, final StorageKey key, final long deficit, final int depth,
+                          final Set<StorageKey> chain) {
+            final CraftingPattern pattern = way.pattern();
+            final ProcessingPattern machine = way.machine();
             final long perRun = pattern != null ? Math.max(1, pattern.result().getCount())
                     : Math.max(1, machine.primaryOutput().amount());
             final long runs = Sizes.ceilDiv(deficit, perRun);
@@ -336,28 +403,19 @@ public final class CraftPlanner {
                  * The uncovered remainder of the request is missing; surplus ingredients secured
                  * above stay in the virtual pools (the real operation only locks what it uses).
                  */
-                missing.merge(key, deficit - feasibleRuns * perRun, Long::sum);
+                add(missing, key, deficit - feasibleRuns * perRun);
             }
-            if (feasibleRuns > 0) {
-                steps.add(pattern != null ? Step.bench(pattern, feasibleRuns) : Step.machine(machine, feasibleRuns));
-                final long produced = feasibleRuns * perRun;
-                final long surplus = produced - Math.min(deficit, produced);
-                if (surplus > 0) {
-                    intermediates.merge(key, surplus, Long::sum); // rounding overflow, never wasted
-                }
-                deficit -= Math.min(deficit, produced);
+            if (feasibleRuns <= 0) {
+                return 0L;
             }
-            return quantity - deficit;
-        }
-
-        @Nullable
-        private CraftingPattern patternFor(final StorageKey key) {
-            return recipes.benches().get(key);
-        }
-
-        @Nullable
-        private ProcessingPattern machineFor(final StorageKey key) {
-            return recipes.machines().get(key);
+            steps.add(pattern != null ? Step.bench(pattern, feasibleRuns) : Step.machine(machine, feasibleRuns));
+            undo.push(steps::removeLast);
+            final long produced = feasibleRuns * perRun;
+            final long surplus = produced - Math.min(deficit, produced);
+            if (surplus > 0) {
+                add(intermediates, key, surplus); // rounding overflow, never wasted
+            }
+            return Math.min(deficit, produced);
         }
 
         /*
@@ -374,20 +432,36 @@ public final class CraftPlanner {
             final long got = need > 0 ? produce(kept.key(), need, depth + 1, chain, false) : 0L;
             final long gotRuns = Sizes.times(got / kept.amount(), kept.lasts());
             final long covered = Math.min(left, gotRuns);
-            lasting.put(kept, credit - fromCredit + gotRuns - covered);
+            set(lasting, kept, credit - fromCredit + gotRuns - covered);
             return fromCredit + covered;
         }
 
-        private static long takeFrom(final Map<StorageKey, Long> pool, final StorageKey key, final long want) {
+        private long takeFrom(final Map<StorageKey, Long> pool, final StorageKey key, final long want) {
             if (want <= 0) {
                 return 0;
             }
             final long have = pool.getOrDefault(key, 0L);
             final long taken = Math.min(have, want);
             if (taken > 0) {
-                pool.put(key, have - taken);
+                set(pool, key, have - taken);
             }
             return taken;
+        }
+
+        private <K> void add(final Map<K, Long> map, final K key, final long amount) {
+            set(map, key, map.getOrDefault(key, 0L) + amount);
+        }
+
+        /* Sets {@code key} in {@code map}, keeping how to put it back as it was. */
+        private <K> void set(final Map<K, Long> map, final K key, final long value) {
+            final Long was = map.put(key, value);
+            undo.push(() -> {
+                if (was == null) {
+                    map.remove(key);
+                } else {
+                    map.put(key, was);
+                }
+            });
         }
     }
 }

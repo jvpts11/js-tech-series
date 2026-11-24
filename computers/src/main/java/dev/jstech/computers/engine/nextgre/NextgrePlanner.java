@@ -131,8 +131,10 @@ public final class NextgrePlanner {
             final Reckoning reckoning = reckon(draft.planned().plan(), shape, draft.routing(), in);
             Text setAside = setAsideByHints(draft, machine != null, in);
             if (setAside == null && !draft.planned().plan().feasible()) {
-                final Map.Entry<StorageKey, Long> lacking = draft.planned().plan().missing().entrySet().iterator()
-                        .next();
+                // Named by the raw thing nothing makes, where the shortage comes down to one, not by a made thing.
+                final CraftPlanner.Plan drafted = draft.planned().plan();
+                final Map.Entry<StorageKey, Long> lacking = (drafted.unmakeable().isEmpty() ? drafted.missing()
+                        : drafted.unmakeable()).entrySet().iterator().next();
                 setAside = NextgreTexts.CANNOT_BE_MADE.with(lacking.getValue(), name(lacking.getKey()));
             }
             final PlanCandidate view = new PlanCandidate(in.key().registryId(), draft.planned().target(),

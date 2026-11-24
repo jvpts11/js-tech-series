@@ -14,6 +14,7 @@ import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftPlanner;
+import dev.jstech.computers.crafting.CraftPlanning;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
@@ -268,8 +269,9 @@ public final class CraftingPayloads {
         final var stock = NetworkStorage.of(level, network).query();
         /*
          * Which recipe to plan with: the one asked for, else the one the machine asking remembers the
-         * player picking for the item, else the first. The reply carries every recipe that makes the item
-         * when there is more than one, so the dialog can offer the choice.
+         * player picking for the item, else the first that can deliver, so a loop of patterns (zinc ingots from
+         * zinc dust ground from zinc ingots) is never where the dialog starts. The reply carries every recipe that
+         * makes the item when there is more than one, so the dialog can offer the choice.
          */
         final List<NetworkRecipe> recipes = mainframe.recipesFor(key);
         int chosen = asked;
@@ -278,8 +280,15 @@ public final class CraftingPayloads {
         }
         final List<RecipeChoice> options = recipes.size() > 1
                 ? recipeChoices(level, mainframe, planner, recipes, key, quantity, machines, stock) : List.of();
+        if (chosen < 0 || chosen >= recipes.size()) {
+            chosen = firstFeasible(options);
+        }
         final NetworkRecipe recipe = recipes.isEmpty() ? null : recipes.get(chosen);
-        final var patterns = mainframe.patternsPreferring(recipe == null ? null : recipe.bench().orElse(null));
+        // Planned as the craft of the chosen card runs: that recipe the only way the result itself is made.
+        final CraftingPattern pickedBench = recipe == null ? null : recipe.bench().orElse(null);
+        final ProcessingPattern pickedMachine = recipe == null ? null : recipe.proc().orElse(null);
+        final var patterns = CraftPlanning.benchesFor(key, pickedBench, pickedMachine, mainframe.networkPatterns());
+        final var pinned = CraftPlanning.machinesFor(key, pickedBench, pickedMachine, machines);
         final int recipeIndex = chosen;
         /*
          * A machine recipe plans by its own direct inputs, red where short, with a line per shortfall saying
@@ -290,11 +299,11 @@ public final class CraftingPayloads {
         final var machinePlan = recipe == null || !recipe.usesMachine() ? null
                 : planMachineRecipe(recipe, quantity, stock);
         if (machinePlan != null) {
-            final Cover cover = coverShortfalls(planner, machinePlan.rows(), patterns, machines, stock,
+            final Cover cover = coverShortfalls(planner, machinePlan.rows(), patterns, pinned, stock,
                     machinePlan.plainMachine(), plan -> estimateTicks(level, mainframe, plan));
             final boolean feasible = machinePlan.feasible()
                     || (machinePlan.plainMachine() && cover.covered()
-                            && planner.plan(key, quantity, patterns, machines, stock).feasible());
+                            && planner.plan(key, quantity, patterns, pinned, stock).feasible());
             // What the tree crafts first takes its own time before the machine's step runs.
             final int estimate = (int) Math.min(Integer.MAX_VALUE, machinePlan.estimateTicks() + cover.ticks());
             PacketDistributor.sendToPlayer(player, new CraftPlanPayload(
@@ -309,7 +318,7 @@ public final class CraftingPayloads {
          * a dispatcher the plan is made here and now instead.
          */
         final Supplier<PlanPreview> preview =
-                () -> planPreview(planner, key, quantity, patterns, machines, stock);
+                () -> planPreview(planner, key, quantity, patterns, pinned, stock);
         final Consumer<PlanPreview> reply = made ->
                 PacketDistributor.sendToPlayer(player, new CraftPlanPayload(result, quantity, made.rows(),
                         made.feasible(), made.maxFeasible(), estimateTicks(level, mainframe, made.plan()),
@@ -324,12 +333,22 @@ public final class CraftingPayloads {
         }
     }
 
-    /** The recipe index this machine remembers for {@code key} when it is still one of {@code count}, else 0. */
+    /** The recipe index this machine remembers for {@code key} when it is still one of {@code count}, else -1. */
     private static int rememberedRecipe(final IComputerTerminalHost host, final StorageKey key, final int count) {
         if (host instanceof IOsHost computer && computer.console() != null) {
             final int remembered = computer.console().settings().recipeChoice(key.id());
             if (remembered >= 0 && remembered < count) {
                 return remembered;
+            }
+        }
+        return -1;
+    }
+
+    /** The first of {@code options} the network can deliver through, or the first of all when none can. */
+    private static int firstFeasible(final List<RecipeChoice> options) {
+        for (int i = 0; i < options.size(); i++) {
+            if (options.get(i).feasible()) {
+                return i;
             }
         }
         return 0;
@@ -375,18 +394,27 @@ public final class CraftingPayloads {
                 }
             } else {
                 covered = false;
-                if (lines.size() < CraftPlanPayload.MAX_COVER) {
-                    lines.add(CraftTexts.NOTHING_MAKES_IT.with(shortfall, name));
+                // What is short is named by the raw thing behind it that nothing makes, not by what a pattern makes.
+                final List<Text> raw = plan.unmakeable().isEmpty()
+                        ? List.of(CraftTexts.NOTHING_MAKES_IT.with(shortfall, name)) : unmakeableLines(plan);
+                for (final Text line : raw) {
+                    if (lines.size() < CraftPlanPayload.MAX_COVER && !lines.contains(line)) {
+                        lines.add(line);
+                    }
                 }
             }
         }
         return new Cover(List.copyOf(lines), covered, ticks);
     }
 
-    /** One line per thing a recursive plan found nothing to make (or not enough of in stock). */
+    /**
+     * One line per raw thing a recursive plan falls short of and nothing on the network makes; where the shortage is
+     * not of such a thing (a loop of patterns), one per thing it falls short of.
+     */
     private static List<Text> unmakeableLines(final CraftPlanner.Plan plan) {
         final List<Text> lines = new ArrayList<>();
-        for (final var missing : plan.missing().entrySet()) {
+        final var shortOf = plan.unmakeable().isEmpty() ? plan.missing() : plan.unmakeable();
+        for (final var missing : shortOf.entrySet()) {
             if (lines.size() >= CraftPlanPayload.MAX_COVER) {
                 break;
             }

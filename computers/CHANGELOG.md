@@ -934,6 +934,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   A pattern file written before keeps every input lasting one run.
 
 ### Changed
+- Autocrafting: where several recipes make the same thing, a craft makes it the first way that closes, so
+  zinc ingots smelted from zinc dust ground from zinc ingots no longer stop a plan that has the raw zinc; and the craft
+  dialog opens on the first recipe that can deliver, not on one that loops back on itself.
+- Autocrafting: a craft asked of a machine whose inputs are short builds the whole tree, or, where the tree
+  does not close, fails saying what raw thing the network is short of and nothing on it makes, instead of running the
+  machine's step alone on what is in stock and timing out. With a partial craft allowed it makes what it can.
+- Network Interactor: what makes an item and what it is used in take three lines each in the details
+  panel, a last line saying how many more, so the Request and Craft buttons below them stay in one place.
 - The manual's page on building a chain machine says how many upgrades a machine takes by its era:
   two in a Vintage machine, three in a Legacy or Transition one, four from the Standard on.
 - Autocrafting on many machines: a craft shares a machine step among the machines whose Crafting
@@ -1104,6 +1112,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- Craft dialog: a short ingredient is named by the raw thing behind it that nothing makes, not as
+  "Missing 2 Polysilicon Rod - nothing on the network makes it" when a pattern makes polysilicon and the chlorine is
+  what is short.
+- Craft dialog: every recipe of an item has its card, one the dialog cannot describe too, so the card
+  picked is the recipe that runs; one left out had moved every card after it onto the next recipe. A recipe picked
+  there is the only way the craft makes the result itself, as the dialog showed it.
+- Network Interactor: a click on an item puts the keyboard down from the search, so C opens its craft
+  instead of typing into the search.
 - Autocrafting: a machine's job no longer fails while the machine is still working a step longer than the
   pattern's timeout, as a wafer step of ten or twenty seconds did against the Pattern Studio's 200 ticks; the job
   waits as long as the machine says it is working.

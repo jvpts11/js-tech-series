@@ -303,10 +303,8 @@ final class MainframeCrafts {
      *
      * <p>If a machine recipe on the network produces {@code key} directly, that recipe runs, as a processing
      * run or as a pipeline; otherwise a recursive bench-and-machine craft is planned. Where a machine recipe's
-     * own inputs are not all in stock and other patterns can make them, the whole tree runs as one craft with
-     * the machine as a step; where nothing can make a missing input, the bare machine run delivers what the
-     * network does hold. {@code partial} applies only to the recursive fallback, since a machine run always
-     * delivers what it can.
+     * own inputs are not all in stock, the whole tree runs as one craft with the machine as a step; a tree that does
+     * not close fails, saying what raw thing it is short of, or with {@code partial} makes what it can.
      *
      * <p>{@code preferMultiStage} decides which wins where a thing can be made BOTH by a pipeline and by
      * composing the individual step patterns: true runs the pipeline; false lets the recursive planner build
@@ -321,7 +319,7 @@ final class MainframeCrafts {
                 continue;
             }
             if (recipe.proc().isPresent()) {
-                final INetworkOperation op = runProcessing(recipe.proc().get(), key, demand, label);
+                final INetworkOperation op = runProcessing(recipe.proc().get(), key, demand, partial, label, false);
                 settle(op, onSettle);
                 return op;
             }
@@ -359,52 +357,62 @@ final class MainframeCrafts {
         final NetworkRecipe chosen = recipes.get(recipe);
         final INetworkOperation op;
         if (chosen.proc().isPresent()) {
-            op = runProcessing(chosen.proc().get(), key, demand, label);
+            op = runProcessing(chosen.proc().get(), key, demand, partial, label, true);
         } else if (chosen.multi().isPresent()) {
             op = pipeline(chosen.multi().get(), demand, label);
         } else {
-            op = planAsync(key, demand, partial, label, chosen.bench().orElse(null));
+            op = planAsync(key, demand, partial, label, chosen.bench().orElse(null), null);
         }
         settle(op, onSettle);
         return op;
     }
 
-    /**
-     * Plans a recursive craft on a virtual thread, with {@code preferred} ahead of every other bench pattern.
-     *
-     * <p>The request shows at once as a pending craft; when the plan lands, the real craft takes over with the
-     * level and the settle callback given meanwhile. Preferring one pattern is how a result that several
-     * patterns make is built by the one the player picked, since the planner takes the first that makes a
-     * thing. Nothing comes back only where nothing on the network makes it at all, or no craft can run here.
-     */
+    /** Plans a recursive craft on a virtual thread, {@code bench} the only way the result itself is made when given. */
     @Nullable
     PendingCraftOperation planAsync(final StorageKey key, final long demand, final boolean partial,
-                                    final String label, @Nullable final CraftingPattern preferred) {
+                                    final String label, @Nullable final CraftingPattern bench) {
+        return planAsync(key, demand, partial, label, bench, null);
+    }
+
+    /**
+     * Plans a recursive craft on a virtual thread. Where the player picked how the result itself is made, {@code
+     * bench} or {@code machine}, that is the only way the plan makes it; everything under it, and the result where
+     * nobody picked, is made the first way that covers it.
+     *
+     * <p>The request shows at once as a pending craft; when the plan lands, the real craft takes over with the
+     * level and the settle callback given meanwhile. Nothing comes back only where nothing on the network makes it
+     * at all, or no craft can run here.
+     */
+    @Nullable
+    private PendingCraftOperation planAsync(final StorageKey key, final long demand, final boolean partial,
+                                            final String label, @Nullable final CraftingPattern bench,
+                                            @Nullable final ProcessingPattern machine) {
         if (!canCraft(demand) || !anythingMakes(key)) {
             return null;
         }
+        final List<ProcessingPattern> machines = CraftPlanning.machinesFor(key, bench, machine, processingPatterns());
         final Map<StorageKey, Long> stock = mainframe.networkIndex().snapshot();
-        final List<CraftingPattern> patterns = AnyTagResolver.resolveAll(patternsPreferring(preferred), stock);
+        final List<CraftingPattern> patterns = AnyTagResolver.resolveAll(
+                CraftPlanning.benchesFor(key, bench, machine, patterns()), stock);
         final PendingCraftOperation pending = new PendingCraftOperation(mainframe, key, demand, partial, label);
         mainframe.takeOn(pending);
-        pending.start(mainframe.dispatch(), patterns, processingPatterns(), stock);
+        pending.start(mainframe.dispatch(), patterns, machines, stock);
         return pending;
     }
 
     /**
-     * Runs a processing recipe for {@code demand} of {@code key}: the whole tree as one craft when an input is
-     * short and other patterns make it (all-or-nothing), else the bare machine run with what the network holds.
+     * Runs a processing recipe for {@code demand} of {@code key}: the bare machine run where the network stocks every
+     * input the whole demand takes, else the whole tree as one craft, the machine making the result where the player
+     * {@code picked} it. A tree that does not close is never cut down to a run of its last step that starves for what
+     * nothing makes: it fails saying what raw thing it is short of, or with {@code partial} makes what it can.
      */
     @Nullable
-    private INetworkOperation runProcessing(final ProcessingPattern machine, final StorageKey key,
-                                            final long demand, final String label) {
-        if (!inputsInStock(machine, demand)) {
-            final NetworkCraftOperation planned = craft(key, demand, false, label, null);
-            if (planned != null) {
-                return planned;
-            }
+    private INetworkOperation runProcessing(final ProcessingPattern machine, final StorageKey key, final long demand,
+                                            final boolean partial, final String label, final boolean picked) {
+        if (inputsInStock(machine, demand)) {
+            return machineRun(machine, demand, label, null);
         }
-        return machineRun(machine, demand, label, null);
+        return planAsync(key, demand, partial, label, null, picked ? machine : null);
     }
 
     /** Whether the network currently stocks every input a processing run producing {@code quantity} would use. */
