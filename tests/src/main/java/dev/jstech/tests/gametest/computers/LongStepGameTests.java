@@ -9,7 +9,6 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
-import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.WaferWork;
 import dev.jstech.computers.crafting.CraftingFloor;
@@ -105,7 +104,7 @@ public final class LongStepGameTests {
 
     /* A Vintage memory wafer on its first layer, going to {@code step}. */
     private static ItemStack wafer(final WaferWork.Step step) {
-        final ItemStack wafer = new ItemStack(ChainChips.waferInProcess(ChainParts.ERAS.getFirst()).get());
+        final ItemStack wafer = new ItemStack(WaferWork.item(ChainParts.ERAS.getFirst(), step));
         wafer.set(ComputingComponents.WAFER_WORK.get(), new WaferWork(
                 BuiltInRegistries.ITEM.getKey(ChainParts.MEMORY_CHIPS.getFirst().get()), 1,
                 2, step));

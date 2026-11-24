@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "jsc:item/wafer_in_process_standard"
+    "layer0": "jsc:item/doped_wafer_standard"
   }
 }

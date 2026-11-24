@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "jsc:item/wafer_in_process_transition"
+    "layer0": "jsc:item/exposed_wafer_transition"
   }
 }

@@ -1322,7 +1322,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                     : isRunningStep(i) || (!step.isMachine() && !waiting && machineRuns.isEmpty() && runsDone[i] > 0)
                         ? OperationRecord.SubRow.SUB_STREAMING
                     : OperationRecord.SubRow.SUB_PENDING;
-            // Each step by its recipe's name: the steps of a chip's route all make the same wafer in process.
+            // Each step by its recipe's name: the layers of a chip's route make the same wafers over again.
             subs.add(new OperationRecord.SubRow(step.name(), step.runs(), runsDone[i], state));
         }
         return subs;

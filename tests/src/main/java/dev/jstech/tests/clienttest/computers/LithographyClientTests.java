@@ -19,6 +19,7 @@ import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.chain.machine.MaskWriting;
 import dev.jstech.computers.chain.machine.WaferMachineBlockEntity;
 import dev.jstech.computers.chain.machine.WaferPages;
+import dev.jstech.computers.chain.machine.WaferWork;
 import dev.jstech.computers.client.CommandPromptScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
@@ -186,8 +187,8 @@ public final class LithographyClientTests {
     /**
      * A wafer's steps in the viewer (computers/docs/design/survival.md, "How a chip is made"): each step has its pages,
      * a page a mask for lithography, an era for etching and implanting, a metal for deposition and a chip for
-     * packaging; U on a wafer in process shows the steps it goes through; and each step's page is its machine's own
-     * face at work, the step's items in the face's slots.
+     * packaging; U on an etched wafer shows where it goes, R the etching that makes it; and each step's page is its
+     * machine's face at work, the step's items in the face's slots.
      */
     @ClientTest(timeoutTicks = 1200)
     public static void jei_waferStepsShowEachStepOnItsMachinesFace(final ClientTestContext ctx) {
@@ -195,7 +196,7 @@ public final class LithographyClientTests {
             ctx.then(0, () -> { });
             return;
         }
-        final ItemStack wafer = new ItemStack(ChainChips.waferInProcess(HardwareEra.LEGACY).get());
+        final ItemStack wafer = new ItemStack(WaferWork.item(HardwareEra.LEGACY, WaferWork.Step.IMPLANT));
         ctx.then(SETTLE, () -> {
             final Map<WaferPages.Step, Long> counts = new EnumMap<>(WaferPages.Step.class);
             for (final WaferPages.Step step : WaferPages.Step.values()) {
@@ -207,9 +208,14 @@ public final class LithographyClientTests {
                     && counts.get(WaferPages.Step.LITHOGRAPHY) >= MASKS
                     && counts.get(WaferPages.Step.PACKAGING) >= MASKS, "each step has its pages: " + counts);
         })
-                .then(SETTLE, () -> ctx.assertTrue(JscJeiPlugin.showUses(wafer), "U on a wafer in process"))
+                .then(SETTLE, () -> ctx.assertTrue(JscJeiPlugin.showUses(wafer), "U on an etched wafer"))
                 .thenWaitUntil(JscJeiPlugin::viewerScreenOpen, SCREEN_WAIT, "the viewer's recipe screen")
                 .thenScreenshot(SETTLE * 4, "jei-wafer-uses")
+                .then(SETTLE, () -> ctx.mc().setScreen(null))
+                .then(SETTLE, () -> ctx.assertTrue(JscJeiPlugin.showRecipesFor(wafer),
+                        "R on an etched wafer, the etching that makes it"))
+                .thenWaitUntil(JscJeiPlugin::viewerScreenOpen, SCREEN_WAIT, "the viewer's recipe screen")
+                .thenScreenshot(SETTLE * 4, "jei-wafer-recipes")
                 .then(SETTLE, () -> ctx.mc().setScreen(null));
         for (final WaferPages.Step step : WaferPages.Step.values()) {
             ctx.then(SETTLE, () -> ctx.assertTrue(JscJeiPlugin.showWaferStep(step), "the viewer opens on " + step))

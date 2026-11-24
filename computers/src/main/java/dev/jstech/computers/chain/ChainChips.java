@@ -25,7 +25,8 @@ import net.minecraft.world.item.Item;
  * era the catalogue's parts are built on, Quince's own processors and the Phi's MIC among them, Blockwright's hashing
  * die and the portables' four families. Beside them, the Vintage's Layouts, the chip drawings its station writes a mask
  * from by photo-reduction; the mask blank every mask is written on; the masks and the finished wafers of the light,
- * the laser diodes' and the LEDs'; and each era's wafer in process, which goes from machine to machine layer by layer.
+ * the laser diodes' and the LEDs'; and each era's wafers between their steps, exposed, etched, doped and metallised,
+ * as they go from machine to machine layer by layer.
  * The memory and controller chips and their masks are each era's own ({@link ChainParts}).
  */
 public final class ChainChips {
@@ -171,8 +172,15 @@ public final class ChainChips {
     public static final ItemEntry<Item> FINISHED_GALLIUM_NITRIDE_WAFER = part("finished_gallium_nitride_wafer",
             HardwareEra.STANDARD).named("Finished Gallium Nitride Wafer").register();
 
-    /** Each era's wafer in process, from the oldest. */
-    public static final List<ItemEntry<Item>> WAFERS_IN_PROCESS = inProcess();
+    /*
+     * Each era's wafer between two of its steps, from the oldest, named by the step it comes out of: exposed by the
+     * Lithography Station, etched by the Plasma Etcher, doped by the Ion Implanter, metallised by the Deposition
+     * Chamber, from which it goes back to the station for its next layer.
+     */
+    public static final List<ItemEntry<Item>> EXPOSED_WAFERS = wafers("exposed", "Exposed");
+    public static final List<ItemEntry<Item>> ETCHED_WAFERS = wafers("etched", "Etched");
+    public static final List<ItemEntry<Item>> DOPED_WAFERS = wafers("doped", "Doped");
+    public static final List<ItemEntry<Item>> METALLISED_WAFERS = wafers("metallised", "Metallised");
 
     private ChainChips() {
     }
@@ -196,16 +204,11 @@ public final class ChainChips {
         return all().stream().filter(die -> die.chip().get() == item || die.mask().get() == item).findFirst();
     }
 
-    /** The wafer in process of {@code era}. */
-    public static ItemEntry<Item> waferInProcess(final Era era) {
-        return WAFERS_IN_PROCESS.get(ChainParts.ERAS.indexOf(era));
-    }
-
-    private static List<ItemEntry<Item>> inProcess() {
+    private static List<ItemEntry<Item>> wafers(final String step, final String english) {
         final List<ItemEntry<Item>> out = new ArrayList<>();
         for (final Era era : ChainParts.ERAS) {
-            out.add(part("wafer_in_process_" + era.path(), era)
-                    .named("Wafer in Process (" + englishName(era) + ")").register());
+            out.add(part(step + "_wafer_" + era.path(), era)
+                    .named(english + " Wafer (" + englishName(era) + ")").register());
         }
         return List.copyOf(out);
     }

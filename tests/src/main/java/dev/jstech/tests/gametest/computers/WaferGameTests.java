@@ -14,7 +14,6 @@ import static dev.jstech.tests.testkit.computers.ChainMachineSite.machineAt;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.made;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.place;
 
-import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
@@ -92,12 +91,12 @@ public final class WaferGameTests {
         });
         helper.succeedWhen(() -> {
             final ChainMachineBlockEntity machine = machineAt(helper, terminal);
-            final WaferWork work = made(machine, ChainChips.waferInProcess(ChainParts.ERAS.getFirst()).get())
+            final WaferWork work = made(machine, WaferWork.item(ChainParts.ERAS.getFirst(), WaferWork.Step.ETCH))
                     .get(ComputingComponents.WAFER_WORK.get());
             helper.assertTrue(work != null && work.layer() == 1 && work.layers() == VINTAGE_LAYERS
                     && work.next() == WaferWork.Step.ETCH
                     && work.chip().equals(id(ChainParts.MEMORY_CHIPS.getFirst().get())),
-                    "a wafer in process on its first layer of a memory chip, for the etcher");
+                    "an exposed wafer on its first layer of a memory chip, for the etcher");
             helper.assertTrue(machine.getInventory().getStackInSlot(1).is(ChainParts.MEMORY_MASKS.getFirst().get()),
                     "the mask stays in its slot, never used up");
         });
@@ -107,18 +106,18 @@ public final class WaferGameTests {
     public static void etcher_etchesAnAdvancedLayerWithChlorineAndArgon(final GameTestHelper helper) {
         final BlockPos terminal = formed(helper, machine("plasma_etcher"));
         final Item chip = ChainParts.MEMORY_CHIPS.get(ChainParts.ERAS.indexOf(HardwareEra.ADVANCED)).get();
-        final Item inProcess = ChainChips.waferInProcess(HardwareEra.ADVANCED).get();
+        final Item etched = WaferWork.item(HardwareEra.ADVANCED, WaferWork.Step.IMPLANT);
         helper.runAfterDelay(20, () -> {
             final ChainMachineBlockEntity etcher = machineAt(helper, terminal);
-            etcher.getInventory().insertItem(0, advanced(inProcess, chip, 1, WaferWork.Step.ETCH), false);
+            etcher.getInventory().insertItem(0, advanced(chip, 1, WaferWork.Step.ETCH), false);
             final List<MatterTank> gas = etcher.matter().inputs(MatterState.GAS);
             gas.get(0).set(new MatterStack(Elements.of(Element.CHLORINE), 1_000));
             gas.get(1).set(new MatterStack(Elements.of(Element.ARGON), 100));
         });
         helper.succeedWhen(() -> {
-            final WaferWork work = made(machineAt(helper, terminal), inProcess).get(ComputingComponents.WAFER_WORK.get());
+            final WaferWork work = made(machineAt(helper, terminal), etched).get(ComputingComponents.WAFER_WORK.get());
             helper.assertTrue(work != null && work.next() == WaferWork.Step.IMPLANT,
-                    "the Advanced layer etched by its chlorine plasma goes on to the implanter");
+                    "the Advanced layer etched by its chlorine plasma goes on to the implanter as an etched wafer");
         });
     }
 
@@ -128,17 +127,17 @@ public final class WaferGameTests {
         final ChainMachine machine = machine("plasma_etcher");
         final BlockPos terminal = formed(helper, machine);
         final Item chip = ChainParts.MEMORY_CHIPS.get(ChainParts.ERAS.indexOf(HardwareEra.ADVANCED)).get();
-        final Item inProcess = ChainChips.waferInProcess(HardwareEra.ADVANCED).get();
+        final Item etched = WaferWork.item(HardwareEra.ADVANCED, WaferWork.Step.IMPLANT);
         helper.runAfterDelay(20, () -> {
             pour(helper, machine, SeriesChemicals.HYDROFLUORIC_ACID);
             final ChainMachineBlockEntity etcher = machineAt(helper, terminal);
-            etcher.getInventory().insertItem(0, advanced(inProcess, chip, 1, WaferWork.Step.ETCH), false);
+            etcher.getInventory().insertItem(0, advanced(chip, 1, WaferWork.Step.ETCH), false);
             final List<MatterTank> gas = etcher.matter().inputs(MatterState.GAS);
             gas.get(0).set(new MatterStack(Elements.of(Element.CHLORINE), 1_000));
             gas.get(1).set(new MatterStack(Elements.of(Element.ARGON), 100));
         });
         helper.succeedWhen(() -> {
-            final WaferWork work = made(machineAt(helper, terminal), inProcess).get(ComputingComponents.WAFER_WORK.get());
+            final WaferWork work = made(machineAt(helper, terminal), etched).get(ComputingComponents.WAFER_WORK.get());
             helper.assertTrue(work != null && work.next() == WaferWork.Step.IMPLANT,
                     "the Advanced layer is etched with the old acid still in the tank");
         });
@@ -242,10 +241,10 @@ public final class WaferGameTests {
         });
         helper.succeedWhen(() -> {
             final WaferWork work = made(machineAt(helper, terminal),
-                    ChainChips.waferInProcess(ChainParts.ERAS.getFirst()).get()).get(ComputingComponents.WAFER_WORK
-                    .get());
+                    WaferWork.item(ChainParts.ERAS.getFirst(), WaferWork.Step.LITHOGRAPHY))
+                    .get(ComputingComponents.WAFER_WORK.get());
             helper.assertTrue(work != null && work.layer() == 2 && work.next() == WaferWork.Step.LITHOGRAPHY,
-                    "the wafer goes back to the station for its second layer");
+                    "the wafer goes back to the station for its second layer, metallised");
         });
     }
 
@@ -295,7 +294,7 @@ public final class WaferGameTests {
         });
         helper.runAfterDelay(160, () -> {
             helper.assertTrue(!holds(machineAt(helper, terminal),
-                    ChainChips.waferInProcess(ChainParts.ERAS.getFirst()).get(), 1),
+                    WaferWork.item(ChainParts.ERAS.getFirst(), WaferWork.Step.ETCH), 1),
                     "no wafer is started with no mask, a stray block in the mask's slot");
             helper.succeed();
         });
@@ -310,19 +309,17 @@ public final class WaferGameTests {
     public static void planner_followsAnAdvancedChipBackToItsSiliconWafer(final GameTestHelper helper) {
         final int era = ChainParts.ERAS.indexOf(HardwareEra.ADVANCED);
         final Item chip = ChainParts.MEMORY_CHIPS.get(era).get();
-        final Item inProcess = ChainChips.waferInProcess(HardwareEra.ADVANCED).get();
         final List<ItemStack> states = new ArrayList<>();
         states.add(new ItemStack(MaterialUses.item(Elements.of(Element.SILICON), Forms.WAFER).get()));
         for (int layer = 1; layer <= ADVANCED_LAYERS; layer++) {
             if (layer > 1) {
-                states.add(advanced(inProcess, chip, layer, WaferWork.Step.LITHOGRAPHY));
+                states.add(advanced(chip, layer, WaferWork.Step.LITHOGRAPHY));
             }
-            states.add(advanced(inProcess, chip, layer, WaferWork.Step.ETCH));
-            states.add(advanced(inProcess, chip, layer, WaferWork.Step.IMPLANT));
-            states.add(advanced(inProcess, chip, layer, WaferWork.Step.DEPOSITION));
+            states.add(advanced(chip, layer, WaferWork.Step.ETCH));
+            states.add(advanced(chip, layer, WaferWork.Step.IMPLANT));
+            states.add(advanced(chip, layer, WaferWork.Step.DEPOSITION));
         }
-        states.add(advanced(ChainParts.FINISHED_WAFERS.get(era).get(), chip, ADVANCED_LAYERS,
-                WaferWork.Step.PACKAGING));
+        states.add(advanced(chip, ADVANCED_LAYERS, WaferWork.Step.PACKAGING));
         final List<ProcessingPattern> route = new ArrayList<>();
         for (int i = 0; i + 1 < states.size(); i++) {
             route.add(step(StorageKey.of(states.get(i)), StorageKey.of(states.get(i + 1)), 1));
@@ -342,9 +339,9 @@ public final class WaferGameTests {
                 List.of(new ProcessingPattern.ProcessingOutput(to, amount, ProcessingPattern.FULL_CHANCE)), 200);
     }
 
-    /* An Advanced {@code chip}'s wafer as {@code item} on {@code layer}, going to {@code step}. */
-    private static ItemStack advanced(final Item item, final Item chip, final int layer, final WaferWork.Step step) {
-        final ItemStack wafer = new ItemStack(item);
+    /* An Advanced {@code chip}'s wafer on {@code layer}, going to {@code step}, as the item it is on its way there. */
+    private static ItemStack advanced(final Item chip, final int layer, final WaferWork.Step step) {
+        final ItemStack wafer = new ItemStack(WaferWork.item(HardwareEra.ADVANCED, step));
         wafer.set(ComputingComponents.WAFER_WORK.get(), new WaferWork(id(chip), layer, ADVANCED_LAYERS, step));
         return wafer;
     }
@@ -358,19 +355,24 @@ public final class WaferGameTests {
         return out.toString();
     }
 
-    /* A Vintage memory chip's wafer in process on {@code layer}, for {@code step}. */
+    /* A Vintage memory chip's wafer on {@code layer}, for {@code step}, as the item it is on its way there. */
     private static ItemStack wafer(final int layer, final WaferWork.Step step) {
-        final ItemStack wafer = new ItemStack(ChainChips.waferInProcess(ChainParts.ERAS.getFirst()).get());
+        final ItemStack wafer = new ItemStack(WaferWork.item(ChainParts.ERAS.getFirst(), step));
         wafer.set(ComputingComponents.WAFER_WORK.get(), new WaferWork(id(ChainParts.MEMORY_CHIPS.getFirst().get()),
                 layer, VINTAGE_LAYERS, step));
         return wafer;
     }
 
-    /* Where the wafer the machine made stands, or none before it made one. */
+    /* Where the wafer the machine made stands, or none before it made one, by the item it made and what it says. */
     private static WaferWork.Step next(final GameTestHelper helper, final BlockPos terminal) {
-        final WaferWork work = made(machineAt(helper, terminal), ChainChips.waferInProcess(ChainParts.ERAS.getFirst())
-                .get()).get(ComputingComponents.WAFER_WORK.get());
-        return work == null ? null : work.next();
+        for (final WaferWork.Step step : WaferWork.Step.values()) {
+            final WaferWork work = made(machineAt(helper, terminal), WaferWork.item(ChainParts.ERAS.getFirst(), step))
+                    .get(ComputingComponents.WAFER_WORK.get());
+            if (work != null) {
+                return work.next() == step ? step : null;
+            }
+        }
+        return null;
     }
 
     /* A bucket of {@code liquid} poured in through the machine's liquid inlet. */

@@ -96,7 +96,7 @@ final class WaferSteps {
         return LAYERS[ChainParts.ERAS.indexOf(era)];
     }
 
-    /* A new wafer and its mask make a wafer in process on its first layer; one back from its deposition, the next. */
+    /* A new wafer and its mask make an exposed wafer on its first layer; a metallised one back, on its next. */
     private static Optional<Step> lithography(final ChainMachine machine, final List<ChainMachines.Worked> worked,
                                               final ProcessingInput input, final int layersLeft) {
         final Needs needs = new Needs(input);
@@ -132,7 +132,7 @@ final class WaferSteps {
             }
             left--;
         }
-        final ItemStack out = new ItemStack(ChainChips.waferInProcess(era).get());
+        final ItemStack out = new ItemStack(WaferWork.item(era, WaferWork.Step.ETCH));
         out.set(ComputingComponents.WAFER_WORK.get(), planned.work().to(WaferWork.Step.ETCH));
         final int after = left;
         return needs.make(out, machine, serving).map(work -> new Step(work, era, after));
@@ -147,8 +147,8 @@ final class WaferSteps {
             return new Planned(mask.era(), new WaferWork(mask.chip(), 1, layers(mask.era()),
                     WaferWork.Step.LITHOGRAPHY));
         }
-        final Item inProcess = ChainChips.waferInProcess(mask.era()).get();
-        final int back = needs.find(stack -> stack.is(inProcess) && at(stack, WaferWork.Step.LITHOGRAPHY)
+        final Item metallised = WaferWork.item(mask.era(), WaferWork.Step.LITHOGRAPHY);
+        final int back = needs.find(stack -> stack.is(metallised) && at(stack, WaferWork.Step.LITHOGRAPHY)
                 && work(stack).chip().equals(mask.chip()));
         if (back < 0) {
             return null;
@@ -248,7 +248,7 @@ final class WaferSteps {
                     : ChainParts.FINISHED_WAFERS.get(ChainParts.ERAS.indexOf(era)).get());
             out.set(ComputingComponents.WAFER_WORK.get(), held.work().to(WaferWork.Step.PACKAGING));
         } else {
-            out = new ItemStack(ChainChips.waferInProcess(era).get());
+            out = new ItemStack(WaferWork.item(era, WaferWork.Step.LITHOGRAPHY));
             final WaferWork done = held.work();
             out.set(ComputingComponents.WAFER_WORK.get(), new WaferWork(done.chip(), done.layer() + 1, done.layers(),
                     WaferWork.Step.LITHOGRAPHY));
@@ -357,7 +357,7 @@ final class WaferSteps {
     private record Held(Era era, WaferWork work, boolean light) {
 
         ItemStack next(final WaferWork.Step step) {
-            final ItemStack out = new ItemStack(ChainChips.waferInProcess(era).get());
+            final ItemStack out = new ItemStack(WaferWork.item(era, step));
             out.set(ComputingComponents.WAFER_WORK.get(), work.to(step));
             return out;
         }
@@ -528,7 +528,7 @@ final class WaferSteps {
             item(find(wanted), count);
         }
 
-        /* The wafer waiting for {@code step}, of any era: a wafer in process, or a finished one for its packaging. */
+        /* The wafer waiting for {@code step}, of any era: one between its steps, or a finished one to package. */
         @Nullable Held wafer(final WaferWork.Step step) {
             final int slot = find(stack -> at(stack, step));
             if (slot < 0) {
@@ -590,12 +590,13 @@ final class WaferSteps {
             return true;
         }
 
-        /* The era of a wafer in process or a finished wafer, by its item. */
+        /* The era of a wafer between its steps or a finished wafer, by its item. */
         private static Era eraOf(final Item item) {
-            for (int i = 0; i < ChainParts.ERAS.size(); i++) {
-                if (ChainChips.WAFERS_IN_PROCESS.get(i).get() == item
-                        || ChainParts.FINISHED_WAFERS.get(i).get() == item) {
-                    return ChainParts.ERAS.get(i);
+            for (final Era era : ChainParts.ERAS) {
+                for (final WaferWork.Step step : WaferWork.Step.values()) {
+                    if (WaferWork.item(era, step) == item) {
+                        return era;
+                    }
                 }
             }
             throw new IllegalArgumentException("not a wafer of the chain: " + item);

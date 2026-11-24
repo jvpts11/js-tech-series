@@ -244,7 +244,7 @@ public final class WaferPages {
         return machine.layout().inputTanks() + machine.layout().outputTanks() + k;
     }
 
-    /* A wafer in process of {@code era}, a memory chip's, as a page about any of its era's shows one. */
+    /* A wafer of {@code era} going to {@code step}, a memory chip's, as a page about any of its era's shows one. */
     private static ItemStack any(final Era era, final WaferWork.Step step) {
         final int index = ChainParts.ERAS.indexOf(era);
         return wafer(era, WaferSteps.idOf(ChainParts.MEMORY_CHIPS.get(index).get()), 1, WaferSteps.layers(era), step);
@@ -252,7 +252,7 @@ public final class WaferPages {
 
     private static ItemStack wafer(final Era era, final ResourceLocation chip, final int layer, final int layers,
                                    final WaferWork.Step step) {
-        final ItemStack out = new ItemStack(ChainChips.waferInProcess(era).get());
+        final ItemStack out = new ItemStack(WaferWork.item(era, step));
         out.set(ComputingComponents.WAFER_WORK.get(), new WaferWork(chip, layer, layers, step));
         return out;
     }

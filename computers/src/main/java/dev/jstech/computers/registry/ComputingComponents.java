@@ -254,7 +254,7 @@ public final class ComputingComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Unit>>
             NEVER_STARTED = saved("never_started", Codec.unit(Unit.INSTANCE), StreamCodec.unit(Unit.INSTANCE));
 
-    /* Where a wafer in process or a finished wafer stands on its way to chips: its chip, layer and next machine. */
+    /* Where a wafer between its steps or a finished wafer stands on its way to chips: chip, layer and next machine. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<WaferWork>>
             WAFER_WORK = saved("wafer_work", WaferWork.CODEC, WaferWork.STREAM_CODEC);
 

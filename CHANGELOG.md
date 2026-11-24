@@ -4387,6 +4387,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) Wafers: a wafer between its steps is an item of each step and era, no longer one Wafer in Process for
+  all of them: an Exposed Wafer out of the Lithography Station, an Etched Wafer out of the Plasma Etcher, a Doped Wafer
+  out of the Ion Implanter and a Metallised Wafer out of the Deposition Chamber, back to the station for its next
+  layer; the last layer comes out a Finished Wafer as before. Each has its own look, the chip and the layer stay in its
+  tooltip, and the recipe viewer finds where each comes from and where it goes. The wafers of light go through the
+  same items of their era. A Wafer in Process in a world before is gone.
 - (Computers) Crafting Interfaces: an interface against one of the series' machines, its own or its formed one's
   port, runs one recipe at a time unless it is set otherwise, as one feeding through routers does: the machine's one
   inlet took two recipes' inputs into the same slots, and a recipe of exact inputs, as the Packaging Line's are, never
