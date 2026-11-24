@@ -180,7 +180,7 @@ public final class CraftingViews {
             tone = InterfaceView.DIM;
         }
         return new InterfaceView(part.name(), shortId(part.id()), skinOf(level, cable), floor.drivenBy(site) != null,
-                part.capacity(), patterns, routers, mode, CraftingDispatch.exclusive(part, reach),
+                part.capacity(), patterns, routers, mode, CraftingDispatch.exclusive(level, part, reach),
                 feedsText(level, reach, routers), receivingText(level, floor, site), part.paused(), part.maxJobs(),
                 warnings, now, tone, part.log().entries(), part.marks());
     }

@@ -10,10 +10,12 @@ package dev.jstech.computers.crafting;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.CraftingRouterPart;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.crafting.InterfaceNames;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.StorageKey;
@@ -21,8 +23,7 @@ import dev.jstech.computers.storage.WatchedDataPort;
 import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.machine.MachineStatus;
-import dev.jstech.core.machine.Machines;
-import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -514,13 +515,33 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
      * counts for it.
      */
     private boolean machineWorking() {
-        final BlockPos faced = floor.reach(site).machine();
-        if (faced == null) {
-            return false;
+        return CraftingDispatch.machineAt(level, floor.reach(site).machine())
+                .map(machine -> machine.status() == MachineStatus.WORKING).orElse(false);
+    }
+
+    /*
+     * A job that gives up takes back out of its machine what it fed and no recipe used, so the next job finds the
+     * machine as it would have found it, and an exact recipe is never stuck behind a lot left half fed. Not while the
+     * machine works a step, whose inputs are that step's; not while another job runs on the same interface, whose
+     * inputs may be the same things; and an input meant to stay in the machine, one that lasts many runs, stays.
+     */
+    private void takeBackLeftovers() {
+        if (floor == null || site == null || interfaceId == null || machineWorking()
+                || !(CraftingDispatch.machineAt(level, floor.reach(site).machine()).orElse(null)
+                        instanceof ProcessingMachineBlockEntity machine)) {
+            return;
         }
-        final BlockPos at = level.getBlockEntity(faced) instanceof MultiblockPartBlockEntity port
-                && port.terminalPos() != null ? port.terminalPos() : faced;
-        return Machines.at(level, at).map(machine -> machine.status() == MachineStatus.WORKING).orElse(false);
+        final MainframeBlockEntity mainframe = NetworkLookup.resolveMainframe(level, network);
+        if (mainframe != null && mainframe.craftJobsOn(interfaceId).stream().anyMatch(other -> other != this)) {
+            return;
+        }
+        final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
+        for (int i = 0; i < inputs.size(); i++) {
+            final ProcessingPattern.ProcessingInput in = inputs.get(i);
+            if (!in.kept() && delivered[i] > 0) {
+                delivered[i] -= MachineLeftovers.takeBack(machine, in.key(), delivered[i], io);
+            }
+        }
     }
 
     /*
@@ -647,6 +668,9 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         }
         done = true;
         waiting = false;
+        if (status != OperationRecord.STATUS_COMPLETED && fedAny()) {
+            takeBackLeftovers();
+        }
         final CraftingInterfacePart part = site == null ? null : site.part(level, CraftingInterfacePart.class);
         if (part != null) {
             final byte kind = switch (status) {

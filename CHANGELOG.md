@@ -4387,6 +4387,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) Crafting Interfaces: an interface against one of the series' machines, its own or its formed one's
+  port, runs one recipe at a time unless it is set otherwise, as one feeding through routers does: the machine's one
+  inlet took two recipes' inputs into the same slots, and a recipe of exact inputs, as the Packaging Line's are, never
+  ran.
 - (Computers) Autocrafting: where several recipes make the same thing, a craft makes it the first way that closes, so
   zinc ingots smelted from zinc dust ground from zinc ingots no longer stop a plan that has the raw zinc; and the craft
   dialog opens on the first recipe that can deliver, not on one that loops back on itself.
@@ -4791,6 +4795,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) Autocrafting: a machine job that gives up or is cancelled takes back to the network what it fed the
+  machine and no recipe used, items, liquids and gases, so the next job finds the machine as it would have found it; a
+  failed lead-acid battery left its lead and PVC in the Electrolytic Cell, and no other recipe of exact inputs ran
+  there after it. Not while the machine still works a step, nor while another job runs on the same interface, and an
+  input meant to stay in the machine, one that lasts many runs, stays.
 - (Computers) Craft dialog: a short ingredient is named by the raw thing behind it that nothing makes, not as
   "Missing 2 Polysilicon Rod - nothing on the network makes it" when a pattern makes polysilicon and the chlorine is
   what is short.

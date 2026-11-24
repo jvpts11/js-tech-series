@@ -384,7 +384,7 @@ public final class CraftManagerPayloads {
             wirePlaces.add(new CraftManagerStatePayload.WirePlace(place.isCard(), placeTitle(names, place),
                     place.used(), place.capacity(), drives, entries));
             if (!place.isCard() && floor != null) {
-                interfaces.add(interfaceRow(names, p, place, floor, mainframe));
+                interfaces.add(interfaceRow(level, names, p, place, floor, mainframe));
             }
         }
         final int waiting = floor == null ? 0 : floor.interfaces().size() - floor.driven().size();
@@ -394,8 +394,8 @@ public final class CraftManagerPayloads {
 
     /* One interface as the Interfaces tab lists it: its machine, how full it is, its mode and what it is doing. */
     private static CraftManagerStatePayload.WireInterface interfaceRow(
-            final InterfaceNames names, final int index, final CraftPlaces.Place place, final CraftingFloor floor,
-            @Nullable final MainframeBlockEntity mainframe) {
+            final ServerLevel level, final InterfaceNames names, final int index, final CraftPlaces.Place place,
+            final CraftingFloor floor, @Nullable final MainframeBlockEntity mainframe) {
         final CraftingInterfacePart part = place.part();
         final CraftingFloor.Reach reach = floor.reach(place.site());
         final List<NetworkProcessingOperation> running = mainframe == null ? List.of()
@@ -417,7 +417,7 @@ public final class CraftManagerPayloads {
             state = CraftManagerStatePayload.IDLE;
         }
         return new CraftManagerStatePayload.WireInterface(index, names.title(part, place.site()),
-                part.patterns().size(), part.capacity(), CraftingDispatch.exclusive(part, reach), state, detail,
+                part.patterns().size(), part.capacity(), CraftingDispatch.exclusive(level, part, reach), state, detail,
                 part.maxJobs());
     }
 

@@ -14,6 +14,9 @@ import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.machine.Machines;
+import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
@@ -23,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -111,9 +115,25 @@ public final class CraftingDispatch {
         return floors;
     }
 
-    /** Whether the interface at {@code site} runs one recipe at a time. */
-    public static boolean exclusive(final CraftingInterfacePart part, final CraftingFloor.Reach reach) {
-        return part.exclusive(reach.mode() == CraftingFloor.Mode.CABLE);
+    /**
+     * Whether the interface at {@code site} runs one recipe at a time: as it is set, else by default where it feeds
+     * through routers, whose faces two recipes' inputs would meet at, and where it feeds one of the series' machines
+     * straight, whose one inlet would take two recipes' inputs into the same slots, where no exact recipe runs.
+     */
+    public static boolean exclusive(final ServerLevel level, final CraftingInterfacePart part,
+                                    final CraftingFloor.Reach reach) {
+        return part.exclusive(reach.mode() == CraftingFloor.Mode.CABLE
+                || reach.mode() == CraftingFloor.Mode.DIRECT && machineAt(level, reach.machine()).isPresent());
+    }
+
+    /** The series' machine at {@code faced}: the one standing there, or the formed one whose port stands there. */
+    public static Optional<MachineBlockEntity> machineAt(final ServerLevel level, @Nullable final BlockPos faced) {
+        if (faced == null) {
+            return Optional.empty();
+        }
+        final BlockPos at = level.getBlockEntity(faced) instanceof MultiblockPartBlockEntity port
+                && port.terminalPos() != null ? port.terminalPos() : faced;
+        return Machines.at(level, at);
     }
 
     /**
@@ -130,7 +150,7 @@ public final class CraftingDispatch {
                 if (part == null || part.paused()) {
                     continue;
                 }
-                final Slot slot = new Slot(floor, site, part, floor.reach(site), floor.drivenBy(site));
+                final Slot slot = new Slot(level, floor, site, part, floor.drivenBy(site));
                 if (runs(level, slot, pattern) && found.stream().noneMatch(other -> other.floor == floor
                         && floor.sameMachine(slot.reach.machine(), other.reach.machine()))) {
                     found.add(slot);
@@ -147,7 +167,7 @@ public final class CraftingDispatch {
             for (final CraftingFloor.Site site : floor.driven()) {
                 final CraftingInterfacePart part = site.part(level, CraftingInterfacePart.class);
                 if (part != null && !slots.containsKey(site)) {
-                    slots.put(site, new Slot(floor, site, part, floor.reach(site), floor.drivenBy(site)));
+                    slots.put(site, new Slot(level, floor, site, part, floor.drivenBy(site)));
                 }
             }
         }
@@ -217,7 +237,7 @@ public final class CraftingDispatch {
                 return false; // two interfaces on one machine take turns, on two ports of a formed one as well
             }
         }
-        if (!exclusive(slot.part, slot.reach)) {
+        if (!slot.exclusive) {
             return true;
         }
         final String recipe = pattern.identity();
@@ -429,15 +449,17 @@ public final class CraftingDispatch {
         private final CraftingFloor.Reach reach;
         @Nullable
         private final BlockPos executor;
+        private final boolean exclusive;
         private final List<NetworkProcessingOperation> jobs = new ArrayList<>();
 
-        private Slot(final CraftingFloor floor, final CraftingFloor.Site site, final CraftingInterfacePart part,
-                     final CraftingFloor.Reach reach, @Nullable final BlockPos executor) {
+        private Slot(final ServerLevel level, final CraftingFloor floor, final CraftingFloor.Site site,
+                     final CraftingInterfacePart part, @Nullable final BlockPos executor) {
             this.floor = floor;
             this.site = site;
             this.part = part;
-            this.reach = reach;
+            this.reach = floor.reach(site);
             this.executor = executor;
+            this.exclusive = CraftingDispatch.exclusive(level, part, reach);
         }
 
         private void take(final NetworkProcessingOperation job) {
