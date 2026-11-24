@@ -22,8 +22,15 @@
       "item": "jscore:copper_wire"
     },
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 1
+        }
+      },
       "count": 4,
-      "item": "jsc:controller_chip_standard"
+      "items": "jsc:controller_chip_standard"
     }
   ],
   "outputs": [

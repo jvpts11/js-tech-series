@@ -10,8 +10,15 @@
       "item": "jsc:etched_board_vintage"
     },
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 2
+        }
+      },
       "count": 1,
-      "item": "jsc:controller_chip_vintage"
+      "items": "jsc:controller_chip_vintage"
     },
     {
       "count": 2,

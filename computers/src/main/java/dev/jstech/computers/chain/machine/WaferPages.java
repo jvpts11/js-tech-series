@@ -30,6 +30,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeManager;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -219,6 +220,20 @@ public final class WaferPages {
         }
         slots.put(line.layout().firstOutput(), List.of(new ItemStack(chip, dies)));
         out.add(new Page(Step.PACKAGING, line, slots, Map.of()));
+    }
+
+    /**
+     * What a page's machine puts in its row of bins, bin by bin: on a packaging page, the plain chips it shows, then
+     * as many of each class {@code recipes} ask of the chip; on any other, what its first output holds.
+     */
+    public static List<ItemStack> bins(final Page page, final RecipeManager recipes) {
+        final List<ItemStack> first = page.slots().getOrDefault(page.machine().layout().firstOutput(), List.of());
+        if (first.isEmpty()) {
+            return List.of();
+        }
+        final ItemStack made = first.getFirst();
+        return page.step() == Step.PACKAGING ? WaferSteps.sorted(made.getItem(), made.getCount(), recipes)
+                : List.of(made);
     }
 
     /* The station of {@code era}'s layers, which its masks expose on. */

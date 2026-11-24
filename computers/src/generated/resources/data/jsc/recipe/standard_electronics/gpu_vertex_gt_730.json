@@ -2,8 +2,15 @@
   "type": "jsc:standard_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 4
+        }
+      },
       "count": 1,
-      "item": "jsc:graphics_chip_standard_kepler"
+      "items": "jsc:graphics_chip_standard_kepler"
     },
     {
       "count": 2,

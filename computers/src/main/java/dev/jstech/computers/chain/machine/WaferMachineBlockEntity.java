@@ -109,7 +109,7 @@ public class WaferMachineBlockEntity extends ChainMachineBlockEntity {
     @Override
     protected Optional<Processing> process(final Level level, final ProcessingInput input) {
         final Optional<WaferSteps.Step> step = WaferSteps.step(machine(), ChainMachines.workedBy(machine()), input,
-                layersLeft.get());
+                layersLeft.get(), level.getRecipeManager());
         if (step.isPresent()) {
             afterWork = step.get().layersLeft();
             stepEra = step.get().era();

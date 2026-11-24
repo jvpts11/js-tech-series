@@ -26,6 +26,7 @@ public enum ChainFaceWord {
     ANNEAL(TextKey.of("jsc.machine_face_word.anneal", "ANNEAL")),
     AOI(TextKey.of("jsc.machine_face_word.aoi", "AOI")),
     BAGS(TextKey.of("jsc.machine_face_word.bags", "BAGS")),
+    BINS(TextKey.of("jsc.machine_face_word.bins", "BINS")),
     BRINE(TextKey.of("jsc.machine_face_word.brine", "BRINE")),
     CASE(TextKey.of("jsc.machine_face_word.case", "CASE")),
     COAT(TextKey.of("jsc.machine_face_word.coat", "COAT")),

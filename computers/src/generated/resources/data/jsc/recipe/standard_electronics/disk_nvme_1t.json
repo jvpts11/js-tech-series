@@ -2,8 +2,15 @@
   "type": "jsc:standard_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 3
+        }
+      },
       "count": 5,
-      "item": "jsc:memory_chip_standard"
+      "items": "jsc:memory_chip_standard"
     },
     {
       "count": 1,

@@ -2,8 +2,15 @@
   "type": "jsc:legacy_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 1
+        }
+      },
       "count": 4,
-      "item": "jsc:processor_chip_legacy_netburst"
+      "items": "jsc:processor_chip_legacy_netburst"
     },
     {
       "count": 1,

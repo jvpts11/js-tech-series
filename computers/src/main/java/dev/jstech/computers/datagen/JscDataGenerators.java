@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.datagen;
 
+import dev.jstech.computers.chain.ChipItem;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.datagen.advancement.JscAdvancementTabs;
@@ -15,6 +16,7 @@ import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.registry.ComputingContent;
+import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.datagen.ContentData;
 import dev.jstech.core.datagen.advancement.ConditionalAdvancementProvider;
 import java.util.function.BiConsumer;
@@ -41,7 +43,8 @@ public final class JscDataGenerators {
         final ContentData data = ContentData.gather(event, ComputingContent.CONTENT)
                 .alsoNaming(JscDataGenerators::systemsAndPrograms)
                 .alsoNaming(JscAdvancementTabs::translations)
-                .alsoNaming(JscDataGenerators::chainMachines);
+                .alsoNaming(JscDataGenerators::chainMachines)
+                .alsoNaming(JscDataGenerators::classedChips);
         data.server(new JscAdvancementProvider(data.output(), data.lookup(), data.existingFiles()));
         data.server(new ConditionalAdvancementProvider(data.output(), data.lookup(), JscAdvancementTabs::all));
         data.server(new ComputersRecipes(data.output(), data.lookup()));
@@ -57,6 +60,15 @@ public final class JscDataGenerators {
     private static void chainMachines(final BiConsumer<String, String> add) {
         for (final ChainMachine machine : ChainMachines.all()) {
             add.accept(machine.nameKey().key(), machine.nameKey().english());
+        }
+    }
+
+    /* Each chip's name with its class, "Memory Chip (Advanced, Class %s)", beside its plain one. */
+    private static void classedChips(final BiConsumer<String, String> add) {
+        for (final ItemEntry<?> entry : ComputingContent.CONTENT.declaredItems()) {
+            if (entry.get() instanceof ChipItem chip) {
+                add.accept(chip.getDescriptionId() + ChipItem.CLASSED, ChipItem.classedEnglish(entry.english()));
+            }
         }
     }
 

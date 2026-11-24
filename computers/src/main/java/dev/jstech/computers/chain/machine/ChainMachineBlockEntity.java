@@ -16,6 +16,7 @@ import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.machine.FacePicture;
 import dev.jstech.core.machine.FaceSlot;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineSounds;
@@ -157,6 +158,12 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     public List<FaceSlot> mainSlots() {
         final List<FaceSlot> own = ChainFaces.slots(machine);
         return own.isEmpty() ? super.mainSlots() : own;
+    }
+
+    /* The row of bins its own face has under the window, the Packaging Line's sorted chips. */
+    @Override
+    public Optional<FacePicture.Tray> tray() {
+        return ChainFaces.of(machine).flatMap(FacePicture::tray);
     }
 
     /* Every machine but the Coke Oven, unless the server lets the computers and the machines run free. */

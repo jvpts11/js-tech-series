@@ -6,8 +6,15 @@
       "item": "jsc:etched_board_transition"
     },
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 2
+        }
+      },
       "count": 1,
-      "item": "jsc:controller_chip_transition"
+      "items": "jsc:controller_chip_transition"
     },
     {
       "count": 3,

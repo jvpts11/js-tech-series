@@ -2,8 +2,15 @@
   "type": "jsc:advanced_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 1
+        }
+      },
       "count": 2,
-      "item": "jsc:graphics_chip_advanced_ampere"
+      "items": "jsc:graphics_chip_advanced_ampere"
     },
     {
       "count": 10,

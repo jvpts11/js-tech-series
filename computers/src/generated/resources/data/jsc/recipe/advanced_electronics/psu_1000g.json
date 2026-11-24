@@ -14,8 +14,15 @@
       "item": "jsc:tantalum_capacitor"
     },
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 1
+        }
+      },
       "count": 1,
-      "item": "jsc:controller_chip_advanced"
+      "items": "jsc:controller_chip_advanced"
     },
     {
       "count": 4,

@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.client.recipeview;
 
+import dev.jstech.core.client.machine.MachineArt;
 import dev.jstech.core.client.machine.PictureFace;
 import dev.jstech.core.client.machine.StandardFace;
+import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.machine.Byproduct;
 import dev.jstech.core.machine.FacePicture;
 import dev.jstech.core.machine.MachineScreenLayout;
@@ -39,6 +41,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -106,6 +109,12 @@ public final class RecipeFaces {
     /** How tall a page laid on a face is. */
     public static int height() {
         return MachineScreenLayout.FACE_HEIGHT;
+    }
+
+    /** How tall a page laid on {@code picture} is: the face, and the row of bins under it when it has one. */
+    public static int height(final FacePicture picture) {
+        return picture.tray().isPresent()
+                ? MachineScreenLayout.PAGE_TRAY_Y + MachineScreenLayout.PAGE_TRAY_HEIGHT : height();
     }
 
     /**
@@ -191,6 +200,25 @@ public final class RecipeFaces {
         PictureFace.drawStill(g, Minecraft.getInstance().font, x, y, face.get().frames(), picture,
                 new PictureFace.Still(said.getOrDefault(face.get().name(), face.get().name()),
                         face.get().rating().get(), lcd, FULL, fills), written -> said.getOrDefault(written, written));
+        picture.tray().ifPresent(tray -> tray(g, tray, x, y));
+    }
+
+    /*
+     * The row of bins under the face, as the machine's screen shows it: a band of the face's plate, its name at its
+     * left and each bin's mark under where the viewer draws the bin.
+     */
+    private static void tray(final GuiGraphics g, final FacePicture.Tray tray, final int x, final int y) {
+        final int top = y + MachineScreenLayout.PAGE_TRAY_Y;
+        g.fill(x, top, x + MachineScreenLayout.FACE_WIDTH, top + MachineScreenLayout.PAGE_TRAY_HEIGHT, tray.argb());
+        final Font font = Minecraft.getInstance().font;
+        MachineArt.text(g, font, Component.translatable(tray.label()).getString(),
+                x + MachineScreenLayout.TRAY_LABEL_X - MachineScreenLayout.FACE_X,
+                top + MachineScreenLayout.TRAY_LABEL_Y, tray.inkArgb());
+        for (int i = 0; i < tray.marks().size() && i < tray.slots().size(); i++) {
+            final GuiLayout.SlotPosition bin = MachineScreenLayout.pageTraySlot(i);
+            MachineArt.textCentred(g, font, tray.marks().get(i), x + bin.x() + MachineScreenLayout.SLOT / 2,
+                    y + bin.y() + MachineScreenLayout.SLOT + 1, tray.inkArgb());
+        }
     }
 
     /**

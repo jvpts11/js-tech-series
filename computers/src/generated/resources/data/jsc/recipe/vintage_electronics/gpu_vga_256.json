@@ -2,8 +2,15 @@
   "type": "jsc:vintage_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 2
+        }
+      },
       "count": 1,
-      "item": "jsc:graphics_chip_vintage_vga"
+      "items": "jsc:graphics_chip_vintage_vga"
     },
     {
       "count": 1,

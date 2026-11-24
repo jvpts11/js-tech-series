@@ -41,9 +41,9 @@ public final class ChainParts {
             HardwareEra.STANDARD, HardwareEra.ADVANCED);
 
     public static final List<ItemEntry<Item>> MEMORY_CHIPS = perEra(era ->
-            part("memory_chip_" + era.path(), era).named("Memory Chip (" + englishName(era) + ")").register());
+            chip("memory_chip_" + era.path(), era).named("Memory Chip (" + englishName(era) + ")").register());
     public static final List<ItemEntry<Item>> CONTROLLER_CHIPS = perEra(era ->
-            part("controller_chip_" + era.path(), era).named("Controller Chip (" + englishName(era) + ")").register());
+            chip("controller_chip_" + era.path(), era).named("Controller Chip (" + englishName(era) + ")").register());
     public static final ItemEntry<Item> MASK_PLATE = part("mask_plate", HardwareEra.VINTAGE).named("Mask Plate")
             .register();
     /*
@@ -151,6 +151,16 @@ public final class ChainParts {
     /** A plain part on the chain's shelf of {@code era}, to be named and registered. */
     static ItemBuilder<Item> part(final String id, final Era era) {
         return CONTENT.item(id, Item::new).look(IItemLook.FLAT).tab(shelf(Shelf.CHAIN, era));
+    }
+
+    /**
+     * A chip on the chain's shelf of {@code era}, to be named and registered: its class, when it has one, said in its
+     * name and painted on its package as a dot, its paint and its shade.
+     */
+    static ItemBuilder<Item> chip(final String id, final Era era) {
+        return CONTENT.<Item>item(id, ChipItem::new)
+                .look(IItemLook.marked(ChipClasses.PROPERTY.toString(), ChipClasses.MARKS, 2))
+                .tab(shelf(Shelf.CHAIN, era));
     }
 
     /* The part {@code declared} declares for each era, from the oldest. */

@@ -2,8 +2,15 @@
   "type": "jsc:legacy_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 3
+        }
+      },
       "count": 2,
-      "item": "jsc:graphics_chip_legacy_r300"
+      "items": "jsc:graphics_chip_legacy_r300"
     },
     {
       "count": 4,

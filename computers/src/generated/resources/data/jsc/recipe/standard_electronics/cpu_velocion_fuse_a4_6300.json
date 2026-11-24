@@ -2,8 +2,15 @@
   "type": "jsc:standard_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 3
+        }
+      },
       "count": 1,
-      "item": "jsc:processor_chip_standard_piledriver"
+      "items": "jsc:processor_chip_standard_piledriver"
     },
     {
       "count": 1,

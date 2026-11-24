@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "jsc:item/mobile_chip_transition_ht",
+    "layer1": "jsc:item/chip_class/mobile_chip_transition_ht_1",
+    "layer2": "jsc:item/chip_class/mobile_chip_transition_ht_2"
+  }
+}

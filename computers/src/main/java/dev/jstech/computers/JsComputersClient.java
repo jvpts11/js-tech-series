@@ -13,6 +13,7 @@ import dev.jstech.computers.client.EjectButtonOutline;
 import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.RigAim;
 import dev.jstech.computers.client.StandingPartOutline;
+import dev.jstech.computers.client.chain.ChipClassesClient;
 import dev.jstech.computers.client.guide.ComputersGuideClient;
 import dev.jstech.computers.client.monitor.MonitorButtonOutline;
 import dev.jstech.computers.client.monitor.MonitorChrome;
@@ -60,6 +61,7 @@ public class JsComputersClient {
         // outlines of the machines' fronts, the keys a machine takes first and what is forgotten on leaving a world.
         ComputingClientSetup.listen(modEventBus);
         ComputersGuideClient.listen(modEventBus);
+        ChipClassesClient.listen(modEventBus);
         MachineKeyboard.listen();
         StandingPartOutline.listen();
         RigAim.listen();

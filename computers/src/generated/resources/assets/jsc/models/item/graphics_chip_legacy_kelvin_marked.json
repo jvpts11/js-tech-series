@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "jsc:item/graphics_chip_legacy_kelvin",
+    "layer1": "jsc:item/chip_class/graphics_chip_legacy_kelvin_1",
+    "layer2": "jsc:item/chip_class/graphics_chip_legacy_kelvin_2"
+  }
+}

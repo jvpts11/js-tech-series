@@ -35,6 +35,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.energy.EnergyClass;
+import dev.jstech.core.machine.FacePicture;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineScreenLayout;
@@ -81,11 +82,14 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
             MachineScreenTexts.TAB_PROTECTION);
     private static final int INVENTORY_WORD_X = 8;
     private static final int INVENTORY_WORD_Y = 6;
+    /* How far a row of bins' window's top runs on, hidden, under the face's; how far in its band of plate stands. */
+    private static final int TRAY_RUN_ON = 6;
+    private static final int TRAY_BAND_INSET = 4;
 
     public MachineScreen(final MachineMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
         this.imageWidth = MachineScreenLayout.WIDTH;
-        this.imageHeight = MachineScreenLayout.HEIGHT;
+        this.imageHeight = MachineScreenLayout.HEIGHT + below();
         this.faces.add(MachineFaces.of(menu.machine()));
         this.faces.add(new SidesTab());
         this.faces.add(new RedstoneTab());
@@ -176,8 +180,10 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
         }
         MachineChrome.lamps(view);
         this.faces.get(active).draw(view);
-        MachineArt.window(g, this.leftPos + INVENTORY_X, this.topPos + INVENTORY_Y,
-                this.leftPos + INVENTORY_X + INVENTORY_WIDTH, this.topPos + INVENTORY_Y + INVENTORY_HEIGHT, 0, 0);
+        this.menu.machine().tray().ifPresent(tray -> tray(g, tray));
+        final int inventoryY = INVENTORY_Y + below();
+        MachineArt.window(g, this.leftPos + INVENTORY_X, this.topPos + inventoryY,
+                this.leftPos + INVENTORY_X + INVENTORY_WIDTH, this.topPos + inventoryY + INVENTORY_HEIGHT, 0, 0);
         for (final Slot slot : this.menu.slots) {
             if (slot.container instanceof Inventory) {
                 MachineArt.slot(g, this.leftPos + slot.x - 1, this.topPos + slot.y - 1);
@@ -189,9 +195,40 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         Draw.text(g, this.font, this.playerInventoryTitle, INVENTORY_X + INVENTORY_WORD_X,
-                INVENTORY_Y + INVENTORY_WORD_Y, MachineArt.PALETTE.get().title());
+                INVENTORY_Y + below() + INVENTORY_WORD_Y, MachineArt.PALETTE.get().title());
         this.faces.get(shownTab()).drawOver(new MachineView(g, this.font, this.menu, 0, 0,
                 mouseX - this.leftPos, mouseY - this.topPos, this.ticks, this::sendButton));
+    }
+
+    /* How far a row of bins under the window, when the machine has one, pushes the inventory down. */
+    private int below() {
+        return MachineScreenLayout.below(this.menu.machine().tray().isPresent());
+    }
+
+    /*
+     * The row of a sorter's bins under the window: a window whose top runs on under the face's, so only its sides and
+     * its foot show, on a band of the face's plate; its name at its left, a frame for each bin and what is written
+     * under each.
+     */
+    private void tray(final GuiGraphics g, final FacePicture.Tray tray) {
+        final int x = this.leftPos;
+        final int y = this.topPos + MachineScreenLayout.TRAY_Y;
+        final int foot = y + MachineScreenLayout.TRAY_HEIGHT;
+        g.enableScissor(x, y, x + MachineScreenLayout.WIDTH, foot);
+        MachineArt.window(g, x, y - TRAY_RUN_ON, x + MachineScreenLayout.WIDTH, foot, 0, 0);
+        g.disableScissor();
+        MachineArt.fill(g, x + TRAY_BAND_INSET, y, x + MachineScreenLayout.WIDTH - TRAY_BAND_INSET - 1,
+                foot - TRAY_BAND_INSET, tray.argb());
+        MachineArt.text(g, this.font, Component.translatable(tray.label()).getString(),
+                x + MachineScreenLayout.TRAY_LABEL_X, y + MachineScreenLayout.TRAY_LABEL_Y, tray.inkArgb());
+        for (int i = 0; i < tray.slots().size(); i++) {
+            final int bin = x + MachineScreenLayout.TRAY_SLOTS_X + i * MachineScreenLayout.TRAY_PITCH;
+            MachineArt.slot(g, bin, this.topPos + MachineScreenLayout.TRAY_SLOT_Y);
+            if (i < tray.marks().size()) {
+                MachineArt.textCentred(g, this.font, tray.marks().get(i), bin + MachineScreenLayout.SLOT / 2,
+                        this.topPos + MachineScreenLayout.TRAY_SLOT_Y + MachineScreenLayout.SLOT + 1, tray.inkArgb());
+            }
+        }
     }
 
     /* What the tab, the plates, a tab's icon or an empty input slot tells the mouse over it. */

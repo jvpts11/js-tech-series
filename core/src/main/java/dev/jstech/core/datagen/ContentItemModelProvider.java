@@ -17,6 +17,7 @@ import dev.jstech.core.content.ModContent;
 import dev.jstech.core.util.DeclarationError;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.data.PackOutput;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -76,7 +77,22 @@ public final class ContentItemModelProvider extends ItemModelProvider {
             case IItemLook.Standard.BUCKET -> bucket(id, item);
             case IItemLook.Parent parent -> getBuilder(id)
                     .parent(new ModelFile.UncheckedModelFile(ContentFiles.named(modid, parent.model())));
+            case IItemLook.Marked marked -> marked(id, item, marked);
         }
+    }
+
+    /*
+     * The flat sprite, and the same sprite with the mark's layers over it, item/<id>_marked, which it turns into while
+     * the property is above zero.
+     */
+    private void marked(final String id, final Item item, final IItemLook.Marked marked) {
+        final ItemModelBuilder painted = getBuilder(id + "_marked")
+                .parent(new ModelFile.UncheckedModelFile("item/generated"))
+                .texture("layer0", modLoc("item/" + id));
+        for (int layer = 1; layer <= marked.layers(); layer++) {
+            painted.texture("layer" + layer, modLoc("item/" + marked.folder() + "/" + id + "_" + layer));
+        }
+        basicItem(item).override().predicate(ResourceLocation.parse(marked.property()), 1F).model(painted).end();
     }
 
     /* The game's bucket with its fluid drawn in, by NeoForge's fluid container model. */

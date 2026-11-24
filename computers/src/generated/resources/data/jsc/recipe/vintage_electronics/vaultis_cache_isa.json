@@ -22,8 +22,15 @@
       "item": "jsc:controller_chip_vintage"
     },
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 2
+        }
+      },
       "count": 2,
-      "item": "jsc:memory_chip_vintage"
+      "items": "jsc:memory_chip_vintage"
     }
   ],
   "outputs": [

@@ -2,8 +2,15 @@
   "type": "jsc:vintage_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 3
+        }
+      },
       "count": 1,
-      "item": "jsc:processor_chip_vintage_p5"
+      "items": "jsc:processor_chip_vintage_p5"
     },
     {
       "count": 1,

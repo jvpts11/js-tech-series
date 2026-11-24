@@ -168,7 +168,8 @@ public final class ChainMachines {
                 .shape("ab,cd", "e#,ee")
                 .legend("a=item_inlet,b=vacuum_casing,c=item_outlet,d=power_entry,e=deposition_chamber_sputter_chamber")
                 .works(WaferMachineBlockEntity::new).declareRecipes();
-        machine("packaging_line").named("Packaging Line").step(20, 2_000).slots(4, 1, 0, 0, 0, 0)
+        // Seven outputs, the bins its dies are sorted into: the plain chips, then classes A to F.
+        machine("packaging_line").named("Packaging Line").step(20, 2_000).slots(4, 7, 0, 0, 0, 0)
                 .shape("abc,bdb", "ef#,bbb")
                 .legend("a=item_outlet,b=machine_casing,c=item_inlet,d=power_entry,e=packaging_line_mould_press,"
                         + "f=packaging_line_wire_bonder")

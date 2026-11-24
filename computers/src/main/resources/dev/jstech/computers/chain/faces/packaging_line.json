@@ -22,11 +22,6 @@
    "x": 180,
    "y": 58,
    "slot": 3
-  },
-  {
-   "x": 180,
-   "y": 80,
-   "slot": 4
   }
  ],
  "meter": {
@@ -82,6 +77,35 @@
    "x": 145,
    "y": 37,
    "colour": "dce0e6"
+  },
+  {
+   "text": "BINS",
+   "x": 181,
+   "y": 83,
+   "colour": "e2e6ec"
   }
- ]
+ ],
+ "tray": {
+  "label": "jsc.machine_face_word.bins",
+  "slots": [
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "marks": [
+   "-",
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F"
+  ],
+  "colour": "c6cac4",
+  "ink": "40444a"
+ }
 }

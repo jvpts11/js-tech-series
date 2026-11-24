@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "jsc:item/memory_chip_vintage",
+    "layer1": "jsc:item/chip_class/memory_chip_vintage_1",
+    "layer2": "jsc:item/chip_class/memory_chip_vintage_2"
+  }
+}

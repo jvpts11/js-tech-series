@@ -3173,7 +3173,8 @@ stable 4
 75 dev.jstech.core.content.IBlockModel.OrientableLit  type record(String name, String side, String front, String top, String frontLit) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.ParticleOnly  type record(String name, String particle) implements IBlockModel
 10 dev.jstech.core.content.IBlockModel.SixFaces  type record(String name, String down, String up, String north, String south, String east, String west, String particle) implements IBlockModel
-10 dev.jstech.core.content.IItemLook  type sealed interface permits IItemLook.Standard, IItemLook.Parent
+96 dev.jstech.core.content.IItemLook  type sealed interface permits IItemLook.Standard, IItemLook.Parent, IItemLook.Marked
+96 dev.jstech.core.content.IItemLook  static IItemLook marked(String, String, int)
 10 dev.jstech.core.content.IItemLook  static IItemLook parent(String)
 10 dev.jstech.core.content.IItemLook  static final IItemLook BUCKET
 10 dev.jstech.core.content.IItemLook  static final IItemLook CABLE
@@ -3183,6 +3184,7 @@ stable 4
 10 dev.jstech.core.content.IItemLook  static final IItemLook HANDMADE
 12 dev.jstech.core.content.IItemLook  static final IItemLook HELD
 10 dev.jstech.core.content.IItemLook  static final IItemLook OF_BLOCK
+96 dev.jstech.core.content.IItemLook.Marked  type record(String property, String folder, int layers) implements IItemLook
 10 dev.jstech.core.content.IItemLook.Parent  type record(String model) implements IItemLook
 10 dev.jstech.core.content.IItemLook.Standard  type enum implements IItemLook
 10 dev.jstech.core.content.IItemLook.Standard  BUCKET
@@ -7570,7 +7572,7 @@ stable 4
 10 dev.jstech.core.machine.DataMachines  static void register()
 10 dev.jstech.core.machine.FaceModes  type final class
 10 dev.jstech.core.machine.FaceModes  static List<FaceMode> round()
-76 dev.jstech.core.machine.FacePicture  type record(int frames, int millis, Optional<String> plate, List<Port> ports, Meter meter, Box lcd, Toggle toggle, List<Glass> glasses, List<Word> words)
+96 dev.jstech.core.machine.FacePicture  type record(int frames, int millis, Optional<String> plate, List<Port> ports, Meter meter, Box lcd, Toggle toggle, List<Glass> glasses, List<Word> words, Optional<Tray> tray)
 76 dev.jstech.core.machine.FacePicture  int rows()
 76 dev.jstech.core.machine.FacePicture  static Optional<FacePicture> read(Class<?>, String)
 76 dev.jstech.core.machine.FacePicture  static final Codec<FacePicture> CODEC
@@ -7594,6 +7596,10 @@ stable 4
 76 dev.jstech.core.machine.FacePicture.Run  static final Codec<Run> CODEC
 76 dev.jstech.core.machine.FacePicture.Toggle  type record(int x, int y, Optional<Place> on, Optional<Place> off)
 76 dev.jstech.core.machine.FacePicture.Toggle  static final Codec<Toggle> CODEC
+96 dev.jstech.core.machine.FacePicture.Tray  type record(String label, List<Integer> slots, List<String> marks, String colour, String ink)
+96 dev.jstech.core.machine.FacePicture.Tray  int argb()
+96 dev.jstech.core.machine.FacePicture.Tray  int inkArgb()
+96 dev.jstech.core.machine.FacePicture.Tray  static final Codec<Tray> CODEC
 76 dev.jstech.core.machine.FacePicture.Word  type record(String text, double x, double y, String colour, List<Run> frames)
 76 dev.jstech.core.machine.FacePicture.Word  boolean showsOn(int)
 76 dev.jstech.core.machine.FacePicture.Word  int argb()
@@ -7654,6 +7660,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  MachineSides sides()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineStatus status()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineStructure structure()
+96 dev.jstech.core.machine.MachineBlockEntity  Optional<FacePicture.Tray> tray()
 12 dev.jstech.core.machine.MachineBlockEntity  Optional<MachineStatus> statusNow()
 10 dev.jstech.core.machine.MachineBlockEntity  Optional<Orientation> formedOrientation()
 12 dev.jstech.core.machine.MachineBlockEntity  Optional<PowerDrawn> powerDrawn()
@@ -7912,8 +7919,11 @@ stable 4
 92 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition bay(int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition fuse()
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition laneSlot(int, int, int, boolean, int)
+96 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition pageTraySlot(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition playerInventory()
 12 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition playerInventory(int)
+96 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition playerInventory(int, boolean)
+96 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition traySlot(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean fits(int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean on(double, double, int, int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean onDisc(double, double, int, int, int)
@@ -7997,6 +8007,8 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static final int OWNER_PLATE_MOST
 10 dev.jstech.core.machine.MachineScreenLayout  static final int OWNER_PLATE_X
 10 dev.jstech.core.machine.MachineScreenLayout  static final int OWNER_PLATE_Y
+96 dev.jstech.core.machine.MachineScreenLayout  static final int PAGE_TRAY_HEIGHT
+96 dev.jstech.core.machine.MachineScreenLayout  static final int PAGE_TRAY_Y
 10 dev.jstech.core.machine.MachineScreenLayout  static final int PLATE_HEIGHT
 10 dev.jstech.core.machine.MachineScreenLayout  static final int PLATE_X
 10 dev.jstech.core.machine.MachineScreenLayout  static final int PROCESS_BOTTOM
@@ -8037,6 +8049,13 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static final int TOGGLE_HEIGHT
 10 dev.jstech.core.machine.MachineScreenLayout  static final int TOGGLE_WIDTH
 10 dev.jstech.core.machine.MachineScreenLayout  static final int TOGGLE_Y
+96 dev.jstech.core.machine.MachineScreenLayout  static final int TRAY_HEIGHT
+96 dev.jstech.core.machine.MachineScreenLayout  static final int TRAY_LABEL_X
+96 dev.jstech.core.machine.MachineScreenLayout  static final int TRAY_LABEL_Y
+96 dev.jstech.core.machine.MachineScreenLayout  static final int TRAY_PITCH
+96 dev.jstech.core.machine.MachineScreenLayout  static final int TRAY_SLOTS_X
+96 dev.jstech.core.machine.MachineScreenLayout  static final int TRAY_SLOT_Y
+96 dev.jstech.core.machine.MachineScreenLayout  static final int TRAY_Y
 10 dev.jstech.core.machine.MachineScreenLayout  static final int WHEEL_DIGIT
 10 dev.jstech.core.machine.MachineScreenLayout  static final int WHEEL_DIGITS
 10 dev.jstech.core.machine.MachineScreenLayout  static final int WHEEL_HEIGHT
@@ -8045,6 +8064,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static final int WINDOW_TOP
 10 dev.jstech.core.machine.MachineScreenLayout  static int arrowX(int)
 92 dev.jstech.core.machine.MachineScreenLayout  static int bayX(int, int)
+96 dev.jstech.core.machine.MachineScreenLayout  static int below(boolean)
 10 dev.jstech.core.machine.MachineScreenLayout  static int cubeFaceAt(double, double, int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int faceX(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int faceY(int)

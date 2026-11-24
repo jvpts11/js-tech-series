@@ -20,9 +20,11 @@ import dev.jstech.computers.chain.machine.WaferPages;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.core.client.recipeview.RecipeFaces;
+import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.machine.FacePicture;
+import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.machine.MachineScreenTexts;
 import dev.jstech.core.machine.MachineTexts;
 import dev.jstech.core.material.MaterialLiquids;
@@ -130,7 +132,7 @@ public final class ChainRecipePages {
                     .recipes(level -> WAFER.get().get(step))
                     .workstations(() -> machines(WAFER.get().get(step)))
                     .icon(() -> new ItemStack(terminal(iconMachine(step))))
-                    .size(RecipeFaces.width(), RecipeFaces.height())
+                    .size(RecipeFaces.width(), RecipeFaces.height(ChainFaces.of(iconMachine(step)).orElseThrow()))
                     .layout(ChainRecipePages::wafer)
                     .ids(page -> ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "wafer/" + name + "/"
                             + NUMBERS.get().get(page)))
@@ -170,6 +172,14 @@ public final class ChainRecipePages {
                 view.output(port.x(), port.y(), held);
             } else {
                 view.input(port.x(), port.y(), held);
+            }
+        }
+        // A machine that sorts what it makes into bins shows them under its face, as its screen does.
+        if (picture.tray().isPresent() && Minecraft.getInstance().level != null) {
+            final List<ItemStack> bins = WaferPages.bins(page, Minecraft.getInstance().level.getRecipeManager());
+            for (int i = 0; i < bins.size() && i < picture.tray().get().slots().size(); i++) {
+                final GuiLayout.SlotPosition bin = MachineScreenLayout.pageTraySlot(i);
+                view.output(bin.x(), bin.y(), bins.get(i));
             }
         }
         final int liquids = machine.layout().inputTanks() + machine.layout().outputTanks();

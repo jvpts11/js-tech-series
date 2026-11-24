@@ -1055,7 +1055,8 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         /* Where this lane's work goes. */
         private ProcessingOutputs outputs() {
             return new ProcessingOutputs(getInventory(), layout.laneOutput(this.index, 0),
-                    layout.laneOutput(this.index, 0) + layout.outputs(), outputTanks, matterOutputs());
+                    layout.laneOutput(this.index, 0) + layout.outputs(), outputTanks, matterOutputs(),
+                    tray().isPresent());
         }
 
         /*

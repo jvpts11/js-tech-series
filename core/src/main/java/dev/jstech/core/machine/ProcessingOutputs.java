@@ -28,9 +28,11 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
  * @param endSlot     the slot after its last
  * @param fluidTanks  the fluid output tanks
  * @param matterTanks the output tanks of matter, every state's
+ * @param binned      whether its output slots are a sorter's bins, each item of a work going into its own bin alone,
+ *                    the first into the first; otherwise into whichever slot has room
  */
 record ProcessingOutputs(FieldItemHandler inventory, int firstSlot, int endSlot, List<FieldFluidTank> fluidTanks,
-                         List<MatterTank> matterTanks) {
+                         List<MatterTank> matterTanks, boolean binned) {
 
     /** Whether {@code items}, {@code fluids} and {@code matter} all find room, as if all were put out at once. */
     boolean fit(final List<ItemStack> items, final List<FluidStack> fluids, final List<MatterStack> matter) {
@@ -39,9 +41,9 @@ record ProcessingOutputs(FieldItemHandler inventory, int firstSlot, int endSlot,
 
     /** Puts out {@code items}, {@code fluids} and {@code matter}, what finds no room lost: check first. */
     void put(final List<ItemStack> items, final List<FluidStack> fluids, final List<MatterStack> matter) {
-        for (final ItemStack output : items) {
-            ItemStack left = output.copy();
-            for (int slot = this.firstSlot; slot < this.endSlot && !left.isEmpty(); slot++) {
+        for (int k = 0; k < items.size(); k++) {
+            ItemStack left = items.get(k).copy();
+            for (int slot = this.firstSlot + from(k); slot < this.firstSlot + to(k) && !left.isEmpty(); slot++) {
                 left = putInto(slot, left);
             }
         }
@@ -82,9 +84,10 @@ record ProcessingOutputs(FieldItemHandler inventory, int firstSlot, int endSlot,
         for (int slot = this.firstSlot; slot < this.endSlot; slot++) {
             slots.add(this.inventory.getStackInSlot(slot).copy());
         }
-        for (final ItemStack output : items) {
+        for (int k = 0; k < items.size(); k++) {
+            final ItemStack output = items.get(k);
             int left = output.getCount();
-            for (int i = 0; i < slots.size() && left > 0; i++) {
+            for (int i = from(k); i < to(k) && left > 0; i++) {
                 final ItemStack held = slots.get(i);
                 final int moved = room(held, output.copyWithCount(left), slotLimit(this.firstSlot + i, output));
                 if (moved <= 0) {
@@ -158,6 +161,17 @@ record ProcessingOutputs(FieldItemHandler inventory, int firstSlot, int endSlot,
             }
         }
         return true;
+    }
+
+    /* The first of the output slots, counted from the lane's first, that a work's item {@code k} may go into. */
+    private int from(final int k) {
+        return this.binned ? k : 0;
+    }
+
+    /* The one after the last of them: its own bin alone when the slots are bins, a bin past the last none at all. */
+    private int to(final int k) {
+        final int slots = this.endSlot - this.firstSlot;
+        return this.binned ? Math.min(k + 1, slots) : slots;
     }
 
     /* The most of {@code stack} an output slot holds: the stack's size times the room the machine's upgrades give. */

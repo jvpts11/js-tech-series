@@ -91,6 +91,8 @@ public final class MachineMenu extends CoreMenu {
     public static final int FIRST_OWN = 900;
     /** The most buttons a machine's own tabs have. */
     public static final int OWN_BUTTONS = 32;
+    /* A slot shown whichever tab is open: a bin of a row under the window. */
+    private static final int EVERY_TAB = -1;
 
     /** The menu of {@code machine} for the player whose {@code inventory} it is. */
     public MachineMenu(final int containerId, final Inventory inventory, final MachineBlockEntity machine) {
@@ -101,10 +103,16 @@ public final class MachineMenu extends CoreMenu {
         // On a machine's own wider screen the standard tabs' face sits centred, and their slots with it.
         final int shift = MachineScreenLayout.kitShift(machine.screenWidth());
         final List<Slot> mains = new ArrayList<>();
+        // A row of bins under the window stands outside every tab's face, so it shows whichever tab is open.
+        final List<Integer> bins = machine.tray().map(FacePicture.Tray::slots).orElse(List.of());
         for (final FaceSlot at : machine.mainSlots()) {
-            final Slot slot = new TabSlot(machine.getInventory(), at.index(), at.x(), at.y(), MAIN, at.output());
+            final boolean bin = bins.contains(at.index());
+            final Slot slot = new TabSlot(machine.getInventory(), at.index(), at.x(), at.y(), bin ? EVERY_TAB : MAIN,
+                    at.output());
             mains.add(slot);
-            faceSlots.add(slot);
+            if (!bin) {
+                faceSlots.add(slot);
+            }
         }
         final SlotGroup main = slots(mains.toArray(Slot[]::new));
         final List<Slot> bays = new ArrayList<>();
@@ -128,7 +136,8 @@ public final class MachineMenu extends CoreMenu {
         }
         final SlotGroup protections = slots(guards.toArray(Slot[]::new));
         final PlayerSlots player = playerInventory(inventory,
-                MachineScreenLayout.playerInventory(machine.screenWidth()), () -> machine.inventoryOn(tab));
+                MachineScreenLayout.playerInventory(machine.screenWidth(), machine.tray().isPresent()),
+                () -> machine.inventoryOn(tab));
         shiftClick(player.main(), main, upgrades, protections, player.hotbar());
         shiftClick(player.hotbar(), main, upgrades, protections, player.main());
         shiftClick(main, player.main(), player.hotbar());
@@ -325,7 +334,7 @@ public final class MachineMenu extends CoreMenu {
 
         @Override
         public boolean isActive() {
-            return tab == this.shownOn;
+            return this.shownOn == EVERY_TAB || tab == this.shownOn;
         }
 
         @Override

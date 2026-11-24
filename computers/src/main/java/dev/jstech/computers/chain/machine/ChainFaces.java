@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.chain.machine;
 
+import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.machine.FacePicture;
 import dev.jstech.core.machine.FaceSlot;
 import dev.jstech.core.machine.MachineScreenLayout;
@@ -47,7 +48,8 @@ public final class ChainFaces {
 
     /**
      * Where {@code machine}'s own face shows its slots, the items' top left in the screen's pixels: each of its
-     * picture's ports with its slot; none for a machine with no face of its own.
+     * picture's ports with its slot, then each bin of its row under the window; none for a machine with no face of
+     * its own.
      */
     public static List<FaceSlot> slots(final ChainMachine machine) {
         final Optional<FacePicture> picture = of(machine);
@@ -60,6 +62,13 @@ public final class ChainFaces {
             out.add(new FaceSlot(port.slot(), MachineScreenLayout.faceX(port.x()) + 1,
                     MachineScreenLayout.faceY(port.y()) + 1, machine.layout().isOutput(port.slot())));
         }
+        picture.get().tray().ifPresent(tray -> {
+            for (int i = 0; i < tray.slots().size(); i++) {
+                final int slot = tray.slots().get(i);
+                final GuiLayout.SlotPosition at = MachineScreenLayout.traySlot(i);
+                out.add(new FaceSlot(slot, at.x(), at.y(), machine.layout().isOutput(slot)));
+            }
+        });
         return out;
     }
 }

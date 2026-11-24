@@ -2,8 +2,15 @@
   "type": "jsc:transition_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 2
+        }
+      },
       "count": 5,
-      "item": "jsc:processor_chip_transition_centro"
+      "items": "jsc:processor_chip_transition_centro"
     },
     {
       "count": 1,

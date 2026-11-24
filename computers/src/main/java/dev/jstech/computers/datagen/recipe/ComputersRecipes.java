@@ -29,18 +29,21 @@ public final class ComputersRecipes extends RecipeProvider {
 
     @Override
     protected void buildRecipes(final RecipeOutput output) {
+        // Every processing recipe waits until all are written, so each model's chip can be given its class.
+        final ChipClassing classing = new ChipClassing(output);
         // The chain's machines' recipes load only while the server's own_chain switch is on.
-        MaterialRecipes.write(output.withConditions(SettingCondition.on(ComputersServerConfig.FILE,
+        MaterialRecipes.write(classing.withConditions(SettingCondition.on(ComputersServerConfig.FILE,
                 ComputersServerConfig.OWN_CHAIN)));
-        BenchRecipes.write(output);
-        HardwareRecipes.write(output);
-        MachineBlockRecipes.write(output);
-        CardRecipes.write(output);
-        ComputerRecipes.write(output);
-        PeripheralRecipes.write(output);
-        NetworkRecipes.write(output);
-        PowerRecipes.write(output);
-        WirelessRecipes.write(output);
-        VillagerRecipes.write(output);
+        BenchRecipes.write(classing);
+        HardwareRecipes.write(classing);
+        MachineBlockRecipes.write(classing);
+        CardRecipes.write(classing);
+        ComputerRecipes.write(classing);
+        PeripheralRecipes.write(classing);
+        NetworkRecipes.write(classing);
+        PowerRecipes.write(classing);
+        WirelessRecipes.write(classing);
+        VillagerRecipes.write(classing);
+        classing.finish();
     }
 }

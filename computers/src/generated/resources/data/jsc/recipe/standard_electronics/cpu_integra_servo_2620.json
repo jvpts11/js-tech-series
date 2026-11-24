@@ -2,8 +2,15 @@
   "type": "jsc:standard_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 4
+        }
+      },
       "count": 3,
-      "item": "jsc:processor_chip_standard_sandy_bridge"
+      "items": "jsc:processor_chip_standard_sandy_bridge"
     },
     {
       "count": 1,

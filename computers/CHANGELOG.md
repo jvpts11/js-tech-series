@@ -934,6 +934,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   A pattern file written before keeps every input lasting one run.
 
 ### Changed
+- Chip classes: the Packaging Line tests a wafer's dies and sorts them into a row of seven bins under its
+  window, the plain chips and classes A to F, as a fab grades its dies. A wafer gives as many plain chips as before and
+  as many again of each class its chip has, from two to six, so no model costs more wafers. Each model of a family
+  takes its own class of the chip that makes it (the die of a processor or a graphics card, the memory of a disk or a
+  module, the controller of the rest), so the lot of a bigger model no longer makes a smaller one: fed an NVMe 8T's
+  nine memory chips, the Advanced Electronics line made a 4T. A classed chip says its class in its name, "Memory Chip
+  (Advanced, Class A)", and in its tooltip, carries a dot of paint on its package's corner in its class's colour, and
+  lists apart in the recipe viewer, whose Packaging Line pages show the bins. The line's packaging takes what it took
+  for a wafer before. Chips already in a world stay plain.
 - Wafers: a wafer between its steps is an item of each step and era, no longer one Wafer in Process for
   all of them: an Exposed Wafer out of the Lithography Station, an Etched Wafer out of the Plasma Etcher, a Doped Wafer
   out of the Ion Implanter and a Metallised Wafer out of the Deposition Chamber, back to the station for its next

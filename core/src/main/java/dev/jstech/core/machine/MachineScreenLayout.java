@@ -45,6 +45,24 @@ public final class MachineScreenLayout {
     public static final int INVENTORY_Y = 157;
     public static final int INVENTORY_WIDTH = 176;
     public static final int INVENTORY_HEIGHT = 100;
+    /**
+     * The row of a sorter's bins under the window, on a machine that has one ({@link FacePicture.Tray}): its top, its
+     * height, which the whole screen and the inventory below grow by, where its first slot's frame stands and how far
+     * apart its slots are, and where its name is written, across and down from its top.
+     */
+    public static final int TRAY_Y = 155;
+    public static final int TRAY_HEIGHT = 30;
+    public static final int TRAY_SLOTS_X = 46;
+    public static final int TRAY_SLOT_Y = TRAY_Y + 3;
+    public static final int TRAY_PITCH = 22;
+    public static final int TRAY_LABEL_X = 8;
+    public static final int TRAY_LABEL_Y = 9;
+    /**
+     * Where a row of bins stands on a recipe page laid on its machine's face, in the face's pixels: its band's top,
+     * just under the face; the band as tall as the screen's, less its window's foot.
+     */
+    public static final int PAGE_TRAY_Y = FACE_HEIGHT + 2;
+    public static final int PAGE_TRAY_HEIGHT = TRAY_HEIGHT - 4;
     /** A slot's side, frame included. */
     public static final int SLOT = 18;
     /** The small text of the face, the game's font at three quarters. */
@@ -211,7 +229,28 @@ public final class MachineScreenLayout {
 
     /** Where the player's inventory grid starts on a screen {@code width} wide, centred under it. */
     public static GuiLayout.SlotPosition playerInventory(final int width) {
-        return new GuiLayout.SlotPosition(INVENTORY_X + kitShift(width) + 8, INVENTORY_Y + 18);
+        return playerInventory(width, false);
+    }
+
+    /** The same, under a row of bins when the machine has one ({@code tray}). */
+    public static GuiLayout.SlotPosition playerInventory(final int width, final boolean tray) {
+        return new GuiLayout.SlotPosition(INVENTORY_X + kitShift(width) + 8, INVENTORY_Y + 18 + below(tray));
+    }
+
+    /** How far a row of bins, when there is one, pushes down what stands under the window. */
+    public static int below(final boolean tray) {
+        return tray ? TRAY_HEIGHT : 0;
+    }
+
+    /** Where the item in bin {@code index} of a row of bins sits, inside its frame, in the screen's own space. */
+    public static GuiLayout.SlotPosition traySlot(final int index) {
+        return new GuiLayout.SlotPosition(TRAY_SLOTS_X + index * TRAY_PITCH + 1, TRAY_SLOT_Y + 1);
+    }
+
+    /** Where the frame of bin {@code index} of a row of bins stands on a recipe page, in the face's pixels. */
+    public static GuiLayout.SlotPosition pageTraySlot(final int index) {
+        return new GuiLayout.SlotPosition(TRAY_SLOTS_X - FACE_X + index * TRAY_PITCH,
+                PAGE_TRAY_Y + TRAY_SLOT_Y - TRAY_Y);
     }
 
     /**

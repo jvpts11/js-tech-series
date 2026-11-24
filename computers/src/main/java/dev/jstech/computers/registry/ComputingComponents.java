@@ -10,6 +10,7 @@ package dev.jstech.computers.registry;
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.backup.TapeContents;
+import dev.jstech.computers.chain.ChipClasses;
 import dev.jstech.computers.chain.machine.WaferWork;
 import dev.jstech.computers.crafting.CraftingEras;
 import dev.jstech.computers.crafting.CraftingPattern;
@@ -257,6 +258,13 @@ public final class ComputingComponents {
     /* Where a wafer between its steps or a finished wafer stands on its way to chips: chip, layer and next machine. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<WaferWork>>
             WAFER_WORK = saved("wafer_work", WaferWork.CODEC, WaferWork.STREAM_CODEC);
+
+    /*
+     * The class a chip's die tested into at the Packaging Line, 1 to 6 for A to F, absent on a plain chip: the model a
+     * recipe makes takes its own class of its chip, so no recipe's lot holds another's.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>>
+            CHIP_CLASS = saved("chip_class", Codec.intRange(1, ChipClasses.MOST), ByteBufCodecs.VAR_INT);
 
     /*
      * A portable device's id, which its state on the server is kept by (its apps, its alerts): given the first time

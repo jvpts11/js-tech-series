@@ -18,6 +18,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.GeoLook;
+import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.material.CatalogueItems;
@@ -144,7 +145,13 @@ public final class ContentGameTests {
                     items.add(block.getId().getPath());
                 }
             }
-            content.declaredItems().forEach(item -> items.add(item.getId().getPath()));
+            for (final ItemEntry<?> item : content.declaredItems()) {
+                items.add(item.getId().getPath());
+                // An item with a mark painted on it turns into its model with the mark while it has one.
+                if (item.look() instanceof IItemLook.Marked) {
+                    items.add(item.getId().getPath() + "_marked");
+                }
+            }
             for (final String item : items) {
                 if (!Files.exists(resource(mod, "models", "item", item + ".json"))) {
                     wrong.add("no item model for " + mod + ":" + item);

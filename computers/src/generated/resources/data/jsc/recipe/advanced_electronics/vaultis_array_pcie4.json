@@ -18,8 +18,15 @@
       "item": "minecraft:gold_nugget"
     },
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 2
+        }
+      },
       "count": 2,
-      "item": "jsc:controller_chip_advanced"
+      "items": "jsc:controller_chip_advanced"
     }
   ],
   "outputs": [

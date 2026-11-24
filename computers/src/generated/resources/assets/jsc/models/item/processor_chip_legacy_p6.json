@@ -1,5 +1,13 @@
 {
   "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "jsc:item/processor_chip_legacy_p6_marked",
+      "predicate": {
+        "jsc:chip_class": 1.0
+      }
+    }
+  ],
   "textures": {
     "layer0": "jsc:item/processor_chip_legacy_p6"
   }

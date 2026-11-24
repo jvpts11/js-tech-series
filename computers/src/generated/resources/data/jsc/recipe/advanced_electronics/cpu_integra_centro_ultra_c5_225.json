@@ -2,8 +2,15 @@
   "type": "jsc:advanced_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 4
+        }
+      },
       "count": 1,
-      "item": "jsc:processor_chip_advanced_arrow_lake"
+      "items": "jsc:processor_chip_advanced_arrow_lake"
     },
     {
       "count": 1,

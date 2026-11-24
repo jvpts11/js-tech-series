@@ -38,10 +38,11 @@ import org.jetbrains.annotations.ApiStatus;
  * @param toggle  its switch and the words on and off
  * @param glasses its sight glasses, in the order of its tanks
  * @param words   the words engraved on its parts
+ * @param tray    the row of outputs under the face, a sorter's bins, when the machine has one
  */
 @ApiStatus.Experimental
 public record FacePicture(int frames, int millis, Optional<String> plate, List<Port> ports, Meter meter, Box lcd,
-                          Toggle toggle, List<Glass> glasses, List<Word> words) {
+                          Toggle toggle, List<Glass> glasses, List<Word> words, Optional<Tray> tray) {
 
     /** How many frames stand in a row of the picture, so no side of it grows past what every graphics card takes. */
     public static final int COLUMNS = 8;
@@ -60,6 +61,37 @@ public record FacePicture(int frames, int millis, Optional<String> plate, List<P
         public static final Codec<Port> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("x").forGetter(Port::x), Codec.INT.fieldOf("y").forGetter(Port::y),
                 Codec.INT.fieldOf("slot").forGetter(Port::slot)).apply(i, Port::new));
+    }
+
+    /**
+     * A row of outputs the screen shows under the face, as a sorter's bins, on a band of the face's own plate: the
+     * translation key of what the row is called, written at its left; the machine's slots in it, from the left; the
+     * mark written under each bin, a letter or a sign, when anything is; and the band's colour and its letters'
+     * (RRGGBB), taken from the face's picture.
+     */
+    public record Tray(String label, List<Integer> slots, List<String> marks, String colour, String ink) {
+
+        public static final Codec<Tray> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("label").forGetter(Tray::label),
+                Codec.INT.listOf().fieldOf("slots").forGetter(Tray::slots),
+                Codec.STRING.listOf().optionalFieldOf("marks", List.of()).forGetter(Tray::marks),
+                Codec.STRING.fieldOf("colour").forGetter(Tray::colour),
+                Codec.STRING.fieldOf("ink").forGetter(Tray::ink)).apply(i, Tray::new));
+
+        public Tray {
+            slots = List.copyOf(slots);
+            marks = List.copyOf(marks);
+        }
+
+        /** The band's colour, opaque ARGB. */
+        public int argb() {
+            return 0xFF << 24 | Integer.parseInt(this.colour, 16);
+        }
+
+        /** Its letters' colour, opaque ARGB. */
+        public int inkArgb() {
+            return 0xFF << 24 | Integer.parseInt(this.ink, 16);
+        }
     }
 
     /** A box of the face, its top left and its size. */
@@ -181,7 +213,8 @@ public record FacePicture(int frames, int millis, Optional<String> plate, List<P
             Box.CODEC.fieldOf("lcd").forGetter(FacePicture::lcd),
             Toggle.CODEC.fieldOf("switch").forGetter(FacePicture::toggle),
             Glass.CODEC.listOf().fieldOf("glasses").forGetter(FacePicture::glasses),
-            Word.CODEC.listOf().fieldOf("words").forGetter(FacePicture::words)).apply(i, FacePicture::new));
+            Word.CODEC.listOf().fieldOf("words").forGetter(FacePicture::words),
+            Tray.CODEC.optionalFieldOf("tray").forGetter(FacePicture::tray)).apply(i, FacePicture::new));
 
     public FacePicture {
         if (frames < 1 || millis < 1) {

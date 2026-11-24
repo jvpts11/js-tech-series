@@ -2,8 +2,15 @@
   "type": "jsc:legacy_electronics",
   "inputs": [
     {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 4
+        }
+      },
       "count": 1,
-      "item": "jsc:processor_chip_legacy_k7"
+      "items": "jsc:processor_chip_legacy_k7"
     },
     {
       "count": 1,

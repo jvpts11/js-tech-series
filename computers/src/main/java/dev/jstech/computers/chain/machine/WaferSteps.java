@@ -9,6 +9,7 @@ package dev.jstech.computers.chain.machine;
 
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
+import dev.jstech.computers.chain.ChipClasses;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
@@ -33,6 +34,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
@@ -75,9 +77,10 @@ final class WaferSteps {
     /**
      * The step {@code machine} works on what {@code input} holds, if a wafer is there for it: its work, the era of the
      * wafer it works on, and what the machine's count of layers left on its dopant dust or its tin becomes once done.
+     * The Packaging Line sorts a wafer's dies into as many classes as {@code recipes} ask of its chip.
      */
     static Optional<Step> step(final ChainMachine machine, final List<ChainMachines.Worked> worked,
-                               final ProcessingInput input, final int layersLeft) {
+                               final ProcessingInput input, final int layersLeft, final RecipeManager recipes) {
         final String id = machine.id();
         if (id.startsWith("lithography_")) {
             return lithography(machine, worked, input, layersLeft);
@@ -86,7 +89,7 @@ final class WaferSteps {
             case "plasma_etcher" -> etch(machine, worked, input);
             case "ion_implanter" -> implant(machine, worked, input, layersLeft);
             case "deposition_chamber" -> deposit(machine, worked, input);
-            case "packaging_line" -> packaging(machine, worked, input);
+            case "packaging_line" -> packaging(machine, worked, input, recipes);
             default -> Optional.empty();
         };
     }
@@ -259,11 +262,13 @@ final class WaferSteps {
     /*
      * A finished wafer cut into its dies, each packaged as its era packages chips: in ceramic with two aluminium
      * bonding wires in the Vintage; in epoxy (one resin for four) with two gold bonding wires and copper foil (one for
-     * four) in the Legacy; in epoxy on a lead-free solder nugget's balls from the Transition. A wafer of light is cut
-     * into its laser diodes or LEDs, which need no package.
+     * four) in the Legacy; in epoxy on a lead-free solder nugget's balls from the Transition. The dies are tested and
+     * sorted into the line's bins: as many plain chips as the wafer always gave, and as many again of each class the
+     * recipes ask of the chip (ChipClasses), so no model costs more wafers than before. A wafer of light is cut into
+     * its laser diodes or LEDs, which need no package.
      */
     private static Optional<Step> packaging(final ChainMachine machine, final List<ChainMachines.Worked> worked,
-                                            final ProcessingInput input) {
+                                            final ProcessingInput input, final RecipeManager recipes) {
         final Needs needs = new Needs(input);
         final Held held = needs.wafer(WaferWork.Step.PACKAGING);
         if (held == null) {
@@ -288,8 +293,20 @@ final class WaferSteps {
             needs.item(plateOf(SeriesCompounds.EPOXY_RESIN), dies / CHIPS_A_SHARE);
             needs.item(nuggetOf(SeriesAlloys.LEAD_FREE_SOLDER), dies);
         }
-        return needs.make(new ItemStack(chip, dies), machine, worked.getFirst())
-                .map(work -> new Step(work, era, 0));
+        return needs.make(sorted(chip, dies, recipes), machine, worked.getFirst()).map(work -> new Step(work, era, 0));
+    }
+
+    /**
+     * What the Packaging Line sorts {@code dies} dies of {@code chip} into, bin by bin: as many plain chips, then as
+     * many of each class {@code recipes} ask of the chip.
+     */
+    static List<ItemStack> sorted(final Item chip, final int dies, final RecipeManager recipes) {
+        final List<ItemStack> bins = new ArrayList<>();
+        bins.add(new ItemStack(chip, dies));
+        for (int grade = 1; grade <= ChipClasses.count(chip, recipes); grade++) {
+            bins.add(ChipClasses.stack(chip, grade, dies));
+        }
+        return bins;
     }
 
     /* The worked kind of a station that serves {@code era}, or none. */
@@ -569,10 +586,16 @@ final class WaferSteps {
 
         /* The work making {@code out} in the machine's step at {@code worked}'s draw, when it takes every item held. */
         Optional<Processing> make(final ItemStack out, final ChainMachine machine, final ChainMachines.Worked worked) {
+            return make(List.of(out), machine, worked);
+        }
+
+        /* The same making {@code outs}, in the order of the machine's outputs. */
+        Optional<Processing> make(final List<ItemStack> outs, final ChainMachine machine,
+                                  final ChainMachines.Worked worked) {
             if (missing || !allItemsTaken()) {
                 return Optional.empty();
             }
-            return Optional.of(new Processing(takes, fluidTakes, List.of(out), List.of(), machine.seconds() * TICKS,
+            return Optional.of(new Processing(takes, fluidTakes, outs, List.of(), machine.seconds() * TICKS,
                     worked.joulesATick(), matterTakes, List.of(), List.of(), catalysts));
         }
 

@@ -8,6 +8,8 @@
 package dev.jstech.computers.integration.jei;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.chain.ChipClasses;
+import dev.jstech.computers.chain.ChipItem;
 import dev.jstech.computers.chain.machine.WaferPages;
 import dev.jstech.computers.client.chain.ChainRecipePages;
 import dev.jstech.computers.client.os.DesktopScreen;
@@ -38,8 +40,10 @@ import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +108,24 @@ public final class JscJeiPlugin implements IModPlugin {
      */
     @Override
     public void registerItemSubtypes(final ISubtypeRegistration registration) {
+        // A chip's class tells one from another: each lists apart, with the models that take it and its bin.
+        for (final Item chip : BuiltInRegistries.ITEM) {
+            if (chip instanceof ChipItem) {
+                registration.registerSubtypeInterpreter(chip, new ISubtypeInterpreter<>() {
+                    @Override
+                    public @Nullable Object getSubtypeData(final ItemStack stack, final UidContext context) {
+                        final int grade = ChipClasses.of(stack);
+                        return grade == 0 ? null : grade;
+                    }
+
+                    @Override
+                    public String getLegacyStringSubtypeInfo(final ItemStack stack, final UidContext context) {
+                        final int grade = ChipClasses.of(stack);
+                        return grade == 0 ? "" : ChipClasses.letter(grade);
+                    }
+                });
+            }
+        }
         for (final MediaFormat format : MediaFormat.values()) {
             registration.registerSubtypeInterpreter(InstallerStacks.blank(format), new ISubtypeInterpreter<>() {
                 @Override

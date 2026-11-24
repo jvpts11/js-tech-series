@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "jsc:item/processor_chip_advanced_comet_lake",
+    "layer1": "jsc:item/chip_class/processor_chip_advanced_comet_lake_1",
+    "layer2": "jsc:item/chip_class/processor_chip_advanced_comet_lake_2"
+  }
+}

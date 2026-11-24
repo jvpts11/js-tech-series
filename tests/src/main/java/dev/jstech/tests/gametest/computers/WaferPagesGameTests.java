@@ -53,6 +53,7 @@ public final class WaferPagesGameTests {
             }
             final Set<Integer> ports = new HashSet<>();
             picture.get().ports().forEach(port -> ports.add(port.slot()));
+            picture.get().tray().ifPresent(tray -> ports.addAll(tray.slots()));
             for (final Integer slot : page.slots().keySet()) {
                 if (!ports.contains(slot)) {
                     wrong.add(page.step() + " on " + page.machine().id() + ": slot " + slot + " has no port");

@@ -13,6 +13,7 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
+import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.machine.FacePicture;
 import dev.jstech.core.machine.FaceSlot;
 import dev.jstech.core.machine.MachineScreenLayout;
@@ -59,12 +60,20 @@ public final class ChainFacesGameTests {
                 continue;
             }
             final List<FaceSlot> slots = ChainFaces.slots(machine);
+            final List<Integer> bins = ChainFaces.of(machine).get().tray().map(FacePicture.Tray::slots)
+                    .orElse(List.of());
             final Set<Integer> shown = new HashSet<>();
             for (final FaceSlot slot : slots) {
                 if (!shown.add(slot.index())) {
                     wrong.add(machine.id() + " shows slot " + slot.index() + " twice");
                 }
-                if (slot.x() - 1 < MachineScreenLayout.FACE_X || slot.y() - 1 < MachineScreenLayout.FACE_Y
+                // A bin of the row under the window stands in that row, where the screen draws it, not on the face.
+                if (bins.contains(slot.index())) {
+                    final GuiLayout.SlotPosition at = MachineScreenLayout.traySlot(bins.indexOf(slot.index()));
+                    if (slot.x() != at.x() || slot.y() != at.y()) {
+                        wrong.add(machine.id() + "'s bin " + slot.index() + " stands outside its row");
+                    }
+                } else if (slot.x() - 1 < MachineScreenLayout.FACE_X || slot.y() - 1 < MachineScreenLayout.FACE_Y
                         || slot.x() - 1 + SLOT > MachineScreenLayout.FACE_X + MachineScreenLayout.FACE_WIDTH
                         || slot.y() - 1 + SLOT > MachineScreenLayout.FACE_Y + MachineScreenLayout.FACE_HEIGHT) {
                     wrong.add(machine.id() + "'s slot " + slot.index() + " stands outside its face");

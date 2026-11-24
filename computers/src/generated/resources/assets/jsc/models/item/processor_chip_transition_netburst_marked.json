@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "jsc:item/processor_chip_transition_netburst",
+    "layer1": "jsc:item/chip_class/processor_chip_transition_netburst_1",
+    "layer2": "jsc:item/chip_class/processor_chip_transition_netburst_2"
+  }
+}

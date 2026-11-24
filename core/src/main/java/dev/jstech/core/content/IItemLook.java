@@ -12,7 +12,8 @@ package dev.jstech.core.content;
  */
 public sealed interface IItemLook
         permits IItemLook.Standard,
-        IItemLook.Parent {
+        IItemLook.Parent,
+        IItemLook.Marked {
 
     /** A block's item that shows its block's model, the one named after it. */
     IItemLook OF_BLOCK = Standard.OF_BLOCK;
@@ -50,6 +51,16 @@ public sealed interface IItemLook
         return new Parent(model);
     }
 
+    /**
+     * A flat sprite with a mark painted on it while the item property {@code property} (one the mod's client
+     * registers, {@code "jsc:chip_class"}) is above zero: the texture {@code item/<id>}, and over it the textures
+     * {@code item/<folder>/<id>_1} to {@code _<layers>}, each tinted by the item colour of its index, which the mod's
+     * client gives: a mark's paint and its shade.
+     */
+    static IItemLook marked(final String property, final String folder, final int layers) {
+        return new Marked(property, folder, layers);
+    }
+
     /** The looks that need nothing but the item's own id. */
     enum Standard implements IItemLook {
         OF_BLOCK,
@@ -64,5 +75,15 @@ public sealed interface IItemLook
 
     /** An item whose model is another model, unchanged. */
     record Parent(String model) implements IItemLook {
+    }
+
+    /** A flat sprite with a mark painted on it while an item property is above zero ({@link #marked}). */
+    record Marked(String property, String folder, int layers) implements IItemLook {
+
+        public Marked {
+            if (layers < 1) {
+                throw new IllegalArgumentException("a mark is painted in a layer at least: " + layers);
+            }
+        }
     }
 }

@@ -601,6 +601,17 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return List.of();
     }
 
+    /**
+     * The row of outputs its screen shows under the window, a sorter's bins, when it has one: none unless it says. Its
+     * bins are its output slots in their order, among its {@link #mainSlots}, each where
+     * {@link MachineScreenLayout#traySlot} puts it; a processing machine puts each item of a work into its own bin, the
+     * first into the first.
+     */
+    @ApiStatus.Experimental
+    public Optional<FacePicture.Tray> tray() {
+        return Optional.empty();
+    }
+
     /** Gives back {@code points} of its health, mending a burnt port once it is whole; how much it gave back. */
     public int repair(final int points) {
         final int given = health.repair(points);

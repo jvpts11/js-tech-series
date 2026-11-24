@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.chain;
 
+import static dev.jstech.computers.chain.ChainParts.chip;
 import static dev.jstech.computers.chain.ChainParts.englishName;
 import static dev.jstech.computers.chain.ChainParts.part;
 
@@ -279,23 +280,23 @@ public final class ChainChips {
             final ItemBuilder<Item> mask;
             switch (kind) {
                 case PROCESSOR -> {
-                    chip = part("processor_chip_" + suffix, era()).named("Processor Chip (" + english + ", " + eraName
+                    chip = chip("processor_chip_" + suffix, era()).named("Processor Chip (" + english + ", " + eraName
                             + ")");
                     mask = part("mask_processor_" + suffix, era()).named("Processor Mask (" + english + ", " + eraName
                             + ")");
                 }
                 case GRAPHICS -> {
-                    chip = part("graphics_chip_" + suffix, era()).named("Graphics Chip (" + english + ", " + eraName
+                    chip = chip("graphics_chip_" + suffix, era()).named("Graphics Chip (" + english + ", " + eraName
                             + ")");
                     mask = part("mask_graphics_" + suffix, era()).named("Graphics Mask (" + english + ", " + eraName
                             + ")");
                 }
                 case HASHING -> {
-                    chip = part("hashing_chip_" + suffix, era()).named("Hashing Chip (" + eraName + ")");
+                    chip = chip("hashing_chip_" + suffix, era()).named("Hashing Chip (" + eraName + ")");
                     mask = part("mask_hashing_" + suffix, era()).named("Hashing Mask (" + eraName + ")");
                 }
                 default -> {
-                    chip = part("mobile_chip_" + suffix, era()).named("Mobile Chip (" + english + ", " + eraName + ")");
+                    chip = chip("mobile_chip_" + suffix, era()).named("Mobile Chip (" + english + ", " + eraName + ")");
                     mask = part("mask_mobile_" + suffix, era()).named("Mobile Mask (" + english + ", " + eraName + ")");
                 }
             }
