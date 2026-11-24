@@ -83,6 +83,8 @@ final class BenchRecipes {
                 Items.IRON_INGOT, 4, Items.COPPER_INGOT, 4, Items.REDSTONE, 1);
         made(output, HardwareEra.LEGACY, "antenna", ChainParts.ANTENNA.get(), 2,
                 of(Element.COPPER, Forms.ROD), 1, pvc(), 1);
+        // A block of steel the Injection Moulder's computer cuts a mould into.
+        made(output, HardwareEra.VINTAGE, "mould_blank", ChainChips.MOULD_BLANK.get(), 1, BenchItems.steelPlate(), 4);
     }
 
     /*

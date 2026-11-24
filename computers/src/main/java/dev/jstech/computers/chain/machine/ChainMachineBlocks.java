@@ -188,6 +188,8 @@ public final class ChainMachineBlocks {
         put(plain("display_line_fill_chamber", HardwareEra.VINTAGE).named("Fill Chamber").register());
         put(plain("display_line_gantry", HardwareEra.VINTAGE).named("Gantry").register());
         put(plain("display_line_test_stand", HardwareEra.VINTAGE).named("Test Stand").register());
+        put(plain("injection_moulder_clamp", HardwareEra.VINTAGE).named("Clamp").register());
+        put(plain("injection_moulder_injection_unit", HardwareEra.VINTAGE).named("Injection Unit").register());
         put(plain("assembly_feeder_bank", HardwareEra.VINTAGE).named("Feeder Bank").register());
         put(plain("assembly_wave_solder", HardwareEra.VINTAGE).named("Wave Solder").register());
         put(plain("assembly_vintage_placement_head", HardwareEra.VINTAGE).named("Vintage Placement Head").register());

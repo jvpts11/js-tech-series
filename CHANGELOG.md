@@ -787,6 +787,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Computers) The Injection Moulder: a chain machine of every era, three blocks wide, two high and two deep, that
+  will mould the plastic bodies of sockets, slots and connectors, fan frames, bezels and cable jackets, each in the
+  mould its job lends it. Formed, it shows its clamp closing on the mould, the screw driving the shot through the
+  glowing barrel, the part cooling and the ejector pins pushing it out onto the take-off belt, and its screen draws
+  the same cycle. Built of a Machine Casing, its entries, a Peripheral Port for the computer that cuts its moulds, a
+  Clamp and an Injection Unit; and the Mould Blank, a block of steel of four Steel Plates at the Vintage bench, which
+  its moulds are cut from. Its recipes come with the moulded bodies.
 - (Core) Machines: clicking the picture of a machine at work on its screen shows all the recipes it makes, as a
   furnace's arrow does, when JEI, EMI or REI is installed; a machine with a drawn face of its own (every chain machine
   of J's Computers) had it only on the standard face's arrow.

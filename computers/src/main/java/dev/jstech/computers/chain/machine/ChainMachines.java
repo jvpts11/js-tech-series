@@ -205,6 +205,13 @@ public final class ChainMachines {
                         + "f=display_line_test_stand,g=liquid_inlet,h=display_line_gantry")
                 .products('g', "jscore:liquid_crystal", "jscore:mercury")
                 .declareRecipes();
+        // The plastic bodies of sockets, slots and connectors, fan frames, bezels and cable jackets, each moulded in
+        // the mould its job lends it, which a computer on its peripheral port cuts from a Mould Blank.
+        machine("injection_moulder").named("Injection Moulder").step(10, 2_000).slots(2, 1, 0, 0, 0, 0)
+                .shape("abc,bdb", "ef#,bbg")
+                .legend("a=item_inlet,b=machine_casing,c=item_outlet,d=power_entry,e=injection_moulder_injection_unit,"
+                        + "f=injection_moulder_clamp,g=peripheral_port")
+                .declareRecipes();
         machine("lithography_vintage").named("Vintage Lithography Station").era(HardwareEra.VINTAGE)
                 .step(20, 2_000).slots(2, 1, 1, 0, 0, 0)
                 .shape("abc,dae", "af#,aga", "aha,aaa")

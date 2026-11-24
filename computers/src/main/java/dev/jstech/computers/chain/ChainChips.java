@@ -34,6 +34,9 @@ public final class ChainChips {
 
     public static final ItemEntry<Item> MASK_BLANK = part("mask_blank", HardwareEra.VINTAGE).named("Mask Blank")
             .register();
+    /* A block of steel the computer at an Injection Moulder cuts a mould, an extrusion die or a board jig into. */
+    public static final ItemEntry<Item> MOULD_BLANK = part("mould_blank", HardwareEra.VINTAGE).named("Mould Blank")
+            .register();
 
     /** The processor dies, each era's from the oldest, in the order the catalogue first builds on them. */
     public static final List<Die> PROCESSORS = List.of(

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "O": {
+      "item": "jsc:copper_coil"
+    }
+  },
+  "pattern": [
+    " H ",
+    "OCO",
+    " M "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:injection_moulder_injection_unit"
+  }
+}

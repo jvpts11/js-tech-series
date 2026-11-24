@@ -259,6 +259,12 @@ final class MachineBlockRecipes {
                 board(HardwareEra.VINTAGE), 1);
         made(output, HardwareEra.VINTAGE, block("preinstaller_disk_dock"), mc, 1, board(HardwareEra.VINTAGE), 1,
                 of(Element.COPPER, Forms.WIRE), 4);
+        // The Injection Moulder: the clamp's platens and tie bars on its hydraulic pump, the injection unit's hopper
+        // and heater bands on its screw drive.
+        grid(output, block("injection_moulder_clamp"), 1, rows("PRP", "RCR", " M "), 'P', plate, 'R',
+                of(SeriesAlloys.STEEL, Forms.ROD), 'C', mc, 'M', motor);
+        grid(output, block("injection_moulder_injection_unit"), 1, rows(" H ", "OCO", " M "), 'H', Items.HOPPER,
+                'O', coil, 'C', mc, 'M', motor);
     }
 
     /*

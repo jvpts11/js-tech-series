@@ -1,0 +1,83 @@
+{
+ "frames": 48,
+ "millis": 110,
+ "plate": "INJECTION MOULDER",
+ "ports": [
+  {
+   "x": 36,
+   "y": 36,
+   "slot": 0
+  },
+  {
+   "x": 36,
+   "y": 80,
+   "slot": 2
+  },
+  {
+   "x": 180,
+   "y": 36,
+   "slot": 1
+  }
+ ],
+ "meter": {
+  "x": 10,
+  "y": 37,
+  "w": 18,
+  "h": 56,
+  "label": {
+   "x": 19,
+   "y": 97
+  }
+ },
+ "lcd": {
+  "x": 102,
+  "y": 5,
+  "w": 56,
+  "h": 22
+ },
+ "switch": {
+  "x": 212,
+  "y": 50,
+  "on": {
+   "x": 215,
+   "y": 42
+  },
+  "off": {
+   "x": 212,
+   "y": 75
+  }
+ },
+ "glasses": [],
+ "words": [
+  {
+   "text": "CLAMP",
+   "x": 64,
+   "y": 37,
+   "colour": "dce0e6"
+  },
+  {
+   "text": "SHOT",
+   "x": 93,
+   "y": 37,
+   "colour": "dce0e6"
+  },
+  {
+   "text": "COOL",
+   "x": 117,
+   "y": 37,
+   "colour": "dce0e6"
+  },
+  {
+   "text": "EJECT",
+   "x": 142,
+   "y": 37,
+   "colour": "dce0e6"
+  },
+  {
+   "text": "MOULD",
+   "x": 34,
+   "y": 57,
+   "colour": "282c34"
+  }
+ ]
+}

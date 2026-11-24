@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    },
+    "R": {
+      "item": "jscore:steel_rod"
+    }
+  },
+  "pattern": [
+    "PRP",
+    "RCR",
+    " M "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:injection_moulder_clamp"
+  }
+}

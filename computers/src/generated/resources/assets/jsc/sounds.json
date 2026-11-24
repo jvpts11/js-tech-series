@@ -209,6 +209,15 @@
     ],
     "subtitle": "subtitles.jsc.machine.induction_furnace"
   },
+  "machine/injection_moulder": {
+    "sounds": [
+      {
+        "attenuation_distance": 20,
+        "name": "jsc:machine/injection_moulder"
+      }
+    ],
+    "subtitle": "subtitles.jsc.machine.injection_moulder"
+  },
   "machine/ion_implanter": {
     "sounds": [
       {

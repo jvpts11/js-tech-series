@@ -53,6 +53,7 @@ public final class ChainSounds {
             work(loop("coil_winder").subtitle("Coil winder spins")),
             work(loop("optical_polisher").subtitle("Polisher grinds")),
             work(loop("display_line").subtitle("Display line gantry moves")),
+            work(loop("injection_moulder").subtitle("Injection moulder cycles")),
             work(loop(LITHOGRAPHY).subtitle("Lithography station runs")),
             work(loop(ASSEMBLY).subtitle("Placement head works")),
             work(loop("preinstaller").subtitle("Preinstaller writes")),
