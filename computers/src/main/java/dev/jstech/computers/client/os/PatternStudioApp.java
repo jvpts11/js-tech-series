@@ -289,8 +289,10 @@ public final class PatternStudioApp implements IInventoryBandApp {
         resultLine = root.add(new Label(this::resultText).setTone(this::resultTone));
         benchFileLine = root.add(new Label(this::benchFileText, Label.Tone.DIM));
         benchRomLine = root.add(new Label(GameText.resolve(IN_RECIPE_ROM), Label.Tone.ACCENT));
-        benchClear = root.add(new Button(GameText.resolve(CLEAR),
-                () -> send(of(PatternStudioEditPayload.BENCH_CLEAR))));
+        benchClear = root.add(new Button(GameText.resolve(CLEAR), () -> {
+            commitEdits();
+            send(of(PatternStudioEditPayload.BENCH_CLEAR));
+        }));
         benchNames = root.add(new NameNoteRow(PatternStudioEditPayload.BENCH_SET_NAME));
 
         inGrid = root.add(new CellGrid(PROC_COLS, PROC_ROWS, PatternWorkbench.PROC_GRID / PROC_COLS, CELL)
@@ -306,7 +308,10 @@ public final class PatternStudioApp implements IInventoryBandApp {
         timeoutLabel = root.add(new Label(GameText.resolve(TIMEOUT), Label.Tone.DIM));
         timeout = root.add(new TextField(6).setOnCommit(this::commitTimeout));
         procFlag = root.add(new Label(this::procFlagText).setTone(this::procFlagTone));
-        procClear = root.add(new Button(GameText.resolve(CLEAR), () -> send(of(PatternStudioEditPayload.PROC_CLEAR))));
+        procClear = root.add(new Button(GameText.resolve(CLEAR), () -> {
+            commitEdits();
+            send(of(PatternStudioEditPayload.PROC_CLEAR));
+        }));
         procNames = root.add(new NameNoteRow(PatternStudioEditPayload.PROC_SET_NAME));
         intoLabel = root.add(new Label(GameText.resolve(INTO_LABEL), Label.Tone.DIM));
         intoButton = root.add(new Button(this::intoText, this::openIntoPicker));
@@ -954,6 +959,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     /* Load: a bench recipe into a card's ROM, a machine or pipeline recipe into the interface chosen. */
     private void loadIntoChosen() {
+        commitEdits();
         send(PatternStudioEditPayload.text(host, monitorPos, PatternStudioEditPayload.LOAD_INTO_ROM, tab,
                 tab == TAB_BENCH ? "" : into, ""));
     }
@@ -1188,7 +1194,17 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private void barAction(final int action) {
+        commitEdits();
         send(PatternStudioEditPayload.at(host, monitorPos, action, tab));
+    }
+
+    /*
+     * Takes the keyboard from whatever field holds it, so a name, a note or a timeout typed and not yet entered goes to
+     * the computer before the action that follows: a field commits what it holds when it loses the keyboard, and a
+     * button acts before the click moves the keyboard. Burn then writes the timeout just typed, and Clear clears it.
+     */
+    private void commitEdits() {
+        root.focus(null);
     }
 
     private boolean draftComplete() {

@@ -8,6 +8,7 @@
 package dev.jstech.core.client.machine;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.client.recipeview.RecipeViewers;
 import dev.jstech.core.machine.FacePicture;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
@@ -28,6 +29,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -157,6 +159,9 @@ public final class PictureFace implements IMachineFace {
             this.statistics = !this.statistics;
             return true;
         }
+        if (onArt(x, y)) {
+            return RecipeViewers.showRecipesMadeIn(new ItemStack(v.machine().getBlockState().getBlock()));
+        }
         return false;
     }
 
@@ -182,6 +187,9 @@ public final class PictureFace implements IMachineFace {
             if (MachineScreenLayout.on(x, y, glass.x() - 3, glass.y() - 4, glass.w() + 6, glass.h() + 8)) {
                 return StandardFace.glassTooltip(machine);
             }
+        }
+        if (RecipeViewers.any() && onArt(x, y)) {
+            return List.of(GameText.component(MachineScreenTexts.TIP_RECIPES));
         }
         return List.of();
     }
@@ -297,5 +305,31 @@ public final class PictureFace implements IMachineFace {
     private boolean onLcd(final double x, final double y) {
         final FacePicture.Box lcd = this.picture.lcd();
         return MachineScreenLayout.on(x, y, lcd.x() - 3, lcd.y() - 3, lcd.w() + 6, lcd.h() + 6);
+    }
+
+    /*
+     * Over the picture of the machine at work, which opens its recipes as a furnace's arrow does: from its leftmost
+     * port to its rightmost, from under its LCD to the foot of its lowest port, and never on a port, whose slot takes
+     * the click.
+     */
+    private boolean onArt(final double x, final double y) {
+        final List<FacePicture.Port> ports = this.picture.ports();
+        if (ports.isEmpty()) {
+            return false;
+        }
+        int left = Integer.MAX_VALUE;
+        int right = Integer.MIN_VALUE;
+        int bottom = Integer.MIN_VALUE;
+        for (final FacePicture.Port port : ports) {
+            if (MachineScreenLayout.on(x, y, port.x(), port.y(), MachineScreenLayout.SLOT, MachineScreenLayout.SLOT)) {
+                return false;
+            }
+            left = Math.min(left, port.x());
+            right = Math.max(right, port.x() + MachineScreenLayout.SLOT);
+            bottom = Math.max(bottom, port.y() + MachineScreenLayout.SLOT);
+        }
+        final FacePicture.Box lcd = this.picture.lcd();
+        final int top = lcd.y() + lcd.h() + 3;
+        return bottom > top && MachineScreenLayout.on(x, y, left, top, right - left, bottom - top);
     }
 }

@@ -30,6 +30,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
@@ -184,9 +185,15 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         return LightTexture.pack(block, sky);
     }
 
+    /*
+     * As far as the player sees the world, and never less than its renderer asked: a machine has no chunk geometry
+     * of its own, so cut off sooner it would vanish while the cables beside it still show. Its animation still stops
+     * at the animation distance, so a far machine costs its still model only.
+     */
     @Override
     public int getViewDistance() {
-        return this.viewDistance;
+        return Math.max(this.viewDistance,
+                Minecraft.getInstance().options.getEffectiveRenderDistance() * SectionPos.SECTION_SIZE);
     }
 
     @Override

@@ -11820,6 +11820,7 @@ stable 4
 10 dev.jstech.core.multipart.IFacePart  abstract void attach(IPartHost, Direction)
 10 dev.jstech.core.multipart.IFacePart  default <T> T capability(BlockCapability<T, Direction>)
 10 dev.jstech.core.multipart.IFacePart  default boolean busy()
+95 dev.jstech.core.multipart.IFacePart  default boolean meetsWire(CableType)
 10 dev.jstech.core.multipart.IFacePart  default boolean ticks()
 10 dev.jstech.core.multipart.IFacePart  default boolean use(ServerPlayer)
 10 dev.jstech.core.multipart.IFacePart  default int comparator()

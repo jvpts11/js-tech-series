@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multipart;
 
+import dev.jstech.core.cable.CableType;
 import dev.jstech.core.text.Text;
 import java.util.List;
 import net.minecraft.core.Direction;
@@ -16,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.BlockCapability;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -48,6 +50,17 @@ public interface IFacePart {
      */
     default boolean ticks() {
         return true;
+    }
+
+    /**
+     * Whether a wire of {@code type} in the block this part faces runs an arm up to the part, though it joins neither
+     * the part nor its block: a part that works through the cable beyond its face, as a crafting interface works
+     * through the crafting cable of the machine it feeds. A part whose answer changes calls
+     * {@link IPartHost#partChanged}.
+     */
+    @ApiStatus.Experimental
+    default boolean meetsWire(final CableType type) {
+        return false;
     }
 
     /**

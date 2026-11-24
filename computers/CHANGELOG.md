@@ -116,6 +116,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- Crafting Interfaces: the crafting cable an interface faces runs up to its plate, so the interface's own
+  cable shows connected to it; it still stays apart from the network the interface is mounted on.
 - A gas named on the network: a full Gas Cylinder, or any item that carries a gas of J's Core, names
   its gas in a bus's filter and on a Pattern Studio cell, as a bucket names its fluid, so an Export Bus can send that
   gas out of the network's storage.
@@ -1102,6 +1104,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- Autocrafting: a machine's job no longer fails while the machine is still working a step longer than the
+  pattern's timeout, as a wafer step of ten or twenty seconds did against the Pattern Studio's 200 ticks; the job
+  waits as long as the machine says it is working.
+- Pattern Studio: Burn, Save to disk, Load and Clear take a name, note or timeout just typed without Enter
+  first; Burn wrote the timeout from before, and Clear left the typed name and timeout behind.
 - Abandoned buildings: a working building's racks stand with their UPS charged, as its battery banks are;
   they stood at no charge.
 - Abandoned buildings: a working building's computers show a picture. None of the eras' processors in

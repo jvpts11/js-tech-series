@@ -20,6 +20,9 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.WatchedDataPort;
 import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.machine.MachineStatus;
+import dev.jstech.core.machine.Machines;
+import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
 import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -206,9 +209,10 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         }
         /*
          * The machine is shared by every job on the interface: while any of them is fed or credited the machine is
-         * moving, and a job queued behind another's inputs is not timed out for waiting its turn.
+         * moving, and a job queued behind another's inputs is not timed out for waiting its turn. A machine that says
+         * it is working is moving too, however long one step of its recipe takes.
          */
-        if (progressed || part.workedAt() >= now - 1) {
+        if (progressed || part.workedAt() >= now - 1 || machineWorking()) {
             idleTicks = 0;
         } else if (++idleTicks > pattern.timeoutTicks()) {
             status = produced > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
@@ -502,6 +506,21 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         final byte live = done ? status
                 : waiting ? OperationRecord.STATUS_WAITING : OperationRecord.STATUS_PROCESSING;
         return buildRecord(live);
+    }
+
+    /*
+     * Whether the machine this job feeds is working a recipe now, by its own status: the machine the interface faces,
+     * or the one a formed structure's port belongs to. A machine of another mod says nothing, and only what moves
+     * counts for it.
+     */
+    private boolean machineWorking() {
+        final BlockPos faced = floor.reach(site).machine();
+        if (faced == null) {
+            return false;
+        }
+        final BlockPos at = level.getBlockEntity(faced) instanceof MultiblockPartBlockEntity port
+                && port.terminalPos() != null ? port.terminalPos() : faced;
+        return Machines.at(level, at).map(machine -> machine.status() == MachineStatus.WORKING).orElse(false);
     }
 
     /*

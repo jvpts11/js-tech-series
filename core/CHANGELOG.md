@@ -564,6 +564,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - What a store takes in a tick: J's Core's API is at version 94. `EnergyStore.maxReceive` and
   `setMaxReceive`, and `FieldEnergyStorage.maxReceive` and `setMaxReceive`, read and change how much a store takes
   in a tick. Experimental.
+- A part a cable reaches without joining it: J's Core's API is at version 95. `IFacePart.meetsWire(CableType)`
+  says a wire of that kind in the block the part faces runs an arm up to the part, though it joins neither the part
+  nor its block; the cable keeps those faces apart from the ones it crosses, and only draws them. Experimental.
 - Room beyond a stack: J's Core's API is at version 93. `FieldItemHandler.beyondTheStack` lets a slot hold
   more of an item than its stack, as its stack limit says, and saves past the 99 the game saves of one stack;
   `stackLimitOf` reads a slot's limit for a stack. `MatterTank.room` and `MatterTanks.room` make a tank that many
@@ -623,6 +626,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   formed model's doors' leaves are left out of its blocks' shapes. Experimental.
 
 ### Added
+- Machines: clicking the picture of a machine at work on its screen shows all the recipes it makes, as a
+  furnace's arrow does, when JEI, EMI or REI is installed; a machine with a drawn face of its own (every chain machine
+  of J's Computers) had it only on the standard face's arrow.
 - The Gas Cylinder: a slim steel cylinder with a bronze valve that carries one gas by hand, as a bucket carries
   a fluid, 10,000 mB (50 litres at 200 times the open air's pressure), one to a stack. Used on a block that gives gas,
   a machine's outlet or a tank, it fills with that block's gas, only the gas it already holds; used while sneaking on a
@@ -2313,6 +2319,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.
 
 ### Changed
+- Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
+  cables beside them still show. They still move only near the player.
 - The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its
   Upgrades tab says: bring it a line that carries what it draws.
 - A machine's Upgrades tab shows up to four bays, closer together when there are four, so a machine of four

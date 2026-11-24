@@ -8,6 +8,7 @@
 package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.crafting.CraftingEras;
 import dev.jstech.computers.crafting.CraftingLog;
 import dev.jstech.computers.crafting.ICraftIo;
@@ -17,6 +18,8 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.menu.CraftingInterfaceMenu;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.Wire;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
@@ -104,6 +107,15 @@ public final class CraftingInterfacePart implements IFacePart {
         }
         this.host = cable;
         this.face = face;
+    }
+
+    /*
+     * A crafting cable against its face reaches up to it, as the routers on that cable are its own; it is drawn
+     * joined, but stays out of the network it is mounted on, as it always has.
+     */
+    @Override
+    public boolean meetsWire(final CableType type) {
+        return DataWires.isCrafting(Wire.of(type));
     }
 
     @Override

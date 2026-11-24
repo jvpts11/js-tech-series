@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
@@ -28,6 +29,8 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.crafting.CraftingViews;
 import dev.jstech.computers.operation.payload.crafting.InterfaceNames;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CableDrawing;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -69,6 +72,8 @@ public final class CraftingInterfaceGameTests {
     private static final int SETTLE = 4;
     private static final String NO_RECEIVING = "jsc.crafting.view.no_receiving";
     private static final String REACHES_NETWORK = "jsc.crafting.view.reaches_network";
+    /* Where a cable's drawing keeps the faces it reaches a part across without joining it. */
+    private static final int REACHES_SHIFT = 16;
     private static final BlockPos MAINFRAME = new BlockPos(1, 2, 2);
     /* Where the second kiln stands, beside the first rig's. */
     private static final BlockPos SECOND_KILN = new BlockPos(4, 2, 5);
@@ -114,6 +119,35 @@ public final class CraftingInterfaceGameTests {
      * An interface facing a crafting cable feeds through the routers on that cable, kept apart from the network by the
      * part on the face; joined to the network, its window warns.
      */
+    /** The crafting cable an interface faces runs an arm up to it, and still does not join the network behind it. */
+    @GameTest(template = ARENA)
+    public static void cable_itsOwnCableReachesTheInterfaceWithoutJoiningIt(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingRig rig = CraftingRig.routed(world, net.cc(), TestMachines.MIXER.get(), true);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final CraftingFloor.Site site = rig.absoluteInterface();
+                    final Direction back = site.face().getOpposite();
+                    final CableBlockEntity own = (CableBlockEntity) helper.getLevel().getBlockEntity(
+                            site.cable().relative(site.face()));
+                    helper.assertTrue(own != null, "a cable stands against the interface");
+                    final CableDrawing drawing = own.drawing();
+                    boolean reaches = false;
+                    for (int i = 0; i < drawing.wires().size(); i++) {
+                        if (DataWires.isCrafting(drawing.wires().get(i))) {
+                            reaches |= (drawing.links().get(i) >> REACHES_SHIFT & 1 << back.get3DDataValue()) != 0;
+                            helper.assertFalse(own.crosses(drawing.wires().get(i).type(), back),
+                                    "its wire does not cross into the interface's block");
+                        }
+                    }
+                    helper.assertTrue(reaches, "its crafting wire runs an arm to the interface");
+                    helper.assertTrue(floor(world, rig).reach(site).reachesAt() == null,
+                            "and its cable stays off the network");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void floor_aRoutedInterfaceFindsTheRoutersOfItsOwnCable(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);

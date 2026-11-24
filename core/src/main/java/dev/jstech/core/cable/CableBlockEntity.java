@@ -80,7 +80,10 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
 
     private final Bundle bundle = new Bundle(this::bundleChanged);
     private final SpaceParts parts = new SpaceParts(this);
-    /* Each lane's faces: the low six bits those its wire crosses, the six from bit 8 those it meets a device on. */
+    /*
+     * Each lane's faces: the low six bits those its wire crosses, the six from bit 8 those it meets a device on, and the
+     * six from bit 16 those it reaches a part on the next block over without joining it (an arm drawn, no link).
+     */
     private final int[] links = new int[Lane.COUNT];
     private final Map<Lane, NetworkUuid> savedNetworks = new EnumMap<>(Lane.class);
     private final PartField wiresField = fields().part(Bundle.KEY, this.bundle).save().toClient();
@@ -106,6 +109,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     private static final String NETWORK = "Network";
     private static final int FACE_BITS = 0x3F;
     private static final int PLUG_SHIFT = 8;
+    private static final int MEET_SHIFT = 16;
     private static final double PIXEL = 1.0 / 16.0;
 
     public CableBlockEntity(final BlockPos pos, final BlockState state) {
@@ -382,8 +386,12 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     public void partChanged() {
         this.partsField.changed();
         this.voxels = null;
-        // A part closes its face to wires, and taking it off opens it again; the neighbours hear of it.
-        if (refreshLinks(true) && this.level != null) {
+        /*
+         * A part closes its face to wires, and taking it off opens it again; the neighbours hear of it, also when no
+         * wire here changed, since a part may reach a neighbour's wire across the face it is on.
+         */
+        refreshLinks(true);
+        if (this.level != null && !this.level.isClientSide()) {
             Neighbours.portsChanged(this.level, this.worldPosition);
         }
         if (this.level != null && !this.level.isClientSide()) {
@@ -683,7 +691,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 continue;
             }
             if (!server.isLoaded(next)) {
-                linked |= before & (bit | bit << PLUG_SHIFT);
+                linked |= before & (bit | bit << PLUG_SHIFT | bit << MEET_SHIFT);
                 continue;
             }
             // The block is read first: asking a place that holds no cable for its block entity costs a lookup for none.
@@ -695,6 +703,8 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                             && other.ends.get(there.slot(), face.getOpposite()).mode() != EndMode.OFF
                             && other.roomFor(wire.type(), face.getOpposite())) {
                         linked |= bit;
+                    } else if (meets(other.parts.get(face.getOpposite()), wire.type())) {
+                        linked |= bit << MEET_SHIFT;
                     }
                 }
                 continue;
@@ -729,7 +739,12 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         }
         final int faces = WireShape.select(type.runsStraight(), type.mostJoins(), linked & FACE_BITS,
                 before & FACE_BITS);
-        return faces | (linked & (faces << PLUG_SHIFT));
+        return faces | (linked & (faces << PLUG_SHIFT)) | (linked & (FACE_BITS << MEET_SHIFT));
+    }
+
+    /* Whether {@code part}, on the block beyond a face, draws a wire of {@code type} up to it without joining it. */
+    private static boolean meets(@Nullable final IFacePart part, final CableType type) {
+        return part != null && part.meetsWire(type);
     }
 
     private void endsChanged() {

@@ -697,6 +697,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) What a store takes in a tick: J's Core's API is at version 94. `EnergyStore.maxReceive` and
   `setMaxReceive`, and `FieldEnergyStorage.maxReceive` and `setMaxReceive`, read and change how much a store takes
   in a tick. Experimental.
+- (Core) A part a cable reaches without joining it: J's Core's API is at version 95. `IFacePart.meetsWire(CableType)`
+  says a wire of that kind in the block the part faces runs an arm up to the part, though it joins neither the part
+  nor its block; the cable keeps those faces apart from the ones it crosses, and only draws them. Experimental.
 - (Core) Room beyond a stack: J's Core's API is at version 93. `FieldItemHandler.beyondTheStack` lets a slot hold
   more of an item than its stack, as its stack limit says, and saves past the 99 the game saves of one stack;
   `stackLimitOf` reads a slot's limit for a stack. `MatterTank.room` and `MatterTanks.room` make a tank that many
@@ -774,6 +777,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Core) Machines: clicking the picture of a machine at work on its screen shows all the recipes it makes, as a
+  furnace's arrow does, when JEI, EMI or REI is installed; a machine with a drawn face of its own (every chain machine
+  of J's Computers) had it only on the standard face's arrow.
+- (Computers) Crafting Interfaces: the crafting cable an interface faces runs up to its plate, so the interface's own
+  cable shows connected to it; it still stays apart from the network the interface is mounted on.
 - (Computers) A gas named on the network: a full Gas Cylinder, or any item that carries a gas of J's Core, names
   its gas in a bus's filter and on a Pattern Studio cell, as a bucket names its fluid, so an Export Bus can send that
   gas out of the network's storage.
@@ -4379,6 +4387,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Core) Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
+  cables beside them still show. They still move only near the player.
 - (Computers) The manual's page on building a chain machine says how many upgrades a machine takes by its era:
   two in a Vintage machine, three in a Legacy or Transition one, four from the Standard on.
 - (Core) The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its
@@ -4776,6 +4786,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A machine whose upgrades have it draw more energy a tick takes that much more in through its port: four
   motors, which make it draw four times as much, or lines that work several recipes at once, no longer leave it
   working at half speed once its few seconds' store runs dry.
+- (Computers) Autocrafting: a machine's job no longer fails while the machine is still working a step longer than the
+  pattern's timeout, as a wafer step of ten or twenty seconds did against the Pattern Studio's 200 ticks; the job
+  waits as long as the machine says it is working.
+- (Computers) Pattern Studio: Burn, Save to disk, Load and Clear take a name, note or timeout just typed without Enter
+  first; Burn wrote the timeout from before, and Clear left the typed name and timeout behind.
 - (Core) A button's label too long for its face ends in "..", where it ran over the buttons beside it: the Crafting
   Manager's "into" button, naming a long place, wrote over Load and Load all.
 - (Computers) Abandoned buildings: a working building's racks stand with their UPS charged, as its battery banks are;
