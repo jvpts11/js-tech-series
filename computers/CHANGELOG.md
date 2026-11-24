@@ -932,6 +932,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   A pattern file written before keeps every input lasting one run.
 
 ### Changed
+- The manual's page on building a chain machine says how many upgrades a machine takes by its era:
+  two in a Vintage machine, three in a Legacy or Transition one, four from the Standard on.
 - Autocrafting on many machines: a craft shares a machine step among the machines whose Crafting
   Interfaces hold its recipe, a share each, as far as its Crafting Computer's threads go, so two kilns of one recipe
   each fire half the stone where one fired it all while the other stood idle.

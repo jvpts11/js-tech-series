@@ -21,6 +21,8 @@ Formed, the machine is drawn as one: its casing and its working blocks merge int
 
 Use the terminal to open the machine's window, with its slots, its tanks and the energy it holds. Things go in through its inlets and come out through its outlets, from and to whatever moves them: a hopper, a pipe, the network's buses or a [Crafting Interface](jsc:crafting_interfaces), which runs it for the network's autocrafting.
 
+The window's Upgrades tab holds the machine's [upgrades](jscore:upgrades): two in a Vintage machine, or in one that serves every era, three in a Legacy or Transition machine, and four from the Standard on.
+
 Every machine but the Coke Oven draws its energy at low voltage through its Power Entry, and only while it works. The Coke Oven burns part of its own coal, as a real one does. On a server set to let its computers run free of energy, the machines run free too.
 
 ## If something goes wrong

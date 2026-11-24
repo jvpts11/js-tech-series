@@ -21,6 +21,8 @@ Formada, a máquina é desenhada como uma só: a sua carcaça e os seus blocos d
 
 Use o terminal para abrir a janela da máquina, com os seus slots, os seus tanques e a energia que ela guarda. As coisas entram pelas suas entradas e saem pelas suas saídas, vindas de e indo para o que as move: um funil, um cano, os barramentos da rede ou uma [Interface de Fabricação](jsc:crafting_interfaces), que a opera para a fabricação automática da rede.
 
+A aba Upgrades da janela guarda os [upgrades](jscore:upgrades) da máquina: dois numa máquina Vintage, ou numa que serve todas as eras, três numa máquina Legacy ou Transition, e quatro da Standard em diante.
+
 Toda máquina, menos o Forno de Coque, consome a sua energia em baixa tensão pela sua Entrada de Energia, e só enquanto trabalha. O Forno de Coque queima parte do seu próprio carvão, como um de verdade. Num servidor configurado para deixar os seus computadores funcionarem sem energia, as máquinas também funcionam sem.
 
 ## Se algo der errado

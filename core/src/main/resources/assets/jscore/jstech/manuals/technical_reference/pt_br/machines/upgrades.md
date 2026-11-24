@@ -51,3 +51,6 @@ Fabrique cada um na bancada com barras de ferro, cobre, ouro e bronze e com reds
 
 > [!PROBLEM] A máquina gasta muito mais energia.
 > Motores e linhas custam energia pelo que ganham. Um Inversor de Frequência devolve parte dela.
+
+> [!PROBLEM] Uma máquina com motores trabalha mais devagar do que a aba Upgrades diz.
+> Chega a ela menos energia do que ela consome: quatro motores a fazem consumir quatro vezes mais por tick. Leve até ela uma linha que dê conta disso.

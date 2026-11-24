@@ -104,6 +104,17 @@ The framework gathers what the machines of Mekanism, Thermal and EnderIO do, in 
 ### Upgrades
 
 The framework gives upgrades a set of **effects** a mod's upgrade item declares: speed, energy, recipes at once, yield,
-byproducts, what a recipe spends of a resource, heat, sound, buffer size. A machine has **few upgrade slots**, and an
-upgrade may say how many of it fit in one machine, so a machine is fast or thrifty, hardly both. Which upgrades exist,
-their numbers and the slots per machine are each mod's, in its own design.
+byproducts, the liquids and the gases a recipe spends, heat, sound, the energy a machine stores and the room of its
+slots and tanks. Upgrades **combine**: gains add up and savings multiply, so four motors of +50% make a machine three
+times as fast and four drives of -20% leave it at 41% of its energy. A machine has **few upgrade slots**, and an upgrade
+may say how many of it fit in one machine, alone or with others of its **kind** (the motors share one limit of four),
+so a machine is fast or thrifty, hardly both. A machine whose upgrades have it draw more energy a tick takes that much
+more in through its port; more room lets a slot hold more than a stack of an item.
+
+The **shared upgrades** are the series' content in the Core, so every mod's machines take the same parts: the Brushed,
+Induction and Brushless Motor (+50% speed, +75% energy), the Variable Frequency Drive (-20% energy), the Parallel Line
+and Advanced Parallel Line (one and two more recipes at once, energy in proportion), the Gas and Solvent Recovery Units
+(-15% of the gases, of the liquids), Precision Tooling (+10% yield), the Muffler (silent), the Expanded Buffers (twice
+the room of each slot and tank) and the Byproduct Separator (+50% byproducts). They are made at the crafting table from
+iron, copper, gold and bronze ingots and the game's redstone, quartz, glass panes and diamond. A mod may add its own;
+the slots per machine are each mod's, in its own design.

@@ -2313,6 +2313,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.
 
 ### Changed
+- The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its
+  Upgrades tab says: bring it a line that carries what it draws.
 - A machine's Upgrades tab shows up to four bays, closer together when there are four, so a machine of four
   upgrade slots shows every one; its bank of bars has a row each for the liquids and the gases a recipe spends, in
   place of one for both, and one for the room of its slots and tanks.

@@ -4379,6 +4379,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) The manual's page on building a chain machine says how many upgrades a machine takes by its era:
+  two in a Vintage machine, three in a Legacy or Transition one, four from the Standard on.
+- (Core) The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its
+  Upgrades tab says: bring it a line that carries what it draws.
 - (Computers) Autocrafting on many machines: a craft shares a machine step among the machines whose Crafting
   Interfaces hold its recipe, a share each, as far as its Crafting Computer's threads go, so two kilns of one recipe
   each fire half the stone where one fired it all while the other stood idle.

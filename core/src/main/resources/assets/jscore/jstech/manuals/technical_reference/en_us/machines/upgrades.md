@@ -51,3 +51,6 @@ Craft each at the Crafting Table from iron, copper, gold and bronze ingots and t
 
 > [!PROBLEM] The machine spends much more energy.
 > Motors and lines cost energy for what they gain. A Variable Frequency Drive takes some of it back.
+
+> [!PROBLEM] A machine with motors works slower than its Upgrades tab says.
+> Less energy reaches it than it draws: four motors have it draw four times as much a tick. Bring it a line that carries that much.
