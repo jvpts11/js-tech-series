@@ -171,6 +171,25 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // One world played by several players at once: a server in a folder of its own (run/shared-server, whose
+        // world and server.properties are set by hand, online-mode=false for the development clients) and more
+        // player windows, each with its own folder, settings and name, that join it as they open.
+        //   .\gradlew.bat runSharedServer    then    .\gradlew.bat runPlayer2 runPlayer3 --parallel
+        //   -Pjoin=<host:port> joins another server than localhost:25565.
+        sharedServer {
+            server()
+            gameDirectory = rootProject.file('run/shared-server')
+            programArgument '--nogui'
+        }
+        def joinAddress = providers.gradleProperty('join').getOrElse('localhost:25565')
+        (2..4).each { player ->
+            create("player${player}") {
+                client()
+                gameDirectory = rootProject.file("run/players/player-${player}")
+                programArguments.addAll '--username', "Dev${player}", '--quickPlayMultiplayer', joinAddress
+            }
+        }
+
         // Launches GameTestServer, runs all registered gametests, then exits. By default the server crashes
         // when no gametests are provided. It runs in a folder of its own: the settings its tests change are written
         // to its config folder, and a development client open on run/ would read them again into the world it plays.
