@@ -45,6 +45,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -81,6 +82,10 @@ public final class LithographyClientTests {
     private static final BlockPos CORNER = new BlockPos(2, 1, 2);
     private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
     private static final String PROGRAM = "jsc:lithography";
+    private static final String PORTUGUESE = "pt_br";
+    private static final String ENGLISH = "en_us";
+    /* How long the game's resources take to load again in another language, with room over it. */
+    private static final int RELOAD_WAIT = 1_200;
 
     private LithographyClientTests() {
     }
@@ -168,9 +173,10 @@ public final class LithographyClientTests {
     /**
      * The window on a computer linked to an Injection Moulder: the moulder with its Mould Blank, a list a family of
      * moulds, the Bezels list with each product's bezel and cover, the Fans list with each era's fan frame, and Cut
-     * Mould cutting the Transition fan frame's mould.
+     * Mould cutting the Transition fan frame's mould. In Portuguese, whose seven lists are wider than the strip, the
+     * tabs scroll as an XP tab control's do, the list shown always in view.
      */
-    @ClientTest(timeoutTicks = 2400)
+    @ClientTest(timeoutTicks = 4800)
     public static void framesXp_lithographyWindowCutsTheFanFrameMould(final ClientTestContext ctx) {
         final ChainMachine moulder = ChainMachines.byId("injection_moulder").orElseThrow();
         final BlockPos computer = port(moulder).east(2);
@@ -208,6 +214,23 @@ public final class LithographyClientTests {
                         .is(frame.tool().get()), WRITE_WAIT, "the moulder to cut the Transition fan frame's mould",
                         level -> "its slot holds " + station(ctx, level, moulder).getInventory().getStackInSlot(0))
                 .thenScreenshot(SETTLE * 2, "lithography-moulder-cut");
+        // In Portuguese the seven lists are wider than the strip: it scrolls, the list shown in view.
+        language(ctx, PORTUGUESE)
+                .then(SETTLE, () -> app(ctx).showKind(MouldCutting.Kind.JIGS))
+                .thenScreenshot(SETTLE * 2, "lithography-moulder-jigs-pt")
+                .then(SETTLE, () -> app(ctx).showKind(MouldCutting.Kind.SOCKETS))
+                .thenScreenshot(SETTLE * 2, "lithography-moulder-sockets-pt");
+        language(ctx, ENGLISH);
+    }
+
+    /* Switches the game to {@code code} and waits for its resources to load again and the loading screen to go. */
+    private static ClientTestContext language(final ClientTestContext ctx, final String code) {
+        final CompletableFuture<?>[] reload = new CompletableFuture<?>[1];
+        return ctx.then(SETTLE, () -> {
+            ctx.mc().getLanguageManager().setSelected(code);
+            reload[0] = ctx.mc().reloadResourcePacks();
+        }).thenWaitUntil(() -> reload[0] != null && reload[0].isDone() && ctx.mc().getOverlay() == null,
+                RELOAD_WAIT, "the game to load " + code);
     }
 
     @ClientTest(timeoutTicks = 600)

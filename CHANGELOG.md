@@ -4411,6 +4411,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Core) A row of tabs too wide for its strip, even with its tabs squeezed, scrolls as a Windows XP tab control's
+  does: two arrows at the strip's end move it a tab at a time, and a tab chosen is brought into view. The
+  Lithography program's seven lists of an Injection Moulder fit this way in Portuguese.
 - (Computers) Board components: each socket, slot and connector is made of its own plastic body, "Socket Body (LGA
   1700)" or "Body (DDR5 DIMM Slot)", which the Injection Moulder moulds from the plastic the component took before,
   in the body's own mould, lent to the job and never used up; the component takes its body where it took the

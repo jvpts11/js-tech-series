@@ -2336,6 +2336,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.
 
 ### Changed
+- A row of tabs too wide for its strip, even with its tabs squeezed, scrolls as a Windows XP tab control's
+  does: two arrows at the strip's end move it a tab at a time, and a tab chosen is brought into view. The
+  Lithography program's seven lists of an Injection Moulder fit this way in Portuguese.
 - Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
   cables beside them still show. They still move only near the player.
 - The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its
