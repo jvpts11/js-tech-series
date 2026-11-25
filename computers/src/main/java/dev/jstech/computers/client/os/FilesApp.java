@@ -65,6 +65,7 @@ import dev.jstech.core.text.TextKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -1914,6 +1915,29 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             }
             return;
         }
+        if (button == 0 && Screen.hasShiftDown() && selected >= 0 && selected < rows.size()) {
+            // Shift+click takes the run from the row clicked last to this one, as every file manager does.
+            bandRows.clear();
+            for (int i = Math.min(selected, index); i <= Math.max(selected, index); i++) {
+                if (rows.get(i).kind() == Kind.FILE || rows.get(i).kind() == Kind.DIR) {
+                    bandRows.add(i);
+                }
+            }
+            return;
+        }
+        if (button == 0 && Screen.hasControlDown()) {
+            // Ctrl+click puts the row into the selection, or takes it out.
+            if (bandRows.isEmpty() && selected >= 0) {
+                bandRows.add(selected);
+            }
+            if (bandRows.remove(index)) {
+                selected = bandRows.isEmpty() ? -1 : bandRows.iterator().next();
+            } else {
+                bandRows.add(index);
+                selected = index;
+            }
+            return;
+        }
         bandRows.clear(); // a plain click on a row replaces whatever a sweep had selected
         final long now = System.currentTimeMillis();
         final boolean doubleClick = index == lastClickRow && (now - lastClickAt) < DOUBLE_CLICK_MS;
@@ -2877,6 +2901,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                             bandRows.add(i);
                         }
                     }
+                    // One of them is the row a copy or a cut is taken from: they take the whole selection with it.
+                    selected = bandRows.isEmpty() ? selected : bandRows.iterator().next();
                 } else {
                     return false;
                 }

@@ -395,6 +395,12 @@ public final class DiskFilesystem {
         return fs.files().containsKey(path);
     }
 
+    /** Whether {@code path} names a folder on the disk: one made as such, or one a stored file sits under. */
+    public static boolean isFolder(final ItemStack disk, final String path) {
+        return !path.isEmpty() && namesAFolder(disk.getOrDefault(
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY), path);
+    }
+
     /**
      * The path a new file of {@code content} should take so nothing already on the disk is overwritten:
      * {@code base + extension} when that path is free or already holds this very content, else the first of

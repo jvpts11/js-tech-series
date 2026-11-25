@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.payload.MediumTransferPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.PauseCopyPayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.fs.CopyTiming;
@@ -207,10 +208,10 @@ public final class FileTransferPayloads {
             return;
         }
         /*
-         * Cross-volume (disk <-> media): copy the file then delete the source. Directories are
-         * not copied across volumes here. A name already taken at the destination is not moved over, because the
-         * source is deleted after the write and the file written over would be lost; when the player chose to
-         * replace it, it is set aside first and put back if the write does not go through.
+         * Cross-volume (disk <-> media): copy the file or the folder, then delete the source. A name already taken at
+         * the destination is not moved over, because the source is deleted after the write and the file written over
+         * would be lost; when the player chose to replace it, it is set aside first and put back if the write does
+         * not go through.
          */
         final Displaced displaced = replace ? displace(level, computer, src, destDir) : null;
         if (transfer(level, computer, src, destDir, false) == null) {
@@ -220,7 +221,13 @@ public final class FileTransferPayloads {
             return;
         }
         final boolean srcMedia = src.startsWith("media:");
-        DiskFilesystem.delete(volumeOf(level, computer, src), srcMedia ? mediaSubPath(src) : src);
+        final ItemStack srcVol = volumeOf(level, computer, src);
+        final String realSrc = srcMedia ? mediaSubPath(src) : src;
+        if (DiskFilesystem.isFolder(srcVol, realSrc)) {
+            DiskFilesystem.rmdir(srcVol, realSrc, kindOf(computer, src));
+        } else {
+            DiskFilesystem.delete(srcVol, realSrc);
+        }
         if (srcMedia) {
             commitMedia(level, computer, src);
         } else {
@@ -249,6 +256,9 @@ public final class FileTransferPayloads {
         final boolean dstMedia = destDir.startsWith("media:");
         final String realSrc = srcMedia ? mediaSubPath(src) : src;
         final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
+        if (DiskFilesystem.isFolder(srcVol, realSrc)) {
+            return transferFolder(level, computer, src, destDir, uniqueName);
+        }
         final Optional<String> read = DiskFilesystem.read(srcVol, realSrc);
         if (read.isEmpty()) {
             return null;
@@ -269,6 +279,75 @@ public final class FileTransferPayloads {
             computer.setChanged();
         }
         return destPath;
+    }
+
+    /*
+     * A folder goes across with all it holds: made again in {@code destDir} (a numbered copy when its name is taken
+     * there and {@code uniqueName} says so), then each file and each folder in it put into the new one the same way.
+     * What fitted stays when a file does not go, but only a whole copy counts, so a move then leaves the folder where
+     * it was. Returns the folder made, or null.
+     */
+    @Nullable
+    private static String transferFolder(final ServerLevel level, final IOsHost computer, final String src,
+                                         final String destDir, final boolean uniqueName) {
+        final ItemStack srcVol = volumeOf(level, computer, src);
+        final ItemStack dstVol = volumeOf(level, computer, destDir);
+        final boolean dstMedia = destDir.startsWith("media:");
+        final String realSrc = src.startsWith("media:") ? mediaSubPath(src) : src;
+        final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
+        final String name = realSrc.substring(realSrc.lastIndexOf('/') + 1);
+        final String destPath = uniqueName ? freeFolderPath(dstVol, realDstDir, name) : joined(realDstDir, name);
+        final FilesystemKind dstKind = kindOf(computer, destDir);
+        if (destPath == null || !DiskFilesystem.mkdir(dstVol, destPath, dstKind)) {
+            return null;
+        }
+        final boolean whole = copyTree(level, computer, srcVol, realSrc, kindOf(computer, src), dstVol, destPath,
+                dstKind, dstMedia);
+        if (dstMedia) {
+            commitMedia(level, computer, destDir);
+        } else {
+            computer.setChanged();
+        }
+        return whole ? destPath : null;
+    }
+
+    /* Writes every file of the folder {@code from} into {@code to}, and every folder in it the same way. */
+    private static boolean copyTree(final ServerLevel level, final IOsHost computer, final ItemStack srcVol,
+                                    final String from, final FilesystemKind srcKind, final ItemStack dstVol,
+                                    final String to, final FilesystemKind dstKind, final boolean dstMedia) {
+        for (final DiskFilesystem.FileEntry file : DiskFilesystem.list(srcVol, from, srcKind)) {
+            final Optional<String> content = DiskFilesystem.read(srcVol, file.path());
+            if (file.readOnly() || content.isEmpty()) {
+                continue; // a projection of what the machine holds has no bytes to carry
+            }
+            final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
+            if (DiskFilesystem.write(dstVol, joined(to, file.path().substring(file.path().lastIndexOf('/') + 1)),
+                    file.type(), content.get(), free, dstKind, level.getGameTime()) != DiskFilesystem.WriteResult.OK) {
+                return false;
+            }
+        }
+        for (final String dir : DiskFilesystem.listDirs(srcVol, from, srcKind)) {
+            final String made = joined(to, dir.substring(dir.lastIndexOf('/') + 1));
+            if (!DiskFilesystem.mkdir(dstVol, made, dstKind)
+                    || !copyTree(level, computer, srcVol, dir, srcKind, dstVol, made, dstKind, dstMedia)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /* The first folder name free in {@code dir}: the name, then "name - Copy", then "name - Copy (2)" and on. */
+    @Nullable
+    private static String freeFolderPath(final ItemStack volume, final String dir, final String name) {
+        String candidate = name;
+        for (int n = 0; n < MAX_COPY_NAMES; n++) {
+            final String path = joined(dir, candidate);
+            if (!DiskFilesystem.exists(volume, path) && !DiskFilesystem.isFolder(volume, path)) {
+                return path;
+            }
+            candidate = name + (n == 0 ? " - Copy" : " - Copy (" + (n + 1) + ")");
+        }
+        return null;
     }
 
     /**

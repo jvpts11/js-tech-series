@@ -85,6 +85,36 @@ public final class FileCopyGameTests {
                 .thenSucceed();
     }
 
+    /** A folder pasted onto a medium goes across with every file and every folder it holds, and stays where it was. */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void copy_aFolderGoesAcrossWithAllItHolds(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = withFloppy(helper);
+        final ItemStack disk = computer.systemDisk();
+        DiskFilesystem.mkdirs(disk, "Recipes/Furnace", FilesystemKind.HIERARCHICAL);
+        DiskFilesystem.write(disk, "Recipes/glass.txt", FileType.TXT, "sand", Long.MAX_VALUE,
+                FilesystemKind.HIERARCHICAL);
+        DiskFilesystem.write(disk, "Recipes/Furnace/iron.txt", FileType.TXT, "ore", Long.MAX_VALUE,
+                FilesystemKind.HIERARCHICAL);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(computer.enabledEndpoints().contains(drive(helper)),
+                        "the floppy drive links to the computer"))
+                .thenExecute(() -> FileTransferPayloads.copy(helper.getLevel(), player(helper),
+                        helper.absolutePos(PC), "Recipes", floppy(helper)))
+                .thenWaitUntil(() -> helper.assertTrue(
+                        FileCopyJobs.runningOn(helper.getLevel(), helper.absolutePos(PC)) == 0, "the copy settles"))
+                .thenExecute(() -> {
+                    final ItemStack floppy = ((MediaReaderBlockEntity) helper.getBlockEntity(DRIVE)).mediaSlot()
+                            .getStackInSlot(0);
+                    helper.assertTrue(DiskFilesystem.read(floppy, "Recipes/glass.txt").orElse("").equals("sand"),
+                            "the folder's file is on the floppy");
+                    helper.assertTrue(DiskFilesystem.read(floppy, "Recipes/Furnace/iron.txt").orElse("")
+                            .equals("ore"), "and the file of the folder inside it");
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "Recipes/Furnace/iron.txt")
+                            .isPresent(), "the folder copied is still on the disk");
+                })
+                .thenSucceed();
+    }
+
     /** A move onto a floppy that already holds a file of that name leaves both files as they were. */
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void move_ontoANameAlreadyTakenLeavesBothFilesAlone(final GameTestHelper helper) {

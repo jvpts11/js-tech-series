@@ -4493,6 +4493,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The Crafting Manager loads a machine recipe into a second interface the player names, so a second
   machine works it too: a recipe the computer kept anywhere was refused as "Already loaded". Into the interface that
   holds it, or into the first place with room, a recipe kept is still left as it is.
+- (Computers) Files copies and moves a folder onto another drive, a disc or a floppy, with every file and folder in
+  it: pasting one there did nothing and said nothing. A move takes the folder away only once all of it is across.
+  Shift+click selects the run from the row clicked last, Ctrl+click adds a row or takes it out, and a copy or a cut
+  after Ctrl+A takes everything selected instead of nothing.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
