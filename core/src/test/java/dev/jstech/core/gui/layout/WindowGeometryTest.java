@@ -42,6 +42,47 @@ class WindowGeometryTest {
     }
 
     @Test
+    void resolve_keptInsideABiggerWindowShrinksToTheWorkAreaAndMovesIn() {
+        /*
+         * The shipped bug: the Crafting Manager opened on a big desktop kept its size when the game's window, and
+         * the desktop with it, shrank; its buttons and the ends of its lists lay under the taskbar, out of reach.
+         */
+        final WindowGeometry.Rect r = WindowGeometry.resolve(110, 106, 380, 300, 280, 160, false, 400, 220, 24, 0,
+                true);
+        assertEquals(380, r.w(), "a width that fits is kept");
+        assertEquals(196, r.h(), "the height shrinks to the work area above the taskbar");
+        assertEquals(20, r.x(), "it moves left until its right edge is on the desktop");
+        assertEquals(0, r.y(), "and up until its bottom is above the taskbar");
+    }
+
+    @Test
+    void resolve_keptInsideNeverShrinksBelowTheMinimum() {
+        final WindowGeometry.Rect r = WindowGeometry.resolve(50, 50, 380, 300, 280, 160, false, 250, 150, 24, 0,
+                true);
+        assertEquals(280, r.w(), "never narrower than the minimum, on a desktop narrower than that");
+        assertEquals(160, r.h(), "never lower than the minimum");
+        assertEquals(0, r.x(), "it starts at the desktop's left edge");
+        assertEquals(0, r.y(), "and at the top of the work area");
+    }
+
+    @Test
+    void resolve_keptInsideLeavesAWindowThatFitsWhereItIs() {
+        final WindowGeometry.Rect r = WindowGeometry.resolve(40, 60, 300, 200, 280, 160, false, 800, 600, 24, 0,
+                true);
+        assertEquals(40, r.x());
+        assertEquals(60, r.y());
+        assertEquals(300, r.w());
+        assertEquals(200, r.h());
+    }
+
+    @Test
+    void resolve_keptInsideStaysUnderATopPanel() {
+        final WindowGeometry.Rect r = WindowGeometry.resolve(10, 2, 300, 200, 280, 160, false, 800, 600, 0, 24,
+                true);
+        assertEquals(24, r.y(), "a window above the top panel comes down under it");
+    }
+
+    @Test
     void resolve_maximizedFillsTheDesktopAboveTheTaskbar() {
         final WindowGeometry.Rect r = WindowGeometry.resolve(10, 20, 200, 100, 313, 158, true, 800, 600, 24);
         assertEquals(0, r.x());

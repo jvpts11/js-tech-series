@@ -5088,6 +5088,7 @@ stable 4
 10 dev.jstech.core.gui.layout.WindowGeometry  type final class
 10 dev.jstech.core.gui.layout.WindowGeometry  static Rect resolve(int, int, int, int, int, int, boolean, int, int, int)
 10 dev.jstech.core.gui.layout.WindowGeometry  static Rect resolve(int, int, int, int, int, int, boolean, int, int, int, int)
+99 dev.jstech.core.gui.layout.WindowGeometry  static Rect resolve(int, int, int, int, int, int, boolean, int, int, int, int, boolean)
 10 dev.jstech.core.gui.layout.WindowGeometry  static Rect scissor(float, float, float, float, int, int, int, int)
 10 dev.jstech.core.gui.layout.WindowGeometry  static Rect scissor(int, int, int, int, int, int)
 10 dev.jstech.core.gui.layout.WindowGeometry.Rect  type record(int x, int y, int w, int h)

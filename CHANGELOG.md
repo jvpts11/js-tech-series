@@ -704,6 +704,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `{"locator": "body"}`, so a model a game draws from a glTF file holds things as one from Blockbench does, and a
   locator on a bone its loop shrinks to nothing draws nothing. `FacePicture`'s record gains its things before its
   tray. Experimental.
+- (Core) A window kept on the desktop: J's Core's API is at version 99. `WindowGeometry.resolve` takes whether a
+  floating window stays inside the work area, shrinking to fit it, never below its minimum, and moving in.
+  Experimental.
 - (Core) A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
   machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
   ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.
@@ -4483,6 +4486,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   cable's interfaces from its own side and drove its share in that order, so one interface could be driven by two
   computers and another by none. A Repeater on a crafting cable now carries it on, as it carries the data lines: the
   interfaces beyond it are on the same network instead of the cable ending at it.
+- (Computers) A window on a computer's desktop stays inside the desktop: one opened on a larger desktop, or one the
+  desktop shrank under with the game's window, shrinks to fit, never below its program's smallest, and moves in. The
+  Crafting Manager's buttons and the ends of its lists lay under the taskbar in a small game window, so its lists
+  seemed to stop before their end.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

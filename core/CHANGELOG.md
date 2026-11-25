@@ -571,6 +571,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `{"locator": "body"}`, so a model a game draws from a glTF file holds things as one from Blockbench does, and a
   locator on a bone its loop shrinks to nothing draws nothing. `FacePicture`'s record gains its things before its
   tray. Experimental.
+- A window kept on the desktop: J's Core's API is at version 99. `WindowGeometry.resolve` takes whether a
+  floating window stays inside the work area, shrinking to fit it, never below its minimum, and moving in.
+  Experimental.
 - A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
   machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
   ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.

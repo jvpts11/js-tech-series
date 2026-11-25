@@ -471,17 +471,21 @@ public final class DesktopWindow {
          * The minimum-size clamp lives in the unit-tested WindowGeometry so it can never silently go missing
          * again (the bug where a stale small geometry squashed the content and clipped the details panel).
          */
+        // A window in its program's own shape keeps that shape, though it may be more than the desktop has room for.
         final WindowGeometry.Rect r = WindowGeometry.resolve(x, y, w, h, app.minWidth(), app.minHeight(),
-                maximized, screenW, screenH, taskbarH, workTop);
+                maximized, screenW, screenH, taskbarH, workTop, !ownFrame());
         curX = r.x();
         curY = r.y();
         curW = r.w();
         curH = r.h();
         /*
-         * Persist the bumped-up floating size so a stale, too-small saved geometry is corrected once and the
-         * resize/drag math (which reads w/h) stays consistent with what is rendered.
+         * Persist the floating geometry as resolved, bumped up to the minimum or brought inside the work area, so a
+         * stale saved geometry is corrected once and the resize/drag math (which reads x/y/w/h) stays consistent with
+         * what is rendered.
          */
         if (!maximized) {
+            this.x = curX;
+            this.y = curY;
             this.w = curW;
             this.h = curH;
         }

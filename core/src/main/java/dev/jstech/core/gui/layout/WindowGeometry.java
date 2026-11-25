@@ -54,10 +54,33 @@ public final class WindowGeometry {
     public static Rect resolve(final int x, final int y, final int w, final int h,
                                final int minW, final int minH, final boolean maximized,
                                final int screenW, final int screenH, final int taskbarH, final int workTop) {
+        return resolve(x, y, w, h, minW, minH, maximized, screenW, screenH, taskbarH, workTop, false);
+    }
+
+    /**
+     * As {@link #resolve(int, int, int, int, int, int, boolean, int, int, int, int)}, and with {@code keepInside} a
+     * floating window also stays inside the work area: one bigger than it (opened on a larger desktop, or the desktop
+     * shrank under it with the game's window) shrinks to fit, never below its minimum, and moves in. Otherwise its
+     * bottom, with its buttons and the ends of its lists, lies off the desktop where nothing can reach it.
+     */
+    public static Rect resolve(final int x, final int y, final int w, final int h,
+                               final int minW, final int minH, final boolean maximized,
+                               final int screenW, final int screenH, final int taskbarH, final int workTop,
+                               final boolean keepInside) {
         if (maximized) {
             return new Rect(0, workTop, screenW, Math.max(0, screenH - taskbarH - workTop));
         }
-        return new Rect(x, y, Math.max(w, minW), Math.max(h, minH));
+        final int width = Math.max(w, minW);
+        final int height = Math.max(h, minH);
+        final int workBottom = screenH - taskbarH;
+        // Before the desktop is laid out it has no size to keep a window in.
+        if (!keepInside || screenW <= 0 || workBottom <= workTop) {
+            return new Rect(x, y, width, height);
+        }
+        final int fitW = Math.max(minW, Math.min(width, screenW));
+        final int fitH = Math.max(minH, Math.min(height, workBottom - workTop));
+        return new Rect(Math.max(0, Math.min(x, screenW - fitW)), Math.max(workTop, Math.min(y, workBottom - fitH)),
+                fitW, fitH);
     }
 
     /**
