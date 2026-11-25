@@ -149,7 +149,7 @@ final class HardwareRecipes {
                     add(items, part("power_eps"), board.cpuSlots());
                 }
             }
-            saveOn(output, era, part.item(), items, BoardJigs.of(board.formFactor()).map(jig -> jig.item().get())
+            saveOn(output, era, part.item(), items, BoardJigs.of(board).map(jig -> jig.item().get())
                     .orElse(null));
         }
     }

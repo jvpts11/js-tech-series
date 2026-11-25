@@ -6,7 +6,7 @@ covers: [jsc:blank_film, jsc:phototool_vintage, jsc:phototool_legacy, jsc:photot
 ---
 # Printing a film
 
-Two things in the chain are drawings on film: the Vintage's Layouts, the drawing of each chip its Lithography Station writes the chip's mask from, and each era's phototool, the drawing of its etched board's layers. A computer's printer prints either on Blank Film, two sheets of it made of a PVC sheet at the Vintage's Electronics Workbench. A Layout is used up writing its mask; a phototool is never used up: a job lends it to the Board Etcher and takes it back, and one serves every board of its era.
+Two things in the chain are drawings on film: the Vintage's Layouts, the drawing of each chip its Lithography Station writes the chip's mask from, and each era's phototool, the drawing of its etched board's layers. A computer's printer prints either on Blank Film, two sheets of it made of a PVC sheet and a silver dust, its emulsion, at the Vintage's Electronics Workbench. A Layout is used up writing its mask; a phototool is never used up: a job lends it to the Board Etcher and takes it back, and one serves every board of its era.
 
 You print the film from the computer the printer is linked to, with Midsoft Lithography, the program that writes a Lithography Station's masks.
 

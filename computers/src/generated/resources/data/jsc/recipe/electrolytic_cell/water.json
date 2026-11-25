@@ -7,6 +7,12 @@
     }
   ],
   "type": "jsc:electrolytic_cell",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jscore:caustic_soda_dust"
+    }
+  ],
   "fluid_inputs": [
     {
       "amount": 1000,

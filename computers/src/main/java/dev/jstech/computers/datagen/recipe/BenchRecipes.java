@@ -9,6 +9,7 @@ package dev.jstech.computers.datagen.recipe;
 
 import static dev.jstech.computers.datagen.recipe.BenchItems.made;
 import static dev.jstech.computers.datagen.recipe.BenchItems.pvc;
+import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.dust;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.kind;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.nugget;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
@@ -80,10 +81,12 @@ final class BenchRecipes {
                 Items.IRON_INGOT, 4, Items.COPPER_INGOT, 4, Items.REDSTONE, 1);
         made(output, HardwareEra.LEGACY, "antenna", ChainParts.ANTENNA.get(), 2,
                 of(Element.COPPER, Forms.ROD), 1, pvc(), 1);
-        // A block of steel the Injection Moulder's computer cuts a mould into.
-        made(output, HardwareEra.VINTAGE, "mould_blank", ChainChips.MOULD_BLANK.get(), 1, BenchItems.steelPlate(), 4);
-        // Clear film the computer's printer prints a Layout or a phototool on, two of a PVC sheet.
-        made(output, HardwareEra.VINTAGE, "blank_film", ChainChips.BLANK_FILM.get(), 2, pvc(), 1);
+        // A block of tool steel, a chromium steel, that the Injection Moulder's computer cuts a mould into.
+        made(output, HardwareEra.VINTAGE, "mould_blank", ChainChips.MOULD_BLANK.get(), 1, BenchItems.steelPlate(), 4,
+                nugget(Element.CHROMIUM), 1);
+        // Film the computer's printer prints a Layout or a phototool on: a PVC base under a silver halide emulsion.
+        made(output, HardwareEra.VINTAGE, "blank_film", ChainChips.BLANK_FILM.get(), 2, pvc(), 1,
+                dust(Element.SILVER), 1);
     }
 
     /*

@@ -15,6 +15,8 @@ import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.lithography.FilmPrinting;
 import dev.jstech.computers.lithography.LithographyDesk;
 import dev.jstech.computers.lithography.LithographyLook;
+import dev.jstech.core.jstechseries.Element;
+import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.material.Forms;
@@ -39,8 +41,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * Printing a film (computers/docs/design/survival.md): the lithography program has the printer linked to its computer
  * print a phototool on a Blank Film from its tray, and refuses with no Blank Film there; the Vintage's Layouts are
- * printed, no longer made at a bench; the Blank Film is two of a PVC sheet; and each era's etched board is etched
- * through its phototool, which the job lends the etcher.
+ * printed, no longer made at a bench; the Blank Film is two of a PVC sheet and a silver dust; and each era's etched
+ * board is etched through its phototool, which the job lends the etcher.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -109,9 +111,13 @@ public final class FilmPrintingGameTests {
                     + " is printed, made by no recipe");
         }
         final List<ProcessingRecipe> film = recipesMaking(helper, ChainChips.BLANK_FILM.get());
+        final ItemStack pvc = new ItemStack(MaterialUses.item(SeriesCompounds.PVC, Forms.SHEET).get());
+        final ItemStack silver = new ItemStack(MaterialUses.item(Elements.of(Element.SILVER), Forms.DUST).get());
         helper.assertTrue(film.size() == 1 && film.getFirst().outputs().getFirst().getCount() == 2
-                && film.getFirst().inputs().size() == 1 && film.getFirst().inputs().getFirst().test(new ItemStack(
-                MaterialUses.item(SeriesCompounds.PVC, Forms.SHEET).get())), "Blank Film is two of a PVC sheet");
+                && film.getFirst().inputs().size() == 2
+                && film.getFirst().inputs().stream().anyMatch(input -> input.test(pvc))
+                && film.getFirst().inputs().stream().anyMatch(input -> input.test(silver)),
+                "Blank Film is two of a PVC sheet under a silver dust's emulsion");
         for (int i = 0; i < ChainParts.ERAS.size(); i++) {
             final Item phototool = ChainParts.PHOTOTOOLS.get(i).get();
             final List<ProcessingRecipe> etched = recipesMaking(helper, ChainParts.ETCHED_BOARDS.get(i).get());

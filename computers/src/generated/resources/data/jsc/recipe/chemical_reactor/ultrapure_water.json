@@ -11,6 +11,10 @@
     {
       "amount": 1000,
       "fluid": "minecraft:water"
+    },
+    {
+      "amount": 50,
+      "fluid": "jscore:sulfuric_acid"
     }
   ],
   "fluid_outputs": [

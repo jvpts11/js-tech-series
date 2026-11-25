@@ -8,6 +8,10 @@
     {
       "count": 1,
       "item": "jscore:steel_rod"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_sheet"
     }
   ],
   "outputs": [

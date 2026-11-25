@@ -256,6 +256,7 @@
     "jsc:extrusion_die_legacy_peripheral_cable",
     "jsc:board_jig_atx",
     "jsc:board_jig_eatx",
+    "jsc:board_jig_dual_eatx",
     "jsc:board_jig_quince_qrusset_g3",
     "jsc:board_jig_quince_power_g4",
     "jsc:board_jig_quince_qserve_legacy",

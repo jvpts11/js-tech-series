@@ -273,8 +273,10 @@ final class MaterialRecipes {
     /* Water split, the chlor-alkali cell, aluminium from alumina and coke, and copper refined. */
     private static void electrolysis(final RecipeOutput output) {
         final ProcessingKind cell = kind("electrolytic_cell");
+        // Alkaline electrolysis: the caustic soda electrolyte stays in the cell, never used up.
         final ChainRecipeItems.Saved water = recipe(cell, "water");
         water.builder().fluidInput(Fluids.WATER, BUCKET)
+                .catalyst(Ingredient.of(of(SeriesCompounds.CAUSTIC_SODA, Forms.DUST)), 1)
                 .matterOutput(Elements.of(Element.HYDROGEN), BUCKET).matterOutput(Elements.of(Element.OXYGEN), 500);
         water.save(output);
         final ChainRecipeItems.Saved brine = recipe(cell, "chlor_alkali");
@@ -338,9 +340,11 @@ final class MaterialRecipes {
                 .fluidInput(liquid(SeriesChemicals.METHANOL), 500).output(of(SeriesCompounds.PHENOLIC_RESIN,
                         Forms.PLATE), 1);
         phenolic.save(output);
+        // Epoxy forms with caustic soda, which polycarbonate does not take.
         final ChainRecipeItems.Saved epoxy = recipe(reactor, "epoxy_resin");
         epoxy.builder().fluidInput(liquid(SeriesChemicals.PHENOL), 500).matterInput(Elements.of(Element.CHLORINE), 250)
-                .output(of(SeriesCompounds.EPOXY_RESIN, Forms.PLATE), 1);
+                .input(of(SeriesCompounds.CAUSTIC_SODA, Forms.DUST), 1).output(of(SeriesCompounds.EPOXY_RESIN,
+                        Forms.PLATE), 1);
         epoxy.save(output);
         final ChainRecipeItems.Saved polycarbonate = recipe(reactor, "polycarbonate");
         polycarbonate.builder().fluidInput(liquid(SeriesChemicals.PHENOL), 500)
@@ -367,8 +371,10 @@ final class MaterialRecipes {
         quartz.save(output);
         made(output, reactor, "phosphorus", List.of(Items.BONE_MEAL, of(SeriesCompounds.COKE, Forms.LUMP),
                 Items.SAND), List.of(4, 1, 1), dust(Element.PHOSPHORUS), 1);
+        // Water through ion-exchange beds, regenerated with acid.
         final ChainRecipeItems.Saved ultrapure = recipe(reactor, "ultrapure_water");
-        ultrapure.builder().fluidInput(Fluids.WATER, BUCKET).fluidOutput(liquid(SeriesChemicals.ULTRAPURE_WATER), 500);
+        ultrapure.builder().fluidInput(Fluids.WATER, BUCKET).fluidInput(liquid(SeriesChemicals.SULFURIC_ACID), 50)
+                .fluidOutput(liquid(SeriesChemicals.ULTRAPURE_WATER), 500);
         ultrapure.save(output);
         made(output, reactor, "zinc_sulfide", List.of(dust(Element.ZINC), dust(Element.SULFUR)), List.of(1, 1),
                 of(SeriesCompounds.ZINC_SULFIDE, Forms.DUST), 1);

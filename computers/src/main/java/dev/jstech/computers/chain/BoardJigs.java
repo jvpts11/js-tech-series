@@ -10,6 +10,7 @@ package dev.jstech.computers.chain;
 import static dev.jstech.computers.chain.ChainParts.part;
 
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -27,7 +28,13 @@ import net.minecraft.world.item.Item;
  */
 public final class BoardJigs {
 
-    /** A jig for each form factor of the boards, in the order of the eras that first make them. */
+    /* What the jig of the EATX boards with two processor sockets holds, laid out unlike the one-socket boards'. */
+    private static final String DUAL_EATX = "dual_eatx";
+
+    /**
+     * A jig for each form factor of the boards, and the two-socket EATX boards' own, in the order of the eras that
+     * first make them.
+     */
     public static final List<Jig> FORM_FACTORS = List.of(
             formFactor(HardwareEra.VINTAGE, FormFactor.AT).named("Board Jig (AT)"),
             formFactor(HardwareEra.VINTAGE, FormFactor.BABY_AT).named("Board Jig (Baby-AT)"),
@@ -35,6 +42,7 @@ public final class BoardJigs {
             formFactor(HardwareEra.VINTAGE, FormFactor.MTX).named("Board Jig (MTX)"),
             formFactor(HardwareEra.LEGACY, FormFactor.ATX).named("Board Jig (ATX)"),
             formFactor(HardwareEra.LEGACY, FormFactor.EATX).named("Board Jig (EATX)"),
+            new Declaration(HardwareEra.LEGACY, DUAL_EATX, "board_jig_dual_eatx").named("Board Jig (Dual EATX)"),
             formFactor(HardwareEra.TRANSITION, FormFactor.MNG).named("Board Jig (MNG)"));
     /** A jig for each of Quince's logic boards, in the order of the eras. */
     public static final List<Jig> QUINCE = List.of(
@@ -73,6 +81,14 @@ public final class BoardJigs {
         return FORM_FACTORS.stream().filter(jig -> jig.boards().equals(formFactor.id())).findFirst();
     }
 
+    /** The jig {@code board} is assembled on: its form factor's, or the two-socket EATX boards' own. */
+    public static Optional<Jig> of(final MotherboardSpec board) {
+        if (board.formFactor() == FormFactor.EATX && board.cpuSlots() > 1) {
+            return FORM_FACTORS.stream().filter(jig -> jig.boards().equals(DUAL_EATX)).findFirst();
+        }
+        return of(board.formFactor());
+    }
+
     /** The jig of Quince's logic board {@code board}, "russet_128k". */
     public static Jig ofQuince(final String board) {
         return QUINCE.stream().filter(jig -> jig.boards().equals(board)).findFirst()
@@ -94,7 +110,8 @@ public final class BoardJigs {
      * One jig.
      *
      * @param era    the era it is first used in
-     * @param boards what it holds: a form factor's id, "jsc:atx", or a Quince logic board's, "russet_128k"
+     * @param boards what it holds: a form factor's id, "jsc:atx", the two-socket EATX boards' "dual_eatx", or a
+     *               Quince logic board's, "russet_128k"
      * @param item   its item
      */
     public record Jig(Era era, String boards, ItemEntry<Item> item) {

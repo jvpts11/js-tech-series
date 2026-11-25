@@ -32,6 +32,7 @@ import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.SeriesAlloys;
+import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.material.Forms;
@@ -171,8 +172,9 @@ final class PeripheralRecipes {
     private static void speakers(final RecipeOutput output) {
         final Item coil = ChainParts.COPPER_COIL.get();
         final Item ferrite = ChainParts.FERRITE.get();
+        // A computer's powered speaker, its amplifier on an etched board.
         made(output, HardwareEra.LEGACY, item("legacy_speaker"), coil, 1, ferrite, 1, Items.PAPER, 1, polycarbonate(),
-                1);
+                1, board(HardwareEra.LEGACY), 1);
         made(output, HardwareEra.TRANSITION, item("transition_speaker"), coil, 1, ferrite, 1, Items.PAPER, 1,
                 polycarbonate(), 1, copperWire(), 2);
         made(output, HardwareEra.TRANSITION, item("transition_subwoofer"), coil, 2, ferrite, 2, Items.PAPER, 2,
@@ -227,8 +229,9 @@ final class PeripheralRecipes {
     private static void media(final RecipeOutput output) {
         final Item blank = ChainParts.BLANK_DISC.get();
         made(output, HardwareEra.VINTAGE, item("floppy_disk"), ChainParts.FLOPPY_FILM.get(), 1, pvc(), 1);
+        // The CD-RW's recording layer lies between zinc sulfide dielectrics.
         made(output, HardwareEra.LEGACY, item("cd_rw"), blank, 1, of(Element.ALUMINIUM, Forms.FOIL), 1,
-                dust(Element.SILVER), 1);
+                dust(Element.SILVER), 1, of(SeriesCompounds.ZINC_SULFIDE, Forms.DUST), 1);
         made(output, HardwareEra.TRANSITION, item("dvd_rw"), blank, 2, of(Element.ALUMINIUM, Forms.FOIL), 1,
                 dust(Element.SILVER), 1, dust(Element.INDIUM), 1);
         made(output, HardwareEra.ADVANCED, item("bd_re"), blank, 1, of(Element.SILVER, Forms.FOIL), 1,
@@ -246,9 +249,12 @@ final class PeripheralRecipes {
         made(output, HardwareEra.ADVANCED, item("usb_flash_drive_64g"), memory(HardwareEra.ADVANCED), 1,
                 controller(HardwareEra.ADVANCED), 1, board(HardwareEra.ADVANCED), 1, of(Element.ALUMINIUM, Forms.PLATE),
                 1, copperFoil(), 2);
-        made(output, HardwareEra.VINTAGE, item("tape_reel"), pvc(), 2, dust(Element.IRON), 1);
+        // An open reel's tape is wound on a metal reel; a DLT's tape is cobalt-doped iron oxide.
+        made(output, HardwareEra.VINTAGE, item("tape_reel"), pvc(), 2, dust(Element.IRON), 1,
+                of(Element.ALUMINIUM, Forms.SHEET), 1);
         made(output, HardwareEra.VINTAGE, item("blank_vinyl_record"), pvc(), 2, Items.PAPER, 1);
-        made(output, HardwareEra.LEGACY, item("dlt_tape"), pvc(), 2, dust(Element.IRON), 1, polycarbonate(), 1);
+        made(output, HardwareEra.LEGACY, item("dlt_tape"), pvc(), 2, dust(Element.IRON), 1, polycarbonate(), 1,
+                dust(Element.COBALT), 1);
         made(output, HardwareEra.TRANSITION, item("lto3_tape"), pvc(), 2, dust(Element.IRON), 2, polycarbonate(), 1,
                 memory(HardwareEra.TRANSITION), 1);
         made(output, HardwareEra.STANDARD, item("lto6_tape"), pvc(), 2, ChainParts.FERRITE.get(), 1, polycarbonate(),

@@ -12,6 +12,10 @@
     {
       "count": 1,
       "item": "jsc:thermal_paste"
+    },
+    {
+      "count": 1,
+      "item": "jscore:steel_plate"
     }
   ],
   "outputs": [

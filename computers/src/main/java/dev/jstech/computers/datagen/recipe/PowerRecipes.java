@@ -88,8 +88,9 @@ final class PowerRecipes {
         made(output, HardwareEra.STANDARD, caseFan(HardwareEra.STANDARD), motor, 1, frame(HardwareEra.STANDARD), 1);
         made(output, HardwareEra.ADVANCED, caseFan(HardwareEra.ADVANCED), motor, 1, frame(HardwareEra.ADVANCED), 1,
                 ChainParts.LED.get(), 1);
-        // The Vintage's stock cooler is its heat sink and the steel clip that holds it on the processor.
-        made(output, HardwareEra.VINTAGE, CoolingItems.VINTAGE_STOCK_COOLER.get(), aluminiumPlate(), 1, steelRod(), 1);
+        // The Vintage's stock cooler is its heat sink, its fins and the steel clip that holds it on the processor.
+        made(output, HardwareEra.VINTAGE, CoolingItems.VINTAGE_STOCK_COOLER.get(), aluminiumPlate(), 1, steelRod(), 1,
+                aluminiumSheet(), 1);
         made(output, HardwareEra.LEGACY, CoolingItems.LEGACY_STOCK_COOLER.get(), aluminiumPlate(), 1,
                 caseFan(HardwareEra.LEGACY), 1, paste, 1);
         made(output, HardwareEra.TRANSITION, CoolingItems.TRANSITION_STOCK_COOLER.get(), aluminiumPlate(), 1,
@@ -115,9 +116,9 @@ final class PowerRecipes {
                     mouldedFor(output, big, pvc(), 1), 1, water, 1, paste, 1);
         }
         // The Russet Pros' heat sinks are passive, the case's fans blowing through them: no fan of their own, and more
-        // aluminium and heat pipes than the era's tower cooler for their size.
+        // aluminium and heat pipes than the era's tower cooler for their size. The 2006 one screws onto a steel plate.
         made(output, HardwareEra.TRANSITION, QuinceItems.HEAT_SINK_PRO_2006.get(), aluminiumSheet(), 4, copperRod, 2,
-                paste, 1);
+                paste, 1, steelPlate(), 1);
         made(output, HardwareEra.STANDARD, QuinceItems.HEAT_SINK_PRO_2019.get(), aluminiumSheet(), 6, copperRod, 4,
                 paste, 1);
     }

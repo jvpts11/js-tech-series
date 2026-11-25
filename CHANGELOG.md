@@ -4453,6 +4453,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   nugget and 100 mB of mercury sealed at the Display Line, in place of a bucket of mercury.
 - (Computers) The Board Etcher has a second inlet, below the first, for the phototool its job lends it: with one
   inlet the laminate and the phototool could not both be in, and no etched board was ever made.
+- (Computers) No recipe's lot holds another recipe a machine works, counting the earlier eras' recipes a later bench
+  works too, so a lot arriving a part at a time never starts the wrong one. The Mould Blank takes a chromium nugget
+  (tool steel), the Blank Film a silver dust (its emulsion), ultrapure water 50 mB of sulfuric acid (its ion-exchange
+  beds' regenerant), the Vintage stock cooler an aluminium sheet (its fins), the Russet Pro's 2006 heat sink a steel
+  plate (its mounting plate), the Legacy speaker a Legacy etched board (its amplifier), the tape reel an aluminium
+  sheet (its reel), the DLT tape a cobalt dust (its coat), the CD-RW a zinc sulfide dust (its dielectric) and epoxy
+  resin a caustic soda dust; water electrolysis keeps a caustic soda dust in the cell as its electrolyte; and the
+  six EATX boards with two processor sockets are assembled on a jig of their own, the Board Jig (Dual EATX).
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

@@ -6,7 +6,7 @@ covers: [jsc:blank_film, jsc:phototool_vintage, jsc:phototool_legacy, jsc:photot
 ---
 # Imprimir um filme
 
-Duas coisas da cadeia são desenhos em filme: os Layouts do Vintage, o desenho de cada chip de que a sua Estação de Litografia grava a máscara do chip, e a fotoferramenta de cada era, o desenho das camadas da sua placa gravada. A impressora de um computador imprime qualquer um deles num Filme Virgem, duas folhas dele feitas de uma folha de PVC na Bancada de Eletrônica do Vintage. Um Layout se gasta ao gravar a sua máscara; uma fotoferramenta nunca se gasta: um trabalho a empresta ao Gravador de Placas e a pega de volta, e uma serve a toda placa da sua era.
+Duas coisas da cadeia são desenhos em filme: os Layouts do Vintage, o desenho de cada chip de que a sua Estação de Litografia grava a máscara do chip, e a fotoferramenta de cada era, o desenho das camadas da sua placa gravada. A impressora de um computador imprime qualquer um deles num Filme Virgem, duas folhas dele feitas de uma folha de PVC e um pó de prata, a sua emulsão, na Bancada de Eletrônica do Vintage. Um Layout se gasta ao gravar a sua máscara; uma fotoferramenta nunca se gasta: um trabalho a empresta ao Gravador de Placas e a pega de volta, e uma serve a toda placa da sua era.
 
 Você imprime o filme pelo computador a que a impressora está ligada, com o Midsoft Lithography, o programa que grava as máscaras de uma Estação de Litografia.
 

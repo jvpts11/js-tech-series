@@ -14,6 +14,7 @@ import static dev.jstech.tests.testkit.computers.ChainMachineSite.place;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.CoolingItems;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.chain.BoardJigs;
 import dev.jstech.computers.chain.BoardParts;
@@ -23,8 +24,10 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.MoulderBlockEntity;
 import dev.jstech.computers.chain.machine.MouldCutting;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.lithography.LithographyDesk;
 import dev.jstech.computers.lithography.LithographyLook;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.machine.ProcessingRecipe;
@@ -44,6 +47,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -66,6 +70,8 @@ public final class MouldingGameTests {
     private static final int SHEETS = 2;
     /* The motherboards of the seven form factors, 57, and Quince's 16 logic boards. */
     private static final int BOARDS = 57 + 16;
+    /* The EATX boards with two sockets: Legacy 604 and 940, Transition 771, Standard 2011, Advanced 4677 and SP5. */
+    private static final int DUAL_SOCKET_BOARDS = 6;
 
     private MouldingGameTests() {
     }
@@ -209,6 +215,27 @@ public final class MouldingGameTests {
             }
         }
         helper.assertTrue(boards >= BOARDS, "every board's recipe was seen: " + boards);
+        helper.succeed();
+    }
+
+    /* The EATX boards with two processor sockets are laid out unlike the one-socket ones, on a jig of their own. */
+    @GameTest(template = ARENA)
+    public static void dualSocketBoards_areAssembledOnTheirOwnJig(final GameTestHelper helper) {
+        final ItemStack dual = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(
+                JsComputers.MODID, "board_jig_dual_eatx")));
+        final ItemStack single = new ItemStack(BoardJigs.of(FormFactor.EATX).orElseThrow().item().get());
+        int duals = 0;
+        for (final RecipeHolder<?> holder : helper.getLevel().getRecipeManager().getRecipes()) {
+            if (holder.value() instanceof ProcessingRecipe recipe && recipe.outputs().size() == 1
+                    && HardwareRegistry.part(recipe.outputs().getFirst().getItem()) instanceof HardwareRegistry.Part
+                    part && part.spec() instanceof MotherboardSpec board && board.formFactor() == FormFactor.EATX) {
+                final boolean two = board.cpuSlots() > 1;
+                duals += two ? 1 : 0;
+                helper.assertTrue(recipe.catalysts().size() == 1 && recipe.catalysts().getFirst().test(two ? dual
+                        : single), holder.id() + " is assembled on the " + (two ? "dual" : "one-socket") + " jig");
+            }
+        }
+        helper.assertTrue(duals == DUAL_SOCKET_BOARDS, "the six two-socket EATX boards were seen: " + duals);
         helper.succeed();
     }
 
