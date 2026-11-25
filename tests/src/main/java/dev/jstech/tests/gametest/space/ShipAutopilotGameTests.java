@@ -433,12 +433,16 @@ public final class ShipAutopilotGameTests {
                             0, 0)).engaged(Optional.of(ShipAutopilot.orbit())));
                 })
                 .thenIdle(CLIMBING)
-                .thenExecute(() -> {
+                // Waited for, not counted: on a slow machine the physics budget lets the ship skip ticks.
+                .thenWaitUntil(() -> {
                     final ShipFlight flight = flight(ship[0]);
                     final double[] nose = flight.noseIn(ship[0].frame());
                     final double pitch = Math.toDegrees(Math.asin(Mth.clamp(nose[1], -1, 1)));
                     helper.assertTrue(Math.abs(pitch - 55) < ON_THE_CLIMB, "ORBIT pitches its nose up to the climb:"
                             + " " + pitch + ", " + flight.state() + " at " + ship[0].pose());
+                })
+                .thenExecute(() -> {
+                    final ShipFlight flight = flight(ship[0]);
                     helper.assertTrue(flight.state().throttle() > OPEN, "its throttle open: " + flight.state());
                     final ShipReadings.Pilot shown = console(ship[0]).flight().pilot();
                     helper.assertTrue(shown.mode().equals("orbit") && shown.apogee() == SpaceClimbs.ceiling(level)
