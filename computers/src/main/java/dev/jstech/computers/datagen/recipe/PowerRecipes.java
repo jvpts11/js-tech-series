@@ -25,6 +25,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelSheet;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.moulded;
+import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.mouldedFor;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 
 import dev.jstech.computers.CoolingItems;
@@ -67,8 +68,8 @@ final class PowerRecipes {
      * polycarbonate after; the bigger fan takes more plastic, and the Advanced's carries its light ring (an LED). The
      * stock cooler is an aluminium plate in the Vintage, with a fan and thermal paste from the Legacy and a copper rod
      * from the Transition; the tower cooler 4 aluminium sheets, 2 copper rods (the heat pipes), a fan and thermal
-     * paste; the all-in-one MF AquaLoop a copper plate, the pump (a motor), the radiator, 2 or 3 fans, the hose (PVC),
-     * its water (a water bottle, about the 250 mB it holds) and thermal paste.
+     * paste; the all-in-one MF AquaLoop a copper plate, the pump (a motor) under its own cover, moulded of a PVC sheet,
+     * the radiator, 2 or 3 fans, its water (a water bottle, about the 250 mB it holds) and thermal paste.
      */
     private static void cooling(final RecipeOutput output) {
         final Item motor = ChainParts.ELECTRIC_MOTOR.get();
@@ -103,12 +104,14 @@ final class PowerRecipes {
             final boolean standard = era == HardwareEra.STANDARD;
             made(output, era, (standard ? CoolingItems.STANDARD_TOWER_COOLER : CoolingItems.ADVANCED_TOWER_COOLER)
                     .get(), aluminiumSheet(), 4, copperRod, 2, caseFan(era), 1, paste, 1);
-            made(output, era, (standard ? CoolingItems.STANDARD_AQUALOOP_240 : CoolingItems.ADVANCED_AQUALOOP_240)
-                    .get(), copperPlate, 1, motor, 1, aluminiumSheet(), 4, caseFan(era), 2, pvc(), 1, water, 1, paste,
-                    1);
-            made(output, era, (standard ? CoolingItems.STANDARD_AQUALOOP_360 : CoolingItems.ADVANCED_AQUALOOP_360)
-                    .get(), copperPlate, 1, motor, 1, aluminiumSheet(), 6, caseFan(era), 3, pvc(), 1, water, 1, paste,
-                    1);
+            final Item small = (standard ? CoolingItems.STANDARD_AQUALOOP_240 : CoolingItems.ADVANCED_AQUALOOP_240)
+                    .get();
+            made(output, era, small, copperPlate, 1, motor, 1, aluminiumSheet(), 4, caseFan(era), 2,
+                    mouldedFor(output, small, pvc(), 1), 1, water, 1, paste, 1);
+            final Item big = (standard ? CoolingItems.STANDARD_AQUALOOP_360 : CoolingItems.ADVANCED_AQUALOOP_360)
+                    .get();
+            made(output, era, big, copperPlate, 1, motor, 1, aluminiumSheet(), 6, caseFan(era), 3,
+                    mouldedFor(output, big, pvc(), 1), 1, water, 1, paste, 1);
         }
         // The Russet Pros' heat sinks are passive, the case's fans blowing through them: no fan of their own, and more
         // aluminium and heat pipes than the era's tower cooler for their size.

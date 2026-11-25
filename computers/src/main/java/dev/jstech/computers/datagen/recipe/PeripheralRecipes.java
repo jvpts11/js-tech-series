@@ -25,6 +25,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelSheet;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.dust;
+import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.mouldedFor;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.nugget;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 
@@ -65,9 +66,10 @@ final class PeripheralRecipes {
     }
 
     /*
-     * The Display Line's screen of its era, an etched board and a case of 2 PVC sheets (Vintage) or 2 polycarbonate.
-     * The Vintage tubes differ by their phosphor: white (the tube's own zinc sulfide), green (doped with copper), amber
-     * (with manganese), and the CGA's colours (both, behind a steel shadow mask), which the Legacy's colour tube has.
+     * The Display Line's screen of its era, an etched board and the monitor's own bezel, moulded of 2 PVC sheets
+     * (Vintage) or 2 polycarbonate. The Vintage tubes differ by their phosphor: white (the tube's own zinc sulfide),
+     * green (doped with copper), amber (with manganese), and the CGA's colours (both, behind a steel shadow mask),
+     * which the Legacy's colour tube has.
      */
     private static void monitors(final RecipeOutput output) {
         final Era v = HardwareEra.VINTAGE;
@@ -75,19 +77,21 @@ final class PeripheralRecipes {
         final Item tube = ChainParts.TUBE_SCREEN.get();
         final Item copper = nugget(Element.COPPER);
         final Item manganese = dust(Element.MANGANESE);
-        made(output, v, item("mono_i_monitor"), tube, 1, board(v), 1, pvc(), 2);
-        made(output, v, item("vintage_monitor"), tube, 1, board(v), 1, pvc(), 2, copper, 1);
-        made(output, v, item("amber_monitor"), tube, 1, board(v), 1, pvc(), 2, manganese, 1);
-        made(output, v, item("cga_monitor"), tube, 1, board(v), 1, pvc(), 2, steelSheet(), 1, copper, 1, manganese,
-                1);
-        made(output, l, item("legacy_monitor"), tube, 1, board(l), 1, polycarbonate(), 2, steelSheet(), 1, copper, 1,
+        made(output, v, item("mono_i_monitor"), tube, 1, board(v), 1, bezel(output, "mono_i_monitor", pvc()), 1);
+        made(output, v, item("vintage_monitor"), tube, 1, board(v), 1, bezel(output, "vintage_monitor", pvc()), 1,
+                copper, 1);
+        made(output, v, item("amber_monitor"), tube, 1, board(v), 1, bezel(output, "amber_monitor", pvc()), 1,
                 manganese, 1);
+        made(output, v, item("cga_monitor"), tube, 1, board(v), 1, bezel(output, "cga_monitor", pvc()), 1,
+                steelSheet(), 1, copper, 1, manganese, 1);
+        made(output, l, item("legacy_monitor"), tube, 1, board(l), 1, bezel(output, "legacy_monitor",
+                polycarbonate()), 1, steelSheet(), 1, copper, 1, manganese, 1);
         made(output, HardwareEra.TRANSITION, item("transition_monitor"), ChainParts.LCD_SCREEN.get(), 1,
-                board(HardwareEra.TRANSITION), 1, polycarbonate(), 2);
+                board(HardwareEra.TRANSITION), 1, bezel(output, "transition_monitor", polycarbonate()), 1);
         made(output, HardwareEra.STANDARD, item("monitor"), ChainParts.LED_SCREEN.get(), 1,
-                board(HardwareEra.STANDARD), 1, polycarbonate(), 2);
+                board(HardwareEra.STANDARD), 1, bezel(output, "monitor", polycarbonate()), 1);
         made(output, HardwareEra.ADVANCED, item("color_monitor"), ChainParts.SELF_LIT_PANEL.get(), 1,
-                board(HardwareEra.ADVANCED), 1, polycarbonate(), 2);
+                board(HardwareEra.ADVANCED), 1, bezel(output, "color_monitor", polycarbonate()), 1);
         // A touch monitor is the monitor with its touch layer (an indium tin oxide foil), cover glass and controller.
         final Item touchLayer = of(SeriesAlloys.INDIUM_TIN_OXIDE, Forms.FOIL);
         made(output, HardwareEra.STANDARD, item("touch_monitor"), item("monitor"), 1, touchLayer, 1,
@@ -120,17 +124,17 @@ final class PeripheralRecipes {
 
     /*
      * A drive in a case of its own: an optical one its motor, a lens, the laser diode of its era and an etched board;
-     * the floppy its motor, a magnetic head and an etched board. The Dock Station's trays are a SATA port for each disk
-     * size and an M.2 slot, with its USB bridge. The scanner its glass, a lens, its sensor and controller (2 controller
-     * chips), the carriage's motor, its lamp (a cold cathode lamp, an LED from the Standard), its board and its box; the
-     * Vinyl RW Drive its platter (a steel plate) and motor and its cutting head (a magnetic head driven by a copper
-     * coil); the Extended CD Drive, as the real duplicator towers, its eight drives (one reads, seven write) and, from
-     * the Transition, its little screen.
+     * the floppy its motor, a magnetic head, an etched board and its bezel, moulded of a PVC sheet. The Dock Station's
+     * trays are a SATA port for each disk size and an M.2 slot, with its USB bridge. The scanner its glass, a lens, its
+     * sensor and controller (2 controller chips), the carriage's motor, its lamp (a cold cathode lamp, an LED from the
+     * Standard), its board and its box; the Vinyl RW Drive its platter (a steel plate) and motor and its cutting head
+     * (a magnetic head driven by a copper coil); the Extended CD Drive, as the real duplicator towers, its eight drives
+     * (one reads, seven write) and, from the Transition, its little screen.
      */
     private static void drives(final RecipeOutput output) {
         final Item motor = ChainParts.ELECTRIC_MOTOR.get();
         made(output, HardwareEra.VINTAGE, item("floppy_drive"), motor, 1, ChainParts.MAGNETIC_HEAD.get(), 1,
-                board(HardwareEra.VINTAGE), 1, pvc(), 1);
+                board(HardwareEra.VINTAGE), 1, mouldedFor(output, item("floppy_drive"), pvc(), 1), 1);
         made(output, HardwareEra.LEGACY, item("cd_drive"), motor, 1, glassLens(), 1,
                 ChainParts.GALLIUM_ARSENIDE_LASER_DIODE.get(), 1, board(HardwareEra.LEGACY), 1, polycarbonate(), 1);
         made(output, HardwareEra.TRANSITION, item("dvd_drive"), motor, 1, glassLens(), 1,
@@ -251,5 +255,10 @@ final class PeripheralRecipes {
                 1, memory(HardwareEra.STANDARD), 1);
         made(output, HardwareEra.ADVANCED, item("lto9_tape"), pvc(), 2, ChainParts.FERRITE.get(), 2, polycarbonate(),
                 1, memory(HardwareEra.ADVANCED), 1);
+    }
+
+    /* The monitor {@code monitor}'s bezel, moulded of two sheets of {@code plastic}. */
+    private static Item bezel(final RecipeOutput output, final String monitor, final Item plastic) {
+        return mouldedFor(output, item(monitor), plastic, 2);
     }
 }

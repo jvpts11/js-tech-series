@@ -1,0 +1,21 @@
+{
+  "type": "jsc:injection_moulder",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:mould_pump_cover_aqualoop_240_standard"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:pump_cover_aqualoop_240_standard"
+    }
+  ]
+}

@@ -40,6 +40,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -116,14 +117,41 @@ public final class MouldingGameTests {
                     .is(frame.item().get()), "the Transition fan frame is moulded from its two sheets");
             helper.assertTrue(moulder.getInventory().getStackInSlot(0).is(frame.mould().get()),
                     "its mould stays, never used up");
-            final List<ProcessingRecipe> fans = helper.getLevel().getRecipeManager().getRecipes().stream()
-                    .map(RecipeHolder::value).filter(recipe -> recipe instanceof ProcessingRecipe)
-                    .map(recipe -> (ProcessingRecipe) recipe)
-                    .filter(recipe -> recipe.outputs().stream().anyMatch(out -> out.is(CoolingItems
-                            .TRANSITION_CASE_FAN.get()))).toList();
+            final List<ProcessingRecipe> fans = recipesMaking(helper, CoolingItems.TRANSITION_CASE_FAN.get());
             helper.assertTrue(fans.size() == 1 && fans.getFirst().inputs().stream().anyMatch(input ->
                     input.test(new ItemStack(frame.item().get()))), "the Transition fan is built on its frame");
         });
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = STEP)
+    public static void bezel_isMouldedOfTheErasPlasticInItsMould(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("injection_moulder"));
+        final MouldedParts.Part bezel = MouldedParts.of("legacy_mainframe");
+        helper.runAfterDelay(SETTLE, () -> {
+            moulder(helper, terminal).getInventory().insertItem(0, new ItemStack(bezel.mould().get()), false);
+            moulder(helper, terminal).getInventory().insertItem(1, new ItemStack(MaterialUses.item(
+                    SeriesCompounds.PVC, Forms.SHEET).get(), SHEETS), false);
+        });
+        helper.succeedWhen(() -> {
+            final MoulderBlockEntity moulder = moulder(helper, terminal);
+            helper.assertTrue(moulder.getInventory().getStackInSlot(moulder.layout().firstOutput())
+                    .is(bezel.item().get()), "the Legacy Mainframe's bezel is moulded from its two PVC sheets");
+            helper.assertTrue(moulder.getInventory().getStackInSlot(0).is(bezel.mould().get()),
+                    "its mould stays, never used up");
+        });
+    }
+
+    @GameTest(template = ARENA)
+    public static void moulded_everyProductIsBuiltWithItsOwnPart(final GameTestHelper helper) {
+        for (final MouldedParts.Part part : MouldedParts.all()) {
+            final List<ProcessingRecipe> made = recipesMaking(helper, part.productItem());
+            helper.assertTrue(made.size() == 1 && made.getFirst().inputs().stream().anyMatch(input ->
+                    input.test(new ItemStack(part.item().get()))), part.product() + " is built with "
+                    + part.item().getId().getPath());
+            helper.assertTrue(recipesMaking(helper, part.item().get()).size() == 1,
+                    part.item().getId().getPath() + " is moulded by one recipe");
+        }
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)
@@ -156,5 +184,12 @@ public final class MouldingGameTests {
 
     private static MoulderBlockEntity moulder(final GameTestHelper helper, final BlockPos terminal) {
         return (MoulderBlockEntity) machineAt(helper, terminal);
+    }
+
+    /* The processing recipes that make {@code item}. */
+    private static List<ProcessingRecipe> recipesMaking(final GameTestHelper helper, final Item item) {
+        return helper.getLevel().getRecipeManager().getRecipes().stream().map(RecipeHolder::value)
+                .filter(recipe -> recipe instanceof ProcessingRecipe).map(recipe -> (ProcessingRecipe) recipe)
+                .filter(recipe -> recipe.outputs().stream().anyMatch(out -> out.is(item))).toList();
     }
 }

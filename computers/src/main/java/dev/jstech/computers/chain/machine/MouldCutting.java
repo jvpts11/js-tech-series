@@ -32,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
  * Cutting a mould at an Injection Moulder: the computer linked to the moulder's peripheral port cuts the mould its
  * lithography program picks on the Mould Blank in the moulder, in one step's time, while the moulder moulds nothing;
  * the mould then stands where its blank was, the tool a job lends the moulder to mould its body in. Any running
- * computer cuts any mould, a list a family: the sockets' bodies, the slots' and the connectors', and the fans'
- * frames.
+ * computer cuts any mould, a list a family: the sockets' bodies, the slots' and the connectors', the fans' frames,
+ * and the bezels with the covers.
  */
 @TextHolder
 public final class MouldCutting {
@@ -61,6 +61,10 @@ public final class MouldCutting {
     private static final TextKey BODY = TextKey.of("jsc.lithography.mould.body", "%s body");
     private static final TextKey FANS = TextKey.of("jsc.lithography.kind.fans", "Fans");
     private static final TextKey FAN_FRAME = TextKey.of("jsc.lithography.mould.fan_frame", "%s fan frame");
+    private static final TextKey BEZELS = TextKey.of("jsc.lithography.kind.bezels", "Bezels");
+    private static final TextKey BEZEL = TextKey.of("jsc.lithography.mould.bezel", "%s bezel");
+    private static final TextKey PUMP_COVER = TextKey.of("jsc.lithography.mould.pump_cover", "%s pump cover");
+    private static final TextKey ARM_COVER = TextKey.of("jsc.lithography.mould.arm_cover", "%s arm cover");
     /** The process the computer runs the cutting as, and what it holds while it does. */
     static final String PROCESS = "mould";
     private static final int MEMORY_MB = 8;
@@ -84,7 +88,7 @@ public final class MouldCutting {
                     (component.kind() == BoardParts.Kind.SOCKET ? SOCKET_BODY : BODY).with(part)));
         }
         for (final MouldedParts.Part part : MouldedParts.all()) {
-            out.add(new Offer(Kind.of(part.family()), part.mould().get(), FAN_FRAME.with(part.era().name())));
+            out.add(new Offer(Kind.of(part.family()), part.mould().get(), name(part)));
         }
         return List.copyOf(out);
     }
@@ -122,6 +126,7 @@ public final class MouldCutting {
             case SLOTS -> SLOTS.text();
             case CONNECTORS -> CONNECTORS.text();
             case FANS -> FANS.text();
+            case BEZELS -> BEZELS.text();
         };
     }
 
@@ -166,12 +171,24 @@ public final class MouldCutting {
         return -1;
     }
 
+    /* What the program calls {@code part}'s mould: "Vintage fan frame", "Server Case bezel". */
+    private static Text name(final MouldedParts.Part part) {
+        final Text product = GameText.of(part.productItem().getDescription());
+        return switch (part.piece()) {
+            case FAN_FRAME -> FAN_FRAME.with(part.era().name());
+            case BEZEL -> BEZEL.with(product);
+            case PUMP_COVER -> PUMP_COVER.with(product);
+            case ARM_COVER -> ARM_COVER.with(product);
+        };
+    }
+
     /** A family of moulds, a list of the program. */
     public enum Kind {
         SOCKETS,
         SLOTS,
         CONNECTORS,
-        FANS;
+        FANS,
+        BEZELS;
 
         /** Its name as the program's picks carry it. */
         public String serializedName() {
@@ -201,6 +218,7 @@ public final class MouldCutting {
         static Kind of(final MouldedParts.Family family) {
             return switch (family) {
                 case FANS -> FANS;
+                case BEZELS -> BEZELS;
             };
         }
     }

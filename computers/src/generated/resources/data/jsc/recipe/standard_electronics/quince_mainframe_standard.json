@@ -20,6 +20,10 @@
     {
       "count": 2,
       "item": "minecraft:glass_pane"
+    },
+    {
+      "count": 1,
+      "item": "jsc:bezel_quince_mainframe_standard"
     }
   ],
   "outputs": [

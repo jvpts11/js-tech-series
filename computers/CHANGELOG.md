@@ -952,6 +952,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Case fans: each era's fan is built on its own frame and rotor, "Fan Frame (Vintage)" to "Fan Frame
   (Advanced)", which the Injection Moulder moulds from the plastic the fan took before, in the frame's own mould; the
   Lithography program lists the five moulds in a Fans list of their own.
+- Bezels: every server case, Personal Computer, monitor, mainframe and server rack, and the floppy drive,
+  is built with its own bezel, "Bezel (Server Case)", and each MF AquaLoop with its own pump cover, which the
+  Injection Moulder moulds from the plastic the product took before, in the piece's own mould; a mainframe's bezel
+  is moulded of two sheets of its era's plastic and a rack's of one, and the Prebuilder's robot arm takes a cover
+  moulded of a PVC sheet. The Lithography program lists their moulds in a Bezels list.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

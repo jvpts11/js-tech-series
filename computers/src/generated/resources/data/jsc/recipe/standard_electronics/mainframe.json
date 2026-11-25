@@ -20,6 +20,10 @@
     {
       "count": 8,
       "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jsc:bezel_mainframe"
     }
   ],
   "outputs": [

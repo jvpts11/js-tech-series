@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "jsc:item/mould_bezel_quince_mainframe_standard"
+  }
+}

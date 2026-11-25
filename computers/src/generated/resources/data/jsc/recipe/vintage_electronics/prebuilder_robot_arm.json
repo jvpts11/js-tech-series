@@ -12,6 +12,10 @@
     {
       "count": 1,
       "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 1,
+      "item": "jsc:arm_cover_prebuilder_robot_arm"
     }
   ],
   "outputs": [

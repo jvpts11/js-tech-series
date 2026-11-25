@@ -1,0 +1,21 @@
+{
+  "type": "jsc:injection_moulder",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:mould_bezel_mono_i_monitor"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:bezel_mono_i_monitor"
+    }
+  ]
+}

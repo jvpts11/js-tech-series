@@ -20,6 +20,10 @@
     {
       "count": 8,
       "item": "jsc:storage_sata"
+    },
+    {
+      "count": 1,
+      "item": "jsc:bezel_server_rack"
     }
   ],
   "outputs": [

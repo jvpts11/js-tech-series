@@ -20,6 +20,10 @@
     {
       "count": 8,
       "item": "jsc:storage_ide"
+    },
+    {
+      "count": 1,
+      "item": "jsc:bezel_legacy_server_rack"
     }
   ],
   "outputs": [

@@ -10,8 +10,8 @@
       "item": "jsc:etched_board_transition"
     },
     {
-      "count": 2,
-      "item": "jscore:polycarbonate_sheet"
+      "count": 1,
+      "item": "jsc:bezel_transition_monitor"
     }
   ],
   "outputs": [

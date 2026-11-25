@@ -18,6 +18,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.rows;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.ingot;
+import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.mouldedFor;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 
 import dev.jstech.computers.chain.ChainBenches;
@@ -250,8 +251,10 @@ final class MachineBlockRecipes {
         grid(output, block("prebuilder_case_lift"), 1, rows("R R", " C ", " M "), 'R', of(SeriesAlloys.STEEL,
                 Forms.ROD), 'C', mc, 'M', motor);
         grid(output, block("prebuilder_parts_tray"), 1, rows("PPP", " C "), 'P', plate, 'C', mc);
-        made(output, HardwareEra.VINTAGE, block("prebuilder_robot_arm"), mc, 1, motor, 2,
-                board(HardwareEra.VINTAGE), 1);
+        // The robot arm's shoulder joint is under its own cover, moulded of a PVC sheet.
+        final ItemLike arm = block("prebuilder_robot_arm");
+        made(output, HardwareEra.VINTAGE, arm, mc, 1, motor, 2, board(HardwareEra.VINTAGE), 1,
+                mouldedFor(output, arm, pvc(), 1), 1);
         grid(output, block("preinstaller_cradle"), 1, rows("P P", " C "), 'P', plate, 'C', mc);
         grid(output, block("preinstaller_board_fixture"), 1, rows("G G", "PCP"), 'G', Items.GOLD_NUGGET, 'P', plate,
                 'C', mc);

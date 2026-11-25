@@ -167,7 +167,8 @@ public final class LithographyClientTests {
 
     /**
      * The window on a computer linked to an Injection Moulder: the moulder with its Mould Blank, a list a family of
-     * moulds, the Fans list with each era's fan frame, and Cut Mould cutting the Transition fan frame's mould.
+     * moulds, the Bezels list with each product's bezel and cover, the Fans list with each era's fan frame, and Cut
+     * Mould cutting the Transition fan frame's mould.
      */
     @ClientTest(timeoutTicks = 2400)
     public static void framesXp_lithographyWindowCutsTheFanFrameMould(final ClientTestContext ctx) {
@@ -192,6 +193,11 @@ public final class LithographyClientTests {
                 .then(SETTLE, () -> DesktopScreen.requestOpen(PROGRAM))
                 .thenWaitUntil(() -> look(ctx) != null && look(ctx).moulder() && look(ctx).blank(), SCREEN_WAIT,
                         "the window to show the moulder with a Mould Blank in it")
+                .then(SETTLE, () -> {
+                    app(ctx).showKind(MouldCutting.Kind.BEZELS);
+                    app(ctx).pickNamed("Legacy Mainframe bezel");
+                })
+                .thenScreenshot(SETTLE * 2, "lithography-moulder-bezels")
                 .then(SETTLE, () -> {
                     app(ctx).showKind(MouldCutting.Kind.FANS);
                     app(ctx).pickNamed("Transition fan frame");

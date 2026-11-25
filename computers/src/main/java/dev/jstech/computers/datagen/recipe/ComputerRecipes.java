@@ -27,6 +27,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.pvc;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelSheet;
+import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.mouldedFor;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.chain.ChainChips;
@@ -78,8 +79,9 @@ final class ComputerRecipes {
 
     /*
      * Each case gives the Personal Computer of its look: its metals and its front, the era's etched board (the panel
-     * with the power switch and the lights), two copper wires and the bezel, of PVC to the Legacy and polycarbonate
-     * after. Of the same case, the Crafting and the Cluster Management Computers take the empty one and their card.
+     * with the power switch and the lights), two copper wires and its own bezel, moulded of a sheet of PVC to the
+     * Legacy and of polycarbonate after. Of the same case, the Crafting and the Cluster Management Computers take the
+     * empty one and their card.
      */
     private static void deskComputers(final RecipeOutput output) {
         computer(output, HardwareEra.VINTAGE, "vintage_", steelPlate(), 6);
@@ -99,7 +101,7 @@ final class ComputerRecipes {
     private static void computer(final RecipeOutput output, final Era era, final String look,
                                  final Object... metals) {
         final Item pc = item(look + "personal_computer");
-        made(output, era, pc, join(metals, front(era)));
+        made(output, era, pc, join(metals, front(output, era, pc)));
         made(output, era, item(look + "crafting_computer"), empty(pc), 1, item(CRAFTING_CARDS.get(index(era))), 1);
         made(output, era, item(look + "cluster_management_computer"), empty(pc), 1,
                 item(CLUSTER_CARDS.get(index(era))), 1);
@@ -205,9 +207,10 @@ final class ComputerRecipes {
     }
 
     /*
-     * The server room. A chassis is two steel plates for every U, an aluminium front, the desk cases' front and the
-     * connectors of the drives it takes from the rack's bays; a server, its chassis with two of its era's case fans
-     * for every U and its rails, two steel rods. The rest each at its era's bench.
+     * The server room. A chassis is two steel plates for every U, an aluminium front, the desk cases' front with its
+     * own bezel and the connectors of the drives it takes from the rack's bays; a server, its chassis with two of its
+     * era's case fans for every U and its rails, two steel rods. A rack's door is a bezel moulded of a sheet, a
+     * mainframe's of two, of the desk cases' plastic. The rest each at its era's bench.
      */
     /*
      * Teracoin's hardware (computers/docs/design/teracoin.md): a mining riser its small board with a PCIe x16 slot, the
@@ -254,14 +257,16 @@ final class ComputerRecipes {
             for (final Chassis chassis : CHASSIS) {
                 final Item made = ofEra(era, chassis.id() + "_case");
                 made(output, era, made, join(new Object[] {steelPlate(), 2 * chassis.units(), aluminiumPlate(), 1},
-                        front(era), bays(era, chassis.drives()[index(era)])));
+                        front(output, era, made), bays(era, chassis.drives()[index(era)])));
                 made(output, era, ofEra(era, chassis.id()), made, 1, caseFan(era), 2 * chassis.units(), rod, 2);
             }
-            made(output, era, ofEra(era, "server_rack"), steelPlate(), 12, rod, 4, caseFan(era), 2, board(era), 1,
-                    bay(era), 8);
+            final Item rack = ofEra(era, "server_rack");
+            made(output, era, rack, steelPlate(), 12, rod, 4, caseFan(era), 2, board(era), 1, bay(era), 8,
+                    mouldedFor(output, rack, bezelPlastic(era), 1), 1);
             made(output, era, ofEra(era, "kvm_switch"), steelPlate(), 2, board(era), 1, controller(era), 1, wire, 4);
-            made(output, era, ofEra(era, "mainframe"), steelPlate(), 12, aluminiumPlate(), 4, caseFan(era), 4,
-                    board(era), 2, wire, 8);
+            final Item mainframe = ofEra(era, "mainframe");
+            made(output, era, mainframe, steelPlate(), 12, aluminiumPlate(), 4, caseFan(era), 4, board(era), 2, wire,
+                    8, mouldedFor(output, mainframe, bezelPlastic(era), 2), 1);
             made(output, era, ofEra(era, "wan_gateway"), steelPlate(), 16, aluminiumPlate(), 4, caseFan(era), 4,
                     board(era), 2, wire, 8, controller(era), 4);
         }
@@ -283,8 +288,9 @@ final class ComputerRecipes {
         }
         made(output, s, item("drive_shelf"), steelPlate(), 4, board(s), 1, part("storage_sata"), 10, caseFan(s), 2);
         for (final Era era : List.of(HardwareEra.TRANSITION, s, a)) {
-            made(output, era, item("quince_mainframe_" + era.path()), aluminiumPlate(), 16, caseFan(era), 4,
-                    board(era), 2, wire, 8, Items.GLASS_PANE, 2);
+            final Item mainframe = item("quince_mainframe_" + era.path());
+            made(output, era, mainframe, aluminiumPlate(), 16, caseFan(era), 4, board(era), 2, wire, 8,
+                    Items.GLASS_PANE, 2, mouldedFor(output, mainframe, polycarbonate(), 2), 1);
         }
         // A qServe is a 1U of aluminium: its chassis, then the chassis with its fans and its rails, as a server is.
         final int[] qserveDrives = {0, 4, 3, 3, 4};
@@ -296,10 +302,19 @@ final class ComputerRecipes {
         }
     }
 
-    /* The desk cases' front: the era's etched board, two copper wires and the bezel. */
+    /* The desk cases' front: the era's etched board, two copper wires and {@code product}'s own bezel. */
+    private static Object[] front(final RecipeOutput output, final Era era, final Item product) {
+        return new Object[] {board(era), 1, copperWire(), 2, mouldedFor(output, product, bezelPlastic(era), 1), 1};
+    }
+
+    /* The front of a case with no bezel of its own, a supercomputer node's or a qServe's: the bezel's sheet, loose. */
     private static Object[] front(final Era era) {
-        return new Object[] {board(era), 1, copperWire(), 2, era.isAtMost(HardwareEra.LEGACY) ? pvc() : polycarbonate(),
-            1};
+        return new Object[] {board(era), 1, copperWire(), 2, bezelPlastic(era), 1};
+    }
+
+    /* The plastic of the desk cases' bezels: PVC to the Legacy, polycarbonate after. */
+    private static Item bezelPlastic(final Era era) {
+        return era.isAtMost(HardwareEra.LEGACY) ? pvc() : polycarbonate();
     }
 
     /* The connectors of {@code drives} bays: an IDE header for every two to the Legacy, a SATA port for each after. */

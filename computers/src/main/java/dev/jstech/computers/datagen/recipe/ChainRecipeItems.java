@@ -8,6 +8,7 @@
 package dev.jstech.computers.datagen.recipe;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.chain.MouldedParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.core.jstechseries.Element;
@@ -100,6 +101,16 @@ final class ChainRecipeItems {
         final Saved moulded = recipe(kind("injection_moulder"), BuiltInRegistries.ITEM.getKey(part).getPath());
         moulded.builder().input(plastic, sheets).catalyst(Ingredient.of(mould), 1).output(part, made);
         moulded.save(output);
+    }
+
+    /**
+     * The part moulded for {@code product}, its bezel or its cover, with its Injection Moulder recipe saved:
+     * {@code sheets} of {@code plastic} in the part's own mould.
+     */
+    static Item mouldedFor(final RecipeOutput output, final ItemLike product, final Item plastic, final int sheets) {
+        final MouldedParts.Part part = MouldedParts.of(idOf(product).getPath());
+        moulded(output, part.item().get(), part.mould().get(), plastic, sheets, 1);
+        return part.item().get();
     }
 
     private static ChainMachine machine(final String id) {

@@ -1,0 +1,21 @@
+{
+  "type": "jsc:injection_moulder",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:mould_arm_cover_prebuilder_robot_arm"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:arm_cover_prebuilder_robot_arm"
+    }
+  ]
+}
