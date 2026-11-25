@@ -74,6 +74,14 @@ public final class CraftPlanner {
             return StorageKey.of(pattern.result());
         }
 
+        /**
+         * Whether a run of this step yields {@code key}: its result, or another output its machine always gives, as a
+         * Packaging Line gives each class of a chip beside the plain ones.
+         */
+        public boolean makes(final StorageKey key) {
+            return key != null && (key.equals(resultKey()) || machine != null && sureAmount(machine, key) > 0);
+        }
+
         public String resultName() {
             return resultText().english();
         }
@@ -174,27 +182,31 @@ public final class CraftPlanner {
 
     /** Whether every input of {@code machine} is raw stock or produced by a step before index {@code at}. */
     private static boolean inputsAvailableBefore(final ProcessingPattern machine, final List<Step> steps, final int at) {
-        final Set<StorageKey> madeAnywhere = new HashSet<>();
-        for (final Step step : steps) {
-            final StorageKey made = step.resultKey();
-            if (made != null) {
-                madeAnywhere.add(made);
-            }
-        }
-        final Set<StorageKey> madeEarlier = new HashSet<>();
-        for (int i = 0; i < at; i++) {
-            final StorageKey made = steps.get(i).resultKey();
-            if (made != null) {
-                madeEarlier.add(made);
-            }
-        }
         for (final ProcessingPattern.ProcessingInput in : machine.inputs()) {
+            boolean madeAnywhere = false;
+            boolean madeEarlier = false;
+            for (int i = 0; i < steps.size(); i++) {
+                if (steps.get(i).makes(in.key())) {
+                    madeAnywhere = true;
+                    madeEarlier |= i < at;
+                }
+            }
             // An input no step makes is raw stock (locked from the start); an intermediate must already exist.
-            if (madeAnywhere.contains(in.key()) && !madeEarlier.contains(in.key())) {
+            if (madeAnywhere && !madeEarlier) {
                 return false;
             }
         }
         return true;
+    }
+
+    /* How much of {@code key} each run of {@code machine} surely gives; none when it gives none or only by chance. */
+    private static long sureAmount(final ProcessingPattern machine, final StorageKey key) {
+        for (final ProcessingPattern.ProcessingOutput out : machine.outputs()) {
+            if (!out.probabilistic() && out.key().equals(key)) {
+                return out.amount();
+            }
+        }
+        return 0L;
     }
 
     public static long maxFeasible(final StorageKey resultKey, final long quantity,
@@ -251,14 +263,28 @@ public final class CraftPlanner {
             for (final ProcessingPattern machine : machines) {
                 final ProcessingPattern.ProcessingOutput primary = machine.primaryOutput();
                 if (primary != null && !machine.inputs().isEmpty()) {
-                    final List<ProcessingPattern> ways = byOutput.computeIfAbsent(primary.key(),
-                            key -> new ArrayList<>());
-                    if (!ways.contains(machine)) {
-                        ways.add(machine);
+                    addWay(byOutput, primary.key(), machine);
+                }
+            }
+            // A machine is also a way to each other thing it always gives, after those that make it first.
+            for (final ProcessingPattern machine : machines) {
+                if (!machine.inputs().isEmpty()) {
+                    for (final ProcessingPattern.ProcessingOutput out : machine.outputs()) {
+                        if (!out.probabilistic()) {
+                            addWay(byOutput, out.key(), machine);
+                        }
                     }
                 }
             }
             return new Recipes(benches, byOutput);
+        }
+
+        private static void addWay(final Map<StorageKey, List<ProcessingPattern>> byOutput, final StorageKey key,
+                                   final ProcessingPattern machine) {
+            final List<ProcessingPattern> ways = byOutput.computeIfAbsent(key, made -> new ArrayList<>());
+            if (!ways.contains(machine)) {
+                ways.add(machine);
+            }
         }
 
         /* The ways to make {@code key}: its bench patterns, then its machine ones, or the machines first. */
@@ -366,8 +392,9 @@ public final class CraftPlanner {
                           final Set<StorageKey> chain) {
             final CraftingPattern pattern = way.pattern();
             final ProcessingPattern machine = way.machine();
+            // A machine chosen for a thing it gives beside its result runs as often as that thing needs.
             final long perRun = pattern != null ? Math.max(1, pattern.result().getCount())
-                    : Math.max(1, machine.primaryOutput().amount());
+                    : Math.max(1, sureAmount(machine, key));
             final long runs = Sizes.ceilDiv(deficit, perRun);
 
             // Secure every ingredient before this step executes (dependency order).
@@ -414,6 +441,15 @@ public final class CraftPlanner {
             final long surplus = produced - Math.min(deficit, produced);
             if (surplus > 0) {
                 add(intermediates, key, surplus); // rounding overflow, never wasted
+            }
+            if (machine != null) {
+                // What else the runs always give is there for the steps after: a wafer packaged for one class of
+                // its chip gives the plain ones and every other class too.
+                for (final ProcessingPattern.ProcessingOutput out : machine.outputs()) {
+                    if (!out.probabilistic() && !out.key().equals(key)) {
+                        add(intermediates, out.key(), Sizes.times(out.amount(), feasibleRuns));
+                    }
+                }
             }
             return Math.min(deficit, produced);
         }

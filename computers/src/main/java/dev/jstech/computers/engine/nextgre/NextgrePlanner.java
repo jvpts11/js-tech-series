@@ -634,7 +634,7 @@ public final class NextgrePlanner {
                     }
                     if (need > held) {
                         for (int j = i - 1; j >= 0; j--) {
-                            if (ingredient.getKey().equals(steps.get(j).resultKey())) {
+                            if (steps.get(j).makes(ingredient.getKey())) {
                                 if (!under.contains(j)) {
                                     under.add(j);
                                 }

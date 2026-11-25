@@ -988,6 +988,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   sheet (its reel), the DLT tape a cobalt dust (its coat), the CD-RW a zinc sulfide dust (its dielectric) and epoxy
   resin a caustic soda dust; water electrolysis keeps a caustic soda dust in the cell as its electrolyte; and the
   six EATX boards with two processor sockets are assembled on a jig of their own, the Board Jig (Dual EATX).
+- A Crafting Computer plans with every output a machine pattern always gives, not only its first: a thing
+  a machine makes beside its result, as each class of a chip comes off the Packaging Line beside the plain ones, can be
+  crafted, and what else a run gives counts for the steps after it instead of running the machine again.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

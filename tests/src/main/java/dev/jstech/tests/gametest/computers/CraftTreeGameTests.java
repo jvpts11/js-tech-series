@@ -70,6 +70,38 @@ public final class CraftTreeGameTests {
         helper.succeed();
     }
 
+    /**
+     * A machine that gives two things each run, as a Packaging Line gives a chip's plain dies and a class of them, is
+     * a way to either: asked for the second, it runs as often as the second needs; and a recipe taking both runs it
+     * once, the second taken from what the first run gave beside its result.
+     */
+    @GameTest(template = ARENA)
+    public static void plan_makesWhatAMachineGivesBesideItsResult(final GameTestHelper helper) {
+        final ProcessingPattern sorter = new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(storageKey(Items.RAW_IRON), 1L)),
+                List.of(new ProcessingPattern.ProcessingOutput(storageKey(Items.IRON_INGOT), 8L,
+                                ProcessingPattern.FULL_CHANCE),
+                        new ProcessingPattern.ProcessingOutput(storageKey(Items.GOLD_INGOT), 8L,
+                                ProcessingPattern.FULL_CHANCE)), ProcessingPattern.DEFAULT_TIMEOUT_TICKS);
+        final ProcessingPattern both = new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(storageKey(Items.IRON_INGOT), 8L),
+                        new ProcessingPattern.ProcessingInput(storageKey(Items.GOLD_INGOT), 8L)),
+                List.of(new ProcessingPattern.ProcessingOutput(storageKey(Items.DIAMOND), 1L,
+                        ProcessingPattern.FULL_CHANCE)), ProcessingPattern.DEFAULT_TIMEOUT_TICKS);
+        final List<ProcessingPattern> machines = List.of(sorter, both);
+        final Map<StorageKey, Long> stock = Map.of(storageKey(Items.RAW_IRON), 3L);
+        final CraftPlanner.Plan gold = CraftPlanner.plan(storageKey(Items.GOLD_INGOT), 20, List.of(), machines, stock);
+        helper.assertTrue(gold.feasible() && gold.steps().size() == 1 && gold.steps().getFirst().machine() == sorter
+                && gold.steps().getFirst().runs() == 3, "twenty of the second output are three runs of the sorter; "
+                + "missing " + gold.missing() + ", steps " + gold.steps());
+        final CraftPlanner.Plan diamond = CraftPlanner.plan(storageKey(Items.DIAMOND), 1, List.of(), machines,
+                Map.of(storageKey(Items.RAW_IRON), 1L));
+        helper.assertTrue(diamond.feasible() && diamond.steps().size() == 2
+                && diamond.steps().getFirst().runs() == 1, "one ore sorted once gives both the recipe takes; missing "
+                + diamond.missing() + ", steps " + diamond.steps());
+        helper.succeed();
+    }
+
     /** A plan short of a made thing names the raw thing behind it that nothing makes, apart from all it is short of. */
     @GameTest(template = ARENA)
     public static void plan_namesTheRawThingTheShortageComesDownTo(final GameTestHelper helper) {
