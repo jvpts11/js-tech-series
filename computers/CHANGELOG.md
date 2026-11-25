@@ -995,6 +995,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the steps of one chip that differ only in the wafer's layer were one recipe to it, so a chip made over several
   layers at once had its wafers of two layers fed into one Deposition Chamber, which then ran neither and stopped the
   craft.
+- A machine step of a craft that waits for what an earlier step is still making is no longer taken for
+  a stopped machine: a long chain's last step starts with its first inputs and waited for the rest longer than its
+  machine may stand still, so a craft of memory modules or drives ended partial with most of its parts still coming.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

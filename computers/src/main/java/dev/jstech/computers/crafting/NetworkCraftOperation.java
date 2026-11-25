@@ -583,6 +583,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                     break;
                 }
                 op.setPriority(priority); // a stage of this craft reports the craft's level
+                final int index = i;
+                op.awaits(() -> earlierStepAtWork(index));
                 machineRuns.add(new MachineRun(i, shareRuns, op));
                 runsLaunched[i] += shareRuns;
                 if (stepStarted[i] < 0) {
@@ -591,6 +593,23 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             }
         }
         return !machineRuns.isEmpty();
+    }
+
+    /*
+     * Whether a machine step this craft runs before step {@code index} is still at work, so what that step waits for
+     * may still be coming. The plan lists every step after the steps that make its inputs; the first step at work
+     * waits on none before it, so it times out as any machine that stands still, and a chain of waiting steps ends.
+     */
+    private boolean earlierStepAtWork(final int index) {
+        if (done) {
+            return false;
+        }
+        for (final MachineRun run : machineRuns) {
+            if (run.step < index && !run.op.isDone()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

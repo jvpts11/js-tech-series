@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -104,6 +105,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     private OperationPriority priority = OperationPriority.DEFAULT;
     @Nullable
     private Runnable onSettle;
+    /* Whether what this step still owes its machine may yet be made by an earlier step of its craft; see awaits(). */
+    private BooleanSupplier stillComing = () -> false;
 
     public static final String KIND = "processing";
 
@@ -220,9 +223,11 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         /*
          * The machine is shared by every job on the interface: while any of them is fed or credited the machine is
          * moving, and a job queued behind another's inputs is not timed out for waiting its turn. A machine that says
-         * it is working is moving too, however long one step of its recipe takes.
+         * it is working is moving too, however long one step of its recipe takes. Nor is a step of a craft that has
+         * not fed its machine everything yet while an earlier step is still making the rest.
          */
-        if (progressed || part.workedAt() >= now - 1 || machineWorking()) {
+        if (progressed || part.workedAt() >= now - 1 || machineWorking()
+                || !fullyDelivered() && stillComing.getAsBoolean()) {
             idleTicks = 0;
         } else if (++idleTicks > pattern.timeoutTicks()) {
             status = produced > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
@@ -354,6 +359,16 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
             callback.run();
         }
         return this;
+    }
+
+    /**
+     * Tells this step of a craft when what it still owes its machine may yet come: while {@code coming} says so, an
+     * earlier step is still making it, and the machine standing with nothing to be fed is waiting for that, not
+     * stopped, so the step is not timed out for it. A craft's last step starts with its first inputs and can wait for
+     * the rest far longer than its machine is allowed to stand still.
+     */
+    public void awaits(final BooleanSupplier coming) {
+        this.stillComing = Objects.requireNonNull(coming, "coming");
     }
 
     public long produced() {

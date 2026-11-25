@@ -532,6 +532,48 @@ public final class CraftingInterfaceGameTests {
     }
 
     /**
+     * A step waiting for what an earlier step of its craft is still making has not stopped: the glass kiln starts with
+     * the first sand and waits on the slow gravel kiln for each next one longer than its recipe lets a machine stand
+     * still, and the craft still makes all its glass.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 900)
+    public static void jobs_aStepWaitingOnAnEarlierStepOfItsCraftIsNotTimedOut(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+        final CraftingInterfacePart second = secondKiln(world);
+        final ProcessingPattern gravel = new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.GRAVEL), 1L)),
+                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.SAND), 1L,
+                                ProcessingPattern.FULL_CHANCE),
+                        new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.FLINT), 1L,
+                                ProcessingPattern.FULL_CHANCE)), 400);
+        final ProcessingPattern glass = CraftingRig.pattern(Items.SAND, Items.GLASS, 20);
+        final AtomicReference<NetworkCraftOperation> craft = new AtomicReference<>();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.GRAVEL, 3);
+                    kiln(rig).setTicksPerItem(60);
+                    rig.hold(gravel);
+                    second.place(NetworkRecipe.ofProcessing(glass));
+                    net.cc().forgetFloor();
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    craft.set(net.mainframe().submitNetworkCraft(StorageKey.of(Items.GLASS), 3, false, "chain"));
+                    helper.assertTrue(craft.get() != null, "the craft is planned through both kilns");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(craft.get().isDone(), "the craft settles"))
+                .thenExecute(() -> {
+                    final OperationRecord record = craft.get().toRecord();
+                    helper.assertTrue(record.status() == OperationRecord.STATUS_COMPLETED,
+                            "the craft completes: " + record.cause());
+                    helper.assertTrue(stored(helper, Items.GLASS) == 3, "three glass in the network, not "
+                            + stored(helper, Items.GLASS));
+                })
+                .thenSucceed();
+    }
+
+    /**
      * A machine with a Parallel Line works two lots of a job at once: the interface puts both ferrites into the
      * Crusher, so the first the bus credits is the four inductors of both, where a plain Crusher's would be two.
      */
