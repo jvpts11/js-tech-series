@@ -281,6 +281,27 @@ public final class WaferGameTests {
                 ChainParts.MEMORY_CHIPS.getFirst().get(), MEMORY_CHIPS), "eight memory chips, each in ceramic"));
     }
 
+    /*
+     * A lot bigger than one stack, as two wafers' packages fed at once, lies over two slots: the line takes the first
+     * run's from one and the second's from the other, and makes both.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 900)
+    public static void packaging_takesALotLyingOverTwoSlots(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("packaging_line"));
+        helper.runAfterDelay(20, () -> {
+            final ItemStack finished = new ItemStack(ChainParts.FINISHED_WAFERS.getFirst().get(), 2);
+            finished.set(ComputingComponents.WAFER_WORK.get(), new WaferWork(id(ChainParts.MEMORY_CHIPS.getFirst()
+                    .get()), VINTAGE_LAYERS, VINTAGE_LAYERS, WaferWork.Step.PACKAGING));
+            final IItemHandler in = machineAt(helper, terminal).getInventory();
+            in.insertItem(0, finished, false);
+            in.insertItem(1, new ItemStack(ChainParts.CERAMIC_PACKAGE.get(), MEMORY_CHIPS), false);
+            in.insertItem(2, new ItemStack(ChainParts.ALUMINIUM_BONDING_WIRE.get(), 4 * MEMORY_CHIPS), false);
+            in.insertItem(3, new ItemStack(ChainParts.CERAMIC_PACKAGE.get(), MEMORY_CHIPS), false);
+        });
+        helper.succeedWhen(() -> helper.assertTrue(holds(machineAt(helper, terminal),
+                ChainParts.MEMORY_CHIPS.getFirst().get(), 2 * MEMORY_CHIPS), "both wafers packaged"));
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void lithography_makesNothingFromMoreThanItTakes(final GameTestHelper helper) {
         final ChainMachine station = machine("lithography_vintage");

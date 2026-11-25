@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -273,19 +272,21 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
     }
 
     /*
-     * Whether the recipe takes everything held: as many slots hold something as it has item inputs and catalysts, as
-     * many tanks as fluid inputs, and as many matter tanks as matter inputs. Each input takes a slot or tank of its
-     * own that holds it, so once the recipe matches, these counts leave nothing held that it does not take.
+     * Whether the recipe takes everything held: every slot holds something one of its item inputs or catalysts takes,
+     * every tank a liquid it takes, every matter tank a matter it takes. A slot holding more of an input than its own
+     * slot does, the rest of a lot that did not fit one stack, is the recipe's too; anything else held stops it.
      */
     boolean usesEverything(final ProcessingInput input) {
-        return held(input.items(), stack -> !stack.isEmpty()) == inputs.size() + catalysts.size()
-                && held(input.fluids(), fluid -> !fluid.isEmpty()) == fluidInputs.size()
-                && held(input.matter(), matter -> matter.isPresent() && matter.get().amount() > 0)
-                == matterInputs.size();
+        return input.items().stream().allMatch(stack -> stack.isEmpty() || takesItem(stack))
+                && input.fluids().stream().allMatch(fluid -> fluid.isEmpty()
+                        || fluidInputs.stream().anyMatch(wanted -> wanted.ingredient().test(fluid)))
+                && input.matter().stream().allMatch(held -> held.isEmpty() || held.get().amount() <= 0
+                        || matterInputs.stream().anyMatch(wanted -> wanted.material() == held.get().material()));
     }
 
-    private static <C> long held(final List<C> contents, final Predicate<C> holds) {
-        return contents.stream().filter(holds).count();
+    private boolean takesItem(final ItemStack stack) {
+        return inputs.stream().anyMatch(wanted -> wanted.ingredient().test(stack))
+                || catalysts.stream().anyMatch(wanted -> wanted.ingredient().test(stack));
     }
 
     /* The slot of each item input, then of each catalyst, or null when the slots do not hold them all. */

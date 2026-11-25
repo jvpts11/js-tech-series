@@ -4464,6 +4464,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) A Crafting Computer plans with every output a machine pattern always gives, not only its first: a thing
   a machine makes beside its result, as each class of a chip comes off the Packaging Line beside the plain ones, can be
   crafted, and what else a run gives counts for the steps after it instead of running the machine again.
+- (Core) A machine that makes only from exactly what a recipe takes no longer stops at a lot bigger than a stack: the
+  rest of an input lying in a second slot is the recipe's too, and only something the recipe does not take stops it.
+  (Computers) The wafer machines the same, so a Packaging Line fed many wafers' packages at once packages them all.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

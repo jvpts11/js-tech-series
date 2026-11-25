@@ -605,17 +605,28 @@ final class WaferSteps {
         }
 
         /*
-         * Whether the step takes every item in the slots: a stray item makes nothing. A liquid or a gas the step does
-         * not use stays in its tank and stops nothing, as the acid a pipe keeps an etcher stocked with for an older
-         * era's layers stays there while it etches a newer era's with its gases.
+         * Whether the step takes every item in the slots: a stray item makes nothing, though more of what it takes in
+         * another slot, the rest of a lot that did not fit one stack, waits there for the next run. A liquid or a gas
+         * the step does not use stays in its tank and stops nothing, as the acid a pipe keeps an etcher stocked with
+         * for an older era's layers stays there while it etches a newer era's with its gases.
          */
         private boolean allItemsTaken() {
             for (int slot = 0; slot < slots.length; slot++) {
-                if (!slots[slot] && !input.items().get(slot).isEmpty()) {
+                final ItemStack held = input.items().get(slot);
+                if (!slots[slot] && !held.isEmpty() && !moreOfATaken(held)) {
                     return false;
                 }
             }
             return true;
+        }
+
+        private boolean moreOfATaken(final ItemStack held) {
+            for (final Take take : takes) {
+                if (ItemStack.isSameItemSameComponents(input.items().get(take.index()), held)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /* The era of a wafer between its steps or a finished wafer, by its item. */

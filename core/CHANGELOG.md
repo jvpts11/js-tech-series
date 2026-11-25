@@ -2339,6 +2339,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A row of tabs too wide for its strip, even with its tabs squeezed, scrolls as a Windows XP tab control's
   does: two arrows at the strip's end move it a tab at a time, and a tab chosen is brought into view. The
   Lithography program's seven lists of an Injection Moulder fit this way in Portuguese.
+- A machine that makes only from exactly what a recipe takes no longer stops at a lot bigger than a stack: the
+  rest of an input lying in a second slot is the recipe's too, and only something the recipe does not take stops it.
+  (Computers) The wafer machines the same, so a Packaging Line fed many wafers' packages at once packages them all.
 - Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
   cables beside them still show. They still move only near the player.
 - The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its

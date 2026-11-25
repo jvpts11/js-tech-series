@@ -28,6 +28,7 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesChemicals;
+import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.machine.MatterTanks;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity.Layout;
@@ -158,6 +159,32 @@ public final class ChainMachineGameTests {
                 .thenExecute(() -> helper.assertTrue(machineAt(helper, terminal).getInventory().getStackInSlot(1)
                         .is(phototool), "the phototool stays, never used up"))
                 .thenSucceed();
+    }
+
+    /*
+     * A machine that makes only from exactly what a recipe takes still takes a lot lying over two slots, the rest of
+     * an input that did not fit one stack: two coils' wire in two slots makes both coils.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 1200)
+    public static void coilWinder_takesALotLyingOverTwoSlots(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("coil_winder"));
+        final Item wire = MaterialUses.item(Elements.of(Element.COPPER), Forms.WIRE).get();
+        final Item pvc = MaterialUses.item(SeriesCompounds.PVC, Forms.SHEET).get();
+        helper.runAfterDelay(20, () -> {
+            final IItemHandler slots = machineAt(helper, terminal).getInventory();
+            slots.insertItem(0, new ItemStack(wire, 4), false);
+            slots.insertItem(1, new ItemStack(pvc, 2), false);
+            slots.insertItem(2, new ItemStack(wire, 4), false);
+        });
+        helper.succeedWhen(() -> {
+            final IItemHandler slots = machineAt(helper, terminal).getInventory();
+            final List<String> held = new ArrayList<>();
+            for (int slot = 0; slot < slots.getSlots(); slot++) {
+                held.add(slots.getStackInSlot(slot).toString());
+            }
+            helper.assertTrue(holds(machineAt(helper, terminal), ChainParts.COPPER_COIL.get(), 2),
+                    "two coils from the wire lying over two slots; it holds " + held);
+        });
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
