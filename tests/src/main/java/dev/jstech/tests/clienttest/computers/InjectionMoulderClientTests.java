@@ -8,10 +8,12 @@
 package dev.jstech.tests.clienttest.computers;
 
 import dev.jstech.computers.chain.BoardParts;
+import dev.jstech.computers.chain.MouldedParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.computers.client.chain.ChainReflect;
 import dev.jstech.core.client.machine.MachineScreen;
 import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.machine.MachineStatus;
@@ -100,6 +102,44 @@ public final class InjectionMoulderClientTests {
         }
         ctx.then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    /**
+     * Any part the moulder moulds shows as its body does, not only a component's body: moulding the Legacy
+     * Mainframe's bezel from PVC, the part on its belt is that bezel and its mould halves show the bezel's mould.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void moulder_showsTheBezelItMoulds(final ClientTestContext ctx) {
+        final ChainMachine machine = ChainMachines.byId("injection_moulder").orElseThrow();
+        final BlockPos terminal = terminalOf(machine);
+        final MouldedParts.Part bezel = MouldedParts.of("legacy_mainframe");
+        ctx.thenServer(0, level -> ctx.serverPlayer().getInventory().clearContent())
+                .thenBuild(0, world -> build(world::setBlock, machine))
+                .thenWaitUntilServer(level -> moulder(ctx, level, terminal).formed(), SETTLE * 30,
+                        "the Injection Moulder to form", level -> "it stands unformed")
+                .thenServer(SETTLE, level -> {
+                    final ChainMachineBlockEntity moulder = moulder(ctx, level, terminal);
+                    moulder.getInventory().insertItem(0, new ItemStack(bezel.mould().get()), false);
+                    moulder.getInventory().insertItem(1, new ItemStack(MaterialUses.item(SeriesCompounds.PVC,
+                            Forms.SHEET).get(), PLASTIC), false);
+                })
+                .thenWaitUntil(() -> {
+                    final ChainMachineBlockEntity shown = (ChainMachineBlockEntity) ctx.mc().level
+                            .getBlockEntity(ctx.abs(terminal));
+                    return shown != null && ChainReflect.held(shown, ChainReflect.BODY).is(bezel.item().get());
+                }, WAIT, "the moulder's model to hold the Legacy Mainframe's bezel")
+                .then(0, () -> {
+                    final ChainMachineBlockEntity shown = (ChainMachineBlockEntity) ctx.mc().level
+                            .getBlockEntity(ctx.abs(terminal));
+                    ctx.assertTrue(ChainReflect.held(shown, ChainReflect.MOULD).is(bezel.mould().get()),
+                            "its mould halves show the bezel's mould: " + ChainReflect.held(shown, ChainReflect.MOULD));
+                })
+                .thenTeleport(SETTLE, IN_FRONT, Direction.SOUTH)
+                .then(SETTLE, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(CORNER.offset(1, 1, 0))).add(0, -0.4, 0)))
+                .then(SETTLE * 5, () -> ctx.mc().getToasts().clear());
+        for (int shot = 0; shot < SHOTS / 2; shot++) {
+            ctx.thenScreenshot(shot == 0 ? 1 : APART * 2, "moulder-bezel-" + shot);
+        }
     }
 
     /* Lays {@code machine}'s blocks from {@link #CORNER} facing north, its Machine Terminal at its place. */

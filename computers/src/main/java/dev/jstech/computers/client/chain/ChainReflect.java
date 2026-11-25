@@ -8,12 +8,14 @@
 package dev.jstech.computers.client.chain;
 
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
+import dev.jstech.computers.chain.machine.MouldCutting;
 import dev.jstech.core.client.material.ThingColours;
 import dev.jstech.core.machine.MachineStatus;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluids;
 
@@ -25,11 +27,10 @@ import net.minecraft.world.level.material.Fluids;
  */
 public final class ChainReflect {
 
-    /** The locator of what a machine makes, at the Injection Moulder the body it moulds. */
+    /** The locator of what a machine makes, at the Injection Moulder the part it moulds. */
     public static final String BODY = "body";
-    private static final String MOULD = "mould";
-    private static final String BODY_ITEM = "body_";
-    private static final String MOULD_ITEM = "mould_";
+    /** The locator of the Injection Moulder's mould halves, which hold the mould of the part it moulds. */
+    public static final String MOULD = "mould";
 
     private ChainReflect() {
     }
@@ -76,29 +77,22 @@ public final class ChainReflect {
 
     /**
      * What the machine's model holds at its locator {@code locator}, from what it makes: at the Injection Moulder the
-     * body it moulds, at "body", and that body's mould on the mould's faces, at "mould", or the mould it cuts; nothing
-     * at rest, or for a locator of no such thing.
+     * part it moulds, a body, a fan frame or a bezel, at "body", and that part's mould on the mould's faces, at
+     * "mould", or the mould it cuts; nothing at rest, or for a locator of no such thing.
      */
     public static ItemStack held(final ChainMachineBlockEntity machine, final String locator) {
         final List<ResourceLocation> out = machine.makes();
         if (out.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        final ResourceLocation made = out.getFirst();
-        final String path = made.getPath();
+        final Item made = BuiltInRegistries.ITEM.get(out.getFirst());
+        final Optional<Item> tool = MouldCutting.toolOf(made);
         return switch (locator) {
-            case BODY -> path.startsWith(BODY_ITEM) ? stack(made) : ItemStack.EMPTY;
-            // A body is moulded in the mould of its own name: body_socket_am4 in mould_socket_am4.
-            case MOULD -> path.startsWith(BODY_ITEM)
-                    ? stack(made.withPath(MOULD_ITEM + path.substring(BODY_ITEM.length())))
-                    : path.startsWith(MOULD_ITEM) ? stack(made) : ItemStack.EMPTY;
+            case BODY -> tool.isPresent() ? new ItemStack(made) : ItemStack.EMPTY;
+            case MOULD -> tool.map(ItemStack::new)
+                    .orElseGet(() -> MouldCutting.isTool(made) ? new ItemStack(made) : ItemStack.EMPTY);
             default -> ItemStack.EMPTY;
         };
-    }
-
-    /* One of the item {@code id} names; empty for none. */
-    private static ItemStack stack(final ResourceLocation id) {
-        return new ItemStack(BuiltInRegistries.ITEM.get(id));
     }
 
     /* The colour of the {@code index}th item, if there is one. */

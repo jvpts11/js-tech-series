@@ -1162,6 +1162,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- The Injection Moulder shows a fan frame or a bezel it moulds, and that part's mould on its mould halves,
+  as it shows a component's body: it showed neither, its belt and mould empty while it worked.
 - Autocrafting: a machine job that gives up or is cancelled takes back to the network what it fed the
   machine and no recipe used, items, liquids and gases, so the next job finds the machine as it would have found it; a
   failed lead-acid battery left its lead and PVC in the Electrolytic Cell, and no other recipe of exact inputs ran

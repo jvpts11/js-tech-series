@@ -20,9 +20,12 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -91,6 +94,16 @@ public final class MouldCutting {
             out.add(new Offer(Kind.of(part.family()), part.mould().get(), name(part)));
         }
         return List.copyOf(out);
+    }
+
+    /** The mould {@code part} is moulded in, a body's, a fan frame's or a bezel's; none for an item no mould makes. */
+    public static Optional<Item> toolOf(final Item part) {
+        return Optional.ofNullable(Tools.BY_PART.get(part));
+    }
+
+    /** Whether {@code item} is a mould the moulder cuts. */
+    public static boolean isTool(final Item item) {
+        return Tools.ALL.contains(item);
     }
 
     /** The mould {@code mould} as the lithography program names it; none for an item that is no mould. */
@@ -235,5 +248,23 @@ public final class MouldCutting {
 
     /* A mould being cut: the slot its blank stands in, the mould, and the work. */
     record Cutting(int slot, Item mould, Processing work) {
+    }
+
+    /* Each moulded part's mould, by the part, gathered the first time one is asked for, after the items registered. */
+    private static final class Tools {
+
+        static final Map<Item, Item> BY_PART = byPart();
+        static final Set<Item> ALL = Set.copyOf(BY_PART.values());
+
+        private static Map<Item, Item> byPart() {
+            final Map<Item, Item> out = new HashMap<>();
+            for (final BoardParts.Component component : BoardParts.all()) {
+                out.put(component.body().get(), component.mould().get());
+            }
+            for (final MouldedParts.Part part : MouldedParts.all()) {
+                out.put(part.item().get(), part.mould().get());
+            }
+            return Map.copyOf(out);
+        }
     }
 }
