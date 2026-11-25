@@ -211,7 +211,7 @@ public final class ChainMachines {
                 .shape("abc,bdb", "ef#,bbg")
                 .legend("a=item_inlet,b=machine_casing,c=item_outlet,d=power_entry,e=injection_moulder_injection_unit,"
                         + "f=injection_moulder_clamp,g=peripheral_port")
-                .declareRecipes();
+                .works(MoulderBlockEntity::new).declareRecipes();
         machine("lithography_vintage").named("Vintage Lithography Station").era(HardwareEra.VINTAGE)
                 .step(20, 2_000).slots(2, 1, 1, 0, 0, 0)
                 .shape("abc,dae", "af#,aga", "aha,aaa")

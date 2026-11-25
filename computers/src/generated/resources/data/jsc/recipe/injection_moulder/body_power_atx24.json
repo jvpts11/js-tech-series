@@ -1,0 +1,21 @@
+{
+  "type": "jsc:injection_moulder",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:mould_power_atx24"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jsc:body_power_atx24"
+    }
+  ]
+}

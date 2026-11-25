@@ -2,8 +2,8 @@
   "type": "jsc:transition_electronics",
   "inputs": [
     {
-      "count": 1,
-      "item": "jscore:polycarbonate_sheet"
+      "count": 4,
+      "item": "jsc:body_memory_slot_ddr3"
     },
     {
       "count": 3,

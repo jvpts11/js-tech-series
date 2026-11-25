@@ -16,6 +16,7 @@ import dev.jstech.computers.chain.machine.ChainFaces;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.chain.machine.MaskWriting;
+import dev.jstech.computers.chain.machine.MouldCutting;
 import dev.jstech.computers.chain.machine.WaferPages;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.program.Programs;
@@ -49,6 +50,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.bus.api.IEventBus;
@@ -65,6 +67,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ChainRecipePages {
 
     private static final String AIR_SEPARATION_UNIT = "air_separation_unit";
+    private static final String INJECTION_MOULDER = "injection_moulder";
     /* A Mask Writing page: its size, and where its things stand, in the GUI's pixels. */
     private static final int MASK_WIDTH = 232;
     private static final int MASK_HEIGHT = 130;
@@ -148,6 +151,15 @@ public final class ChainRecipePages {
                 .ids(page -> ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mask_writing/"
                         + page.station().id() + "/" + BuiltInRegistries.ITEM.getKey(page.offer().mask()).getPath()))
                 .declare();
+        RecipeViews.of(JsComputers.MODID, "mould_cutting", ChainPagesLook.MOULD_CUTTING, MouldCutting.Offer.class)
+                .recipes(level -> MouldCutting.offers())
+                .workstations(() -> List.of(new ItemStack(terminal(INJECTION_MOULDER))))
+                .icon(() -> new ItemStack(ChainChips.MOULD_BLANK.get()))
+                .size(MASK_WIDTH, MASK_HEIGHT)
+                .layout(ChainRecipePages::mould)
+                .ids(offer -> ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mould_cutting/"
+                        + BuiltInRegistries.ITEM.getKey(offer.mould()).getPath()))
+                .declare();
         RecipeViews.of(JsComputers.MODID, "air_separation", ChainPagesLook.AIR_SEPARATION, ChainMachine.class)
                 .recipes(level -> List.of(ChainMachines.byId(AIR_SEPARATION_UNIT).orElseThrow()))
                 .workstations(() -> List.of(new ItemStack(terminal(AIR_SEPARATION_UNIT))))
@@ -223,16 +235,43 @@ public final class ChainRecipePages {
      * with its two lines; and how much faster a newer computer writes it.
      */
     private static void mask(final MaskPage page, final RecipeView.Builder view) {
-        final ChainPagesLook.Colours ink = ChainPagesLook.PALETTE.get();
         final int seconds = page.station().seconds();
+        toolPage(view, ChainChips.MASK_BLANK.get(), page.offer().mask(), seconds, ChainPagesLook.IN_THE_SLOT,
+                page.station(), ChainPagesLook.ITS_SLOT, page.offer().computer(),
+                ChainPagesLook.PICK.with(page.offer().name()));
+        page.offer().faster().ifPresent(newer -> view.line(ROW_X, FOOT_Y, MASK_WIDTH - ROW_X,
+                GameText.component(ChainPagesLook.FASTER.with(ChainPagesLook.SECONDS.with(Math.max(1, seconds / 2)),
+                        newer.name())), ChainPagesLook.PALETTE.get().dim()));
+    }
+
+    /*
+     * A mould a computer cuts, laid out as a mask is: the Mould Blank in the Injection Moulder's mould slot becoming
+     * the mould in one step's time, never used up; under the rule, the moulder, any computer linked to it and the
+     * program that cuts it.
+     */
+    private static void mould(final MouldCutting.Offer offer, final RecipeView.Builder view) {
+        final ChainMachine moulder = ChainMachines.byId(INJECTION_MOULDER).orElseThrow();
+        toolPage(view, ChainChips.MOULD_BLANK.get(), offer.mould(), moulder.seconds(),
+                ChainPagesLook.IN_THE_MOULD_SLOT, moulder, ChainPagesLook.ITS_MOULD_SLOT, HardwareEra.VINTAGE,
+                ChainPagesLook.PICK_CUT.with(offer.name()));
+    }
+
+    /*
+     * A tool a computer makes on a blank in a machine's slot: the blank becoming the tool in {@code seconds}, never used
+     * up, the tool's name over what it is for, as its item names it; under the rule, the machine, the computer it must
+     * be linked to and the program, each an icon with its two lines.
+     */
+    private static void toolPage(final RecipeView.Builder view, final Item blank, final Item tool, final int seconds,
+                                 final TextKey inTheSlot, final ChainMachine machine, final TextKey itsSlot,
+                                 final Era computer, final Text pick) {
+        final ChainPagesLook.Colours ink = ChainPagesLook.PALETTE.get();
         final Component time = GameText.component(ChainPagesLook.SECONDS.with(seconds));
-        view.input(BLANK_X - INSET, SLOT_Y - INSET, List.of(new ItemStack(ChainChips.MASK_BLANK.get())))
-                .output(MASK_X - INSET, SLOT_Y - INSET, new ItemStack(page.offer().mask()))
+        view.input(BLANK_X - INSET, SLOT_Y - INSET, List.of(new ItemStack(blank)))
+                .output(MASK_X - INSET, SLOT_Y - INSET, new ItemStack(tool))
                 .arrow(ARROW_X, ARROW_Y, 0)
                 .line(ARROW_X + (ARROW_WIDTH - Minecraft.getInstance().font.width(time)) / 2, 0, ARROW_WIDTH * 2,
                         time, ink.text());
-        // The mask's name, its kind over the chip and the era it is for, as its item names it.
-        final String name = new ItemStack(page.offer().mask()).getHoverName().getString();
+        final String name = new ItemStack(tool).getHoverName().getString();
         final int open = name.indexOf(" (");
         view.line(NAME_X, SLOT_Y + 1, MASK_WIDTH - NAME_X, Component.literal(open < 0 ? name
                 : name.substring(0, open)), ink.text());
@@ -240,19 +279,15 @@ public final class ChainRecipePages {
             view.line(NAME_X, SLOT_Y + 1 + LINE, MASK_WIDTH - NAME_X, Component.literal(name.substring(open + 2,
                     name.length() - 1)), ink.dim());
         }
-        view.line(IN_SLOT_X, UNDER_Y, NEVER_X - IN_SLOT_X, GameText.component(ChainPagesLook.IN_THE_SLOT), ink.dim())
+        view.line(IN_SLOT_X, UNDER_Y, NEVER_X - IN_SLOT_X, GameText.component(inTheSlot), ink.dim())
                 .line(NEVER_X, UNDER_Y, MASK_WIDTH - NEVER_X, GameText.component(ChainPagesLook.NEVER_USED_UP),
                         ink.dim())
                 .rule(ROW_X - 1, RULE_Y, MASK_WIDTH - 2 * ROW_X + 1, 1, ink.rule());
-        final ItemStack station = new ItemStack(ChainMachines.terminalOf(page.station()).get());
-        row(view, ink, 0, station, GameText.of(station.getHoverName()), ChainPagesLook.ITS_SLOT.text());
-        row(view, ink, 1, new ItemStack(computerOf(page.offer().computer())), ChainPagesLook.COMPUTER.with(
-                page.offer().computer().name()), ChainPagesLook.LINKED.text());
-        row(view, ink, 2, InstallerStacks.forProgram(Programs.LITHOGRAPHY), ChainPagesLook.PROGRAM.text(),
-                ChainPagesLook.PICK.with(page.offer().name()));
-        page.offer().faster().ifPresent(newer -> view.line(ROW_X, FOOT_Y, MASK_WIDTH - ROW_X,
-                GameText.component(ChainPagesLook.FASTER.with(ChainPagesLook.SECONDS.with(Math.max(1, seconds / 2)),
-                        newer.name())), ink.dim()));
+        final ItemStack terminal = new ItemStack(ChainMachines.terminalOf(machine).get());
+        row(view, ink, 0, terminal, GameText.of(terminal.getHoverName()), itsSlot.text());
+        row(view, ink, 1, new ItemStack(computerOf(computer)), ChainPagesLook.COMPUTER.with(computer.name()),
+                ChainPagesLook.LINKED.text());
+        row(view, ink, 2, InstallerStacks.forProgram(Programs.LITHOGRAPHY), ChainPagesLook.PROGRAM.text(), pick);
     }
 
     /* A row under the rule: what the writing needs, an icon not used up, and its two lines beside it. */

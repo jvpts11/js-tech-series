@@ -2,8 +2,8 @@
   "type": "jsc:vintage_electronics",
   "inputs": [
     {
-      "count": 1,
-      "item": "jscore:pvc_sheet"
+      "count": 4,
+      "item": "jsc:body_memory_slot_sdram"
     },
     {
       "count": 7,

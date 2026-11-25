@@ -1,0 +1,21 @@
+{
+  "type": "jsc:injection_moulder",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:mould_socket_am3"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:body_socket_am3"
+    }
+  ]
+}

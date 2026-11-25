@@ -4404,6 +4404,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) Board components: each socket, slot and connector is made of its own plastic body, "Socket Body (LGA
+  1700)" or "Body (DDR5 DIMM Slot)", which the Injection Moulder moulds from the plastic the component took before,
+  in the body's own mould, lent to the job and never used up; the component takes its body where it took the
+  plastic, so no component's lot makes another any more. Each body's mould is cut on a Mould Blank in the moulder by
+  the computer linked to its peripheral port: the Lithography program shows a linked moulder with its plastic, its
+  mould slot and the moulds it cuts, a list each for the sockets, the slots and the connectors, and Cut Mould cuts
+  the one picked in one step, the mould standing where its blank was; on MC-DOS, W cuts it. The recipe viewer has a
+  Mould Cutting page for each mould, and the Guide to Operations a page on cutting one.
 - (Computers) Autocrafting: a job lends its machine the tool its recipe keeps in it, a mask or a mould, and takes it
   back to the network when it ends, so one Lithography Station exposes every chip, each job bringing its own mask; a
   station kept the first mask it was fed and could serve no other chip. A recipe brought from the recipe viewer into

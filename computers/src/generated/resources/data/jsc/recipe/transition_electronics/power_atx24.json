@@ -2,8 +2,8 @@
   "type": "jsc:transition_electronics",
   "inputs": [
     {
-      "count": 1,
-      "item": "jscore:polycarbonate_sheet"
+      "count": 2,
+      "item": "jsc:body_power_atx24"
     },
     {
       "count": 1,

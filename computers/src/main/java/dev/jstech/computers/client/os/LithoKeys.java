@@ -8,7 +8,6 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.chain.machine.MaskWriting;
 import dev.jstech.computers.lithography.LithographyLook;
 import dev.jstech.computers.operation.payload.lithography.LithographyRequestPayload;
 import dev.jstech.computers.operation.payload.lithography.LithographyStatePayload;
@@ -164,12 +163,13 @@ public final class LithoKeys implements TtyEditor.IKeys {
             foot(screen, ink, look, rows);
             return screen;
         }
-        final Text named = LithoTuiTexts.STATION_LINE.with(look.station());
+        // A moulder names itself; a station by its era and its light.
+        final Text named = look.moulder() ? look.station() : LithoTuiTexts.STATION_LINE.with(look.station());
         screen.put(LEFT, 1, resolve(look.stations() > 1 ? LithoTuiTexts.OF_STATIONS.with(named, look.shown() + 1,
                 look.stations()) : named), ink.dim());
         final int half = wide / 2;
         stationSide(screen, ink, look, half);
-        maskSide(screen, ink, half, wide, rows);
+        maskSide(screen, ink, look, half, wide, rows);
         say(screen, ink, look, wide, rows);
         foot(screen, ink, look, rows);
         return screen;
@@ -190,36 +190,41 @@ public final class LithoKeys implements TtyEditor.IKeys {
         final int room = half - valueAt - 2;
         int row = FIRST_ROW;
         row = dots(screen, ink, row, resolve(LithographyTexts.ROW_STATUS), resolve(look.status()), valueAt, room);
-        row = dots(screen, ink, row, resolve(LithographyTexts.ROW_WAFER), resolve(look.wafer()), valueAt, room);
+        row = dots(screen, ink, row, resolve(LithoWords.wafer(look)), resolve(look.wafer()), valueAt, room);
         if (look.exposing()) {
-            dots(screen, ink, row, resolve(LithographyTexts.ROW_LAYER), "", valueAt, room);
+            dots(screen, ink, row, resolve(LithoWords.layer(look)), "", valueAt, room);
             bar(screen, ink, valueAt, row, LAYER_BAR, look.layerPermille() / PERMILLE);
             screen.put(valueAt + LAYER_BAR + 1, row, resolve(LithographyTexts.SECONDS.with(look.layerSeconds())),
                     ink.bright());
             row++;
         } else {
-            row = dots(screen, ink, row, resolve(LithographyTexts.ROW_LAYER), "-", valueAt, room);
+            row = dots(screen, ink, row, resolve(LithoWords.layer(look)), "-", valueAt, room);
         }
-        row = dots(screen, ink, row, resolve(LithographyTexts.ROW_LITHO), resolve(look.lithoMb() > 0
+        row = dots(screen, ink, row, resolve(LithoWords.process(look)), resolve(look.lithoMb() > 0
                 ? LithographyTexts.HELD.with(look.lithoMb()) : LithographyTexts.NOT_RUNNING.text()), valueAt, room);
         for (final LithographyLook.Supply supply : look.supplies()) {
             row = dots(screen, ink, row, resolve(supply.name()), resolve(LithographyTexts.MILLIBUCKETS.with(
                     String.format(Locale.ROOT, "%,d", supply.amount()))), valueAt, room);
         }
-        dots(screen, ink, row, resolve(LithographyTexts.ROW_SLOT), resolve(look.slot()), valueAt, room);
+        dots(screen, ink, row, resolve(LithoWords.slot(look)), resolve(look.slot()), valueAt, room);
     }
 
-    /* The masks on the right: the kinds as tabs, as many rows as they take, and the list of the one shown. */
-    private void maskSide(final TextScreen screen, final Colours ink, final int half, final int wide, final int rows) {
+    /*
+     * The masks, or a moulder's moulds, on the right: the kinds as tabs, as many rows as they take, and the list of
+     * the one shown.
+     */
+    private void maskSide(final TextScreen screen, final Colours ink, final LithographyLook look, final int half,
+                          final int wide, final int rows) {
         final int left = half + LEFT;
-        screen.put(left, HEAD_ROW, resolve(LithoTuiTexts.HEAD_MASKS), ink.bright());
+        screen.put(left, HEAD_ROW, resolve(look.moulder() ? LithoTuiTexts.HEAD_MOULDS : LithoTuiTexts.HEAD_MASKS),
+                ink.bright());
         screen.put(left, HEAD_ROW + 1, RULE.repeat(Math.max(0, wide - left - 1)), ink.dim());
         final List<String> kinds = kinds();
         kind = kinds.isEmpty() ? 0 : Math.min(kind, kinds.size() - 1);
         int row = FIRST_ROW;
         int column = left;
         for (int i = 0; i < kinds.size(); i++) {
-            final String label = resolve(MaskWriting.title(MaskWriting.Kind.of(kinds.get(i))));
+            final String label = resolve(LithoWords.kind(kinds.get(i)));
             if (column + label.length() > wide - 1 && column > left) {
                 row++;
                 column = left;
@@ -259,7 +264,7 @@ public final class LithoKeys implements TtyEditor.IKeys {
             return;
         }
         if (look.writes()) {
-            screen.put(LEFT, line + 1, clip(resolve(LithographyTexts.WRITING_THE.with(look.writing())), wide - 4),
+            screen.put(LEFT, line + 1, clip(resolve(LithoWords.making(look).with(look.writing())), wide - 4),
                     ink.bright());
             final int cells = Math.max(1, wide / 2);
             bar(screen, ink, LEFT, line + 2, cells, look.writingPermille() / PERMILLE);
@@ -270,11 +275,12 @@ public final class LithoKeys implements TtyEditor.IKeys {
         final LithographyLook.Pick pick = pick();
         final String hint;
         if (look.blank()) {
-            hint = pick == null ? "" : resolve(LithoTuiTexts.WRITE_HINT.with(pick.name()));
+            hint = pick == null ? "" : resolve((look.moulder() ? LithoTuiTexts.CUT_HINT : LithoTuiTexts.WRITE_HINT)
+                    .with(pick.name()));
         } else if (look.masked()) {
-            hint = resolve(LithographyTexts.MASK_HINT.with(look.slot()));
+            hint = resolve(LithoWords.toolHint(look).with(look.slot()));
         } else {
-            hint = resolve(LithographyTexts.EMPTY_HINT);
+            hint = resolve(LithoWords.emptyHint(look));
         }
         screen.put(LEFT, line + 1, clip(hint, wide - LEFT * 2), ink.bright());
     }
@@ -283,8 +289,10 @@ public final class LithoKeys implements TtyEditor.IKeys {
     private static void foot(final TextScreen screen, final Colours ink, final LithographyLook look, final int rows) {
         final int row = rows - 1;
         screen.fill(0, row, screen.columns(), 1, ink.bright(), ink.bar());
-        screen.put(1, row, resolve(look.stations() > 1 ? LithoTuiTexts.KEYS_STATIONS : LithoTuiTexts.KEYS),
-                ink.bright(), ink.bar());
+        final TextKey keys = look.moulder()
+                ? look.stations() > 1 ? LithoTuiTexts.KEYS_MOULDER_STATIONS : LithoTuiTexts.KEYS_MOULDER
+                : look.stations() > 1 ? LithoTuiTexts.KEYS_STATIONS : LithoTuiTexts.KEYS;
+        screen.put(1, row, resolve(keys), ink.bright(), ink.bar());
         final String version = resolve(LithoTuiTexts.VERSION);
         screen.put(screen.columns() - version.length() - 2, row, version, ink.dim(), ink.bar());
     }

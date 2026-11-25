@@ -38,11 +38,13 @@ import net.minecraft.resources.ResourceLocation;
  * @param writing         the mask it is writing, by what the program calls it, or nothing
  * @param writingPermille how far through the writing it is, in thousandths
  * @param writingSeconds  how many seconds the writing has left
+ * @param moulder         whether the machine is an Injection Moulder, whose rows tell its plastic, the part it moulds
+ *                        and its mould slot, and whose picks are the moulds it cuts on a Mould Blank
  */
 public record LithographyLook(int stations, int shown, Text station, Text status, Text wafer, boolean exposing,
                               int layerPermille, int layerSeconds, int lithoMb, List<Supply> supplies, Text slot,
                               boolean blank, boolean masked, List<Pick> picks, Text writing, int writingPermille,
-                              int writingSeconds) {
+                              int writingSeconds, boolean moulder) {
 
     /* The most of each list a look carries: far over what a station has. */
     private static final int MOST_SUPPLIES = 8;
@@ -51,7 +53,7 @@ public record LithographyLook(int stations, int shown, Text station, Text status
 
     /** A computer no station works for. */
     public static final LithographyLook NONE = new LithographyLook(0, 0, Text.EMPTY, Text.EMPTY, Text.EMPTY, false,
-            0, 0, 0, List.of(), Text.EMPTY, false, false, List.of(), Text.EMPTY, 0, 0);
+            0, 0, 0, List.of(), Text.EMPTY, false, false, List.of(), Text.EMPTY, 0, 0, false);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LithographyLook> STREAM_CODEC = StreamCodec.of(
             (buf, look) -> {
@@ -67,13 +69,14 @@ public record LithographyLook(int stations, int shown, Text station, Text status
                 Pick.LIST_CODEC.encode(buf, look.picks());
                 TextCodecs.STREAM_CODEC.encode(buf, look.writing());
                 buf.writeVarInt(look.writingPermille()).writeVarInt(look.writingSeconds());
+                buf.writeBoolean(look.moulder());
             },
             buf -> new LithographyLook(buf.readVarInt(), buf.readVarInt(), TextCodecs.STREAM_CODEC.decode(buf),
                     TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(),
                     buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), Supply.LIST_CODEC.decode(buf),
                     TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readBoolean(),
                     Pick.LIST_CODEC.decode(buf),
-                    TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt()));
+                    TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()));
 
     public LithographyLook {
         supplies = List.copyOf(supplies);

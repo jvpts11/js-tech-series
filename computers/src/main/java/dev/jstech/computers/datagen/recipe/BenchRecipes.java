@@ -33,6 +33,7 @@ import java.util.function.BiConsumer;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 
 /**
  * What is assembled by hand at an era's Electronics Workbench, and by that era's Electronics Assembly Line
@@ -118,11 +119,12 @@ final class BenchRecipes {
     }
 
     /*
-     * Each component of a board: a plastic body (PVC up to the Legacy, polycarbonate from the Transition; a big socket
-     * two or three), stamped contacts (copper foil, one for every hundred pins, a power connector's thick pins copper
-     * wire), their plating (tin in the Vintage, gold after; a power connector always tin), and the metal its mechanism
-     * needs. Of the components made of the same things, each with more pins takes at least one contact more than the
-     * one before it, era after era, so no two are alike; Quince's sockets, reckoned last, after those already made.
+     * Each component of a board: its plastic body (PVC up to the Legacy, polycarbonate from the Transition; a big
+     * socket two or three), moulded at the Injection Moulder in the component's own mould, one body for each component;
+     * stamped contacts (copper foil, one for every hundred pins, a power connector's thick pins copper wire), their
+     * plating (tin in the Vintage, gold after; a power connector always tin), and the metal its mechanism needs. Of the
+     * components made of the same things, each with more pins takes at least one contact more than the one before it,
+     * era after era, so no two are alike; Quince's sockets, reckoned last, after those already made.
      */
     private static void boardParts(final RecipeOutput output) {
         reckon((made, contacts) -> made.save(output));
@@ -159,13 +161,19 @@ final class BenchRecipes {
                 contactsSoFar.getOrDefault(signature, 0) + 1);
         contactsSoFar.put(signature, contacts);
         CONTACTS.put(component, contacts);
-        final ChainRecipeItems.Saved made = recipe(bench(component.era()), component.item().getId().getPath());
-        made.builder().input(body, bodies).input(contact, contacts).input(plating, 1);
+        // The plastic goes into the component's own body, moulded in its own mould, one body for each component made.
+        final int made = component.kind().made();
+        final ChainRecipeItems.Saved moulded = recipe(kind("injection_moulder"), component.body().getId().getPath());
+        moulded.builder().input(body, bodies).catalyst(Ingredient.of(component.mould().get()), 1)
+                .output(component.body().get(), made);
+        saved.accept(moulded, 0);
+        final ChainRecipeItems.Saved part = recipe(bench(component.era()), component.item().getId().getPath());
+        part.builder().input(component.body().get(), made).input(contact, contacts).input(plating, 1);
         for (int i = 0; i < metal.size(); i += 2) {
-            made.builder().input((Item) metal.get(i), (Integer) metal.get(i + 1));
+            part.builder().input((Item) metal.get(i), (Integer) metal.get(i + 1));
         }
-        made.builder().output(component.item().get(), component.kind().made());
-        saved.accept(made, contacts);
+        part.builder().output(component.item().get(), made);
+        saved.accept(part, contacts);
     }
 
     /*

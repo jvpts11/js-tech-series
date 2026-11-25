@@ -2,8 +2,8 @@
   "type": "jsc:transition_electronics",
   "inputs": [
     {
-      "count": 2,
-      "item": "jscore:polycarbonate_sheet"
+      "count": 1,
+      "item": "jsc:body_socket_lga_1366"
     },
     {
       "count": 14,

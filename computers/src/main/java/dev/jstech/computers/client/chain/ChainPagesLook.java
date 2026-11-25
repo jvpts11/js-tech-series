@@ -37,6 +37,10 @@ final class ChainPagesLook {
     static final TextKey LINKED = TextKey.of("jsc.jei.mask_writing.linked", "on, linked to its peripheral port");
     static final TextKey PROGRAM = TextKey.of("jsc.jei.mask_writing.program", "Lithography program:");
     static final TextKey PICK = TextKey.of("jsc.jei.mask_writing.pick", "pick %s, then Write");
+    static final TextKey MOULD_CUTTING = TextKey.of("jsc.jei.mould_cutting", "Mould Cutting");
+    static final TextKey IN_THE_MOULD_SLOT = TextKey.of("jsc.jei.mould_cutting.in_the_slot", "in the mould slot");
+    static final TextKey ITS_MOULD_SLOT = TextKey.of("jsc.jei.mould_cutting.its_slot", "its mould slot");
+    static final TextKey PICK_CUT = TextKey.of("jsc.jei.mould_cutting.pick", "pick %s, then Cut Mould");
     static final TextKey FASTER = TextKey.of("jsc.jei.mask_writing.faster", "%s on a %s computer or newer");
     /** A Mask Writing page's ink: what it says, what it says under that, and the line under the mask. */
     static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "jei/mask_writing",

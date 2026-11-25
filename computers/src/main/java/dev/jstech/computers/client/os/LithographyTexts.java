@@ -43,6 +43,20 @@ final class LithographyTexts {
             "%s in the slot: the station exposes through it");
     static final TextKey EMPTY_HINT = TextKey.of("jsc.lithography.hint.empty",
             "Put a Mask Blank in the station's mask slot to write a mask on it");
+    static final TextKey ROW_PLASTIC = TextKey.of("jsc.lithography.row.plastic", "Plastic");
+    static final TextKey ROW_PART = TextKey.of("jsc.lithography.row.part", "Part");
+    static final TextKey ROW_MOULD = TextKey.of("jsc.lithography.row.mould", "mould");
+    static final TextKey ROW_MOULD_SLOT = TextKey.of("jsc.lithography.row.mould_slot", "Mould slot");
+    static final TextKey CUT_MOULD = TextKey.of("jsc.lithography.cut_mould", "Cut Mould");
+    static final TextKey TOOL_NEVER_USED_UP = TextKey.of("jsc.lithography.tool_never_used_up",
+            "A tool is never used up");
+    static final TextKey CUTTING_THE = TextKey.of("jsc.lithography.cutting_the", "Cutting the %s mould");
+    static final TextKey MOULD_BLANK_HINT = TextKey.of("jsc.lithography.hint.mould_blank",
+            "A Mould Blank is in the slot: Cut Mould cuts the %s mould on it");
+    static final TextKey MOULD_HINT = TextKey.of("jsc.lithography.hint.mould",
+            "%s in the slot: the moulder moulds in it");
+    static final TextKey MOULD_EMPTY_HINT = TextKey.of("jsc.lithography.hint.mould_empty",
+            "Put a Mould Blank in the moulder's mould slot to cut a mould on it");
     static final TextKey NO_STATION = TextKey.of("jsc.lithography.no_station",
             "No Lithography Station is linked to this computer");
     static final TextKey NO_STATION_HINT = TextKey.of("jsc.lithography.no_station_hint",

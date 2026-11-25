@@ -2,8 +2,8 @@
   "type": "jsc:advanced_electronics",
   "inputs": [
     {
-      "count": 3,
-      "item": "jscore:polycarbonate_sheet"
+      "count": 1,
+      "item": "jsc:body_socket_quince_q"
     },
     {
       "count": 62,

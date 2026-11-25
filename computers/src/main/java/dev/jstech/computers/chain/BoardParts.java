@@ -174,11 +174,17 @@ public final class BoardParts {
      * @param pins  its real pins, which its contacts are reckoned from
      * @param holds how it holds a processor, for a socket
      * @param item  its item
+     * @param body  its plastic body, moulded at the Injection Moulder in its own mould
+     * @param mould the steel mould its body is moulded in, cut from a Mould Blank
      */
-    public record Component(Kind kind, Era era, int pins, Mechanism holds, ItemEntry<Item> item) {
+    public record Component(Kind kind, Era era, int pins, Mechanism holds, ItemEntry<Item> item,
+                            ItemEntry<Item> body, ItemEntry<Item> mould) {
     }
 
-    /* A component declared by its kind, era, path, pins and mechanism, named last, which registers it. */
+    /*
+     * A component declared by its kind, era, path, pins and mechanism, named last, which registers it, its body,
+     * "Socket Body (LGA 1700)" or "Body (DDR5 DIMM Slot)", and its mould, "Mould (LGA 1700)".
+     */
     private record Declaration(Kind kind, Era era, String path, int pins, Mechanism holds) {
 
         Component named(final String english) {
@@ -189,7 +195,11 @@ public final class BoardParts {
                 case STORAGE -> "storage_" + path;
                 case POWER -> "power_" + path;
             };
-            return new Component(kind, era, pins, holds, part(id, era).named(english).register());
+            final ItemEntry<Item> body = kind == Kind.SOCKET
+                    ? part("body_" + id, era).named("Socket Body (" + english + ")").register()
+                    : part("body_" + id, era).named("Body (" + english + ")").register();
+            return new Component(kind, era, pins, holds, part(id, era).named(english).register(), body,
+                    part("mould_" + id, era).named("Mould (" + english + ")").register());
         }
     }
 }

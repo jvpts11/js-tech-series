@@ -9,9 +9,12 @@ package dev.jstech.computers.lithography;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.chain.ChainChips;
+import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.LithoLink;
 import dev.jstech.computers.chain.machine.LithoStations;
 import dev.jstech.computers.chain.machine.MaskWriting;
+import dev.jstech.computers.chain.machine.MoulderBlockEntity;
+import dev.jstech.computers.chain.machine.MouldCutting;
 import dev.jstech.computers.chain.machine.WaferMachineBlockEntity;
 import dev.jstech.computers.chain.machine.WaferWork;
 import dev.jstech.core.jstechseries.Element;
@@ -30,6 +33,7 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -39,8 +43,9 @@ import net.minecraft.world.item.Items;
 
 /**
  * The lithography program's side on the computer (computers/docs/design/survival.md, "Masks"): what it shows of the
- * Lithography Stations linked to its computer, read off each station, and the mask it has one write. Both of the
- * program's forms, its text screen on MC-DOS and its window on the desktop systems, show what this reads.
+ * Lithography Stations and the Injection Moulders linked to its computer, read off each machine, and the mask it has a
+ * station write or the mould it has a moulder cut. Both of the program's forms, its text screen on MC-DOS and its
+ * window on the desktop systems, show what this reads.
  */
 @TextHolder
 public final class LithographyDesk {
@@ -55,6 +60,7 @@ public final class LithographyDesk {
     private static final TextKey NONE = TextKey.of("jsc.lithography.none", "none");
     private static final TextKey EMPTY = TextKey.of("jsc.lithography.slot.empty", "empty");
     private static final TextKey MASK = TextKey.of("jsc.lithography.slot.mask", "%s mask");
+    private static final TextKey MOULD = TextKey.of("jsc.lithography.slot.mould", "%s mould");
     private static final TextKey PHOTORESIST = TextKey.of("jsc.lithography.supply.photoresist", "Photoresist");
     private static final TextKey KRYPTON = TextKey.of("jsc.lithography.supply.krypton", "Krypton");
     private static final TextKey ARGON = TextKey.of("jsc.lithography.supply.argon", "Argon");
@@ -71,12 +77,15 @@ public final class LithographyDesk {
      */
     public static LithographyLook look(final ServerLevel level, final AbstractComputerBlockEntity computer,
                                        final int index) {
-        final List<WaferMachineBlockEntity> stations = LithoStations.of(level, computer);
+        final List<ChainMachineBlockEntity> stations = LithoStations.of(level, computer);
         if (stations.isEmpty()) {
             return LithographyLook.NONE;
         }
         final int shown = index >= 0 && index < stations.size() ? index : 0;
-        final WaferMachineBlockEntity station = stations.get(shown);
+        if (stations.get(shown) instanceof MoulderBlockEntity moulder) {
+            return moulder(level, computer, stations.size(), shown, moulder);
+        }
+        final WaferMachineBlockEntity station = (WaferMachineBlockEntity) stations.get(shown);
         final List<MaskWriting.Offer> offers = MaskWriting.offers(station.machine(), computer.displayEra());
         final List<LithographyLook.Pick> picks = new ArrayList<>();
         for (final MaskWriting.Offer offer : offers) {
@@ -99,7 +108,7 @@ public final class LithographyDesk {
                 LithoLink.heldMb(computer, station.getBlockPos(), level.getGameTime()), supplies(station),
                 slotOf(offers, mask), blank, !mask.isEmpty() && !blank, picks,
                 writing ? nameOf(offers, new ItemStack(writes)) : Text.EMPTY,
-                writing ? permille : 0, writing ? seconds : 0);
+                writing ? permille : 0, writing ? seconds : 0, false);
     }
 
     /**
@@ -108,12 +117,61 @@ public final class LithographyDesk {
      */
     public static Optional<TextKey> write(final ServerLevel level, final AbstractComputerBlockEntity computer,
                                           final int index, final ResourceLocation mask) {
-        final List<WaferMachineBlockEntity> stations = LithoStations.of(level, computer);
+        final List<ChainMachineBlockEntity> stations = LithoStations.of(level, computer);
         final Item item = BuiltInRegistries.ITEM.get(mask);
         if (index < 0 || index >= stations.size() || item == Items.AIR) {
             return Optional.of(MaskWriting.NOT_OFFERED);
         }
-        return MaskWriting.write(stations.get(index), computer.displayEra(), item);
+        // An Injection Moulder cuts the mould picked; a station writes the mask.
+        if (stations.get(index) instanceof MoulderBlockEntity moulder) {
+            return MouldCutting.cut(moulder, item);
+        }
+        return MaskWriting.write((WaferMachineBlockEntity) stations.get(index), computer.displayEra(), item);
+    }
+
+    /*
+     * What the program shows of an Injection Moulder: what it is doing, the plastic it holds and the part it moulds,
+     * what its computer holds for it while it cuts, what stands in its mould slot, the moulds it cuts and the one it is
+     * cutting.
+     */
+    private static LithographyLook moulder(final ServerLevel level, final AbstractComputerBlockEntity computer,
+                                           final int machines, final int shown, final MoulderBlockEntity moulder) {
+        final List<MouldCutting.Offer> offers = MouldCutting.offers();
+        final List<LithographyLook.Pick> picks = new ArrayList<>();
+        for (final MouldCutting.Offer offer : offers) {
+            picks.add(new LithographyLook.Pick(offer.kind().serializedName(),
+                    BuiltInRegistries.ITEM.getKey(offer.mould()), offer.name()));
+        }
+        final ItemStack tool = firstOf(moulder.inputs(), LithographyDesk::mouldTool);
+        final ItemStack plastic = firstOf(moulder.inputs(), held -> !held.isEmpty() && !mouldTool(held));
+        final boolean blank = tool.is(ChainChips.MOULD_BLANK.get());
+        final Item cuts = moulder.cuts();
+        final boolean cutting = cuts != null && blank && !moulder.moulding();
+        final int permille = moulder.getMaxProgress() <= 0 ? 0
+                : (int) ((long) moulder.getProgress() * PERMILLE / moulder.getMaxProgress());
+        final int seconds = Math.max(0, moulder.getMaxProgress() - moulder.getProgress()) / TICKS_A_SECOND;
+        final Text status = moulder.moulding() ? MouldCutting.MOULDING_A_PART.text()
+                : cutting ? MouldCutting.CUTTING_A_MOULD.text() : IDLE.text();
+        final Text slot = tool.isEmpty() ? EMPTY.text() : blank ? GameText.of(tool.getHoverName())
+                : MouldCutting.offerOf(tool.getItem()).map(offer -> MOULD.with(offer.name()))
+                        .orElseGet(() -> GameText.of(tool.getHoverName()));
+        final Text named = cutting ? MouldCutting.offerOf(cuts).map(MouldCutting.Offer::name).orElse(Text.EMPTY)
+                : Text.EMPTY;
+        return new LithographyLook(machines, shown, moulder.machine().nameKey().text(), status,
+                plastic.isEmpty() ? NONE.text() : GameText.of(plastic.getHoverName()), moulder.moulding(),
+                moulder.moulding() ? permille : 0, moulder.moulding() ? seconds : 0,
+                MouldCutting.heldMb(computer, moulder, level.getGameTime()), List.of(), slot, blank,
+                !tool.isEmpty() && !blank, picks, named, cutting ? permille : 0, cutting ? seconds : 0, true);
+    }
+
+    /* Whether {@code stack} is a moulder's tool or what one is cut on: a Mould Blank or a mould. */
+    private static boolean mouldTool(final ItemStack stack) {
+        return stack.is(ChainChips.MOULD_BLANK.get()) || MouldCutting.offerOf(stack.getItem()).isPresent();
+    }
+
+    /* The first of {@code stacks} that {@code wanted} accepts; nothing when none does. */
+    private static ItemStack firstOf(final List<ItemStack> stacks, final Predicate<ItemStack> wanted) {
+        return stacks.stream().filter(wanted).findFirst().orElse(ItemStack.EMPTY);
     }
 
     /* The mask or the blank among the station's inputs, the first; nothing when it holds neither. */

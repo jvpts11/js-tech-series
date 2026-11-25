@@ -2,8 +2,8 @@
   "type": "jsc:transition_electronics",
   "inputs": [
     {
-      "count": 1,
-      "item": "jscore:polycarbonate_sheet"
+      "count": 4,
+      "item": "jsc:body_storage_sata"
     },
     {
       "count": 1,

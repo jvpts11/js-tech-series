@@ -17,39 +17,40 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
- * The Lithography Stations a computer works for, the ones from the Legacy on whose peripheral port is linked to it
- * (computers/docs/design/survival.md): what its lithography program shows and writes masks on. The stations in the
- * world are listed as they load and leave, so a computer asks only them, never the blocks round it.
+ * The machines a computer's lithography program works for, the ones whose peripheral port is linked to it
+ * (computers/docs/design/survival.md): the Lithography Stations from the Legacy on, which it writes masks for, and the
+ * Injection Moulders, which it cuts moulds for. The machines in the world are listed as they load and leave, so a
+ * computer asks only them, never the blocks round it.
  */
 public final class LithoStations {
 
-    private static final Set<WaferMachineBlockEntity> LOADED = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<ChainMachineBlockEntity> LOADED = Collections.newSetFromMap(new WeakHashMap<>());
 
     private LithoStations() {
     }
 
-    /** A station that works through a computer came into the world; it is listed while it stays. */
-    public static void loaded(final WaferMachineBlockEntity station) {
-        LOADED.add(station);
+    /** A machine that works through a computer came into the world; it is listed while it stays. */
+    public static void loaded(final ChainMachineBlockEntity machine) {
+        LOADED.add(machine);
     }
 
-    /** A station left the world. */
-    public static void gone(final WaferMachineBlockEntity station) {
-        LOADED.remove(station);
+    /** A machine left the world. */
+    public static void gone(final ChainMachineBlockEntity machine) {
+        LOADED.remove(machine);
     }
 
-    /** The formed stations in {@code level} whose peripheral port is linked to {@code computer}, by position. */
-    public static List<WaferMachineBlockEntity> of(final ServerLevel level, final BlockEntity computer) {
-        final List<WaferMachineBlockEntity> out = new ArrayList<>();
-        for (final WaferMachineBlockEntity station : List.copyOf(LOADED)) {
-            if (station.isRemoved() || station.getLevel() != level || !station.formed()) {
+    /** The formed machines in {@code level} whose peripheral port is linked to {@code computer}, by position. */
+    public static List<ChainMachineBlockEntity> of(final ServerLevel level, final BlockEntity computer) {
+        final List<ChainMachineBlockEntity> out = new ArrayList<>();
+        for (final ChainMachineBlockEntity machine : List.copyOf(LOADED)) {
+            if (machine.isRemoved() || machine.getLevel() != level || !machine.formed()) {
                 continue;
             }
-            if (LithoLink.computer(level, station).filter(linked -> linked == computer).isPresent()) {
-                out.add(station);
+            if (LithoLink.computer(level, machine).filter(linked -> linked == computer).isPresent()) {
+                out.add(machine);
             }
         }
-        out.sort(Comparator.comparingLong(station -> station.getBlockPos().asLong()));
+        out.sort(Comparator.comparingLong(machine -> machine.getBlockPos().asLong()));
         return out;
     }
 }

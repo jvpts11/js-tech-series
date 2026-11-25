@@ -93,7 +93,9 @@ public final class LithographyApp implements IDesktopApp {
         }));
         this.list = root.add(new ListView<>(this::shownPicks, ROW_H, this::renderPick)
                 .setOnClick((index, button, mx, my) -> pick(index)));
-        this.write = root.add(new Button(GameText.resolve(LithographyTexts.WRITE_MASK), this::writeMask));
+        // Write Mask for a station, Cut Mould for an Injection Moulder, as the machine shown is.
+        this.write = root.add(new Button(() -> GameText.resolve(LithoWords.button(state == null
+                ? LithographyLook.NONE : state.look())), this::writeMask));
         active = this;
         request(LithographyRequestPayload.LOOK, null);
     }
@@ -173,7 +175,7 @@ public final class LithographyApp implements IDesktopApp {
             skin.panel(g, x + MASKS_X, y + GROUP_TOP + TAB_H, width - MASKS_X - PAD, paneBottom - (y + GROUP_TOP
                     + TAB_H));
             layoutMasks(look, x, y, width, paneBottom);
-            Draw.text(g, font, GameText.resolve(LithographyTexts.NEVER_USED_UP), x + MASKS_X + LIST_INSET,
+            Draw.text(g, font, GameText.resolve(LithoWords.neverUsedUp(look)), x + MASKS_X + LIST_INSET,
                     paneBottom - BUTTON_FOOT + 4, skin.dim());
         } else if (state != null) {
             final String none = GameText.resolve(LithographyTexts.NO_STATION);
@@ -270,9 +272,9 @@ public final class LithographyApp implements IDesktopApp {
         rows.add(new String[] {GameText.resolve(LithographyTexts.ROW_LINKED),
             GameText.resolve(LithographyTexts.PERIPHERAL_PORT)});
         rows.add(row(LithographyTexts.ROW_STATUS, look.status()));
-        rows.add(row(LithographyTexts.ROW_WAFER, look.wafer()));
+        rows.add(row(LithoWords.wafer(look), look.wafer()));
         if (look.exposing()) {
-            rows.add(new String[] {GameText.resolve(LithographyTexts.ROW_LAYER), String.format(Locale.ROOT,
+            rows.add(new String[] {GameText.resolve(LithoWords.layer(look)), String.format(Locale.ROOT,
                 "%d%%  %s", look.layerPermille() / 10, GameText.resolve(LithographyTexts.SECONDS.with(
                 look.layerSeconds())))});
         }
@@ -280,9 +282,9 @@ public final class LithographyApp implements IDesktopApp {
             rows.add(new String[] {GameText.resolve(supply.name()), GameText.resolve(LithographyTexts.MILLIBUCKETS
                 .with(String.format(Locale.ROOT, "%,d", supply.amount())))});
         }
-        rows.add(new String[] {GameText.resolve(LithographyTexts.ROW_LITHO), GameText.resolve(look.lithoMb() > 0
+        rows.add(new String[] {GameText.resolve(LithoWords.process(look)), GameText.resolve(look.lithoMb() > 0
             ? LithographyTexts.HELD.with(look.lithoMb()) : LithographyTexts.NOT_RUNNING.text())});
-        rows.add(row(LithographyTexts.ROW_SLOT, look.slot()));
+        rows.add(row(LithoWords.slot(look), look.slot()));
         for (int i = 0; i < rows.size(); i++) {
             final int ry = gy + ROW_TOP + i * ROW_PITCH;
             Draw.text(g, font, Texts.clip(font, rows.get(i)[0], VALUE_X - LABEL_X - 2), gx + LABEL_X, ry,
@@ -327,16 +329,16 @@ public final class LithographyApp implements IDesktopApp {
         } else if (look.stations() == 0) {
             line = "";
         } else if (look.writes()) {
-            line = GameText.resolve(LithographyTexts.WRITING_THE.with(look.writing()));
+            line = GameText.resolve(LithoWords.making(look).with(look.writing()));
             skin.progress(g, x + width - BAR_W - PAD, y + 2, BAR_W, STATUS_H - 4,
                     look.writingPermille() / PERMILLE);
         } else if (look.blank()) {
             final LithographyLook.Pick pick = currentPick();
-            line = pick == null ? "" : GameText.resolve(LithographyTexts.BLANK_HINT.with(pick.name()));
+            line = pick == null ? "" : GameText.resolve(LithoWords.blankHint(look).with(pick.name()));
         } else if (look.masked()) {
-            line = GameText.resolve(LithographyTexts.MASK_HINT.with(look.slot()));
+            line = GameText.resolve(LithoWords.toolHint(look).with(look.slot()));
         } else {
-            line = GameText.resolve(LithographyTexts.EMPTY_HINT);
+            line = GameText.resolve(LithoWords.emptyHint(look));
         }
         final int room = width - PAD * 2 - (look.writes() ? BAR_W + PAD : 0);
         Draw.text(g, font, Texts.clip(font, line, room), x + PAD, y + 4, skin.text());
@@ -393,7 +395,7 @@ public final class LithographyApp implements IDesktopApp {
     private List<String> tabLabels() {
         final List<String> out = new ArrayList<>();
         for (final String kind : kinds()) {
-            out.add(GameText.resolve(MaskWriting.title(MaskWriting.Kind.of(kind))));
+            out.add(GameText.resolve(LithoWords.kind(kind)));
         }
         return out;
     }

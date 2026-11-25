@@ -17,6 +17,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
+import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.LithoStations;
 import dev.jstech.computers.chain.machine.MaskWriting;
 import dev.jstech.computers.chain.machine.WaferMachineBlockEntity;
@@ -178,7 +179,7 @@ public final class MaskWritingGameTests {
     public static void stations_ofAComputerAreTheOnesLinkedToIt(final GameTestHelper helper) {
         final BlockPos terminal = linkedLegacyStation(helper, EraKit.LEGACY);
         helper.runAfterDelay(SETTLE, () -> {
-            final List<WaferMachineBlockEntity> stations = LithoStations.of(helper.getLevel(), computer(helper));
+            final List<ChainMachineBlockEntity> stations = LithoStations.of(helper.getLevel(), computer(helper));
             helper.assertTrue(stations.size() == 1 && stations.getFirst() == station(helper, terminal),
                     "the computer finds the station on its cable: " + stations);
             helper.succeed();
