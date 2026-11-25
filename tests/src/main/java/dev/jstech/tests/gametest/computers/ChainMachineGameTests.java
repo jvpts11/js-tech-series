@@ -27,8 +27,13 @@ import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
+import dev.jstech.core.jstechseries.SeriesChemicals;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.machine.MatterTanks;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity.Layout;
+import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterStack;
@@ -36,6 +41,7 @@ import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestComputerEnergy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -44,7 +50,11 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -79,6 +89,36 @@ public final class ChainMachineGameTests {
         helper.succeed();
     }
 
+    /*
+     * Every recipe a machine works fits in it: its items and the tools it keeps there each in an input slot of their
+     * own, what it makes in the outputs, its liquids and other matter in the tanks; a tool with no slot left (the Board
+     * Etcher's phototool) would leave the recipe never made.
+     */
+    @GameTest(template = ARENA)
+    public static void every_machineHoldsEveryRecipeItWorks(final GameTestHelper helper) {
+        final List<String> wrong = new ArrayList<>();
+        for (final ChainMachine machine : ChainMachines.all()) {
+            final Layout layout = machine.layout();
+            final int matterIn = layout.matter().stream().mapToInt(MatterTanks.MatterSpec::inputs).sum();
+            final int matterOut = layout.matter().stream().mapToInt(MatterTanks.MatterSpec::outputs).sum();
+            for (final ChainMachines.Worked worked : ChainMachines.workedBy(machine)) {
+                for (final RecipeHolder<ProcessingRecipe> holder : helper.getLevel().getRecipeManager()
+                        .getAllRecipesFor(worked.kind().type())) {
+                    final ProcessingRecipe recipe = holder.value();
+                    if (recipe.inputs().size() + recipe.catalysts().size() > layout.inputs()
+                            || recipe.outputs().size() > layout.outputs()
+                            || recipe.fluidInputs().size() > layout.inputTanks()
+                            || recipe.fluidOutputs().size() > layout.outputTanks()
+                            || recipe.matterInputs().size() > matterIn || recipe.matterOutputs().size() > matterOut) {
+                        wrong.add(holder.id() + " in " + machine.id());
+                    }
+                }
+            }
+        }
+        helper.assertTrue(wrong.isEmpty(), "every recipe fits in its machine: " + wrong);
+        helper.succeed();
+    }
+
     /* Every machine of the chain but the Prebuilder, whose sounds follow its own steps, runs a loop of its own. */
     @GameTest(template = ARENA, timeoutTicks = 20)
     public static void every_machineRunsALoopOfItsOwnWhileItWorks(final GameTestHelper helper) {
@@ -92,6 +132,32 @@ public final class ChainMachineGameTests {
             helper.assertTrue(ChainSounds.class.getResource(file) != null, machine.id() + "'s loop is a file: " + file);
         }
         helper.succeed();
+    }
+
+    /* The Board Etcher holds the laminate and the phototool side by side, etches the board and keeps the phototool. */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void boardEtcher_etchesTheLaminateThroughItsPhototool(final GameTestHelper helper) {
+        final ChainMachine etcher = machine("board_etcher");
+        final BlockPos terminal = formed(helper, etcher);
+        final Item phototool = ChainParts.PHOTOTOOLS.getFirst().get();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(machineAt(helper, terminal).formed(), "the etcher formed"))
+                .thenExecute(() -> {
+                    final IFluidHandler inlet = helper.getLevel().getCapability(Capabilities.FluidHandler.BLOCK,
+                            helper.absolutePos(place(etcher, "liquid_inlet")), Direction.UP);
+                    helper.assertTrue(inlet != null, "the liquid inlet opens onto the etcher");
+                    inlet.fill(new FluidStack(MaterialLiquids.fluid(SeriesChemicals.FERRIC_CHLORIDE).get(),
+                            FluidType.BUCKET_VOLUME), IFluidHandler.FluidAction.EXECUTE);
+                    final IItemHandler slots = machineAt(helper, terminal).getInventory();
+                    slots.insertItem(0, new ItemStack(ChainParts.FR2_LAMINATE.get()), false);
+                    helper.assertTrue(slots.insertItem(1, new ItemStack(phototool), false).isEmpty(),
+                            "the phototool has an inlet of its own");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(holds(machineAt(helper, terminal),
+                        ChainParts.ETCHED_BOARDS.getFirst().get(), 1), "the board is etched"))
+                .thenExecute(() -> helper.assertTrue(machineAt(helper, terminal).getInventory().getStackInSlot(1)
+                        .is(phototool), "the phototool stays, never used up"))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)

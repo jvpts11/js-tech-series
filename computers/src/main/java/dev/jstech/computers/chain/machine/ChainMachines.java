@@ -179,7 +179,8 @@ public final class ChainMachines {
                 .legend("a=item_outlet,b=laminator_hot_platen,c=item_inlet,d=power_entry,e=machine_casing,"
                         + "f=laminator_press_crown")
                 .declareRecipes();
-        machine("board_etcher").named("Board Etcher").step(10, 1_500).slots(1, 1, 1, 0, 0, 0)
+        // Its second inlet holds the phototool the job lends it while the laminate is etched through it.
+        machine("board_etcher").named("Board Etcher").step(10, 1_500).slots(2, 1, 1, 0, 0, 0)
                 .shape("abc,def", "gg#,fff")
                 .legend("a=item_outlet,b=board_etcher_etchant_sump,c=item_inlet,d=power_entry,e=liquid_inlet,"
                         + "f=lined_casing,g=board_etcher_spray_tunnel")

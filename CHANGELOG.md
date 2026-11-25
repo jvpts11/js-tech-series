@@ -4451,6 +4451,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   PCI its read cache (a Legacy memory chip).
 - (Computers) The Vintage Lithography Station's mercury lamp is made with a Mercury Arc Tube, quartz, a tungsten
   nugget and 100 mB of mercury sealed at the Display Line, in place of a bucket of mercury.
+- (Computers) The Board Etcher has a second inlet, below the first, for the phototool its job lends it: with one
+  inlet the laminate and the phototool could not both be in, and no etched board was ever made.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
