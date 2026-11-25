@@ -167,7 +167,7 @@ public final class RecipeFaces {
         }
         page.face(new RecipeView.Face(face.frames(), List.of(lcd(GameText.resolve(MachineScreenTexts.LCD_WORKING)),
                 lcd(GameText.resolve(MachineTexts.RECIPE_TIME.with(Text.literal(seconds(recipe.ticks())))))), said,
-                matter));
+                matter, recipe.outputs().isEmpty() ? ItemStack.EMPTY : recipe.outputs().getFirst()));
     }
 
     /**
@@ -199,7 +199,8 @@ public final class RecipeFaces {
         final List<String> lcd = laid.get().lcd().stream().map(Component::getString).toList();
         PictureFace.drawStill(g, Minecraft.getInstance().font, x, y, face.get().frames(), picture,
                 new PictureFace.Still(said.getOrDefault(face.get().name(), face.get().name()),
-                        face.get().rating().get(), lcd, FULL, fills), written -> said.getOrDefault(written, written));
+                        face.get().rating().get(), lcd, FULL, fills, laid.get().made()),
+                written -> said.getOrDefault(written, written));
         picture.tray().ifPresent(tray -> tray(g, tray, x, y));
     }
 

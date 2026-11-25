@@ -85,6 +85,25 @@ class GltfReaderTest {
     }
 
     @Test
+    void animation_sizesANodeThatRestsAtNothing() {
+        final Builder gltf = triangle();
+        gltf.root.getAsJsonArray("nodes").get(0).getAsJsonObject().add("scale",
+                JsonParser.parseString("[0, 0, 0]"));
+        final int times = gltf.accessor(gltf.view(floats(0, 1)), FLOAT, 2, "SCALAR");
+        final int sizes = gltf.accessor(gltf.view(floats(0, 0, 0, 0.5F, 0.5F, 0.5F)), FLOAT, 2, "VEC3");
+        gltf.root.add("animations", array(JsonParser.parseString("""
+                {"name": "appear", "samplers": [{"input": %d, "output": %d, "interpolation": "STEP"}],
+                 "channels": [{"sampler": 0, "target": {"node": 0, "path": "scale"}}]}
+                """.formatted(times, sizes)).getAsJsonObject()));
+        final ModelData model = GltfReader.read("part", gltf.text(), file -> null);
+        final float rest = model.bone("body").orElseThrow().scale().x();
+        assertEquals(0, rest, 1.0e-5, "it rests too small to see");
+        final float[] out = new float[3];
+        model.animations().getFirst().bones().get("body").scale().evaluate(1, new ExpressionContext(), out);
+        assertEquals(0.5, rest * out[0], EPSILON, "and the loop sizes it outright, as its file says");
+    }
+
+    @Test
     void read_breaksStripsAndFansIntoTriangles() {
         final Builder gltf = new Builder();
         final int square = gltf.accessor(gltf.view(floats(0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0)), FLOAT, 4, "VEC3");
@@ -145,6 +164,21 @@ class GltfReaderTest {
                 .orElseThrow().meshes();
         assertEquals(List.of(false, false, true, false), meshes.stream().map(ModelMesh::seeThrough).toList(),
                 "a material without blending is drawn as the model is; one blended, as glass");
+    }
+
+    @Test
+    void read_takesALocatorFromANodesExtras() {
+        final Builder gltf = triangle();
+        gltf.root.getAsJsonArray("nodes").add(JsonParser.parseString("""
+                {"name": "held_body", "translation": [0, 0.5, 0], "extras": {"locator": "body"}}
+                """).getAsJsonObject());
+        final ModelData model = GltfReader.read("part", gltf.text(), file -> null);
+        final ModelBone held = model.bone("held_body").orElseThrow();
+        assertEquals(List.of("body"), held.locators().stream().map(ModelLocator::name).toList(),
+                "a node whose extras name a locator holds it");
+        assertEquals(0, held.locators().getFirst().offset().length(), EPSILON, "at the node's own origin");
+        assertEquals(8, held.translation().y(), EPSILON, "the node placing it");
+        assertEquals(List.of(), model.bone("body").orElseThrow().locators(), "a node without one holds none");
     }
 
     /* A model of one triangle on a node moved a metre east and half a metre south. */

@@ -25,8 +25,9 @@ import org.jetbrains.annotations.ApiStatus;
  * A machine's face as a picture of its own (its mod drew it: the machine at work, its parts moving) and where on it
  * what the game draws itself stands, in the face's pixels from its top left: its ports, the slots the menu places
  * and the picture lets into the body; its panel meter, its LCD, its switch and the words beside it, its sight glasses;
- * and the words engraved on its parts. The picture's frames are laid out {@link #COLUMNS} to a row, the machine idle
- * first, then its working loop. Both sides read it: the menu for its slots, the screen for the rest.
+ * and the words engraved on its parts; and the things of its work it shows moving, which the game draws as the work
+ * makes them. The picture's frames are laid out {@link #COLUMNS} to a row, the machine idle first, then its working
+ * loop. Both sides read it: the menu for its slots, the screen for the rest.
  *
  * @param frames  how many frames its working loop has, after its idle one
  * @param millis  how long each frame of the loop shows, in milliseconds
@@ -38,11 +39,13 @@ import org.jetbrains.annotations.ApiStatus;
  * @param toggle  its switch and the words on and off
  * @param glasses its sight glasses, in the order of its tanks
  * @param words   the words engraved on its parts
+ * @param things  where what the work makes stands on each frame, drawn by the game
  * @param tray    the row of outputs under the face, a sorter's bins, when the machine has one
  */
 @ApiStatus.Experimental
 public record FacePicture(int frames, int millis, Optional<String> plate, List<Port> ports, Meter meter, Box lcd,
-                          Toggle toggle, List<Glass> glasses, List<Word> words, Optional<Tray> tray) {
+                          Toggle toggle, List<Glass> glasses, List<Word> words, List<Thing> things,
+                          Optional<Tray> tray) {
 
     /** How many frames stand in a row of the picture, so no side of it grows past what every graphics card takes. */
     public static final int COLUMNS = 8;
@@ -192,15 +195,30 @@ public record FacePicture(int frames, int millis, Optional<String> plate, List<P
 
         /** Whether it shows on frame {@code frame} of the picture. */
         public boolean showsOn(final int frame) {
-            if (this.frames.isEmpty()) {
-                return true;
-            }
-            for (final Run run : this.frames) {
-                if (frame >= run.first() && frame <= run.last()) {
-                    return true;
-                }
-            }
-            return false;
+            return shows(this.frames, frame);
+        }
+    }
+
+    /**
+     * What the work makes, drawn by the game over the picture as an item is drawn, its top left at ({@code x},
+     * {@code y}) and {@code size} pixels wide (an item's own being 16), on the frames it shows on, all of them when
+     * none are given: the part a moulder ejects, its own on every recipe, where the picture leaves it out.
+     */
+    public record Thing(double x, double y, double size, List<Run> frames) {
+
+        public static final Codec<Thing> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.DOUBLE.fieldOf("x").forGetter(Thing::x), Codec.DOUBLE.fieldOf("y").forGetter(Thing::y),
+                Codec.DOUBLE.fieldOf("size").forGetter(Thing::size),
+                Run.CODEC.listOf().optionalFieldOf("frames", List.of()).forGetter(Thing::frames))
+                .apply(i, Thing::new));
+
+        public Thing {
+            frames = List.copyOf(frames);
+        }
+
+        /** Whether it shows on frame {@code frame} of the picture. */
+        public boolean showsOn(final int frame) {
+            return shows(this.frames, frame);
         }
     }
 
@@ -214,6 +232,7 @@ public record FacePicture(int frames, int millis, Optional<String> plate, List<P
             Toggle.CODEC.fieldOf("switch").forGetter(FacePicture::toggle),
             Glass.CODEC.listOf().fieldOf("glasses").forGetter(FacePicture::glasses),
             Word.CODEC.listOf().fieldOf("words").forGetter(FacePicture::words),
+            Thing.CODEC.listOf().optionalFieldOf("things", List.of()).forGetter(FacePicture::things),
             Tray.CODEC.optionalFieldOf("tray").forGetter(FacePicture::tray)).apply(i, FacePicture::new));
 
     public FacePicture {
@@ -224,6 +243,7 @@ public record FacePicture(int frames, int millis, Optional<String> plate, List<P
         ports = List.copyOf(ports);
         glasses = List.copyOf(glasses);
         words = List.copyOf(words);
+        things = List.copyOf(things);
     }
 
     /** How many rows of frames the picture has. */
@@ -249,5 +269,18 @@ public record FacePicture(int frames, int millis, Optional<String> plate, List<P
         } catch (final IOException e) {
             throw new IllegalStateException("the face " + path + " could not be read", e);
         }
+    }
+
+    /* Whether a part shown on {@code runs} shows on frame {@code frame}: on every frame when there are none. */
+    private static boolean shows(final List<Run> runs, final int frame) {
+        if (runs.isEmpty()) {
+            return true;
+        }
+        for (final Run run : runs) {
+            if (frame >= run.first() && frame <= run.last()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -75,6 +75,7 @@ import dev.jstech.tests.clienttest.computers.GuidedInstallerClientTests;
 import dev.jstech.tests.clienttest.computers.HelpTerminalClientTests;
 import dev.jstech.tests.clienttest.computers.HelpWindowClientTests;
 import dev.jstech.tests.clienttest.computers.InfoCenterClientTests;
+import dev.jstech.tests.clienttest.computers.InjectionMoulderClientTests;
 import dev.jstech.tests.clienttest.computers.InstallMediaClientTests;
 import dev.jstech.tests.clienttest.computers.InteracTuiClientTests;
 import dev.jstech.tests.clienttest.computers.IsmsClientTests;
@@ -462,6 +463,7 @@ public final class ClientTestSuite {
             LithographyClientTests.class,
             ChainFaceClientTests.class,
             ChainUpgradesClientTests.class,
+            InjectionMoulderClientTests.class,
             RecipeFacesClientTests.class,
             MultipartModelClientTests.class,
             CableBlockClientTests.class,

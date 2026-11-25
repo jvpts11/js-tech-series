@@ -313,7 +313,7 @@ public final class ChainRecipePages {
         }
         return new RecipeView.Face(ChainFaceScreens.frames(machine.id()), List.of(lcd(GameText.resolve(
                 MachineScreenTexts.LCD_WORKING)), lcd(GameText.resolve(MachineTexts.RECIPE_TIME.with(
-                machine.seconds())))), said, matter);
+                machine.seconds())))), said, matter, ItemStack.EMPTY);
     }
 
     private static Component lcd(final String words) {

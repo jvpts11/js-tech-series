@@ -29,8 +29,8 @@ import org.joml.Vector3f;
 /**
  * Reads glTF 2.0, the format Blender writes natively and Maya, 3ds Max and Cinema 4D write with an exporter, in its
  * text form ({@code .gltf}, its buffers beside it or inside it) and its binary one ({@code .glb}): the nodes as bones,
- * their meshes with normals, pictures, skins and morph targets, the textures of their materials and whether those are
- * blended (drawn see-through, as glass is), and the animations,
+ * their meshes with normals, pictures, skins and morph targets, the locators their extras name, the textures of their
+ * materials and whether those are blended (drawn see-through, as glass is), and the animations,
  * stepped, straight or along cubic splines. glTF is right-handed with Y up, as the game is, so nothing turns round;
  * but it counts in metres and the Core in pixels, sixteen to a metre, a block being a metre. Pure.
  */
@@ -49,6 +49,10 @@ public final class GltfReader {
     private static final String BASE64 = ";base64,";
     private static final String CUBIC = "CUBICSPLINE";
     private static final String BLEND = "BLEND";
+    /* How large a node sized to nothing rests: too small to see, yet a size the loop's sizes multiply. */
+    private static final float NOTHING = 1.0E-6F;
+    private static final String EXTRAS = "extras";
+    private static final String LOCATOR = "locator";
     private static final int TRIANGLES = 4;
     private static final int STRIP = 5;
     private static final int FAN = 6;
@@ -130,7 +134,7 @@ public final class GltfReader {
             final Transform rest = transform(node);
             bones.add(new ModelBone(this.nodeNames.get(i), parent == null ? null : this.nodeNames.get(parent),
                     new Vector3f(), rest.rotation, new Vector3f(), rest.translation, rest.scale, List.of(), meshes,
-                    List.of(), false));
+                    locators(node), false));
         }
         final List<ModelAnimation> animations = new ArrayList<>();
         int index = 0;
@@ -179,11 +183,25 @@ public final class GltfReader {
         return out;
     }
 
+    /*
+     * The locator a node marks: glTF has none of its own, so a node whose extras name one, {"locator": "body"} (a
+     * custom property in Blender), holds there what its model holds by that name, at the node's own origin, turned
+     * and sized as the node is.
+     */
+    private static List<ModelLocator> locators(final JsonObject node) {
+        if (!node.has(EXTRAS) || !node.get(EXTRAS).isJsonObject()) {
+            return List.of();
+        }
+        final JsonElement locator = node.getAsJsonObject(EXTRAS).get(LOCATOR);
+        return locator != null && locator.isJsonPrimitive()
+                ? List.of(new ModelLocator(locator.getAsString(), new Vector3f(), new Vector3f())) : List.of();
+    }
+
     /* The names Blender and most exporters give a mesh's morph targets, in the extras glTF leaves for it. */
     private static List<String> targetNames(final JsonObject mesh) {
         final List<String> out = new ArrayList<>();
-        if (mesh.has("extras") && mesh.get("extras").isJsonObject()) {
-            for (final JsonElement each : array(mesh.getAsJsonObject("extras"), "targetNames")) {
+        if (mesh.has(EXTRAS) && mesh.get(EXTRAS).isJsonObject()) {
+            for (final JsonElement each : array(mesh.getAsJsonObject(EXTRAS), "targetNames")) {
                 out.add(each.getAsString());
             }
         }
@@ -405,8 +423,16 @@ public final class GltfReader {
                 out.scale.set(ModelJson.vector(node.get("scale")));
             }
         }
+        // A node sized to nothing at rest, as a loop hides a part it shows later, rests a hair above nothing: the
+        // Core sizes a bone by its rest size times the loop's, which nothing would keep at nothing whatever the loop.
+        out.scale.set(somewhat(out.scale.x), somewhat(out.scale.y), somewhat(out.scale.z));
         out.translation.mul(PIXELS);
         return out;
+    }
+
+    /* A size, or a hair above nothing for nothing. */
+    private static float somewhat(final float size) {
+        return size == 0 ? NOTHING : size;
     }
 
     /* The numbers of an accessor, each as a float, its normalised integers made into fractions. */

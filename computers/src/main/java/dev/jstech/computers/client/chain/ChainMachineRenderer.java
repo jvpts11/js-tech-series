@@ -31,7 +31,8 @@ import net.neoforged.neoforge.common.NeoForge;
  * Draws a formed chain machine from its terminal, as its approved mock draws it (computers/docs/design/survival.md):
  * its model over the whole machine, playing its working loop while it works and at rest otherwise; only the bones of
  * the mode it works in (a tube or a flat screen); the bones of each channel painted in the colour of the material at
- * work; and, while it works, what it gives off, each emitter an effect held in the world where the machine stands,
+ * work; the things of the recipe at its locators (the moulder's body and its mould); and, while it works, what it
+ * gives off, each emitter an effect held in the world where the machine stands,
  * turned as it was built. Nothing is drawn while it is not formed: its blocks show.
  */
 public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockEntity> {
@@ -57,6 +58,7 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
     public static BlockEntityRenderer<ChainMachineBlockEntity> create(final ChainMachine machine) {
         return KitBlockEntityRenderer.<ChainMachineBlockEntity>formedOnly(machine.modelId())
                 .driver(new ChainMachineRenderer(machine))
+                .held(ChainReflect::held)
                 .build();
     }
 

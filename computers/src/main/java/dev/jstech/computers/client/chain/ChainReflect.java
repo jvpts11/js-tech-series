@@ -25,6 +25,12 @@ import net.minecraft.world.level.material.Fluids;
  */
 public final class ChainReflect {
 
+    /** The locator of what a machine makes, at the Injection Moulder the body it moulds. */
+    public static final String BODY = "body";
+    private static final String MOULD = "mould";
+    private static final String BODY_ITEM = "body_";
+    private static final String MOULD_ITEM = "mould_";
+
     private ChainReflect() {
     }
 
@@ -66,6 +72,33 @@ public final class ChainReflect {
             case "wire" -> named(in, "wire").or(() -> item(in, 0)).orElse(ThingColours.GREY);
             default -> item(in, 0).orElse(ThingColours.GREY);
         };
+    }
+
+    /**
+     * What the machine's model holds at its locator {@code locator}, from what it makes: at the Injection Moulder the
+     * body it moulds, at "body", and that body's mould on the mould's faces, at "mould", or the mould it cuts; nothing
+     * at rest, or for a locator of no such thing.
+     */
+    public static ItemStack held(final ChainMachineBlockEntity machine, final String locator) {
+        final List<ResourceLocation> out = machine.makes();
+        if (out.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        final ResourceLocation made = out.getFirst();
+        final String path = made.getPath();
+        return switch (locator) {
+            case BODY -> path.startsWith(BODY_ITEM) ? stack(made) : ItemStack.EMPTY;
+            // A body is moulded in the mould of its own name: body_socket_am4 in mould_socket_am4.
+            case MOULD -> path.startsWith(BODY_ITEM)
+                    ? stack(made.withPath(MOULD_ITEM + path.substring(BODY_ITEM.length())))
+                    : path.startsWith(MOULD_ITEM) ? stack(made) : ItemStack.EMPTY;
+            default -> ItemStack.EMPTY;
+        };
+    }
+
+    /* One of the item {@code id} names; empty for none. */
+    private static ItemStack stack(final ResourceLocation id) {
+        return new ItemStack(BuiltInRegistries.ITEM.get(id));
     }
 
     /* The colour of the {@code index}th item, if there is one. */

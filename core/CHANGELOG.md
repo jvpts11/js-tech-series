@@ -564,6 +564,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - What a store takes in a tick: J's Core's API is at version 94. `EnergyStore.maxReceive` and
   `setMaxReceive`, and `FieldEnergyStorage.maxReceive` and `setMaxReceive`, read and change how much a store takes
   in a tick. Experimental.
+- What a machine makes on its face and in its model: J's Core's API is at version 98. `FacePicture.things`
+  says where on each frame of a face the game draws what the work makes, as an item, and a `PictureFace` given what a
+  machine's work makes draws it there; a recipe page laid on the face draws the recipe's first output there
+  (`RecipeView.Face.made`, `PictureFace.Still.made`). A glTF model's node marks a locator by naming it in its extras,
+  `{"locator": "body"}`, so a model a game draws from a glTF file holds things as one from Blockbench does, and a
+  locator on a bone its loop shrinks to nothing draws nothing. `FacePicture`'s record gains its things before its
+  tray. Experimental.
 - A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
   machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
   ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.
@@ -2509,6 +2516,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   one.
 
 ### Fixed
+- A part of a glTF model that rests sized to nothing and that its loop shows later shows: the Core sized a bone
+  by its rest size times the loop's, so a part hidden at rest stayed hidden, and a chain machine's parts that come
+  and go and are not there as its loop starts (a heater's glow, the pins pushing a part off) never appeared; they
+  now come and go as the machines' approved mocks draw them.
 - A machine whose upgrades have it draw more energy a tick takes that much more in through its port: four
   motors, which make it draw four times as much, or lines that work several recipes at once, no longer leave it
   working at half speed once its few seconds' store runs dry.

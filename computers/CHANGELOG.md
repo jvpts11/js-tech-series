@@ -949,6 +949,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   mould slot and the moulds it cuts, a list each for the sockets, the slots and the connectors, and Cut Mould cuts
   the one picked in one step, the mould standing where its blank was; on MC-DOS, W cuts it. The recipe viewer has a
   Mould Cutting page for each mould, and the Guide to Operations a page on cutting one.
+- The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
+  recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
+  hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
+  its recipe page.
 - Autocrafting: a job lends its machine the tool its recipe keeps in it, a mask or a mould, and takes it
   back to the network when it ends, so one Lithography Station exposes every chip, each job bringing its own mask; a
   station kept the first mask it was fed and could serve no other chip. A recipe brought from the recipe viewer into

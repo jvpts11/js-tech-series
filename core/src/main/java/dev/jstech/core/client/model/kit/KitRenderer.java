@@ -49,6 +49,8 @@ public final class KitRenderer {
 
     private static final float PIXEL = 1.0F / 16.0F;
     private static final int WHITE = 0xFFFFFFFF;
+    /* How little a bone's world may hold, by its volume, and still draw what it holds: one shrunk to nothing. */
+    private static final float SHRUNK = 1.0E-9F;
     /* Where a model drawn in the world stands from the camera, worked out on the render thread. */
     private static final Vector3f SEEN = new Vector3f();
 
@@ -393,7 +395,9 @@ public final class KitRenderer {
                                        @Nullable final Level level, final float size) {
         final List<ModelBone> bones = instance.model().data().bones();
         for (int i = 0; i < bones.size(); i++) {
-            if (bones.get(i).locators().isEmpty() || hidden[i]) {
+            // A bone shrunk to nothing, as a loop hides what is not there yet, holds nothing to draw.
+            if (bones.get(i).locators().isEmpty() || hidden[i]
+                    || Math.abs(instance.world()[i].determinant()) < SHRUNK) {
                 continue;
             }
             for (final ModelLocator locator : bones.get(i).locators()) {

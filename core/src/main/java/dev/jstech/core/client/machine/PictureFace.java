@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
@@ -46,6 +47,7 @@ public final class PictureFace implements IMachineFace {
     private final ResourceLocation frames;
     private final FacePicture picture;
     private final BiFunction<MachineBlockEntity, String, String> say;
+    private final Function<MachineBlockEntity, ItemStack> making;
     /* What it shares with the standard face: the slots' locks drawn over the items. */
     private final StandardFace standard = new StandardFace();
     private long peak;
@@ -61,6 +63,8 @@ public final class PictureFace implements IMachineFace {
     private static final int PLATE_GAP = 4;
     /* What a still's glass with nothing in it writes under it. */
     private static final String EMPTY_GLASS = "-";
+    /* How wide an item is drawn at its own size. */
+    private static final double ITEM = 16.0;
 
     /**
      * @param frames  its frames, laid out {@link FacePicture#COLUMNS} to a row, the idle one first, each as large as
@@ -70,9 +74,23 @@ public final class PictureFace implements IMachineFace {
      */
     public PictureFace(final ResourceLocation frames, final FacePicture picture,
                        final BiFunction<MachineBlockEntity, String, String> say) {
+        this(frames, picture, say, machine -> ItemStack.EMPTY);
+    }
+
+    /**
+     * @param frames its frames, laid out {@link FacePicture#COLUMNS} to a row, the idle one first, each as large as
+     *               the face
+     * @param picture where on it what the game draws stands
+     * @param say    what a word of the picture says on the machine: its translation, or a reading of the machine
+     * @param making what the machine's work makes, which the picture's things show; empty for nothing
+     */
+    public PictureFace(final ResourceLocation frames, final FacePicture picture,
+                       final BiFunction<MachineBlockEntity, String, String> say,
+                       final Function<MachineBlockEntity, ItemStack> making) {
         this.frames = frames;
         this.picture = picture;
         this.say = say;
+        this.making = making;
     }
 
     @Override
@@ -80,6 +98,7 @@ public final class PictureFace implements IMachineFace {
         final MachineBlockEntity machine = v.machine();
         final int frame = v.working() ? loopFrame(this.picture, v.tick() * MILLIS_A_TICK) : 0;
         frame(v.g(), v.x(0), v.y(0), this.frames, this.picture, frame);
+        things(v.g(), v.x(0), v.y(0), this.picture, frame, this.making.apply(machine));
         // The plates: the name its picture writes on them, else the screen's title, as far as its LCD leaves room.
         final Screen open = Minecraft.getInstance().screen;
         final String name = this.picture.plate().map(plate -> this.say.apply(machine, plate)).orElseGet(() ->
@@ -110,6 +129,7 @@ public final class PictureFace implements IMachineFace {
         final long now = System.currentTimeMillis();
         final int frame = loopFrame(picture, now);
         frame(g, x, y, frames, picture, frame);
+        things(g, x, y, picture, frame, still.made());
         MachineChrome.plates(g, font, x, y, still.name(), plateRoom(picture), still.rating());
         MachineChrome.lamps(g, font, x, y, MachineStatus.Lamp.RUN, true);
         final FacePicture.Meter meter = picture.meter();
@@ -234,6 +254,23 @@ public final class PictureFace implements IMachineFace {
                 y + at.y(), ink));
     }
 
+    /* What the work makes, {@code made}, where the picture's things stand on frame {@code frame}; nothing for none. */
+    private static void things(final GuiGraphics g, final int x, final int y, final FacePicture picture,
+                               final int frame, final ItemStack made) {
+        if (made.isEmpty()) {
+            return;
+        }
+        for (final FacePicture.Thing thing : picture.things()) {
+            if (thing.showsOn(frame)) {
+                g.pose().pushPose();
+                g.pose().translate(x + thing.x(), y + thing.y(), 0);
+                g.pose().scale((float) (thing.size() / ITEM), (float) (thing.size() / ITEM), 1.0F);
+                g.renderItem(made, 0, 0);
+                g.pose().popPose();
+            }
+        }
+    }
+
     /* The words engraved on its parts that show on frame {@code frame}, each as {@code say} says it. */
     private static void words(final GuiGraphics g, final Font font, final int x, final int y,
                               final FacePicture picture, final int frame, final UnaryOperator<String> say) {
@@ -275,8 +312,10 @@ public final class PictureFace implements IMachineFace {
      * @param lcd    its LCD's lines
      * @param meter  how far up its scale its meter's needle stands, from 0 to 1
      * @param fills  what each of its sight glasses holds, in the order the picture lists them; none, an empty glass
+     * @param made   what the work makes, which the picture's things show; empty for nothing
      */
-    public record Still(String name, String rating, List<String> lcd, double meter, List<Optional<Fill>> fills) {
+    public record Still(String name, String rating, List<String> lcd, double meter, List<Optional<Fill>> fills,
+                        ItemStack made) {
 
         public Still {
             lcd = List.copyOf(lcd);

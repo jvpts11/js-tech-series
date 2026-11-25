@@ -74,6 +74,9 @@ public final class ChainFaceClientTests {
                 .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(terminal))
                         instanceof ChainMachineBlockEntity built && built.formed(), WAIT,
                         machine.id() + " to form", level -> "it stands unformed")
+                // Switched off, so it stands idle: the Air Separation Unit works from the air with nothing given it.
+                .thenServer(0, level -> ((ChainMachineBlockEntity) level.getBlockEntity(ctx.abs(terminal))).control()
+                        .setOn(false))
                 .thenTeleport(0, new BlockPos(terminal.getX(), CORNER.getY(), CORNER.getZ() - 2), Direction.SOUTH)
                 .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(terminal))))
                 .then(2, () -> ctx.rightClick(terminal, Direction.NORTH))
@@ -82,8 +85,9 @@ public final class ChainFaceClientTests {
                 .then(SETTLE, () -> {
                     final int left = (ctx.mc().getWindow().getGuiScaledWidth() - MachineScreenLayout.WIDTH) / 2
                             + MachineScreenLayout.FACE_X;
-                    final int top = (ctx.mc().getWindow().getGuiScaledHeight() - MachineScreenLayout.HEIGHT) / 2
-                            + MachineScreenLayout.FACE_Y;
+                    // A machine with a row of bins has a screen grown by the row.
+                    final int top = (ctx.mc().getWindow().getGuiScaledHeight() - MachineScreenLayout.HEIGHT
+                            - MachineScreenLayout.below(picture.tray().isPresent())) / 2 + MachineScreenLayout.FACE_Y;
                     try (NativeImage drawn = ctx.captureGuiPixels(left, top, MachineScreenLayout.FACE_WIDTH,
                             MachineScreenLayout.FACE_HEIGHT); NativeImage idle = idleFrame(ctx, machine.id())) {
                         final int[] counts = compare(drawn, idle, picture);

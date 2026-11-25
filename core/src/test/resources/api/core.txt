@@ -7572,7 +7572,7 @@ stable 4
 10 dev.jstech.core.machine.DataMachines  static void register()
 10 dev.jstech.core.machine.FaceModes  type final class
 10 dev.jstech.core.machine.FaceModes  static List<FaceMode> round()
-96 dev.jstech.core.machine.FacePicture  type record(int frames, int millis, Optional<String> plate, List<Port> ports, Meter meter, Box lcd, Toggle toggle, List<Glass> glasses, List<Word> words, Optional<Tray> tray)
+98 dev.jstech.core.machine.FacePicture  type record(int frames, int millis, Optional<String> plate, List<Port> ports, Meter meter, Box lcd, Toggle toggle, List<Glass> glasses, List<Word> words, List<Thing> things, Optional<Tray> tray)
 76 dev.jstech.core.machine.FacePicture  int rows()
 76 dev.jstech.core.machine.FacePicture  static Optional<FacePicture> read(Class<?>, String)
 76 dev.jstech.core.machine.FacePicture  static final Codec<FacePicture> CODEC
@@ -7594,6 +7594,9 @@ stable 4
 76 dev.jstech.core.machine.FacePicture.Port  static final Codec<Port> CODEC
 76 dev.jstech.core.machine.FacePicture.Run  type record(int first, int last)
 76 dev.jstech.core.machine.FacePicture.Run  static final Codec<Run> CODEC
+98 dev.jstech.core.machine.FacePicture.Thing  type record(double x, double y, double size, List<Run> frames)
+98 dev.jstech.core.machine.FacePicture.Thing  boolean showsOn(int)
+98 dev.jstech.core.machine.FacePicture.Thing  static final Codec<Thing> CODEC
 76 dev.jstech.core.machine.FacePicture.Toggle  type record(int x, int y, Optional<Place> on, Optional<Place> off)
 76 dev.jstech.core.machine.FacePicture.Toggle  static final Codec<Toggle> CODEC
 96 dev.jstech.core.machine.FacePicture.Tray  type record(String label, List<Integer> slots, List<String> marks, String colour, String ink)

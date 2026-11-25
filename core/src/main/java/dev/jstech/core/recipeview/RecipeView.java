@@ -159,15 +159,17 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
      * @param said   what each word written on the face says on this page, by the word as written: its translation,
      *               or what the recipe makes of it, as a byproduct's chance
      * @param matter the matter each of the machine's tanks takes or gives, by the tank's place among its tanks
+     * @param made   what the recipe makes, which the face's things show; empty for nothing
      */
     public record Face(ResourceLocation id, List<Component> lcd, Map<String, String> said,
-                       Map<Integer, MatterStack> matter) {
+                       Map<Integer, MatterStack> matter, ItemStack made) {
 
         public Face {
             Objects.requireNonNull(id, "id");
             lcd = List.copyOf(lcd);
             said = Map.copyOf(said);
             matter = Map.copyOf(matter);
+            made = made.copy();
         }
     }
 

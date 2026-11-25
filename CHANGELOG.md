@@ -697,6 +697,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) What a store takes in a tick: J's Core's API is at version 94. `EnergyStore.maxReceive` and
   `setMaxReceive`, and `FieldEnergyStorage.maxReceive` and `setMaxReceive`, read and change how much a store takes
   in a tick. Experimental.
+- (Core) What a machine makes on its face and in its model: J's Core's API is at version 98. `FacePicture.things`
+  says where on each frame of a face the game draws what the work makes, as an item, and a `PictureFace` given what a
+  machine's work makes draws it there; a recipe page laid on the face draws the recipe's first output there
+  (`RecipeView.Face.made`, `PictureFace.Still.made`). A glTF model's node marks a locator by naming it in its extras,
+  `{"locator": "body"}`, so a model a game draws from a glTF file holds things as one from Blockbench does, and a
+  locator on a bone its loop shrinks to nothing draws nothing. `FacePicture`'s record gains its things before its
+  tray. Experimental.
 - (Core) A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
   machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
   ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.
@@ -4412,6 +4419,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   mould slot and the moulds it cuts, a list each for the sockets, the slots and the connectors, and Cut Mould cuts
   the one picked in one step, the mould standing where its blank was; on MC-DOS, W cuts it. The recipe viewer has a
   Mould Cutting page for each mould, and the Guide to Operations a page on cutting one.
+- (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
+  recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
+  hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
+  its recipe page.
 - (Computers) Autocrafting: a job lends its machine the tool its recipe keeps in it, a mask or a mould, and takes it
   back to the network when it ends, so one Lithography Station exposes every chip, each job bringing its own mask; a
   station kept the first mask it was fed and could serve no other chip. A recipe brought from the recipe viewer into
@@ -4839,6 +4850,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Core) A part of a glTF model that rests sized to nothing and that its loop shows later shows: the Core sized a bone
+  by its rest size times the loop's, so a part hidden at rest stayed hidden, and a chain machine's parts that come
+  and go and are not there as its loop starts (a heater's glow, the pins pushing a part off) never appeared; they
+  now come and go as the machines' approved mocks draw them.
 - (Computers) Autocrafting: a machine job that gives up or is cancelled takes back to the network what it fed the
   machine and no recipe used, items, liquids and gases, so the next job finds the machine as it would have found it; a
   failed lead-acid battery left its lead and PVC in the Electrolytic Cell, and no other recipe of exact inputs ran

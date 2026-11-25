@@ -36,6 +36,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
@@ -91,7 +92,10 @@ public final class ChainFaceScreens {
             if (picture.isEmpty()) {
                 continue;
             }
-            final PictureFace own = new PictureFace(frames(machine.id()), picture.get(), ChainFaceScreens::say);
+            // What the work makes is the body the moulder's face shows ejected, as its model holds it.
+            final PictureFace own = new PictureFace(frames(machine.id()), picture.get(), ChainFaceScreens::say,
+                    terminal -> terminal instanceof ChainMachineBlockEntity chain
+                            ? ChainReflect.held(chain, ChainReflect.BODY) : ItemStack.EMPTY);
             final Optional<FacePicture> fibre = machine.id().equals("optical_polisher")
                     ? ChainFaces.of(ChainFaces.POLISHER_FIBRE) : Optional.empty();
             if (fibre.isPresent()) {
