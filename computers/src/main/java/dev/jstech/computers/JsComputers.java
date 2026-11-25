@@ -22,6 +22,7 @@ import dev.jstech.computers.chain.ChainMaterials;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.ChipClasses;
 import dev.jstech.computers.chain.MouldedParts;
+import dev.jstech.computers.chain.machine.ArcTubeTooltip;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.chain.machine.MaskTooltip;
@@ -219,6 +220,7 @@ public class JsComputers {
         NeoForge.EVENT_BUS.addListener(PartTooltips::onTooltip);
         NeoForge.EVENT_BUS.addListener(WaferTooltip::onTooltip);
         NeoForge.EVENT_BUS.addListener(MaskTooltip::onTooltip);
+        NeoForge.EVENT_BUS.addListener(ArcTubeTooltip::onTooltip);
         NeoForge.EVENT_BUS.addListener(ChipClasses::onTooltip);
     }
 

@@ -362,6 +362,8 @@ final class HardwareRecipes {
         bay.put(ChainParts.ETCHED_BOARDS.getFirst().get(), 1);
         bay.put(part("storage_ide"), 1);
         bay.put(of(SeriesCompounds.PVC, Forms.SHEET), 1);
+        // The tray's rails it slides in and out on.
+        bay.put(of(SeriesAlloys.STEEL, Forms.ROD), 1);
         save(output, HardwareEra.VINTAGE, HardwareItems.HOT_SWAP_DRIVE_BAY.get(), bay);
         optical(output, HardwareEra.LEGACY, HardwareItems.INTERNAL_CD_DRIVE.get(), lens,
                 ChainParts.GALLIUM_ARSENIDE_LASER_DIODE.get(), "storage_ide");

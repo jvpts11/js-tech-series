@@ -1,0 +1,32 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "jscore:setting",
+      "file": "jscomputers-server",
+      "setting": "survival.own_chain"
+    }
+  ],
+  "type": "jsc:display_line",
+  "fluid_inputs": [
+    {
+      "amount": 100,
+      "fluid": "jscore:mercury"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:quartz"
+    },
+    {
+      "count": 1,
+      "item": "jscore:tungsten_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:mercury_arc_tube"
+    }
+  ]
+}

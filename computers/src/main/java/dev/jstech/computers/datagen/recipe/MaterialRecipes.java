@@ -393,8 +393,9 @@ final class MaterialRecipes {
     /* The components the chain's machines make, by the design's table of components. */
     private static void components(final RecipeOutput output) {
         final ProcessingKind kiln = kind("ceramic_kiln");
-        made(output, kiln, "ceramic_package", List.of(of(SeriesCompounds.ALUMINA, Forms.DUST)), List.of(1),
-                ChainParts.CERAMIC_PACKAGE.get(), 4);
+        // A package is fired on its lead frame, tinned.
+        made(output, kiln, "ceramic_package", List.of(of(SeriesCompounds.ALUMINA, Forms.DUST), nugget(Element.TIN)),
+                List.of(1, 1), ChainParts.CERAMIC_PACKAGE.get(), 4);
         made(output, kiln, "ceramic_capacitor", List.of(of(SeriesCompounds.ALUMINA, Forms.DUST),
                 of(Element.NICKEL, Forms.FOIL)), List.of(1, 1), ChainParts.CERAMIC_CAPACITOR.get(), 8);
         made(output, kiln, "tantalum_capacitor", List.of(dust(Element.TANTALUM), dust(Element.MANGANESE)),
@@ -405,20 +406,23 @@ final class MaterialRecipes {
                 List.of(2, 1, 1), ChainParts.FERRITE.get(), 4);
         final ProcessingKind winder = kind("coil_winder");
         final Item copperWire = of(Element.COPPER, Forms.WIRE);
-        made(output, winder, "inductor", List.of(ChainParts.FERRITE.get(), copperWire), List.of(1, 2),
-                ChainParts.INDUCTOR.get(), 2);
+        // An inductor's leads are tinned; a coil is wound on its plastic bobbin.
+        made(output, winder, "inductor", List.of(ChainParts.FERRITE.get(), copperWire, nugget(Element.TIN)),
+                List.of(1, 2, 1), ChainParts.INDUCTOR.get(), 2);
         made(output, winder, "transformer", List.of(ChainParts.FERRITE.get(), copperWire), List.of(2, 4),
                 ChainParts.TRANSFORMER.get(), 1);
         made(output, winder, "electric_motor", List.of(of(SeriesAlloys.STEEL, Forms.ROD), copperWire,
                 ChainParts.FERRITE.get()), List.of(1, 4, 1), ChainParts.ELECTRIC_MOTOR.get(), 1);
         made(output, winder, "magnetic_head", List.of(of(SeriesAlloys.PERMALLOY, Forms.FOIL), copperWire),
                 List.of(1, 1), ChainParts.MAGNETIC_HEAD.get(), 2);
-        made(output, winder, "copper_coil", List.of(copperWire), List.of(4), ChainParts.COPPER_COIL.get(), 1);
+        made(output, winder, "copper_coil", List.of(copperWire, of(SeriesCompounds.PVC, Forms.SHEET)), List.of(4, 1),
+                ChainParts.COPPER_COIL.get(), 1);
         final ProcessingKind polisher = kind("optical_polisher");
         made(output, polisher, "mask_plate", List.of(of(SeriesCompounds.CULTURED_QUARTZ, Forms.CRYSTAL)), List.of(1),
                 ChainParts.MASK_PLATE.get(), 1);
-        made(output, polisher, "glass_lens", List.of(Items.GLASS), List.of(1), of(SeriesCompounds.GLASS, Forms.LENS),
-                4);
+        // A lens is held in its aluminium ring.
+        made(output, polisher, "glass_lens", List.of(Items.GLASS, of(Element.ALUMINIUM, Forms.SHEET)), List.of(1, 1),
+                of(SeriesCompounds.GLASS, Forms.LENS), 4);
         made(output, polisher, "calcium_fluoride_lens", List.of(of(SeriesCompounds.CALCIUM_FLUORIDE, Forms.BOULE)),
                 List.of(1), of(SeriesCompounds.CALCIUM_FLUORIDE, Forms.LENS), 4);
         made(output, polisher, "blank_disc", List.of(of(SeriesCompounds.POLYCARBONATE, Forms.SHEET)), List.of(1),
@@ -463,6 +467,11 @@ final class MaterialRecipes {
         lamp.builder().input(Items.GLASS, 1).fluidInput(liquid(Elements.of(Element.MERCURY)), 100)
                 .output(ChainParts.COLD_CATHODE_LAMP.get(), 1);
         lamp.save(output);
+        // A lithography light's lamp, as the real i-line one: a fused quartz bulb, tungsten electrodes, mercury.
+        final ChainRecipeItems.Saved arc = recipe(display, "mercury_arc_tube");
+        arc.builder().input(Items.QUARTZ, 1).input(nugget(Element.TUNGSTEN), 1)
+                .fluidInput(liquid(Elements.of(Element.MERCURY)), 100).output(ChainParts.MERCURY_ARC_TUBE.get(), 1);
+        arc.save(output);
         final Item ito = of(SeriesAlloys.INDIUM_TIN_OXIDE, Forms.FOIL);
         final ChainRecipeItems.Saved lcd = recipe(display, "lcd_screen");
         lcd.builder().input(Items.GLASS, 2).input(ito, 1).input(ChainParts.COLD_CATHODE_LAMP.get(), 1)

@@ -29,7 +29,6 @@ import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.plant.CoolingPlant;
 import dev.jstech.core.jstechseries.Element;
-import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesAlloys;
 import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -227,8 +226,9 @@ final class MachineBlockRecipes {
                 'C', cc);
         grid(output, block("lithography_mirror_optics"), 1, rows("OSO", "OCO", " S "), 'O', molybdenum,
                 'S', siliconWafer, 'C', cc);
+        // The mercury light's lamp is its arc tube, the mercury sealed in it at the Display Line.
         grid(output, block("lithography_mercury_lamp"), 1, rows("GHG", " C ", " T "), 'G', Items.GLASS,
-                'H', mercuryBucket(), 'C', cc, 'T', transformer);
+                'H', ChainParts.MERCURY_ARC_TUBE.get(), 'C', cc, 'T', transformer);
         // Each era's light is made at the bench of the era before, of that era's parts: the era's own bench takes
         // its own chips, which only its own station makes.
         made(output, HardwareEra.VINTAGE, block("lithography_krf_laser"), cc, 1, transformer, 2, glassLens, 2,
@@ -339,9 +339,5 @@ final class MachineBlockRecipes {
 
     private static ItemLike block(final String id) {
         return ChainMachineBlocks.byId(id).get();
-    }
-
-    private static Item mercuryBucket() {
-        return ChainRecipeItems.liquid(Elements.of(Element.MERCURY)).getBucket();
     }
 }

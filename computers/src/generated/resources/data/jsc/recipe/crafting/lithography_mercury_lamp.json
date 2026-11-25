@@ -9,7 +9,7 @@
       "item": "minecraft:glass"
     },
     "H": {
-      "item": "jscore:mercury_bucket"
+      "item": "jsc:mercury_arc_tube"
     },
     "T": {
       "item": "jsc:transformer"

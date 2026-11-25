@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import com.mojang.serialization.JsonOps;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
@@ -279,7 +280,11 @@ public final class ComputersRecipesGameTests {
         return String.join(", ", things);
     }
 
+    /* The items an ingredient takes, and for one that asks for components (a chip's class) the whole of it. */
     private static String items(final Ingredient ingredient) {
+        if (!ingredient.isSimple()) {
+            return Ingredient.CODEC.encodeStart(JsonOps.INSTANCE, ingredient).getOrThrow().toString();
+        }
         return Arrays.stream(ingredient.getItems()).map(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem())
                 .toString()).sorted().collect(Collectors.joining("|"));
     }

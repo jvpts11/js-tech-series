@@ -112,6 +112,7 @@
     "jsc:inductor",
     "jsc:transformer",
     "jsc:copper_coil",
+    "jsc:mercury_arc_tube",
     "jsc:tube_screen",
     "jsc:fr2_laminate",
     "jsc:etched_board_vintage",

@@ -83,6 +83,9 @@ public final class ChainParts {
             HardwareEra.STANDARD).named("Gallium Nitride Laser Diode").register();
     public static final ItemEntry<Item> COLD_CATHODE_LAMP = part("cold_cathode_lamp", HardwareEra.LEGACY)
             .named("Cold Cathode Lamp").register();
+    /* The lamp of a Lithography Station's mercury light: fused quartz, tungsten electrodes and a bead of mercury. */
+    public static final ItemEntry<Item> MERCURY_ARC_TUBE = part("mercury_arc_tube", HardwareEra.VINTAGE)
+            .named("Mercury Arc Tube").register();
     /* Each screen in the era its kind of monitor first sits on a desk. */
     public static final ItemEntry<Item> TUBE_SCREEN = part("tube_screen", HardwareEra.VINTAGE).named("Tube Screen")
             .register();

@@ -11,6 +11,10 @@
     {
       "count": 4,
       "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
     }
   ],
   "outputs": [

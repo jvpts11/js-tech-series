@@ -281,6 +281,17 @@ public final class LithographyClientTests {
                 RELOAD_WAIT, "the game to load " + code);
     }
 
+    /** The Mercury Arc Tube says what it is made of, under its name, as its approved mock does. */
+    @ClientTest(timeoutTicks = 100)
+    public static void tooltip_mercuryArcTubeSaysWhatItIsMadeOf(final ClientTestContext ctx) {
+        ctx.then(SETTLE, () -> {
+            final List<String> lines = tooltip(ctx, new ItemStack(ChainParts.MERCURY_ARC_TUBE.get()));
+            ctx.assertTrue(lines.size() >= 3 && lines.get(0).equals("Mercury Arc Tube")
+                    && lines.get(1).equals("Fused quartz, tungsten electrodes")
+                    && lines.get(2).equals("and a bead of mercury"), "the tube's name and its two lines: " + lines);
+        });
+    }
+
     @ClientTest(timeoutTicks = 600)
     public static void jei_maskWritingShowsHowTheK8MaskIsMadeAndTheTooltipsSayIt(final ClientTestContext ctx) {
         final ItemStack k8 = new ItemStack(mask(HardwareEra.LEGACY, "k8"));

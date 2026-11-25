@@ -15,6 +15,10 @@
     {
       "count": 2,
       "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:tin_nugget"
     }
   ],
   "outputs": [

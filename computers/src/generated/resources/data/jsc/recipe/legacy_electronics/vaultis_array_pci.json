@@ -20,6 +20,17 @@
     {
       "count": 2,
       "item": "jsc:controller_chip_legacy"
+    },
+    {
+      "type": "neoforge:components",
+      "components": {
+        "jsc:chip_class": {
+          "SaveVersion": 1,
+          "Value": 2
+        }
+      },
+      "count": 1,
+      "items": "jsc:memory_chip_legacy"
     }
   ],
   "outputs": [

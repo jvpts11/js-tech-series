@@ -66,8 +66,8 @@ final class PowerRecipes {
     /*
      * The case fan of each era (80, 80, 92, 120 and 120 mm) is a motor and its blades, PVC in the Vintage and
      * polycarbonate after; the bigger fan takes more plastic, and the Advanced's carries its light ring (an LED). The
-     * stock cooler is an aluminium plate in the Vintage, with a fan and thermal paste from the Legacy and a copper rod
-     * from the Transition; the tower cooler 4 aluminium sheets, 2 copper rods (the heat pipes), a fan and thermal
+     * stock cooler is an aluminium plate and its clip in the Vintage, a fan and thermal paste from the Legacy, a copper
+     * rod from the Transition; the tower cooler 4 aluminium sheets, 2 copper rods (the heat pipes), a fan and thermal
      * paste; the all-in-one MF AquaLoop a copper plate, the pump (a motor) under its own cover, moulded of a PVC sheet,
      * the radiator, 2 or 3 fans, its water (a water bottle, about the 250 mB it holds) and thermal paste.
      */
@@ -88,7 +88,8 @@ final class PowerRecipes {
         made(output, HardwareEra.STANDARD, caseFan(HardwareEra.STANDARD), motor, 1, frame(HardwareEra.STANDARD), 1);
         made(output, HardwareEra.ADVANCED, caseFan(HardwareEra.ADVANCED), motor, 1, frame(HardwareEra.ADVANCED), 1,
                 ChainParts.LED.get(), 1);
-        made(output, HardwareEra.VINTAGE, CoolingItems.VINTAGE_STOCK_COOLER.get(), aluminiumPlate(), 1);
+        // The Vintage's stock cooler is its heat sink and the steel clip that holds it on the processor.
+        made(output, HardwareEra.VINTAGE, CoolingItems.VINTAGE_STOCK_COOLER.get(), aluminiumPlate(), 1, steelRod(), 1);
         made(output, HardwareEra.LEGACY, CoolingItems.LEGACY_STOCK_COOLER.get(), aluminiumPlate(), 1,
                 caseFan(HardwareEra.LEGACY), 1, paste, 1);
         made(output, HardwareEra.TRANSITION, CoolingItems.TRANSITION_STOCK_COOLER.get(), aluminiumPlate(), 1,

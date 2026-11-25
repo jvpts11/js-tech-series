@@ -13152,5 +13152,7 @@
   "jsc.jei.film_printing.its_tray": "Filme Virgem na sua bandeja",
   "jsc.jei.film_printing.linked": "ligado, com a impressora ligada a ele",
   "jsc.jei.film_printing.pick": "escolha %s e depois Imprimir Filme",
-  "jsc.lithography.layout_used_up": "Um Layout se gasta ao gravar a sua máscara"
+  "jsc.lithography.layout_used_up": "Um Layout se gasta ao gravar a sua máscara",
+  "item.jsc.mercury_arc_tube": "Tubo de Arco de Mercúrio",
+  "jsc.mercury_arc_tube.made_of": "Quartzo fundido, eletrodos de tungstênio e uma gota de mercúrio"
 }

@@ -971,6 +971,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   printer waits for Blank Film in its tray as it waits for paper. A Layout is no longer made at a bench, and each
   era's etched board is etched through its phototool, which a job lends the Board Etcher and never uses up. The
   recipe viewer has a Film Printing page for each film, and the Guide to Operations a page on printing one.
+- Seven small parts each take the material that makes them what they are, so a bigger part's lot never
+  makes one of them: the Vintage stock cooler its clip (a steel rod), the hot-swap drive bay its rails (a steel rod),
+  the copper coil its bobbin (a PVC sheet), the inductor its tinned leads (a tin nugget), the glass lens its
+  aluminium ring (an aluminium sheet), the ceramic package its tinned lead frame (a tin nugget) and the Vaultis Array
+  PCI its read cache (a Legacy memory chip).
+- The Vintage Lithography Station's mercury lamp is made with a Mercury Arc Tube, quartz, a tungsten
+  nugget and 100 mB of mercury sealed at the Display Line, in place of a bucket of mercury.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

@@ -16,6 +16,10 @@
     {
       "count": 1,
       "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:steel_rod"
     }
   ],
   "outputs": [

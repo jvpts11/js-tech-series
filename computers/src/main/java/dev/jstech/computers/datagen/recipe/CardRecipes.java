@@ -56,7 +56,8 @@ final class CardRecipes {
         card(output, l, "enchanting_card", 2, controller(l), 1, Items.LAPIS_LAZULI, 1);
         card(output, l, "anvil_card", 2, controller(l), 1, steelPlate(), 1);
         card(output, l, "management_nic", 2, controller(l), 2, copperWire(),1);
-        card(output, l, "vaultis_array_pci", 5, controller(l), 2);
+        // A RAID card's read cache, a memory chip.
+        card(output, l, "vaultis_array_pci", 5, controller(l), 2, memory(l), 1);
         card(output, l, "vaultis_cache_pci", 5, controller(l), 1, memory(l), 2);
         card(output, l, "t1_card", 5, controller(l), 1, ChainParts.TRANSFORMER.get(), 2);
         card(output, l, "network_anchor_card_legacy", 5, controller(l), 1, memory(l), 3);

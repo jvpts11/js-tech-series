@@ -11,6 +11,10 @@
     {
       "count": 1,
       "item": "minecraft:glass"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_sheet"
     }
   ],
   "outputs": [
