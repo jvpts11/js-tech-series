@@ -991,6 +991,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A Crafting Computer plans with every output a machine pattern always gives, not only its first: a thing
   a machine makes beside its result, as each class of a chip comes off the Packaging Line beside the plain ones, can be
   crafted, and what else a run gives counts for the steps after it instead of running the machine again.
+- A Crafting Interface that runs one recipe at a time tells recipes apart by their items' components too:
+  the steps of one chip that differ only in the wafer's layer were one recipe to it, so a chip made over several
+  layers at once had its wafers of two layers fed into one Deposition Chamber, which then ran neither and stopped the
+  craft.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

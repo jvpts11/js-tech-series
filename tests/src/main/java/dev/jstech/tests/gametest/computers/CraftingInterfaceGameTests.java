@@ -46,12 +46,14 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomModelData;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -678,6 +680,44 @@ public final class CraftingInterfaceGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * Two recipes whose items differ only in their components (a wafer at two layers of one chip) are two recipes to
+     * an exclusive interface: the second waits, or the machine would hold both and run neither.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void jobs_anExclusiveInterfaceTellsRecipesApartByTheirComponents(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+        final StorageKey first = marked(Items.COBBLESTONE, 1);
+        final StorageKey second = marked(Items.COBBLESTONE, 2);
+        final ProcessingPattern fromFirst = toStone(first);
+        final ProcessingPattern fromSecond = toStone(second);
+        final AtomicReference<NetworkProcessingOperation> a = new AtomicReference<>();
+        final AtomicReference<NetworkProcessingOperation> b = new AtomicReference<>();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.rack().getServerStorage(0).insert(first, 16);
+                    net.rack().getServerStorage(0).insert(second, 16);
+                    rig.hold(fromFirst);
+                    rig.hold(fromSecond);
+                    rig.part().setExclusive(true, "");
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    a.set(net.mainframe().submitNetworkProcessing(fromFirst, 3, "a"));
+                    b.set(net.mainframe().submitNetworkProcessing(fromSecond, 3, "b"));
+                })
+                .thenExecuteAfter(4, () -> {
+                    helper.assertFalse(a.get().isWaiting(), "the first recipe runs");
+                    helper.assertTrue(b.get().isWaiting(), "the same recipe from marked stone waits its turn");
+                })
+                .thenExecuteAfter(100, () -> {
+                    helper.assertTrue(done(a.get()) && done(b.get()), "both complete in turn");
+                    helper.assertTrue(stored(helper, Items.STONE) == 6, "six stone");
+                })
+                .thenSucceed();
+    }
+
     /** An interface that is not exclusive takes different recipes at once, as far as its machine takes them. */
     @GameTest(template = ARENA, timeoutTicks = 300)
     public static void jobs_aSharedInterfaceTakesDifferentRecipesAtOnce(final GameTestHelper helper) {
@@ -1058,6 +1098,19 @@ public final class CraftingInterfaceGameTests {
         final MainframeBlockEntity mainframe = TestWorldBuilder.forGameTest(helper).blockEntity(MAINFRAME,
                 MainframeBlockEntity.class);
         return NetworkStorage.of(helper.getLevel(), mainframe.networkUuid()).count(StorageKey.of(item));
+    }
+
+    /* {@code item} carrying a model data number, a component nothing reads: the same item, told apart by it. */
+    private static StorageKey marked(final Item item, final int mark) {
+        final ItemStack stack = new ItemStack(item);
+        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(mark));
+        return StorageKey.of(stack);
+    }
+
+    private static ProcessingPattern toStone(final StorageKey input) {
+        return new ProcessingPattern(List.of(new ProcessingPattern.ProcessingInput(input, 1L)),
+                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.STONE), 1L,
+                        ProcessingPattern.FULL_CHANCE)), 200);
     }
 
     private static NetworkRecipe proc(final Item input, final Item output) {

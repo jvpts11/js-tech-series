@@ -258,12 +258,14 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
 
     /**
      * The recipe written as one line of its inputs and outputs, the same for every pattern of the same recipe
-     * ({@link #sameRecipe}): what an interface tells one recipe from another by while it runs one at a time.
+     * ({@link #sameRecipe}): what an interface tells one recipe from another by while it runs one at a time. Each
+     * key is written with its components, or two steps of one chip (the same wafer at two layers) would read as one
+     * recipe, and an interface running one at a time would feed both into a machine that then runs neither.
      */
     public String identity() {
         final StringBuilder line = new StringBuilder();
         for (final ProcessingInput in : inputs) {
-            line.append(in.key().id()).append('*').append(in.amount());
+            line.append(in.key().fullId()).append('*').append(in.amount());
             if (in.kept()) {
                 line.append('/').append(in.lasts());
             }
@@ -271,7 +273,7 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
         }
         line.append("->");
         for (final ProcessingOutput out : outputs) {
-            line.append(out.key().id()).append('*').append(out.amount()).append('@').append(out.chancePercent())
+            line.append(out.key().fullId()).append('*').append(out.amount()).append('@').append(out.chancePercent())
                     .append(';');
         }
         return line.toString();

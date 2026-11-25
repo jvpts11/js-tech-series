@@ -18,6 +18,7 @@ import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterBridges;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.util.Sizes;
+import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The identity of one stored DATA type preserving an item's or fluid's data components: an item, a liquid (a fluid),
@@ -96,6 +98,9 @@ public final class StorageKey {
     @Nullable
     private final ResourceLocation substance; // a chemical's registry id or a material's id; null for items, fluids
     private final int hash;
+    /* fullId(), worked out the first time it is asked for: a key never changes, so neither does its text. */
+    @Nullable
+    private String fullId;
 
     private StorageKey(final Kind kind, final ItemStack itemPrototype, final FluidStack fluidPrototype,
                        @Nullable final ResourceLocation substance) {
@@ -324,6 +329,28 @@ public final class StorageKey {
      */
     public String id() {
         return kind.serializedName() + "|" + registryId();
+    }
+
+    /**
+     * The {@link #id()} with the key's components after it, sorted by their type, when it has any: the text that tells
+     * apart two keys {@code id()} joins, such as a wafer at one layer of its chip and the same wafer at the next.
+     */
+    public String fullId() {
+        String line = fullId;
+        if (line == null) {
+            final DataComponentPatch components = switch (kind) {
+                case ITEM -> itemPrototype.getComponentsPatch();
+                case FLUID -> fluidPrototype.getComponentsPatch();
+                default -> DataComponentPatch.EMPTY;
+            };
+            line = components.isEmpty() ? id() : id() + components.entrySet().stream()
+                    .map(entry -> BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(entry.getKey()) + "="
+                            + entry.getValue().map(String::valueOf).orElse("removed"))
+                    .sorted()
+                    .collect(Collectors.joining(",", "[", "]"));
+            fullId = line;
+        }
+        return line;
     }
 
     /** A chemical key on disk: {@code {"chemical": "<id>"}}. */

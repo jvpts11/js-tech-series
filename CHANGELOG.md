@@ -4467,6 +4467,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A machine that makes only from exactly what a recipe takes no longer stops at a lot bigger than a stack: the
   rest of an input lying in a second slot is the recipe's too, and only something the recipe does not take stops it.
   (Computers) The wafer machines the same, so a Packaging Line fed many wafers' packages at once packages them all.
+- (Computers) A Crafting Interface that runs one recipe at a time tells recipes apart by their items' components too:
+  the steps of one chip that differ only in the wafer's layer were one recipe to it, so a chip made over several
+  layers at once had its wafers of two layers fed into one Deposition Chamber, which then ran neither and stopped the
+  craft.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
