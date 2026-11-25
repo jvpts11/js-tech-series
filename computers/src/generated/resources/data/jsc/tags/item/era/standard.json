@@ -228,6 +228,8 @@
     "jsc:body_socket_lga_2011",
     "jsc:socket_lga_2011",
     "jsc:mould_socket_lga_2011",
+    "jsc:fan_frame_standard",
+    "jsc:mould_fan_frame_standard",
     "jsc:standard_electronics_workbench",
     "jsc:assembly_standard_placement_head",
     "jsc:assembly_standard_reflow_oven",

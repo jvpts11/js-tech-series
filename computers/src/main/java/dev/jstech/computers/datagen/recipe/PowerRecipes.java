@@ -24,11 +24,13 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.rows;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelSheet;
+import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.moulded;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 
 import dev.jstech.computers.CoolingItems;
 import dev.jstech.computers.QuinceItems;
 import dev.jstech.computers.chain.ChainParts;
+import dev.jstech.computers.chain.MouldedParts;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -72,11 +74,18 @@ final class PowerRecipes {
         final Item motor = ChainParts.ELECTRIC_MOTOR.get();
         final Item paste = ChainParts.THERMAL_PASTE.get();
         final Item copperRod = of(Element.COPPER, Forms.ROD);
-        made(output, HardwareEra.VINTAGE, caseFan(HardwareEra.VINTAGE), motor, 1, pvc(), 1);
-        made(output, HardwareEra.LEGACY, caseFan(HardwareEra.LEGACY), motor, 1, polycarbonate(), 1);
-        made(output, HardwareEra.TRANSITION, caseFan(HardwareEra.TRANSITION), motor, 1, polycarbonate(), 2);
-        made(output, HardwareEra.STANDARD, caseFan(HardwareEra.STANDARD), motor, 1, polycarbonate(), 3);
-        made(output, HardwareEra.ADVANCED, caseFan(HardwareEra.ADVANCED), motor, 1, polycarbonate(), 3,
+        // Each fan's plastic goes into its own frame and rotor, moulded in its own mould.
+        fanFrame(output, HardwareEra.VINTAGE, pvc(), 1);
+        fanFrame(output, HardwareEra.LEGACY, polycarbonate(), 1);
+        fanFrame(output, HardwareEra.TRANSITION, polycarbonate(), 2);
+        fanFrame(output, HardwareEra.STANDARD, polycarbonate(), 3);
+        fanFrame(output, HardwareEra.ADVANCED, polycarbonate(), 3);
+        made(output, HardwareEra.VINTAGE, caseFan(HardwareEra.VINTAGE), motor, 1, frame(HardwareEra.VINTAGE), 1);
+        made(output, HardwareEra.LEGACY, caseFan(HardwareEra.LEGACY), motor, 1, frame(HardwareEra.LEGACY), 1);
+        made(output, HardwareEra.TRANSITION, caseFan(HardwareEra.TRANSITION), motor, 1,
+                frame(HardwareEra.TRANSITION), 1);
+        made(output, HardwareEra.STANDARD, caseFan(HardwareEra.STANDARD), motor, 1, frame(HardwareEra.STANDARD), 1);
+        made(output, HardwareEra.ADVANCED, caseFan(HardwareEra.ADVANCED), motor, 1, frame(HardwareEra.ADVANCED), 1,
                 ChainParts.LED.get(), 1);
         made(output, HardwareEra.VINTAGE, CoolingItems.VINTAGE_STOCK_COOLER.get(), aluminiumPlate(), 1);
         made(output, HardwareEra.LEGACY, CoolingItems.LEGACY_STOCK_COOLER.get(), aluminiumPlate(), 1,
@@ -162,5 +171,15 @@ final class PowerRecipes {
         grid(output, item("vent_panel"), 1, rows("PSP"), 'P', steelPlate(), 'S', steelSheet());
         grid(output, item("guide_to_operations"), 1, rows("VP", "RP", "VP"), 'V', pvc(), 'P', Items.PAPER,
                 'R', steelRod());
+    }
+
+    /* Era {@code era}'s fan frame, moulded at the Injection Moulder from {@code sheets} of {@code plastic}. */
+    private static void fanFrame(final RecipeOutput output, final Era era, final Item plastic, final int sheets) {
+        final MouldedParts.Part frame = MouldedParts.fanFrame(era);
+        moulded(output, frame.item().get(), frame.mould().get(), plastic, sheets, 1);
+    }
+
+    private static Item frame(final Era era) {
+        return MouldedParts.fanFrame(era).item().get();
     }
 }

@@ -24,6 +24,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluid;
 
@@ -88,6 +89,17 @@ final class ChainRecipeItems {
     static Saved recipe(final ProcessingKind kind, final String name) {
         return new Saved(ProcessingRecipeBuilder.of(kind), ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                 kind.id().getPath() + "/" + name));
+    }
+
+    /**
+     * Saves the Injection Moulder's recipe of {@code part}: {@code sheets} of {@code plastic} moulded in {@code mould},
+     * which the job lends the moulder and never uses up, into {@code made} parts.
+     */
+    static void moulded(final RecipeOutput output, final Item part, final Item mould, final Item plastic,
+                        final int sheets, final int made) {
+        final Saved moulded = recipe(kind("injection_moulder"), BuiltInRegistries.ITEM.getKey(part).getPath());
+        moulded.builder().input(plastic, sheets).catalyst(Ingredient.of(mould), 1).output(part, made);
+        moulded.save(output);
     }
 
     private static ChainMachine machine(final String id) {

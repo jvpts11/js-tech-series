@@ -1,0 +1,21 @@
+{
+  "type": "jsc:injection_moulder",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:mould_fan_frame_vintage"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:fan_frame_vintage"
+    }
+  ]
+}

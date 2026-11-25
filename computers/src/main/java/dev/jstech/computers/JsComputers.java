@@ -20,6 +20,7 @@ import dev.jstech.computers.chain.ChainDeposits;
 import dev.jstech.computers.chain.ChainMaterials;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.ChipClasses;
+import dev.jstech.computers.chain.MouldedParts;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.chain.machine.MaskTooltip;
@@ -161,6 +162,7 @@ public class JsComputers {
         ChainParts.declare();
         ChainChips.declare();
         BoardParts.declare();
+        MouldedParts.declare();
         ChainBenches.declare();
         // The chain's machines: their blocks before they form, then each machine and what it is made of.
         ChainMachineBlocks.declare(modEventBus);

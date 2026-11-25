@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "jsc:item/mould_fan_frame_advanced"
+  }
+}

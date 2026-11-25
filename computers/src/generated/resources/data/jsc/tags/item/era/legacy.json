@@ -229,6 +229,8 @@
     "jsc:body_socket_quince_card",
     "jsc:socket_quince_card",
     "jsc:mould_socket_quince_card",
+    "jsc:fan_frame_legacy",
+    "jsc:mould_fan_frame_legacy",
     "jsc:legacy_electronics_workbench",
     "jsc:lithography_krf_laser",
     "jsc:assembly_legacy_placement_head",

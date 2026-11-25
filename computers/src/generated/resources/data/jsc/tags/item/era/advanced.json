@@ -357,6 +357,8 @@
     "jsc:body_socket_quince_q",
     "jsc:socket_quince_q",
     "jsc:mould_socket_quince_q",
+    "jsc:fan_frame_advanced",
+    "jsc:mould_fan_frame_advanced",
     "jsc:advanced_electronics_workbench",
     "jsc:lithography_mirror_optics",
     "jsc:lithography_euv_source",

@@ -202,6 +202,8 @@
     "jsc:body_socket_quince_dip64",
     "jsc:socket_quince_dip64",
     "jsc:mould_socket_quince_dip64",
+    "jsc:fan_frame_vintage",
+    "jsc:mould_fan_frame_vintage",
     "jsc:vintage_electronics_workbench",
     "jsc:machine_casing",
     "jsc:refractory_casing",

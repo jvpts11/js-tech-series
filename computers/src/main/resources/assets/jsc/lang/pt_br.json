@@ -12907,9 +12907,11 @@
   "jsc.lithography.hint.mould_blank": "Há um Bloco de Molde Virgem no slot: Cortar Molde corta nele o molde de %s",
   "jsc.lithography.hint.mould_empty": "Ponha um Bloco de Molde Virgem no slot de molde da injetora para cortar um molde nele",
   "jsc.lithography.kind.connectors": "Conectores",
+  "jsc.lithography.kind.fans": "Ventiladores",
   "jsc.lithography.kind.slots": "Slots",
   "jsc.lithography.kind.sockets": "Soquetes",
   "jsc.lithography.mould.body": "corpo do %s",
+  "jsc.lithography.mould.fan_frame": "estrutura de ventilador %s",
   "jsc.lithography.mould.socket_body": "corpo do soquete %s",
   "jsc.lithography.refused.cutting": "A injetora está cortando um molde: espere ela terminar",
   "jsc.lithography.refused.moulding": "A injetora está moldando: corte um molde quando a peça sair",
@@ -12922,5 +12924,15 @@
   "jsc.lithography.slot.mould": "molde de %s",
   "jsc.lithography.status.cutting": "Cortando um molde",
   "jsc.lithography.status.moulding": "Moldando",
-  "jsc.lithography.tool_never_used_up": "Uma ferramenta nunca se gasta"
+  "jsc.lithography.tool_never_used_up": "Uma ferramenta nunca se gasta",
+  "item.jsc.fan_frame_vintage": "Estrutura de Ventilador (Vintage)",
+  "item.jsc.mould_fan_frame_vintage": "Molde (Estrutura de Ventilador, Vintage)",
+  "item.jsc.fan_frame_legacy": "Estrutura de Ventilador (Legacy)",
+  "item.jsc.mould_fan_frame_legacy": "Molde (Estrutura de Ventilador, Legacy)",
+  "item.jsc.fan_frame_transition": "Estrutura de Ventilador (Transition)",
+  "item.jsc.mould_fan_frame_transition": "Molde (Estrutura de Ventilador, Transition)",
+  "item.jsc.fan_frame_standard": "Estrutura de Ventilador (Standard)",
+  "item.jsc.mould_fan_frame_standard": "Molde (Estrutura de Ventilador, Standard)",
+  "item.jsc.fan_frame_advanced": "Estrutura de Ventilador (Advanced)",
+  "item.jsc.mould_fan_frame_advanced": "Molde (Estrutura de Ventilador, Advanced)"
 }

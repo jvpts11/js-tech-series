@@ -217,6 +217,8 @@
     "jsc:body_storage_sata",
     "jsc:storage_sata",
     "jsc:mould_storage_sata",
+    "jsc:fan_frame_transition",
+    "jsc:mould_fan_frame_transition",
     "jsc:transition_electronics_workbench",
     "jsc:lithography_fluoride_optics",
     "jsc:lithography_arf_laser",

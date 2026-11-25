@@ -13,15 +13,19 @@ import static dev.jstech.tests.testkit.computers.ChainMachineSite.machineAt;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.place;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.CoolingItems;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.chain.BoardParts;
 import dev.jstech.computers.chain.ChainChips;
+import dev.jstech.computers.chain.MouldedParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.MoulderBlockEntity;
 import dev.jstech.computers.chain.machine.MouldCutting;
 import dev.jstech.computers.lithography.LithographyDesk;
 import dev.jstech.computers.lithography.LithographyLook;
 import dev.jstech.core.jstechseries.SeriesCompounds;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.text.TextKey;
@@ -30,12 +34,14 @@ import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.EraKit;
 import dev.jstech.tests.testkit.computers.EraNetwork;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -95,10 +101,35 @@ public final class MouldingGameTests {
         });
     }
 
+    @GameTest(template = ARENA, timeoutTicks = STEP)
+    public static void fanFrame_isMouldedInItsMouldAndTheFanTakesIt(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("injection_moulder"));
+        final MouldedParts.Part frame = MouldedParts.fanFrame(HardwareEra.TRANSITION);
+        helper.runAfterDelay(SETTLE, () -> {
+            moulder(helper, terminal).getInventory().insertItem(0, new ItemStack(frame.mould().get()), false);
+            moulder(helper, terminal).getInventory().insertItem(1, new ItemStack(MaterialUses.item(
+                    SeriesCompounds.POLYCARBONATE, Forms.SHEET).get(), SHEETS), false);
+        });
+        helper.succeedWhen(() -> {
+            final MoulderBlockEntity moulder = moulder(helper, terminal);
+            helper.assertTrue(moulder.getInventory().getStackInSlot(moulder.layout().firstOutput())
+                    .is(frame.item().get()), "the Transition fan frame is moulded from its two sheets");
+            helper.assertTrue(moulder.getInventory().getStackInSlot(0).is(frame.mould().get()),
+                    "its mould stays, never used up");
+            final List<ProcessingRecipe> fans = helper.getLevel().getRecipeManager().getRecipes().stream()
+                    .map(RecipeHolder::value).filter(recipe -> recipe instanceof ProcessingRecipe)
+                    .map(recipe -> (ProcessingRecipe) recipe)
+                    .filter(recipe -> recipe.outputs().stream().anyMatch(out -> out.is(CoolingItems
+                            .TRANSITION_CASE_FAN.get()))).toList();
+            helper.assertTrue(fans.size() == 1 && fans.getFirst().inputs().stream().anyMatch(input ->
+                    input.test(new ItemStack(frame.item().get()))), "the Transition fan is built on its frame");
+        });
+    }
+
     @GameTest(template = ARENA)
     public static void moulds_areListedByFamily(final GameTestHelper helper) {
-        helper.assertTrue(MouldCutting.offers().size() == BoardParts.all().size(),
-                "every component's mould is cut: " + MouldCutting.offers().size());
+        helper.assertTrue(MouldCutting.offers().size() == BoardParts.all().size() + MouldedParts.all().size(),
+                "every component's and every moulded part's mould is cut: " + MouldCutting.offers().size());
         for (final MouldCutting.Kind kind : MouldCutting.Kind.values()) {
             helper.assertTrue(MouldCutting.offers().stream().anyMatch(offer -> offer.kind() == kind),
                     "the " + kind + " list has moulds");

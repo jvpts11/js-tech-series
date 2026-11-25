@@ -13,11 +13,13 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
+import dev.jstech.computers.chain.MouldedParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
+import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.chain.machine.MaskWriting;
-import dev.jstech.computers.chain.machine.WaferMachineBlockEntity;
+import dev.jstech.computers.chain.machine.MouldCutting;
 import dev.jstech.computers.chain.machine.WaferPages;
 import dev.jstech.computers.chain.machine.WaferWork;
 import dev.jstech.computers.client.CommandPromptScreen;
@@ -163,6 +165,45 @@ public final class LithographyClientTests {
                 .thenScreenshot(SCREEN_WAIT, "lithography-window-writing");
     }
 
+    /**
+     * The window on a computer linked to an Injection Moulder: the moulder with its Mould Blank, a list a family of
+     * moulds, the Fans list with each era's fan frame, and Cut Mould cutting the Transition fan frame's mould.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void framesXp_lithographyWindowCutsTheFanFrameMould(final ClientTestContext ctx) {
+        final ChainMachine moulder = ChainMachines.byId("injection_moulder").orElseThrow();
+        final BlockPos computer = port(moulder).east(2);
+        final BlockPos monitor = computer.east();
+        final MouldedParts.Part frame = MouldedParts.fanFrame(HardwareEra.TRANSITION);
+        station(ctx, moulder)
+                .thenBuild(SETTLE, world -> {
+                    final PersonalComputerBlockEntity pc = EraNetwork.runningComputer(world, EraKit.LEGACY,
+                            computer);
+                    pc.console().install(Programs.LITHOGRAPHY.toString());
+                    world.placeMonitor(monitor, Direction.EAST, ComputingModule.LEGACY_MONITOR.get());
+                })
+                .thenServer(SETTLE, level -> station(ctx, level, moulder).getInventory().insertItem(0,
+                        new ItemStack(ChainChips.MOULD_BLANK.get()), false))
+                .thenTeleport(SETTLE, monitor.east(2), Direction.WEST)
+                .thenRightClick(SETTLE, monitor)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .thenWaitUntil(() -> !ctx.screen(DesktopScreen.class).launcherLabels().isEmpty(), SCREEN_WAIT,
+                        "the desktop to list its programs")
+                .then(SETTLE, () -> DesktopScreen.requestOpen(PROGRAM))
+                .thenWaitUntil(() -> look(ctx) != null && look(ctx).moulder() && look(ctx).blank(), SCREEN_WAIT,
+                        "the window to show the moulder with a Mould Blank in it")
+                .then(SETTLE, () -> {
+                    app(ctx).showKind(MouldCutting.Kind.FANS);
+                    app(ctx).pickNamed("Transition fan frame");
+                })
+                .thenScreenshot(SETTLE * 2, "lithography-moulder-fans")
+                .then(SETTLE, () -> app(ctx).writeMask())
+                .thenWaitUntilServer(level -> station(ctx, level, moulder).getInventory().getStackInSlot(0)
+                        .is(frame.mould().get()), WRITE_WAIT, "the moulder to cut the Transition fan frame's mould",
+                        level -> "its slot holds " + station(ctx, level, moulder).getInventory().getStackInSlot(0))
+                .thenScreenshot(SETTLE * 2, "lithography-moulder-cut");
+    }
+
     @ClientTest(timeoutTicks = 600)
     public static void jei_maskWritingShowsHowTheK8MaskIsMadeAndTheTooltipsSayIt(final ClientTestContext ctx) {
         final ItemStack k8 = new ItemStack(mask(HardwareEra.LEGACY, "k8"));
@@ -239,9 +280,9 @@ public final class LithographyClientTests {
         station(ctx, level, machine).getInventory().insertItem(0, new ItemStack(ChainChips.MASK_BLANK.get()), false);
     }
 
-    private static WaferMachineBlockEntity station(final ClientTestContext ctx, final ServerLevel level,
+    private static ChainMachineBlockEntity station(final ClientTestContext ctx, final ServerLevel level,
                                                    final ChainMachine machine) {
-        return (WaferMachineBlockEntity) level.getBlockEntity(ctx.abs(place(machine, '#')));
+        return (ChainMachineBlockEntity) level.getBlockEntity(ctx.abs(place(machine, '#')));
     }
 
     /* Lays {@code machine}'s blocks from {@link #CORNER} facing north, its Machine Terminal at its place. */

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.chain.machine.MaskWriting;
+import dev.jstech.computers.chain.machine.MouldCutting;
 import dev.jstech.computers.lithography.LithographyLook;
 import dev.jstech.computers.operation.payload.lithography.LithographyRequestPayload;
 import dev.jstech.computers.operation.payload.lithography.LithographyStatePayload;
@@ -226,12 +227,12 @@ public final class LithographyApp implements IDesktopApp {
 
     /** Shows the list of {@code kind}, its first mask picked. */
     public void showKind(final MaskWriting.Kind kind) {
-        final int at = kinds().indexOf(kind.serializedName());
-        if (at >= 0) {
-            tab = at;
-            tabs.setSelected(at);
-            picked = null;
-        }
+        showList(kind.serializedName());
+    }
+
+    /** Shows the moulder's list of {@code kind}, its first mould picked. */
+    public void showKind(final MouldCutting.Kind kind) {
+        showList(kind.serializedName());
     }
 
     /** Picks the mask the program calls {@code name} in the list shown, if it is there. */
@@ -249,6 +250,16 @@ public final class LithographyApp implements IDesktopApp {
         final LithographyLook.Pick pick = currentPick();
         if (pick != null) {
             request(LithographyRequestPayload.WRITE, pick.mask());
+        }
+    }
+
+    /* Shows the list named {@code kind}, its first pick picked, when the window has one. */
+    private void showList(final String kind) {
+        final int at = kinds().indexOf(kind);
+        if (at >= 0) {
+            tab = at;
+            tabs.setSelected(at);
+            picked = null;
         }
     }
 
