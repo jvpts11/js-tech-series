@@ -1,5 +1,11 @@
 {
   "type": "jsc:standard_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_quince_mainframe_s"
+    }
+  ],
   "inputs": [
     {
       "count": 2,

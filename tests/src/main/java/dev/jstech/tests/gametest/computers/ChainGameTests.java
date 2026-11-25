@@ -16,6 +16,8 @@ import dev.jstech.computers.block.WorkbenchBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.JsCore;
 import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
+import dev.jstech.computers.chain.BoardJigs;
+import dev.jstech.computers.chain.BoardParts;
 import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.menu.WorkbenchMenu;
@@ -43,6 +45,7 @@ import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -77,6 +80,8 @@ public final class ChainGameTests {
     private static final String ENERGY = TestComputerEnergy.BATCH;
     /* Where a bench stands, facing east: its back, where its energy comes in, to the west. */
     private static final BlockPos BENCH = new BlockPos(3, 2, 3);
+    /* Long enough for a bench that started to show progress. */
+    private static final int JIGLESS_TICKS = 40;
     private static final int VINTAGE = 0;
     private static final int LEGACY = 1;
 
@@ -172,6 +177,30 @@ public final class ChainGameTests {
             helper.assertTrue(bench.trays().getStackInSlot(0).isEmpty() && bench.trays().getStackInSlot(7).isEmpty(),
                     "its ingredients taken from their trays, wherever they lay");
         });
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void bench_assemblesABoardOnItsJigWhichStaysInItsTray(final GameTestHelper helper) {
+        final WorkbenchBlockEntity bench = bench(helper, ChainBenches.VINTAGE.get(), BENCH);
+        final Item jig = BoardJigs.ofQuince("russet_128k").item().get();
+        bench.trays().insertItem(0, new ItemStack(ChainParts.POPULATED_BOARDS.get(VINTAGE).get()), false);
+        bench.trays().insertItem(1, new ItemStack(BoardParts.byPath("socket_quince_dip64").item().get()), false);
+        bench.trays().insertItem(2, new ItemStack(BoardParts.byPath("memory_slot_simm").item().get(), 4), false);
+        bench.trays().insertItem(3, new ItemStack(BoardParts.byPath("storage_ide").item().get()), false);
+        bench.trays().insertItem(4, new ItemStack(BoardParts.byPath("power_at").item().get()), false);
+        helper.startSequence()
+                .thenIdle(JIGLESS_TICKS)
+                .thenExecute(() -> {
+                    helper.assertTrue(bench.output().getStackInSlot(0).isEmpty() && bench.progress() == 0,
+                            "with no jig in a tray, the bench does not start the board");
+                    bench.trays().insertItem(8, new ItemStack(jig), false);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(bench.output().getStackInSlot(0).is(BuiltInRegistries.ITEM
+                        .get(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "quince_board_russet_128k"))),
+                        "the Russet 128K's board is made"))
+                .thenExecute(() -> helper.assertTrue(bench.trays().getStackInSlot(8).is(jig)
+                        && bench.trays().getStackInSlot(0).isEmpty(), "its jig stays in its tray, never used up"))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)

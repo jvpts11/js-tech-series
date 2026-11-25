@@ -1,5 +1,11 @@
 {
   "type": "jsc:legacy_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_quince_qrusset_g3"
+    }
+  ],
   "inputs": [
     {
       "count": 1,

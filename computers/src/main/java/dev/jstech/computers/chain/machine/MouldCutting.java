@@ -7,11 +7,14 @@
  */
 package dev.jstech.computers.chain.machine;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.chain.BoardJigs;
 import dev.jstech.computers.chain.BoardParts;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.MouldedParts;
+import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.core.machine.ProcessingInput;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity.Processing;
 import dev.jstech.core.text.GameText;
@@ -26,6 +29,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,8 +43,8 @@ import org.jetbrains.annotations.Nullable;
  * lithography program picks on the Mould Blank in the moulder, in one step's time, while the moulder moulds nothing;
  * the mould then stands where its blank was, the tool a job lends the moulder to mould its body in. Any running
  * computer cuts any mould, a list a family: the sockets' bodies, the slots' and the connectors', the fans' frames,
- * the bezels with the covers, and the cables' jackets, whose tool is the extrusion die each cable's jacket is pushed
- * through.
+ * the bezels with the covers, the cables' jackets, whose tool is the extrusion die each cable's jacket is pushed
+ * through, and the board jigs, the fixtures boards are assembled on, which mould nothing.
  */
 @TextHolder
 public final class MouldCutting {
@@ -71,6 +78,9 @@ public final class MouldCutting {
     private static final TextKey ARM_COVER = TextKey.of("jsc.lithography.mould.arm_cover", "%s arm cover");
     private static final TextKey CABLES = TextKey.of("jsc.lithography.kind.cables", "Cables");
     private static final TextKey JACKET = TextKey.of("jsc.lithography.mould.jacket", "%s jacket");
+    private static final TextKey JIGS = TextKey.of("jsc.lithography.kind.jigs", "Jigs");
+    private static final TextKey FORM_JIG = TextKey.of("jsc.lithography.mould.form_jig", "%s board jig");
+    private static final TextKey BOARD_JIG = TextKey.of("jsc.lithography.mould.board_jig", "%s jig");
     /** The process the computer runs the cutting as, and what it holds while it does. */
     static final String PROCESS = "mould";
     private static final int MEMORY_MB = 8;
@@ -96,6 +106,9 @@ public final class MouldCutting {
         for (final MouldedParts.Part part : MouldedParts.all()) {
             out.add(new Offer(Kind.of(part.family()), part.tool().get(), name(part)));
         }
+        for (final BoardJigs.Jig jig : BoardJigs.all()) {
+            out.add(new Offer(Kind.JIGS, jig.item().get(), name(jig)));
+        }
         return List.copyOf(out);
     }
 
@@ -107,7 +120,7 @@ public final class MouldCutting {
         return Optional.ofNullable(Tools.BY_PART.get(part));
     }
 
-    /** Whether {@code item} is a mould or a die the moulder cuts. */
+    /** Whether {@code item} is a mould, a die or a jig the moulder cuts. */
     public static boolean isTool(final Item item) {
         return Tools.ALL.contains(item);
     }
@@ -147,6 +160,7 @@ public final class MouldCutting {
             case FANS -> FANS.text();
             case BEZELS -> BEZELS.text();
             case CABLES -> CABLES.text();
+            case JIGS -> JIGS.text();
         };
     }
 
@@ -203,6 +217,17 @@ public final class MouldCutting {
         };
     }
 
+    /*
+     * What the program calls {@code jig}: a form factor's by its name, the same in every language, "ATX board jig";
+     * a Quince logic board's by the board, "Quince Logic Board (Russet 128K) jig".
+     */
+    private static Text name(final BoardJigs.Jig jig) {
+        final FormFactor formFactor = FormFactor.byId(jig.boards());
+        return formFactor != null ? FORM_JIG.with(Text.literal(formFactor.label()))
+                : BOARD_JIG.with(GameText.of(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(
+                        JsComputers.MODID, "quince_board_" + jig.boards())).getDescription()));
+    }
+
     /** A family of moulds, a list of the program. */
     public enum Kind {
         SOCKETS,
@@ -210,7 +235,8 @@ public final class MouldCutting {
         CONNECTORS,
         FANS,
         BEZELS,
-        CABLES;
+        CABLES,
+        JIGS;
 
         /** Its name as the program's picks carry it. */
         public String serializedName() {
@@ -264,7 +290,8 @@ public final class MouldCutting {
     private static final class Tools {
 
         static final Map<Item, Item> BY_PART = byPart();
-        static final Set<Item> ALL = Set.copyOf(BY_PART.values());
+        static final Set<Item> ALL = Stream.concat(BY_PART.values().stream(),
+                BoardJigs.all().stream().map(jig -> jig.item().get())).collect(Collectors.toUnmodifiableSet());
 
         private static Map<Item, Item> byPart() {
             final Map<Item, Item> out = new HashMap<>();

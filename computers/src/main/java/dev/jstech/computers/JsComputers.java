@@ -13,6 +13,7 @@ import dev.jstech.computers.advancement.PendingAwards;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.chain.BoardJigs;
 import dev.jstech.computers.chain.BoardParts;
 import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.chain.ChainChips;
@@ -163,6 +164,7 @@ public class JsComputers {
         ChainChips.declare();
         BoardParts.declare();
         MouldedParts.declare();
+        BoardJigs.declare();
         ChainBenches.declare();
         // The chain's machines: their blocks before they form, then each machine and what it is made of.
         ChainMachineBlocks.declare(modEventBus);

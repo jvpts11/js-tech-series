@@ -21,6 +21,7 @@ import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.recipe;
 
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.chain.BoardJigs;
 import dev.jstech.computers.chain.BoardParts;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
@@ -55,7 +56,9 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Every hardware part of the catalogue at the bench of its era (computers/docs/design/recipes.md, "The hardware
@@ -103,7 +106,7 @@ final class HardwareRecipes {
      * A board's second step: its populated board (two for the big form factors), a socket for each processor, its
      * memory slots shared among the generations it takes, its expansion slots (two of the older bus beside the
      * newer's), its storage connectors (two disks to an IDE header, one to a SATA port or an M.2 slot) and its power
-     * connectors.
+     * connectors; assembled on its form factor's jig, which stays in the bench's tray or goes back to the network.
      */
     private static void boards(final RecipeOutput output) {
         for (final Part<MotherboardSpec> part : parts(MotherboardSpec.class)) {
@@ -146,7 +149,8 @@ final class HardwareRecipes {
                     add(items, part("power_eps"), board.cpuSlots());
                 }
             }
-            save(output, era, part, items);
+            saveOn(output, era, part.item(), items, BoardJigs.of(board.formFactor()).map(jig -> jig.item().get())
+                    .orElse(null));
         }
     }
 
@@ -401,8 +405,17 @@ final class HardwareRecipes {
 
     private static void save(final RecipeOutput output, final Era era, final Item result,
                              final Map<ItemLike, Integer> items) {
+        saveOn(output, era, result, items, null);
+    }
+
+    /* As {@link #save}, assembled on {@code tool}, a board's jig, kept in its tray and never used up; or on none. */
+    private static void saveOn(final RecipeOutput output, final Era era, final Item result,
+                               final Map<ItemLike, Integer> items, @Nullable final Item tool) {
         final ChainRecipeItems.Saved made = recipe(bench(era), BuiltInRegistries.ITEM.getKey(result).getPath());
         items.forEach((item, count) -> made.builder().input(item, count));
+        if (tool != null) {
+            made.builder().catalyst(Ingredient.of(tool), 1);
+        }
         made.builder().output(result, 1);
         made.save(output);
     }

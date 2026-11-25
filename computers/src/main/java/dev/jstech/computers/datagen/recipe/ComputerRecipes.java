@@ -19,6 +19,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.index;
 import static dev.jstech.computers.datagen.recipe.BenchItems.item;
 import static dev.jstech.computers.datagen.recipe.BenchItems.join;
 import static dev.jstech.computers.datagen.recipe.BenchItems.made;
+import static dev.jstech.computers.datagen.recipe.BenchItems.madeOn;
 import static dev.jstech.computers.datagen.recipe.BenchItems.ofEra;
 import static dev.jstech.computers.datagen.recipe.BenchItems.part;
 import static dev.jstech.computers.datagen.recipe.BenchItems.polycarbonate;
@@ -30,6 +31,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.steelSheet;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.mouldedFor;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.chain.BoardJigs;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.hardware.QuinceMachines;
@@ -107,53 +109,56 @@ final class ComputerRecipes {
                 item(CLUSTER_CARDS.get(index(era))), 1);
     }
 
-    /* Quince's logic boards, by the motherboards' rule with the numbers of the real machines of each year. */
+    /*
+     * Quince's logic boards, by the motherboards' rule with the numbers of the real machines of each year, each
+     * assembled on its own jig.
+     */
     private static void quinceBoards(final RecipeOutput output) {
         final Era v = HardwareEra.VINTAGE;
         final Era l = HardwareEra.LEGACY;
         final Era t = HardwareEra.TRANSITION;
         final Era s = HardwareEra.STANDARD;
         final Era a = HardwareEra.ADVANCED;
-        made(output, v, item("quince_board_russet_128k"), populated(v), 1, part("socket_quince_dip64"), 1,
+        logicBoard(output, v, "russet_128k",populated(v), 1, part("socket_quince_dip64"), 1,
                 part("memory_slot_simm"), 4, part("storage_ide"), 1, part("power_at"), 1);
-        made(output, l, item("quince_board_qrusset_g3"), populated(l), 1, part("socket_quince_card"), 1,
+        logicBoard(output, l, "qrusset_g3",populated(l), 1, part("socket_quince_card"), 1,
                 part("memory_slot_sdram"), 2, part("storage_ide"), 1, part("power_atx20"), 1);
-        made(output, l, item("quince_board_power_g4"), populated(l), 2, part("socket_quince_card"), 2,
+        logicBoard(output, l, "power_g4",populated(l), 2, part("socket_quince_card"), 2,
                 part("memory_slot_ddr"), 4, part("storage_ide"), 2, part("power_atx20"), 1, part("power_eps"), 2,
                 part("expansion_slot_agp"), 1, part("expansion_slot_pci"), 4);
-        made(output, l, item("quince_board_qserve_legacy"), populated(l), 2, part("socket_quince_card"), 2,
+        logicBoard(output, l, "qserve_legacy",populated(l), 2, part("socket_quince_card"), 2,
                 part("memory_slot_ddr"), 4, part("expansion_slot_pci"), 2, part("storage_ide"), 2,
                 part("power_atx20"), 1, part("power_eps"), 2);
-        made(output, t, item("quince_board_pro_2006"), populated(t), 2, part("socket_lga_771"), 2,
+        logicBoard(output, t, "pro_2006",populated(t), 2, part("socket_lga_771"), 2,
                 part("memory_slot_ddr2"), 8, part("expansion_slot_pcie"), 4, part("storage_sata"), 4,
                 part("power_atx24"), 1, part("power_eps"), 2);
-        made(output, t, item("quince_board_qrusset_white"), populated(t), 1, part("socket_lga_775"), 1,
+        logicBoard(output, t, "qrusset_white",populated(t), 1, part("socket_lga_775"), 1,
                 part("memory_slot_ddr2"), 2, part("storage_sata"), 1, part("power_atx24"), 1);
-        made(output, t, item("quince_board_qserve_transition"), populated(t), 2, part("socket_lga_771"), 2,
+        logicBoard(output, t, "qserve_transition",populated(t), 2, part("socket_lga_771"), 2,
                 part("memory_slot_ddr2"), 8, part("expansion_slot_pcie"), 2, part("storage_sata"), 3,
                 part("power_atx24"), 1, part("power_eps"), 2);
-        made(output, t, item("quince_board_mainframe_t"), populated(t), 2, part("socket_lga_771"), 4,
+        logicBoard(output, t, "mainframe_t",populated(t), 2, part("socket_lga_771"), 4,
                 part("memory_slot_ddr2"), 16, part("expansion_slot_pcie"), 6, part("storage_sata"), 4,
                 part("power_atx24"), 1, part("power_eps"), 4);
-        made(output, s, item("quince_board_qrusset_thin"), populated(s), 1, part("socket_lga_1155"), 1,
+        logicBoard(output, s, "qrusset_thin",populated(s), 1, part("socket_lga_1155"), 1,
                 part("memory_slot_ddr3"), 4, part("storage_sata"), 1, part("power_atx24"), 1);
-        made(output, s, item("quince_board_pro_2019"), populated(s), 2, part("socket_lga_2011"), 1,
+        logicBoard(output, s, "pro_2019",populated(s), 2, part("socket_lga_2011"), 1,
                 part("memory_slot_ddr3"), 4, part("expansion_slot_pcie"), 2, part("storage_sata"), 1,
                 part("power_atx24"), 1);
-        made(output, s, item("quince_board_qserve_standard"), populated(s), 2, part("socket_lga_2011"), 2,
+        logicBoard(output, s, "qserve_standard",populated(s), 2, part("socket_lga_2011"), 2,
                 part("memory_slot_ddr3"), 12, part("expansion_slot_pcie"), 2, part("storage_sata"), 3,
                 part("power_atx24"), 1, part("power_eps"), 2);
-        made(output, s, item("quince_board_mainframe_s"), populated(s), 2, part("socket_lga_2011"), 4,
+        logicBoard(output, s, "mainframe_s",populated(s), 2, part("socket_lga_2011"), 4,
                 part("memory_slot_ddr3"), 32, part("expansion_slot_pcie"), 6, part("storage_sata"), 4,
                 part("power_atx24"), 1, part("power_eps"), 4);
-        made(output, a, item("quince_board_russet_studio"), populated(a), 1, part("socket_quince_q"), 1,
+        logicBoard(output, a, "russet_studio",populated(a), 1, part("socket_quince_q"), 1,
                 part("memory_slot_ddr5"), 2, part("storage_m2"), 1, part("power_atx24"), 1);
-        made(output, a, item("quince_board_qrusset_colour"), populated(a), 1, part("socket_quince_q"), 1,
+        logicBoard(output, a, "qrusset_colour",populated(a), 1, part("socket_quince_q"), 1,
                 part("storage_m2"), 1, part("power_atx24"), 1);
-        made(output, a, item("quince_board_qserve_advanced"), populated(a), 2, part("socket_quince_q"), 1,
+        logicBoard(output, a, "qserve_advanced",populated(a), 2, part("socket_quince_q"), 1,
                 part("memory_slot_ddr5"), 8, part("expansion_slot_pcie"), 2, part("storage_m2"), 4,
                 part("power_atx24"), 1);
-        made(output, a, item("quince_board_mainframe_a"), populated(a), 2, part("socket_quince_q"), 4,
+        logicBoard(output, a, "mainframe_a",populated(a), 2, part("socket_quince_q"), 4,
                 part("memory_slot_ddr5"), 32, part("expansion_slot_pcie"), 6, part("storage_m2"), 4,
                 part("power_atx24"), 1, part("power_eps"), 4);
     }
@@ -196,6 +201,12 @@ final class ComputerRecipes {
             dyed(output, item("qrusset_colour_blue"), colourDyes.get(i - 1),
                     item("qrusset_colour_" + QuinceMachines.COLOURS.get(i)));
         }
+    }
+
+    /* Quince's logic board {@code board}, "russet_128k", of {@code ingredients}, assembled on its own jig. */
+    private static void logicBoard(final RecipeOutput output, final Era era, final String board,
+                                   final Object... ingredients) {
+        madeOn(output, era, item("quince_board_" + board), BoardJigs.ofQuince(board).item().get(), ingredients);
     }
 
     /* {@code into} at a crafting table: {@code computer}, empty, and {@code dye}. */

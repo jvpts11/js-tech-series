@@ -1,5 +1,11 @@
 {
   "type": "jsc:advanced_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_atx"
+    }
+  ],
   "inputs": [
     {
       "count": 1,

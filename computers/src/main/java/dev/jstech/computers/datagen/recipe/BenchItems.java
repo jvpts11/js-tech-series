@@ -58,16 +58,19 @@ final class BenchItems {
     /* A bench recipe of {@code era} making {@code count} of {@code result}, saved as {@code name}. */
     static void made(final RecipeOutput output, final Era era, final String name, final ItemLike result,
                      final int count, final Object... ingredients) {
-        final ChainRecipeItems.Saved made = recipe(bench(era), name);
-        for (int i = 0; i < ingredients.length; i += 2) {
-            final int n = (Integer) ingredients[i + 1];
-            if (ingredients[i] instanceof Ingredient ingredient) {
-                made.builder().input(ingredient, n);
-            } else {
-                made.builder().input((ItemLike) ingredients[i], n);
-            }
-        }
+        final ChainRecipeItems.Saved made = withInputs(recipe(bench(era), name), ingredients);
         made.builder().output(result, count);
+        made.save(output);
+    }
+
+    /*
+     * A bench recipe of {@code era} making one {@code result} on {@code tool}, which stays in its tray at the bench and
+     * which a job lends the assembly line, never used up.
+     */
+    static void madeOn(final RecipeOutput output, final Era era, final ItemLike result, final Item tool,
+                       final Object... ingredients) {
+        final ChainRecipeItems.Saved made = withInputs(recipe(bench(era), idOf(result).getPath()), ingredients);
+        made.builder().catalyst(Ingredient.of(tool), 1).output(result, 1);
         made.save(output);
     }
 
@@ -218,5 +221,18 @@ final class BenchItems {
             throw new IllegalStateException("no item " + id);
         }
         return found;
+    }
+
+    /* {@code made} taking {@code ingredients}: each ingredient, an item or an ingredient, then its count. */
+    private static ChainRecipeItems.Saved withInputs(final ChainRecipeItems.Saved made, final Object... ingredients) {
+        for (int i = 0; i < ingredients.length; i += 2) {
+            final int n = (Integer) ingredients[i + 1];
+            if (ingredients[i] instanceof Ingredient ingredient) {
+                made.builder().input(ingredient, n);
+            } else {
+                made.builder().input((ItemLike) ingredients[i], n);
+            }
+        }
+        return made;
     }
 }

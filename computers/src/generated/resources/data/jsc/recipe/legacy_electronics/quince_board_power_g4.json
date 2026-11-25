@@ -1,5 +1,11 @@
 {
   "type": "jsc:legacy_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_quince_power_g4"
+    }
+  ],
   "inputs": [
     {
       "count": 2,

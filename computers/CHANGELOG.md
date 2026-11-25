@@ -961,6 +961,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Moulder extrudes from the PVC the cable took before, through the cable's own extrusion die, "Extrusion Die (Cat 5e
   Cable)", cut on a Mould Blank like a mould and lent to the job like one; the Lithography program lists the dies in
   a Cables list.
+- Board jigs: every motherboard is assembled on its form factor's jig, "Board Jig (ATX)", one each for
+  AT, Baby-AT, ATX, EATX, EEB, MTX and MNG, and each of Quince's logic boards on its own; a jig is cut on a Mould
+  Blank at the Injection Moulder, listed in the Lithography program's Jigs list, and is never used up: a job lends it
+  to the Electronics Assembly Line and takes it back, and at the bench it stays in its tray.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

@@ -1,5 +1,11 @@
 {
   "type": "jsc:legacy_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_eatx"
+    }
+  ],
   "inputs": [
     {
       "count": 2,

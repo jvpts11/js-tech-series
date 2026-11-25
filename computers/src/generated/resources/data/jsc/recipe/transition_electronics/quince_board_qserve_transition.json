@@ -1,5 +1,11 @@
 {
   "type": "jsc:transition_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_quince_qserve_transition"
+    }
+  ],
   "inputs": [
     {
       "count": 2,

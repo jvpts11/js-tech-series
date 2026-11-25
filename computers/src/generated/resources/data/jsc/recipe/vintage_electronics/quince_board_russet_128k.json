@@ -1,5 +1,11 @@
 {
   "type": "jsc:vintage_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_quince_russet_128k"
+    }
+  ],
   "inputs": [
     {
       "count": 1,

@@ -1,5 +1,11 @@
 {
   "type": "jsc:vintage_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_mtx"
+    }
+  ],
   "inputs": [
     {
       "count": 2,

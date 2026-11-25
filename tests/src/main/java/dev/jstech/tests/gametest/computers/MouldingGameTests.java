@@ -15,12 +15,14 @@ import static dev.jstech.tests.testkit.computers.ChainMachineSite.place;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.CoolingItems;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.chain.BoardJigs;
 import dev.jstech.computers.chain.BoardParts;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.MouldedParts;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.MoulderBlockEntity;
 import dev.jstech.computers.chain.machine.MouldCutting;
+import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.lithography.LithographyDesk;
 import dev.jstech.computers.lithography.LithographyLook;
 import dev.jstech.core.jstechseries.SeriesCompounds;
@@ -36,6 +38,8 @@ import dev.jstech.tests.testkit.computers.EraNetwork;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -49,7 +53,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The Injection Moulder: the computer on its peripheral port cuts the mould its lithography program picks on the
  * Mould Blank in the moulder, the mould standing where its blank was; and the moulder moulds a component's body from
- * the plastic its component took, in the body's own mould, which it never uses up.
+ * the plastic its component took, in the body's own mould, which it never uses up. A board jig is cut the same way,
+ * and every motherboard is assembled on its own.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -59,6 +64,8 @@ public final class MouldingGameTests {
     private static final int STEP = 400;
     private static final int SETTLE = 20;
     private static final int SHEETS = 2;
+    /* The motherboards of the seven form factors, 57, and Quince's 16 logic boards. */
+    private static final int BOARDS = 57 + 16;
 
     private MouldingGameTests() {
     }
@@ -172,10 +179,44 @@ public final class MouldingGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA, timeoutTicks = STEP)
+    public static void jig_isCutOnTheBlankByTheLinkedComputer(final GameTestHelper helper) {
+        final BlockPos terminal = linkedMoulder(helper);
+        final Item atx = BoardJigs.of(FormFactor.ATX).orElseThrow().item().get();
+        helper.runAfterDelay(SETTLE, () -> {
+            moulder(helper, terminal).getInventory().insertItem(0, new ItemStack(ChainChips.MOULD_BLANK.get()),
+                    false);
+            final Optional<TextKey> refused = LithographyDesk.write(helper.getLevel(), computer(helper), 0,
+                    BuiltInRegistries.ITEM.getKey(atx));
+            helper.assertTrue(refused.isEmpty(), "the moulder takes the cutting of the ATX jig: " + refused);
+        });
+        helper.succeedWhen(() -> helper.assertTrue(moulder(helper, terminal).getInventory().getStackInSlot(0)
+                .is(atx), "the jig stands where its blank was"));
+    }
+
+    @GameTest(template = ARENA)
+    public static void boards_areEachAssembledOnTheirJig(final GameTestHelper helper) {
+        final Set<Item> jigs = BoardJigs.all().stream().map(jig -> jig.item().get()).collect(Collectors.toSet());
+        int boards = 0;
+        for (final RecipeHolder<?> holder : helper.getLevel().getRecipeManager().getRecipes()) {
+            if (holder.value() instanceof ProcessingRecipe recipe && !recipe.outputs().isEmpty()) {
+                final String made = BuiltInRegistries.ITEM.getKey(recipe.outputs().getFirst().getItem()).getPath();
+                if (made.startsWith("motherboard_") || made.startsWith("quince_board_")) {
+                    boards++;
+                    helper.assertTrue(recipe.catalysts().size() == 1 && jigs.stream().anyMatch(jig ->
+                            recipe.catalysts().getFirst().test(new ItemStack(jig))), made + " is assembled on a jig");
+                }
+            }
+        }
+        helper.assertTrue(boards >= BOARDS, "every board's recipe was seen: " + boards);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void moulds_areListedByFamily(final GameTestHelper helper) {
-        helper.assertTrue(MouldCutting.offers().size() == BoardParts.all().size() + MouldedParts.all().size(),
-                "every component's and every moulded part's mould is cut: " + MouldCutting.offers().size());
+        helper.assertTrue(MouldCutting.offers().size() == BoardParts.all().size() + MouldedParts.all().size()
+                + BoardJigs.all().size(), "every component's and every moulded part's mould, and every jig, is cut: "
+                + MouldCutting.offers().size());
         for (final MouldCutting.Kind kind : MouldCutting.Kind.values()) {
             helper.assertTrue(MouldCutting.offers().stream().anyMatch(offer -> offer.kind() == kind),
                     "the " + kind + " list has moulds");
