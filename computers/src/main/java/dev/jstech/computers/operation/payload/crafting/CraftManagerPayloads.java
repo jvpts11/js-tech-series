@@ -147,11 +147,22 @@ public final class CraftManagerPayloads {
         }
     }
 
-    /**
-     * Loads {@code .craft} files from a removable medium: a bench recipe into a card's ROM, a processing or pipeline
-     * recipe into an interface, the one the player chose or else the first with room. With {@code allMissing}, every
-     * file the computer does not keep yet is loaded.
-     */
+    /** What loading recipe files came to: how many went in, how many were recipes, and whether one found no room. */
+    public record Loaded(int loaded, int parsed, boolean full) {
+
+        /** The line the Manager says it in. */
+        Text status() {
+            if (full) {
+                return CraftTexts.LOADED_ROM_FULL.with(loaded, parsed);
+            }
+            if (loaded > 0) {
+                return (loaded == 1 ? CraftTexts.LOADED_ONE : CraftTexts.LOADED_MANY).with(loaded);
+            }
+            return (parsed > 0 ? CraftTexts.ALREADY_LOADED : CraftTexts.NOTHING_TO_LOAD).text();
+        }
+    }
+
+    /** Loads the {@code .craft} files the player chose on a removable medium and shows them the Manager again. */
     private static void handleLoadFromMedia(final LoadFromMediaPayload payload, final ServerPlayer player,
                                             final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
@@ -165,15 +176,29 @@ public final class CraftManagerPayloads {
         if (media.isEmpty()) {
             return;
         }
+        final Loaded loaded = loadFromMedia(cc, level, media, payload.fileNames(), payload.place(),
+                payload.allMissing());
+        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, loaded.status(), loaded.full()));
+    }
+
+    /**
+     * Loads {@code .craft} files from {@code media} into {@code cc}: a bench recipe into a card's ROM, a processing or
+     * pipeline recipe into an interface, the place numbered {@code place} when the player chose one of the recipe's
+     * kind, else the first with room. With {@code allMissing}, every file on the medium the computer does not keep yet
+     * is loaded instead of {@code fileNames}.
+     */
+    public static Loaded loadFromMedia(final CraftingComputerBlockEntity cc, final ServerLevel level,
+                                       final ItemStack media, final List<String> fileNames, final int place,
+                                       final boolean allMissing) {
         final List<String> toLoad = new ArrayList<>();
-        if (payload.allMissing()) {
+        if (allMissing) {
             for (final DiskFilesystem.FileEntry e : DiskFilesystem.list(media, "", FilesystemKind.HIERARCHICAL)) {
                 if (e.type() == FileType.CRAFT) {
                     toLoad.add(e.path());
                 }
             }
         } else {
-            toLoad.addAll(payload.fileNames());
+            toLoad.addAll(fileNames);
         }
         int loaded = 0;
         int parsed = 0;
@@ -190,11 +215,18 @@ public final class CraftManagerPayloads {
                 continue;
             }
             parsed++;
-            if (keeps(places, recipe)) {
+            final CraftPlaces.Place picked = places.at(place);
+            final CraftPlaces.Place chosen = picked != null && picked.isCard() == recipe.bench().isPresent()
+                    ? picked : null;
+            /*
+             * A recipe goes into a second interface when the player names that interface, so a second machine works it
+             * too: then only the place it goes into must not hold it already. Put into the first place with room, a
+             * recipe the computer keeps anywhere is left as it is.
+             */
+            if (chosen != null ? holds(chosen, recipe) : keeps(places, recipe)) {
                 continue;
             }
-            final CraftPlaces.Place chosen = places.at(payload.place());
-            final CraftPlaces.Place into = chosen != null && chosen.isCard() == recipe.bench().isPresent()
+            final CraftPlaces.Place into = chosen != null
                     ? chosen : recipe.bench().isPresent() ? places.cardWithRoom() : places.interfaceWithRoom();
             if (into == null || !into.put(recipe)) {
                 full = true;
@@ -208,15 +240,7 @@ public final class CraftManagerPayloads {
         }
         cc.setChanged();
         cc.forgetFloor();
-        final Text status;
-        if (full) {
-            status = CraftTexts.LOADED_ROM_FULL.with(loaded, parsed);
-        } else if (loaded > 0) {
-            status = (loaded == 1 ? CraftTexts.LOADED_ONE : CraftTexts.LOADED_MANY).with(loaded);
-        } else {
-            status = (parsed > 0 ? CraftTexts.ALREADY_LOADED : CraftTexts.NOTHING_TO_LOAD).text();
-        }
-        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, status, full));
+        return new Loaded(loaded, parsed, full);
     }
 
     /** Removes the chosen recipes, highest first so an earlier removal does not move a later one. */
@@ -429,11 +453,15 @@ public final class CraftManagerPayloads {
     /* Whether the computer keeps {@code recipe} already: a card's ROM, or an interface it drives. */
     private static boolean keeps(final CraftPlaces places, final NetworkRecipe recipe) {
         for (final CraftPlaces.Place place : places.all()) {
-            if (place.recipes().stream().anyMatch(held -> held.sameRecipe(recipe))) {
+            if (holds(place, recipe)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean holds(final CraftPlaces.Place place, final NetworkRecipe recipe) {
+        return place.recipes().stream().anyMatch(held -> held.sameRecipe(recipe));
     }
 
     @Nullable

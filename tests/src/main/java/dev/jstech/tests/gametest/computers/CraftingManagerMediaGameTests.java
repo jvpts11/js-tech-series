@@ -8,27 +8,35 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
 import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
+import dev.jstech.computers.operation.payload.crafting.CraftPlaces;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.CraftFiles;
+import dev.jstech.tests.testkit.computers.CraftingRig;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -91,6 +99,40 @@ public final class CraftingManagerMediaGameTests {
                                     && fallback.mediaFiles().isEmpty(),
                             "without crafts anywhere, the first writable medium is offered; got "
                                     + fallback.mediaVolumeKey());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A machine recipe goes into a second interface the player names, so a second machine works it too; never twice
+     * into one interface, and put into the first place with room, one the computer keeps anywhere is left as it is.
+     */
+    @GameTest(template = ARENA)
+    public static void load_aRecipeGoesIntoASecondInterfaceThePlayerNames(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        for (int z = 3; z <= 4; z++) {
+            CraftingRig.lay(world, new BlockPos(5, 2, z));
+            CraftingRig.addPart(world, new CraftingFloor.Site(new BlockPos(5, 2, z), Direction.EAST),
+                    new CraftingInterfacePart(HardwareEra.STANDARD));
+        }
+        final ItemStack dvd = new ItemStack(ComputingModule.DVD_RW.get());
+        final String file = CraftFiles.writeProcessing(dvd, CraftFiles.furnaceIron(200),
+                helper.getLevel().registryAccess());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final CraftingComputerBlockEntity cc = net.cc();
+                    cc.forgetFloor();
+                    final List<Integer> interfaces = interfacePlaces(cc, helper.getLevel());
+                    helper.assertTrue(interfaces.size() == 2, "two interfaces to load into: " + interfaces);
+                    helper.assertTrue(load(helper, cc, dvd, file, interfaces.get(0)) == 1,
+                            "the recipe goes into the first interface");
+                    helper.assertTrue(load(helper, cc, dvd, file, -1) == 0,
+                            "put into the first place with room, a recipe the computer keeps is left as it is");
+                    helper.assertTrue(load(helper, cc, dvd, file, interfaces.get(1)) == 1,
+                            "named, it goes into the second interface too");
+                    helper.assertTrue(load(helper, cc, dvd, file, interfaces.get(1)) == 0,
+                            "and never twice into one interface");
                 })
                 .thenSucceed();
     }
@@ -177,5 +219,23 @@ public final class CraftingManagerMediaGameTests {
                 dvd, "oak_planks", ".craft", "recipe A");
         helper.assertTrue(again.equals("oak_planks.craft"), "the same recipe lands on its own file; got " + again);
         helper.succeed();
+    }
+
+    /* How many recipes loading {@code file} from {@code media} into the place numbered {@code place} put in. */
+    private static int load(final GameTestHelper helper, final CraftingComputerBlockEntity cc, final ItemStack media,
+                            final String file, final int place) {
+        return CraftManagerPayloads.loadFromMedia(cc, helper.getLevel(), media, List.of(file), place, false).loaded();
+    }
+
+    /* The numbers of the places that are interfaces the computer drives, in order. */
+    private static List<Integer> interfacePlaces(final CraftingComputerBlockEntity cc, final ServerLevel level) {
+        final List<CraftPlaces.Place> all = CraftPlaces.of(cc, level).all();
+        final List<Integer> out = new ArrayList<>();
+        for (int i = 0; i < all.size(); i++) {
+            if (!all.get(i).isCard()) {
+                out.add(i);
+            }
+        }
+        return out;
     }
 }

@@ -4490,6 +4490,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   desktop shrank under with the game's window, shrinks to fit, never below its program's smallest, and moves in. The
   Crafting Manager's buttons and the ends of its lists lay under the taskbar in a small game window, so its lists
   seemed to stop before their end.
+- (Computers) The Crafting Manager loads a machine recipe into a second interface the player names, so a second
+  machine works it too: a recipe the computer kept anywhere was refused as "Already loaded". Into the interface that
+  holds it, or into the first place with room, a recipe kept is still left as it is.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
