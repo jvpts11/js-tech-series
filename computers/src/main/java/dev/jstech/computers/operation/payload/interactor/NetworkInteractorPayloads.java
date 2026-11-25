@@ -163,18 +163,18 @@ public final class NetworkInteractorPayloads {
         final NetworkUuid network = computer.networkUuid();
         // The whole network's items (Network Storage tab).
         final List<NetworkItemEntry> networkItems = new ArrayList<>();
-        long usedItems = 0L;
         // Built once: it serves both the item grid and the room figures below.
         final NetworkStorage room = network == null ? null : NetworkStorage.of(level, network);
+        /*
+         * The gauge's used share, counted as the capacity is: a sum of every amount held counted a liquid's or a gas's
+         * millibuckets as items, so a network holding a few tanks read as fuller than full.
+         */
+        final long usedItems = room == null ? 0L : room.used();
         if (room != null) {
             final NetworkSystem system =
                     NetworkSystem.get(level);
             final NetworkStorage storage = room;
             final Map<StorageKey, Long> totals = storage.query();
-            for (final long amount : totals.values()) {
-                // The gauge counts every type, even those past the entry cap below.
-                usedItems += amount;
-            }
             for (final var e : totals.entrySet()) {
                 if (networkItems.size() >= NetworkInteractorPayload.MAX_ENTRIES) {
                     break;
