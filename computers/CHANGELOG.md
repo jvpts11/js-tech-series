@@ -1001,6 +1001,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Network Interactor's storage gauge counts what the network holds as it counts its room: it counted
   a liquid's or a gas's millibuckets as items, so a network holding a few tanks read as full, its gauge red and its
   card holding more items than it had room for.
+- JEI shows the recipes and uses of a stack in the Network Interactor's grid, on every tab with one, as it
+  does over a slot: the grid is drawn by the desktop, so its stacks were never seen as ingredients.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

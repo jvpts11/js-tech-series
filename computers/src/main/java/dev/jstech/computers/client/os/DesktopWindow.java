@@ -13,6 +13,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.WindowGeometry;
 import dev.jstech.core.motion.Motion;
@@ -675,18 +676,35 @@ public final class DesktopWindow {
      * {@link #render}, so it must be called after it.
      */
     public void renderTooltip(final GuiGraphics g, final Font font, final int mouseX, final int mouseY) {
+        final int[] content = contentUnder(mouseX, mouseY);
+        if (content != null) {
+            app.renderTooltip(g, font, content[0], content[1], content[2], content[3], mouseX, mouseY);
+        }
+    }
+
+    /**
+     * The stored thing this window's program shows under the cursor, when the cursor is over its content and it is
+     * not minimised; see {@link IDesktopApp#keyAt}. Uses the bounds from the last {@link #render}.
+     */
+    @Nullable
+    public StorageKey keyAt(final int mouseX, final int mouseY) {
+        return contentUnder(mouseX, mouseY) == null ? null : app.keyAt(mouseX, mouseY);
+    }
+
+    /* The content rectangle (x, y, width, height) when the cursor is over it and the window is not minimised. */
+    @Nullable
+    private int[] contentUnder(final int mouseX, final int mouseY) {
         if (minimized) {
-            return;
+            return null;
         }
         final boolean own = ownFrame();
         final int contentX = own ? curX : curX + 4;
         final int contentY = own ? curY : curY + TITLE_H + 4;
         final int contentW = own ? curW : curW - 8;
         final int contentH = own ? curH : curH - TITLE_H - 8;
-        if (mouseX >= contentX && mouseX < contentX + contentW
-                && mouseY >= contentY && mouseY < contentY + contentH) {
-            app.renderTooltip(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
-        }
+        final boolean over = mouseX >= contentX && mouseX < contentX + contentW
+                && mouseY >= contentY && mouseY < contentY + contentH;
+        return over ? new int[] {contentX, contentY, contentW, contentH} : null;
     }
 
     /*

@@ -2675,6 +2675,14 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
     }
 
+    /** The grid's entry under the cursor on any storage or crafting tab, as a recipe viewer looks it up. */
+    @Override
+    @Nullable
+    public StorageKey keyAt(final int mouseX, final int mouseY) {
+        final NetworkItemEntry hovered = hoveredGridEntry(mouseX, mouseY);
+        return hovered == null ? null : hovered.key();
+    }
+
     //  The request/storage dialog
 
     /**

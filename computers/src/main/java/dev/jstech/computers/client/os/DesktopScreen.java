@@ -16,6 +16,7 @@ import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.config.ComputersClientConfig;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.live.TubeFilter;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
@@ -157,6 +158,20 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Whether {@code app} runs in the front (focused) window; what a recipe viewer's drop or transfer targets. */
     public boolean isFront(final IDesktopApp app) {
         return state.isFront(app);
+    }
+
+    /**
+     * The stored thing the front window's program shows under the cursor, at the screen's own coordinates: what a
+     * recipe viewer looks up when asked over the desktop, as over a slot. Null off the glass or over anything else.
+     */
+    @Nullable
+    public StorageKey keyUnderMouse(final double mouseX, final double mouseY) {
+        final DesktopViewport view = state.view();
+        final DesktopWindow front = state.wm().front();
+        if (front == null || !view.onGlass(mouseX, mouseY)) {
+            return null;
+        }
+        return front.keyAt((int) Math.floor(view.localX(mouseX)), (int) Math.floor(view.localY(mouseY)));
     }
 
     /** Every window of a program (its dialogs aside), front-most last, named by its window key or its label. */

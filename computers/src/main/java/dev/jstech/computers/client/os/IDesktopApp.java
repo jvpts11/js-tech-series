@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiComponent;
 import net.minecraft.client.gui.Font;
@@ -257,5 +258,15 @@ public interface IDesktopApp {
      */
     default void renderTooltip(GuiGraphics graphics, Font font, int x, int y, int width, int height,
                                int mouseX, int mouseY) {
+    }
+
+    /**
+     * What the program shows a stored thing for under the cursor, at the same pixels {@link #renderTooltip} gets: what
+     * a recipe viewer looks up when asked over the desktop. Null over anything else; the real inventory slots are the
+     * screen's own, which the viewer reads itself.
+     */
+    @Nullable
+    default StorageKey keyAt(int mouseX, int mouseY) {
+        return null;
     }
 }

@@ -175,6 +175,7 @@ public final class JscJeiPlugin implements IModPlugin {
     public void registerGuiHandlers(final IGuiHandlerRegistration registration) {
         // The monitor bodies are kept clear by the Core's bridge, which every computer screen names them to.
         registration.addGhostIngredientHandler(DesktopScreen.class, new StudioGhostIngredientHandler());
+        registration.addGuiContainerHandler(DesktopScreen.class, new DesktopIngredientHandler());
     }
 
     /**
