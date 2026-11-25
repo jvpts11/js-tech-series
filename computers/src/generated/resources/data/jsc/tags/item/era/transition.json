@@ -151,6 +151,7 @@
     "jsc:finished_wafer_transition",
     "jsc:laser_diode_algainp",
     "jsc:etched_board_transition",
+    "jsc:phototool_transition",
     "jsc:populated_board_transition",
     "jsc:processor_chip_transition_netburst",
     "jsc:mask_processor_transition_netburst",

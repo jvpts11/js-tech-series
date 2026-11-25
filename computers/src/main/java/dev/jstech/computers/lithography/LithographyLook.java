@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.lithography;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import java.util.List;
@@ -38,13 +40,15 @@ import net.minecraft.resources.ResourceLocation;
  * @param writing         the mask it is writing, by what the program calls it, or nothing
  * @param writingPermille how far through the writing it is, in thousandths
  * @param writingSeconds  how many seconds the writing has left
- * @param moulder         whether the machine is an Injection Moulder, whose rows tell its plastic, the part it moulds
- *                        and its mould slot, and whose picks are the moulds it cuts on a Mould Blank
+ * @param machine         what the machine is: a Lithography Station; an Injection Moulder, whose rows tell its
+ *                        plastic, the part it moulds and its mould slot, and whose picks are the tools it cuts on a
+ *                        Mould Blank; or a printer, whose rows tell its tray, and whose picks are the films it prints
+ *                        on a Blank Film
  */
 public record LithographyLook(int stations, int shown, Text station, Text status, Text wafer, boolean exposing,
                               int layerPermille, int layerSeconds, int lithoMb, List<Supply> supplies, Text slot,
                               boolean blank, boolean masked, List<Pick> picks, Text writing, int writingPermille,
-                              int writingSeconds, boolean moulder) {
+                              int writingSeconds, MachineKind machine) {
 
     /* The most of each list a look carries: far over what a station has. */
     private static final int MOST_SUPPLIES = 8;
@@ -53,7 +57,7 @@ public record LithographyLook(int stations, int shown, Text station, Text status
 
     /** A computer no station works for. */
     public static final LithographyLook NONE = new LithographyLook(0, 0, Text.EMPTY, Text.EMPTY, Text.EMPTY, false,
-            0, 0, 0, List.of(), Text.EMPTY, false, false, List.of(), Text.EMPTY, 0, 0, false);
+            0, 0, 0, List.of(), Text.EMPTY, false, false, List.of(), Text.EMPTY, 0, 0, MachineKind.STATION);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LithographyLook> STREAM_CODEC = StreamCodec.of(
             (buf, look) -> {
@@ -69,23 +73,54 @@ public record LithographyLook(int stations, int shown, Text station, Text status
                 Pick.LIST_CODEC.encode(buf, look.picks());
                 TextCodecs.STREAM_CODEC.encode(buf, look.writing());
                 buf.writeVarInt(look.writingPermille()).writeVarInt(look.writingSeconds());
-                buf.writeBoolean(look.moulder());
+                buf.writeByte(look.machine().id());
             },
             buf -> new LithographyLook(buf.readVarInt(), buf.readVarInt(), TextCodecs.STREAM_CODEC.decode(buf),
                     TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(),
                     buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), Supply.LIST_CODEC.decode(buf),
                     TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readBoolean(),
                     Pick.LIST_CODEC.decode(buf),
-                    TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()));
+                    TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(),
+                    MachineKind.IDS.byId(buf.readByte(), MachineKind.STATION)));
 
     public LithographyLook {
         supplies = List.copyOf(supplies);
         picks = List.copyOf(picks);
     }
 
-    /** Whether it is writing a mask. */
+    /** Whether it is writing a mask, cutting a tool or printing a film. */
     public boolean writes() {
         return !writing.isEmpty();
+    }
+
+    /** Whether the machine is an Injection Moulder. */
+    public boolean moulder() {
+        return machine == MachineKind.MOULDER;
+    }
+
+    /** Whether the machine is a printer. */
+    public boolean printer() {
+        return machine == MachineKind.PRINTER;
+    }
+
+    /** What a machine the program works for is, which its rows, its lists and its button say. */
+    public enum MachineKind implements IStableId {
+        STATION(0),
+        MOULDER(1),
+        PRINTER(2);
+
+        private final int id;
+
+        private static final StableIds<MachineKind> IDS = StableIds.of(MachineKind.class);
+
+        MachineKind(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
     }
 
     /**

@@ -7,6 +7,12 @@
     }
   ],
   "type": "jsc:board_etcher",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:phototool_vintage"
+    }
+  ],
   "fluid_inputs": [
     {
       "amount": 250,

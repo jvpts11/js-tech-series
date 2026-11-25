@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.chain.machine.MaskWriting;
 import dev.jstech.computers.chain.machine.MouldCutting;
+import dev.jstech.computers.lithography.FilmPrinting;
 import dev.jstech.computers.lithography.LithographyLook;
 import dev.jstech.computers.operation.payload.lithography.LithographyRequestPayload;
 import dev.jstech.computers.operation.payload.lithography.LithographyStatePayload;
@@ -176,7 +177,7 @@ public final class LithographyApp implements IDesktopApp {
             skin.panel(g, x + MASKS_X, y + GROUP_TOP + TAB_H, width - MASKS_X - PAD, paneBottom - (y + GROUP_TOP
                     + TAB_H));
             layoutMasks(look, x, y, width, paneBottom);
-            Draw.text(g, font, GameText.resolve(LithoWords.neverUsedUp(look)), x + MASKS_X + LIST_INSET,
+            Draw.text(g, font, GameText.resolve(LithoWords.neverUsedUp(look, shownKind())), x + MASKS_X + LIST_INSET,
                     paneBottom - BUTTON_FOOT + 4, skin.dim());
         } else if (state != null) {
             final String none = GameText.resolve(LithographyTexts.NO_STATION);
@@ -235,6 +236,11 @@ public final class LithographyApp implements IDesktopApp {
         showList(kind.serializedName());
     }
 
+    /** Shows the printer's list of {@code kind}, its first film picked. */
+    public void showKind(final FilmPrinting.Kind kind) {
+        showList(kind.serializedName());
+    }
+
     /** Picks the mask the program calls {@code name} in the list shown, if it is there. */
     public void pickNamed(final String name) {
         final List<LithographyLook.Pick> shown = shownPicks();
@@ -281,7 +287,7 @@ public final class LithographyApp implements IDesktopApp {
         final List<String[]> rows = new ArrayList<>();
         rows.add(row(LithographyTexts.ROW_STATION, look.station()));
         rows.add(new String[] {GameText.resolve(LithographyTexts.ROW_LINKED),
-            GameText.resolve(LithographyTexts.PERIPHERAL_PORT)});
+            GameText.resolve(LithoWords.linked(look))});
         rows.add(row(LithographyTexts.ROW_STATUS, look.status()));
         rows.add(row(LithoWords.wafer(look), look.wafer()));
         if (look.exposing()) {
@@ -293,9 +299,12 @@ public final class LithographyApp implements IDesktopApp {
             rows.add(new String[] {GameText.resolve(supply.name()), GameText.resolve(LithographyTexts.MILLIBUCKETS
                 .with(String.format(Locale.ROOT, "%,d", supply.amount())))});
         }
-        rows.add(new String[] {GameText.resolve(LithoWords.process(look)), GameText.resolve(look.lithoMb() > 0
-            ? LithographyTexts.HELD.with(look.lithoMb()) : LithographyTexts.NOT_RUNNING.text())});
-        rows.add(row(LithoWords.slot(look), look.slot()));
+        // A printer runs no process on its computer and has no tool slot: its tray is its row.
+        if (!look.printer()) {
+            rows.add(new String[] {GameText.resolve(LithoWords.process(look)), GameText.resolve(look.lithoMb() > 0
+                ? LithographyTexts.HELD.with(look.lithoMb()) : LithographyTexts.NOT_RUNNING.text())});
+            rows.add(row(LithoWords.slot(look), look.slot()));
+        }
         for (int i = 0; i < rows.size(); i++) {
             final int ry = gy + ROW_TOP + i * ROW_PITCH;
             Draw.text(g, font, Texts.clip(font, rows.get(i)[0], VALUE_X - LABEL_X - 2), gx + LABEL_X, ry,
@@ -393,6 +402,12 @@ public final class LithographyApp implements IDesktopApp {
         }
         final String kind = kinds.get(Math.min(tab, kinds.size() - 1));
         return state.look().picks().stream().filter(pick -> pick.kind().equals(kind)).toList();
+    }
+
+    /* The kind whose list is shown, or none before the computer has answered. */
+    private String shownKind() {
+        final List<String> kinds = kinds();
+        return kinds.isEmpty() ? "" : kinds.get(Math.min(tab, kinds.size() - 1));
     }
 
     /* The kinds the station writes masks of, in the order of the program's lists, as the picks come. */

@@ -4,16 +4,12 @@
     {
       "count": 1,
       "item": "jscore:pvc_sheet"
-    },
-    {
-      "count": 1,
-      "item": "jsc:ferrite"
     }
   ],
   "outputs": [
     {
-      "count": 1,
-      "id": "jsc:layout_memory"
+      "count": 2,
+      "id": "jsc:blank_film"
     }
   ]
 }

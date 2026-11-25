@@ -41,6 +41,13 @@ final class ChainPagesLook {
     static final TextKey IN_THE_MOULD_SLOT = TextKey.of("jsc.jei.mould_cutting.in_the_slot", "in the mould slot");
     static final TextKey ITS_MOULD_SLOT = TextKey.of("jsc.jei.mould_cutting.its_slot", "its mould slot");
     static final TextKey PICK_CUT = TextKey.of("jsc.jei.mould_cutting.pick", "pick %s, then Cut Mould");
+    static final TextKey FILM_PRINTING = TextKey.of("jsc.jei.film_printing", "Film Printing");
+    static final TextKey IN_THE_TRAY = TextKey.of("jsc.jei.film_printing.in_the_tray", "in the printer's tray");
+    static final TextKey USED_FOR_ITS_MASK = TextKey.of("jsc.jei.film_printing.used_for_its_mask",
+            "used up writing its mask");
+    static final TextKey ITS_TRAY = TextKey.of("jsc.jei.film_printing.its_tray", "Blank Film in its tray");
+    static final TextKey LINKED_PRINTER = TextKey.of("jsc.jei.film_printing.linked", "on, the printer linked to it");
+    static final TextKey PICK_PRINT = TextKey.of("jsc.jei.film_printing.pick", "pick %s, then Print Film");
     static final TextKey FASTER = TextKey.of("jsc.jei.mask_writing.faster", "%s on a %s computer or newer");
     /** A Mask Writing page's ink: what it says, what it says under that, and the line under the mask. */
     static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "jei/mask_writing",

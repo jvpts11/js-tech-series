@@ -31,6 +31,7 @@ final class PrinterTexts {
     static final TextKey PAUSED = TextKey.of("jsc.printer.status.paused", "paused");
     static final TextKey NO_PAPER = TextKey.of("jsc.printer.status.no_paper", "no paper");
     static final TextKey NO_MAP = TextKey.of("jsc.printer.status.no_map", "no empty map");
+    static final TextKey NO_FILM = TextKey.of("jsc.printer.status.no_film", "no Blank Film");
     static final TextKey OUTPUT_FULL = TextKey.of("jsc.printer.status.output_full", "take the sheets");
     static final TextKey EMPTY_QUEUE = TextKey.of("jsc.printer.empty_queue", "The queue is empty.");
     static final TextKey MORE = TextKey.of("jsc.printer.more", "and %s more");

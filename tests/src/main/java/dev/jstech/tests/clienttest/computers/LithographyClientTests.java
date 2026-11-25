@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.MouldedParts;
@@ -30,6 +31,7 @@ import dev.jstech.computers.client.os.LithographyApp;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.integration.jei.JscJeiPlugin;
+import dev.jstech.computers.lithography.FilmPrinting;
 import dev.jstech.computers.lithography.LithographyLook;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.core.gui.TextScreen;
@@ -221,6 +223,52 @@ public final class LithographyClientTests {
                 .then(SETTLE, () -> app(ctx).showKind(MouldCutting.Kind.SOCKETS))
                 .thenScreenshot(SETTLE * 2, "lithography-moulder-sockets-pt");
         language(ctx, ENGLISH);
+    }
+
+    /**
+     * The window on a computer with a printer linked to it: the printer with Blank Film in its tray, the Layouts and
+     * the Phototools lists, and Print Film printing the Vintage's phototool on a Blank Film.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void framesXp_lithographyWindowPrintsThePhototool(final ClientTestContext ctx) {
+        final BlockPos computer = CORNER.east(2);
+        final BlockPos monitor = computer.east();
+        final BlockPos printer = computer.south();
+        final Item phototool = ChainParts.PHOTOTOOLS.getFirst().get();
+        ctx.thenBuild(0, world -> {
+                    final PersonalComputerBlockEntity pc = EraNetwork.runningComputer(world, EraKit.LEGACY,
+                            computer);
+                    pc.console().install(Programs.LITHOGRAPHY.toString());
+                    world.placeMonitor(monitor, Direction.EAST, ComputingModule.LEGACY_MONITOR.get());
+                    world.setBlock(printer, ComputingModule.LEGACY_PRINTER.get());
+                })
+                .thenServer(SETTLE, level -> printerAt(ctx, level, printer).paper().setStackInSlot(0,
+                        new ItemStack(ChainChips.BLANK_FILM.get(), 4)))
+                .thenTeleport(SETTLE, monitor.east(2), Direction.WEST)
+                .thenRightClick(SETTLE, monitor)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .thenWaitUntil(() -> !ctx.screen(DesktopScreen.class).launcherLabels().isEmpty(), SCREEN_WAIT,
+                        "the desktop to list its programs")
+                .then(SETTLE, () -> DesktopScreen.requestOpen(PROGRAM))
+                .thenWaitUntil(() -> look(ctx) != null && look(ctx).printer() && look(ctx).blank(), SCREEN_WAIT,
+                        "the window to show the printer with Blank Film in its tray")
+                .then(SETTLE, () -> app(ctx).showKind(FilmPrinting.Kind.LAYOUTS))
+                .thenScreenshot(SETTLE * 2, "lithography-printer-layouts")
+                .then(SETTLE, () -> {
+                    app(ctx).showKind(FilmPrinting.Kind.PHOTOTOOLS);
+                    app(ctx).pickNamed("Vintage board phototool");
+                })
+                .thenScreenshot(SETTLE * 2, "lithography-printer-phototools")
+                .then(SETTLE, () -> app(ctx).writeMask())
+                .thenWaitUntilServer(level -> printerAt(ctx, level, printer).output().getStackInSlot(0).is(phototool),
+                        WRITE_WAIT, "the printer to print the Vintage's phototool",
+                        level -> "its output holds " + printerAt(ctx, level, printer).output().getStackInSlot(0))
+                .thenScreenshot(SETTLE * 2, "lithography-printer-printed");
+    }
+
+    private static PrinterBlockEntity printerAt(final ClientTestContext ctx, final ServerLevel level,
+                                                final BlockPos printer) {
+        return (PrinterBlockEntity) level.getBlockEntity(ctx.abs(printer));
     }
 
     /* Switches the game to {@code code} and waits for its resources to load again and the loading screen to go. */

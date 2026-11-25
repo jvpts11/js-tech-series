@@ -8,7 +8,7 @@ covers: [jsc:mask_blank]
 
 Uma Estação de Litografia expõe cada camada de um wafer por uma máscara, e uma máscara nunca se gasta: você grava uma máscara e ela serve a todo wafer do seu chip. Toda máscara é gravada numa Máscara Virgem, uma placa de máscara da Polidora Óptica com uma pepita de cromo depositada nela na Câmara de Deposição.
 
-A estação Vintage grava as suas máscaras por fotorredução: ponha nela uma máscara virgem e o Layout do chip, e ela dá a máscara, gastando o Layout.
+A estação Vintage grava as suas máscaras por fotorredução: ponha nela uma máscara virgem e o Layout do chip, e ela dá a máscara, gastando o Layout. Um Layout é o desenho do chip, impresso num Filme Virgem pela impressora de um computador.
 
 Da Legacy em diante, você grava a máscara pelo computador ligado à estação, com o Midsoft Lithography.
 

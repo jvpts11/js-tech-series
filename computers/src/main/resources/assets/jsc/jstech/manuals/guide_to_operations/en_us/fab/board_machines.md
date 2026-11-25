@@ -10,7 +10,7 @@ What goes round the chips is made here: you get the boards they sit on, the part
 
 The Injection Moulder moulds plastic in a steel mould: its Clamp closes the mould, its Injection Unit shoots the molten plastic in, and the part comes out onto the belt. The plastic and the mould go in on its right, the parts come out on its left, and the computer on the Peripheral Port behind its tower cuts its moulds from a Mould Blank.
 
-The Laminator presses paper or glass fibre with resin, clad in copper foil, and the Board Etcher etches the clad laminate into a board's traces with its ferric chloride. The Ceramic Kiln fires alumina packages, ceramic capacitors and ferrites, its door shut while it fires. The Coil Winder winds wire into coils, motors and magnetic heads.
+The Laminator presses paper or glass fibre with resin, clad in copper foil, and the Board Etcher etches the clad laminate into a board's traces with its ferric chloride, through its era's phototool, a film a computer's printer prints, which the job lends the etcher and never uses up. The Ceramic Kiln fires alumina packages, ceramic capacitors and ferrites, its door shut while it fires. The Coil Winder winds wire into coils, motors and magnetic heads.
 
 The Optical Polisher polishes quartz into mask plates, glass and calcium fluoride into lenses and polycarbonate into blank discs, and draws glass fibre and optical fibre from its tower. The Display Line makes the screens: tubes with their phosphor, flat screens with indium tin oxide, and LED panels, taking liquid crystal and mercury through its two liquid inlets.
 

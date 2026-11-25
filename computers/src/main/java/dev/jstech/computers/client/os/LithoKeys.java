@@ -163,8 +163,9 @@ public final class LithoKeys implements TtyEditor.IKeys {
             foot(screen, ink, look, rows);
             return screen;
         }
-        // A moulder names itself; a station by its era and its light.
-        final Text named = look.moulder() ? look.station() : LithoTuiTexts.STATION_LINE.with(look.station());
+        // A moulder or a printer names itself; a station by its era and its light.
+        final Text named = look.moulder() || look.printer() ? look.station()
+                : LithoTuiTexts.STATION_LINE.with(look.station());
         screen.put(LEFT, 1, resolve(look.stations() > 1 ? LithoTuiTexts.OF_STATIONS.with(named, look.shown() + 1,
                 look.stations()) : named), ink.dim());
         final int half = wide / 2;
@@ -191,6 +192,10 @@ public final class LithoKeys implements TtyEditor.IKeys {
         int row = FIRST_ROW;
         row = dots(screen, ink, row, resolve(LithographyTexts.ROW_STATUS), resolve(look.status()), valueAt, room);
         row = dots(screen, ink, row, resolve(LithoWords.wafer(look)), resolve(look.wafer()), valueAt, room);
+        // A printer has its tray, and no layer, process or tool slot.
+        if (look.printer()) {
+            return;
+        }
         if (look.exposing()) {
             dots(screen, ink, row, resolve(LithoWords.layer(look)), "", valueAt, room);
             bar(screen, ink, valueAt, row, LAYER_BAR, look.layerPermille() / PERMILLE);
@@ -216,8 +221,12 @@ public final class LithoKeys implements TtyEditor.IKeys {
     private void maskSide(final TextScreen screen, final Colours ink, final LithographyLook look, final int half,
                           final int wide, final int rows) {
         final int left = half + LEFT;
-        screen.put(left, HEAD_ROW, resolve(look.moulder() ? LithoTuiTexts.HEAD_MOULDS : LithoTuiTexts.HEAD_MASKS),
-                ink.bright());
+        final TextKey head = switch (look.machine()) {
+            case STATION -> LithoTuiTexts.HEAD_MASKS;
+            case MOULDER -> LithoTuiTexts.HEAD_MOULDS;
+            case PRINTER -> LithoTuiTexts.HEAD_FILMS;
+        };
+        screen.put(left, HEAD_ROW, resolve(head), ink.bright());
         screen.put(left, HEAD_ROW + 1, RULE.repeat(Math.max(0, wide - left - 1)), ink.dim());
         final List<String> kinds = kinds();
         kind = kinds.isEmpty() ? 0 : Math.min(kind, kinds.size() - 1);
@@ -275,8 +284,12 @@ public final class LithoKeys implements TtyEditor.IKeys {
         final LithographyLook.Pick pick = pick();
         final String hint;
         if (look.blank()) {
-            hint = pick == null ? "" : resolve((look.moulder() ? LithoTuiTexts.CUT_HINT : LithoTuiTexts.WRITE_HINT)
-                    .with(pick.name()));
+            final TextKey does = switch (look.machine()) {
+                case STATION -> LithoTuiTexts.WRITE_HINT;
+                case MOULDER -> LithoTuiTexts.CUT_HINT;
+                case PRINTER -> LithoTuiTexts.PRINT_HINT;
+            };
+            hint = pick == null ? "" : resolve(does.with(pick.name()));
         } else if (look.masked()) {
             hint = resolve(LithoWords.toolHint(look).with(look.slot()));
         } else {
@@ -289,9 +302,12 @@ public final class LithoKeys implements TtyEditor.IKeys {
     private static void foot(final TextScreen screen, final Colours ink, final LithographyLook look, final int rows) {
         final int row = rows - 1;
         screen.fill(0, row, screen.columns(), 1, ink.bright(), ink.bar());
-        final TextKey keys = look.moulder()
-                ? look.stations() > 1 ? LithoTuiTexts.KEYS_MOULDER_STATIONS : LithoTuiTexts.KEYS_MOULDER
-                : look.stations() > 1 ? LithoTuiTexts.KEYS_STATIONS : LithoTuiTexts.KEYS;
+        final boolean many = look.stations() > 1;
+        final TextKey keys = switch (look.machine()) {
+            case STATION -> many ? LithoTuiTexts.KEYS_STATIONS : LithoTuiTexts.KEYS;
+            case MOULDER -> many ? LithoTuiTexts.KEYS_MOULDER_STATIONS : LithoTuiTexts.KEYS_MOULDER;
+            case PRINTER -> many ? LithoTuiTexts.KEYS_PRINTER_STATIONS : LithoTuiTexts.KEYS_PRINTER;
+        };
         screen.put(1, row, resolve(keys), ink.bright(), ink.bar());
         final String version = resolve(LithoTuiTexts.VERSION);
         screen.put(screen.columns() - version.length() - 2, row, version, ink.dim(), ink.bar());

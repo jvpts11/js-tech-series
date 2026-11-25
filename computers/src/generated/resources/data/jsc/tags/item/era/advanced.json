@@ -226,6 +226,7 @@
     "jsc:finished_wafer_advanced",
     "jsc:self_lit_panel",
     "jsc:etched_board_advanced",
+    "jsc:phototool_advanced",
     "jsc:populated_board_advanced",
     "jsc:processor_chip_advanced_kaby_lake",
     "jsc:mask_processor_advanced_kaby_lake",

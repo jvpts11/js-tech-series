@@ -10,6 +10,7 @@ package dev.jstech.computers.client.chain;
 import com.google.common.base.Suppliers;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.PrinterBlock;
 import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.machine.AirSeparationBlockEntity;
 import dev.jstech.computers.chain.machine.ChainFaces;
@@ -18,6 +19,7 @@ import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.chain.machine.MaskWriting;
 import dev.jstech.computers.chain.machine.MouldCutting;
 import dev.jstech.computers.chain.machine.WaferPages;
+import dev.jstech.computers.lithography.FilmPrinting;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
@@ -90,6 +92,7 @@ public final class ChainRecipePages {
     private static final int FOOT_Y = 121;
     /* A slot is laid by its frame, a pixel round the item it shows. */
     private static final int INSET = 1;
+    private static final int TICKS_A_SECOND = 20;
     /* Each step's pages, worked out the first time a viewer asks, with each page's number among its step's. */
     private static final Supplier<Map<WaferPages.Step, List<WaferPages.Page>>> WAFER =
             Suppliers.memoize(ChainRecipePages::waferPages);
@@ -159,6 +162,19 @@ public final class ChainRecipePages {
                 .layout(ChainRecipePages::mould)
                 .ids(offer -> ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mould_cutting/"
                         + BuiltInRegistries.ITEM.getKey(offer.mould()).getPath()))
+                .declare();
+        RecipeViews.of(JsComputers.MODID, "film_printing", ChainPagesLook.FILM_PRINTING, FilmPrinting.Offer.class)
+                .recipes(level -> FilmPrinting.offers())
+                .workstations(() -> List.of(new ItemStack(ComputingModule.VINTAGE_PRINTER.get()),
+                        new ItemStack(ComputingModule.LEGACY_PRINTER.get()),
+                        new ItemStack(ComputingModule.TRANSITION_PRINTER.get()),
+                        new ItemStack(ComputingModule.PRINTER.get()),
+                        new ItemStack(ComputingModule.ADVANCED_PRINTER.get())))
+                .icon(() -> new ItemStack(ChainChips.BLANK_FILM.get()))
+                .size(MASK_WIDTH, MASK_HEIGHT)
+                .layout(ChainRecipePages::film)
+                .ids(offer -> ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "film_printing/"
+                        + BuiltInRegistries.ITEM.getKey(offer.film()).getPath()))
                 .declare();
         RecipeViews.of(JsComputers.MODID, "air_separation", ChainPagesLook.AIR_SEPARATION, ChainMachine.class)
                 .recipes(level -> List.of(ChainMachines.byId(AIR_SEPARATION_UNIT).orElseThrow()))
@@ -236,9 +252,10 @@ public final class ChainRecipePages {
      */
     private static void mask(final MaskPage page, final RecipeView.Builder view) {
         final int seconds = page.station().seconds();
-        toolPage(view, ChainChips.MASK_BLANK.get(), page.offer().mask(), seconds, ChainPagesLook.IN_THE_SLOT,
-                page.station(), ChainPagesLook.ITS_SLOT, page.offer().computer(),
-                ChainPagesLook.PICK.with(page.offer().name()));
+        toolPage(view, new Tool(ChainChips.MASK_BLANK.get(), page.offer().mask(), seconds, ChainPagesLook.IN_THE_SLOT,
+                ChainPagesLook.NEVER_USED_UP, new ItemStack(ChainMachines.terminalOf(page.station()).get()),
+                ChainPagesLook.ITS_SLOT, page.offer().computer(), ChainPagesLook.LINKED,
+                ChainPagesLook.PICK.with(page.offer().name())));
         page.offer().faster().ifPresent(newer -> view.line(ROW_X, FOOT_Y, MASK_WIDTH - ROW_X,
                 GameText.component(ChainPagesLook.FASTER.with(ChainPagesLook.SECONDS.with(Math.max(1, seconds / 2)),
                         newer.name())), ChainPagesLook.PALETTE.get().dim()));
@@ -251,22 +268,36 @@ public final class ChainRecipePages {
      */
     private static void mould(final MouldCutting.Offer offer, final RecipeView.Builder view) {
         final ChainMachine moulder = ChainMachines.byId(INJECTION_MOULDER).orElseThrow();
-        toolPage(view, ChainChips.MOULD_BLANK.get(), offer.mould(), moulder.seconds(),
-                ChainPagesLook.IN_THE_MOULD_SLOT, moulder, ChainPagesLook.ITS_MOULD_SLOT, HardwareEra.VINTAGE,
-                ChainPagesLook.PICK_CUT.with(offer.name()));
+        toolPage(view, new Tool(ChainChips.MOULD_BLANK.get(), offer.mould(), moulder.seconds(),
+                ChainPagesLook.IN_THE_MOULD_SLOT, ChainPagesLook.NEVER_USED_UP, new ItemStack(terminal(
+                INJECTION_MOULDER)), ChainPagesLook.ITS_MOULD_SLOT, HardwareEra.VINTAGE, ChainPagesLook.LINKED,
+                ChainPagesLook.PICK_CUT.with(offer.name())));
     }
 
     /*
-     * A tool a computer makes on a blank in a machine's slot: the blank becoming the tool in {@code seconds}, never used
-     * up, the tool's name over what it is for, as its item names it; under the rule, the machine, the computer it must
-     * be linked to and the program, each an icon with its two lines.
+     * A film a computer's printer prints, laid out as a mask is: the Blank Film in the printer's tray becoming the film
+     * in a page's time of the Vintage's printer, a phototool never used up and a Layout used up writing its mask; under
+     * the rule, the printer, any computer it is linked to and the program that prints it.
      */
-    private static void toolPage(final RecipeView.Builder view, final Item blank, final Item tool, final int seconds,
-                                 final TextKey inTheSlot, final ChainMachine machine, final TextKey itsSlot,
-                                 final Era computer, final Text pick) {
+    private static void film(final FilmPrinting.Offer offer, final RecipeView.Builder view) {
+        final PrinterBlock printer = ComputingModule.VINTAGE_PRINTER.get();
+        toolPage(view, new Tool(ChainChips.BLANK_FILM.get(), offer.film(), Math.max(1, printer.model().pageTicks()
+                / TICKS_A_SECOND), ChainPagesLook.IN_THE_TRAY, offer.kind() == FilmPrinting.Kind.PHOTOTOOLS
+                ? ChainPagesLook.NEVER_USED_UP : ChainPagesLook.USED_FOR_ITS_MASK, new ItemStack(printer),
+                ChainPagesLook.ITS_TRAY, HardwareEra.VINTAGE, ChainPagesLook.LINKED_PRINTER,
+                ChainPagesLook.PICK_PRINT.with(offer.name())));
+    }
+
+    /*
+     * A tool a computer makes on a blank in a machine's slot: the blank becoming the tool in its seconds, what becomes
+     * of it, the tool's name over what it is for, as its item names it; under the rule, the machine, the computer it
+     * must be linked to and the program, each an icon with its two lines.
+     */
+    private static void toolPage(final RecipeView.Builder view, final Tool made) {
         final ChainPagesLook.Colours ink = ChainPagesLook.PALETTE.get();
-        final Component time = GameText.component(ChainPagesLook.SECONDS.with(seconds));
-        view.input(BLANK_X - INSET, SLOT_Y - INSET, List.of(new ItemStack(blank)))
+        final Component time = GameText.component(ChainPagesLook.SECONDS.with(made.seconds()));
+        final Item tool = made.tool();
+        view.input(BLANK_X - INSET, SLOT_Y - INSET, List.of(new ItemStack(made.blank())))
                 .output(MASK_X - INSET, SLOT_Y - INSET, new ItemStack(tool))
                 .arrow(ARROW_X, ARROW_Y, 0)
                 .line(ARROW_X + (ARROW_WIDTH - Minecraft.getInstance().font.width(time)) / 2, 0, ARROW_WIDTH * 2,
@@ -279,15 +310,14 @@ public final class ChainRecipePages {
             view.line(NAME_X, SLOT_Y + 1 + LINE, MASK_WIDTH - NAME_X, Component.literal(name.substring(open + 2,
                     name.length() - 1)), ink.dim());
         }
-        view.line(IN_SLOT_X, UNDER_Y, NEVER_X - IN_SLOT_X, GameText.component(inTheSlot), ink.dim())
-                .line(NEVER_X, UNDER_Y, MASK_WIDTH - NEVER_X, GameText.component(ChainPagesLook.NEVER_USED_UP),
-                        ink.dim())
+        view.line(IN_SLOT_X, UNDER_Y, NEVER_X - IN_SLOT_X, GameText.component(made.inTheSlot()), ink.dim())
+                .line(NEVER_X, UNDER_Y, MASK_WIDTH - NEVER_X, GameText.component(made.kept()), ink.dim())
                 .rule(ROW_X - 1, RULE_Y, MASK_WIDTH - 2 * ROW_X + 1, 1, ink.rule());
-        final ItemStack terminal = new ItemStack(ChainMachines.terminalOf(machine).get());
-        row(view, ink, 0, terminal, GameText.of(terminal.getHoverName()), itsSlot.text());
-        row(view, ink, 1, new ItemStack(computerOf(computer)), ChainPagesLook.COMPUTER.with(computer.name()),
-                ChainPagesLook.LINKED.text());
-        row(view, ink, 2, InstallerStacks.forProgram(Programs.LITHOGRAPHY), ChainPagesLook.PROGRAM.text(), pick);
+        row(view, ink, 0, made.station(), GameText.of(made.station().getHoverName()), made.itsSlot().text());
+        row(view, ink, 1, new ItemStack(computerOf(made.computer())), ChainPagesLook.COMPUTER.with(
+                made.computer().name()), made.linked().text());
+        row(view, ink, 2, InstallerStacks.forProgram(Programs.LITHOGRAPHY), ChainPagesLook.PROGRAM.text(),
+                made.pick());
     }
 
     /* A row under the rule: what the writing needs, an icon not used up, and its two lines beside it. */
@@ -409,5 +439,14 @@ public final class ChainRecipePages {
      * @param offer   the mask, as the lithography program offers it
      */
     public record MaskPage(ChainMachine station, MaskWriting.Offer offer) {
+    }
+
+    /*
+     * What a tool's page shows: the blank, the tool and how many seconds the one takes to become the other, where the
+     * blank stands and what becomes of the tool, the machine that makes it and where in it, the oldest computer that
+     * has it made, how that computer is linked to the machine, and what the program is asked.
+     */
+    private record Tool(Item blank, Item tool, int seconds, TextKey inTheSlot, TextKey kept, ItemStack station,
+                        TextKey itsSlot, Era computer, TextKey linked, Text pick) {
     }
 }

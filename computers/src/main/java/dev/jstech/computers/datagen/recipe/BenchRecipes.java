@@ -37,16 +37,12 @@ import net.minecraft.world.item.crafting.Ingredient;
 
 /**
  * What is assembled by hand at an era's Electronics Workbench, and by that era's Electronics Assembly Line
- * (computers/docs/design/recipes.md): the components made at a bench, the Vintage's Layouts and the masks its
- * Lithography Station writes from them, the board's components by their rule, and each era's populated board.
+ * (computers/docs/design/recipes.md): the components made at a bench, the Blank Film the computer's printer prints the
+ * Vintage's Layouts on and the masks its Lithography Station writes from them, the board's components by their rule,
+ * and each era's populated board.
  */
 final class BenchRecipes {
 
-    /* A die takes a sheet of PVC for every million transistors, and of two alike the bigger one a sheet more. */
-    private static final Map<String, Integer> PROCESSOR_SHEETS = Map.of("m68k", 1, "i486", 2, "p5", 3, "k5", 4,
-            "p6", 6, "k6", 9);
-    private static final Map<String, Integer> GRAPHICS_SHEETS = Map.of("vga", 1, "rendition", 2, "threedfx", 3,
-            "nv3", 4, "rage", 5, "fahrenheit", 7);
     /* The controller chips a populated board of each era carries, from the Vintage. */
     private static final int[] CONTROLLERS = {4, 2, 2, 1, 1};
     private static final int PASSIVES = 4;
@@ -86,27 +82,15 @@ final class BenchRecipes {
                 of(Element.COPPER, Forms.ROD), 1, pvc(), 1);
         // A block of steel the Injection Moulder's computer cuts a mould into.
         made(output, HardwareEra.VINTAGE, "mould_blank", ChainChips.MOULD_BLANK.get(), 1, BenchItems.steelPlate(), 4);
+        // Clear film the computer's printer prints a Layout or a phototool on, two of a PVC sheet.
+        made(output, HardwareEra.VINTAGE, "blank_film", ChainChips.BLANK_FILM.get(), 2, pvc(), 1);
     }
 
     /*
-     * The Vintage's Layouts, the chip's drawing cut in PVC film: the memory's on the ferrite of the core memory it
-     * replaced, the controller's on the magnetic head of the drive it runs, a processor's on its clock's oscillator and
-     * a graphics die's on the tube's deflection coil, the sheets by the die's size. The Vintage station writes each
-     * die's mask from its Layout and a mask blank, the Layout used up.
+     * The masks the Vintage station writes, each die's from its Layout and a mask blank, the Layout used up. A Layout,
+     * the chip's drawing, is printed on Blank Film by the computer's printer (FilmPrinting), not made at a bench.
      */
     private static void layouts(final RecipeOutput output) {
-        made(output, HardwareEra.VINTAGE, "layout_memory", ChainChips.MEMORY_LAYOUT.get(), 1, pvc(), 1,
-                ChainParts.FERRITE.get(), 1);
-        made(output, HardwareEra.VINTAGE, "layout_controller", ChainChips.CONTROLLER_LAYOUT.get(), 1, pvc(), 1,
-                ChainParts.MAGNETIC_HEAD.get(), 1);
-        for (final ChainChips.Layout layout : ChainChips.PROCESSOR_LAYOUTS) {
-            made(output, HardwareEra.VINTAGE, layout.item().getId().getPath(), layout.item().get(), 1, pvc(),
-                    PROCESSOR_SHEETS.get(layout.path()), ChainParts.OSCILLATOR.get(), 1);
-        }
-        for (final ChainChips.Layout layout : ChainChips.GRAPHICS_LAYOUTS) {
-            made(output, HardwareEra.VINTAGE, layout.item().getId().getPath(), layout.item().get(), 1, pvc(),
-                    GRAPHICS_SHEETS.get(layout.path()), ChainParts.COPPER_COIL.get(), 1);
-        }
         final ProcessingKind station = kind("lithography_vintage", HardwareEra.VINTAGE);
         mask(output, station, ChainChips.MEMORY_LAYOUT.get(), ChainParts.MEMORY_MASKS.getFirst().get());
         mask(output, station, ChainChips.CONTROLLER_LAYOUT.get(), ChainParts.CONTROLLER_MASKS.getFirst().get());

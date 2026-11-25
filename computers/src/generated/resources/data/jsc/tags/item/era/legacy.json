@@ -143,6 +143,7 @@
     "jsc:lcd_screen",
     "jsc:fr4_laminate",
     "jsc:etched_board_legacy",
+    "jsc:phototool_legacy",
     "jsc:populated_board_legacy",
     "jsc:glass_fibre",
     "jsc:gold_bonding_wire",

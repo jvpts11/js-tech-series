@@ -4438,6 +4438,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   AT, Baby-AT, ATX, EATX, EEB, MTX and MNG, and each of Quince's logic boards on its own; a jig is cut on a Mould
   Blank at the Injection Moulder, listed in the Lithography program's Jigs list, and is never used up: a job lends it
   to the Electronics Assembly Line and takes it back, and at the bench it stays in its tray.
+- (Computers) Films: a computer's printer prints the Vintage's Layouts and each era's phototool on Blank Film, two
+  of a PVC sheet at the Vintage's bench. The Lithography program shows a printer linked to its computer as it shows a
+  station, with its tray and a Layouts and a Phototools list, and Print Film (W on MC-DOS) prints the film picked; the
+  printer waits for Blank Film in its tray as it waits for paper. A Layout is no longer made at a bench, and each
+  era's etched board is etched through its phototool, which a job lends the Board Etcher and never uses up. The
+  recipe viewer has a Film Printing page for each film, and the Guide to Operations a page on printing one.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

@@ -10,7 +10,7 @@ O que fica em volta dos chips é feito aqui: você obtém as placas em que eles 
 
 A Injetora molda plástico num molde de aço: a sua Unidade de Fechamento fecha o molde, a sua Unidade de Injeção injeta o plástico derretido, e a peça sai na esteira. O plástico e o molde entram pela direita, as peças saem pela esquerda, e o computador na Porta Periférica atrás da torre corta os seus moldes de um Bloco de Molde Virgem.
 
-A Prensa de Laminados prensa papel ou fibra de vidro com resina, revestidos de folha de cobre, e o Gravador de Placas grava o laminado revestido nas trilhas de uma placa com o seu cloreto férrico. O Forno Cerâmico queima encapsulamentos de alumina, capacitores cerâmicos e ferrites, com a porta fechada enquanto queima. A Bobinadeira enrola fio em bobinas, motores e cabeças magnéticas.
+A Prensa de Laminados prensa papel ou fibra de vidro com resina, revestidos de folha de cobre, e o Gravador de Placas grava o laminado revestido nas trilhas de uma placa com o seu cloreto férrico, através da fotoferramenta da sua era, um filme que a impressora de um computador imprime, que o trabalho empresta ao gravador e nunca gasta. O Forno Cerâmico queima encapsulamentos de alumina, capacitores cerâmicos e ferrites, com a porta fechada enquanto queima. A Bobinadeira enrola fio em bobinas, motores e cabeças magnéticas.
 
 A Polidora Óptica pole quartzo em placas de máscara, vidro e fluoreto de cálcio em lentes e policarbonato em discos virgens, e estira fibra de vidro e fibra óptica na sua torre. A Linha de Telas faz as telas: tubos com o seu fósforo, telas planas com óxido de índio e estanho, e painéis de LED, recebendo cristal líquido e mercúrio pelas suas duas entradas de líquido.
 

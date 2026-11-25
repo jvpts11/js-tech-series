@@ -32,6 +32,13 @@ final class LithoTuiTexts {
             "Arrows move   Tab kind   W cut mould   F3 exit");
     static final TextKey KEYS_MOULDER_STATIONS = TextKey.of("jsc.cli.litho.keys_moulder_stations",
             "Arrows move   Tab kind   W cut mould   S station   F3 exit");
+    static final TextKey HEAD_FILMS = TextKey.of("jsc.cli.litho.head.films", "FILMS");
+    static final TextKey PRINT_HINT = TextKey.of("jsc.cli.litho.print_hint",
+            "W prints the %s on the Blank Film in the tray");
+    static final TextKey KEYS_PRINTER = TextKey.of("jsc.cli.litho.keys_printer",
+            "Arrows move   Tab kind   W print film   F3 exit");
+    static final TextKey KEYS_PRINTER_STATIONS = TextKey.of("jsc.cli.litho.keys_printer_stations",
+            "Arrows move   Tab kind   W print film   S station   F3 exit");
     static final TextKey VERSION = TextKey.of("jsc.cli.litho.version", "1.0");
     static final TextKey PERCENT = TextKey.of("jsc.cli.litho.percent", "%s%%");
 

@@ -38,6 +38,7 @@ public final class Printers {
     private static final TextKey PAUSED = TextKey.of("jsc.printer.state.paused", "Paused");
     private static final TextKey NO_PAPER = TextKey.of("jsc.printer.state.no_paper", "Out of paper");
     private static final TextKey NO_MAP = TextKey.of("jsc.printer.state.no_map", "Needs an empty map");
+    private static final TextKey NO_FILM = TextKey.of("jsc.printer.state.no_film", "Needs Blank Film");
     private static final TextKey NOT_A_MAP = TextKey.of("jsc.printer.not_a_map",
             "%s is not a map a scanner of this world read.");
     private static final TextKey OUTPUT_FULL = TextKey.of("jsc.printer.state.output_full",
@@ -175,6 +176,7 @@ public final class Printers {
             case PAUSED -> PAUSED.text();
             case NO_PAPER -> NO_PAPER.text();
             case NO_MAP -> NO_MAP.text();
+            case NO_FILM -> NO_FILM.text();
             case OUTPUT_FULL -> OUTPUT_FULL.text();
             case NONE -> printer.printing() ? PRINTING.text() : READY.text();
         };

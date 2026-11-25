@@ -172,6 +172,7 @@
     "jsc:laser_diode_gallium_nitride",
     "jsc:led_screen",
     "jsc:etched_board_standard",
+    "jsc:phototool_standard",
     "jsc:populated_board_standard",
     "jsc:optical_fibre",
     "jsc:processor_chip_standard_sandy_bridge",

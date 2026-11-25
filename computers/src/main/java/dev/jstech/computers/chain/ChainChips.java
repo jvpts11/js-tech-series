@@ -37,6 +37,9 @@ public final class ChainChips {
     /* A block of steel the computer at an Injection Moulder cuts a mould, an extrusion die or a board jig into. */
     public static final ItemEntry<Item> MOULD_BLANK = part("mould_blank", HardwareEra.VINTAGE).named("Mould Blank")
             .register();
+    /* A clear sheet of film the computer's printer prints a Vintage Layout or a board's phototool on. */
+    public static final ItemEntry<Item> BLANK_FILM = part("blank_film", HardwareEra.VINTAGE).named("Blank Film")
+            .register();
 
     /** The processor dies, each era's from the oldest, in the order the catalogue first builds on them. */
     public static final List<Die> PROCESSORS = List.of(

@@ -99,6 +99,9 @@ public final class ChainParts {
             .named("FR-4 Laminate").register();
     public static final List<ItemEntry<Item>> ETCHED_BOARDS = perEra(era ->
             part("etched_board_" + era.path(), era).named("Etched Board (" + englishName(era) + ")").register());
+    /* Each era's phototool: the film with its etched board's layers, printed on Blank Film and lent to the etcher. */
+    public static final List<ItemEntry<Item>> PHOTOTOOLS = perEra(era ->
+            part("phototool_" + era.path(), era).named("Phototool (" + englishName(era) + ")").register());
     /* An etched board with its era's controller chips, its oscillator and its passives: every board's first step. */
     public static final List<ItemEntry<Item>> POPULATED_BOARDS = perEra(era ->
             part("populated_board_" + era.path(), era).named("Populated Board (" + englishName(era) + ")")

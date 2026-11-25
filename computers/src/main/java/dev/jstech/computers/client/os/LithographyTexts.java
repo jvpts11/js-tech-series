@@ -57,6 +57,16 @@ final class LithographyTexts {
             "%s in the slot: the moulder moulds in it");
     static final TextKey MOULD_EMPTY_HINT = TextKey.of("jsc.lithography.hint.mould_empty",
             "Put a Mould Blank in the moulder's mould slot to cut a mould on it");
+    static final TextKey DEVICE_PORT = TextKey.of("jsc.lithography.device_port", "device port");
+    static final TextKey ROW_TRAY = TextKey.of("jsc.lithography.row.tray", "Tray");
+    static final TextKey PRINT_FILM = TextKey.of("jsc.lithography.print_film", "Print Film");
+    static final TextKey PHOTOTOOL_NEVER_USED_UP = TextKey.of("jsc.lithography.phototool_never_used_up",
+            "A phototool is never used up");
+    static final TextKey LAYOUT_USED_UP = TextKey.of("jsc.lithography.layout_used_up",
+            "A Layout is used up writing its mask");
+    static final TextKey PRINTING_THE = TextKey.of("jsc.lithography.printing_the", "Printing the %s");
+    static final TextKey FILM_BLANK_HINT = TextKey.of("jsc.lithography.hint.film_blank",
+            "Blank Film is in the tray: Print Film prints the %s on it");
     static final TextKey NO_STATION = TextKey.of("jsc.lithography.no_station",
             "No Lithography Station is linked to this computer");
     static final TextKey NO_STATION_HINT = TextKey.of("jsc.lithography.no_station_hint",

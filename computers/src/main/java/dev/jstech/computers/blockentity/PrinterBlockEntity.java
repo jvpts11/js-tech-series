@@ -13,6 +13,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.PrinterBlock;
+import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.printer.PrintedDocuments;
@@ -37,7 +38,10 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -58,9 +62,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible {
 
-    /* The tray takes plain paper, a sheet a page, or empty maps, a map for each copy of a scanned map. */
+    /*
+     * The tray takes plain paper, a sheet a page, empty maps, a map for each copy of a scanned map, or Blank Film, a
+     * film for each Layout or phototool the lithography program prints.
+     */
     private final FieldItemHandler paper = fields().items("Paper", 1).save().toClient().dropsWhenBroken()
-            .accepts((index, stack) -> stack.is(Items.PAPER) || stack.is(Items.MAP));
+            .accepts((index, stack) -> stack.is(Items.PAPER) || stack.is(Items.MAP)
+                    || stack.is(ChainChips.BLANK_FILM.get()));
     /* The output only gives: the printer puts its sheets there, a player takes them. */
     private final FieldItemHandler output = fields().items("Output", OUTPUT_SLOTS).save().toClient()
             .dropsWhenBroken().slotLimit(1).accepts((index, stack) -> false);
@@ -111,7 +119,16 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
      */
     @Nullable
     public PrintJob submit(final PrintedDocument document, final int copies, final String user, final long time) {
-        return submit(document, copies, user, time, PrintJob.NO_MAP);
+        return submit(document, copies, user, time, PrintJob.NO_MAP, PrintJob.NO_FILM);
+    }
+
+    /**
+     * Puts the film {@code film}, a Vintage Layout or a board's phototool, in the queue, printed on a Blank Film from
+     * the tray; the job, or null when the queue is full. {@code document} names it in the queue.
+     */
+    @Nullable
+    public PrintJob submitFilm(final PrintedDocument document, final Item film, final String user, final long time) {
+        return submit(document, 1, user, time, PrintJob.NO_MAP, BuiltInRegistries.ITEM.getKey(film));
     }
 
     /**
@@ -121,7 +138,7 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
     @Nullable
     public PrintJob submitMap(final PrintedDocument document, final int map, final int copies, final String user,
                               final long time) {
-        return submit(document, copies, user, time, Math.max(0, map));
+        return submit(document, copies, user, time, Math.max(0, map), PrintJob.NO_FILM);
     }
 
     /** The jobs waiting, the one printing first. */
@@ -184,6 +201,11 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
     /** How many sheets of the current job are out. */
     public int sheetsDone() {
         return sheetsDone.get();
+    }
+
+    /** How far into the page coming out it is, in ticks of the model's {@link PrinterModel#pageTicks()}. */
+    public int pageTicksDone() {
+        return pageTicks.get();
     }
 
     /** How many sheets of paper are in the tray. */
@@ -284,12 +306,12 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
     /* A job in the queue; the map it copies, or {@link PrintJob#NO_MAP} for a document on paper. */
     @Nullable
     private PrintJob submit(final PrintedDocument document, final int copies, final String user, final long time,
-                            final int map) {
+                            final int map, final ResourceLocation film) {
         if (queue.get().size() >= QUEUE_MAX) {
             return null;
         }
         final PrintJob job = new PrintJob(nextId.get(), document.printedBy(model()), Math.max(1, Math.min(99, copies)),
-                user, time, map);
+                user, time, map, film);
         nextId.set(nextId.get() + 1);
         final List<PrintJob> now = new ArrayList<>(queue.get());
         now.add(job);
@@ -298,9 +320,9 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
     }
 
     /*
-     * A page at a time: with a job, paper in the tray (an empty map, for a map's copy) and, before a copy starts, a
-     * free place in the output, the printer counts the page's ticks, takes a sheet when the page is out, and hands each
-     * copy over when its last page is.
+     * A page at a time: with a job, paper in the tray (an empty map, for a map's copy; a Blank Film, for a film) and,
+     * before a copy starts, a free place in the output, the printer counts the page's ticks, takes a sheet when the
+     * page is out, and hands each copy over when its last page is.
      */
     private void tickPrint() {
         final List<PrintJob> now = queue.get();
@@ -312,8 +334,10 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
         final PrintJob job = now.getFirst();
         final int sheets = job.document().sheets();
         final ItemStack tray = paper.getStackInSlot(0);
-        if (job.copiesMap() ? !tray.is(Items.MAP) : !tray.is(Items.PAPER)) {
-            stall(job.copiesMap() ? Wait.NO_MAP : Wait.NO_PAPER);
+        final Wait lacking = job.printsFilm() ? Wait.NO_FILM : job.copiesMap() ? Wait.NO_MAP : Wait.NO_PAPER;
+        final Item takes = job.printsFilm() ? ChainChips.BLANK_FILM.get() : job.copiesMap() ? Items.MAP : Items.PAPER;
+        if (!tray.is(takes)) {
+            stall(lacking);
             return;
         }
         if (sheetsDone.get() % sheets == 0 && pageTicks.get() == 0 && freeOutput() < 0) {
@@ -359,6 +383,10 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
             output.setStackInSlot(slot, map);
             return;
         }
+        if (job.printsFilm()) {
+            output.setStackInSlot(slot, new ItemStack(BuiltInRegistries.ITEM.get(job.film())));
+            return;
+        }
         final ItemStack sheet = new ItemStack(ComputingModule.PRINTED_PAPER.get());
         sheet.set(ComputingComponents.PRINTED_DOCUMENT.get(), job.document());
         output.setStackInSlot(slot, sheet);
@@ -390,7 +418,8 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
         PAUSED(1),
         NO_PAPER(2),
         OUTPUT_FULL(3),
-        NO_MAP(4);
+        NO_MAP(4),
+        NO_FILM(5);
 
         private final int id;
 
@@ -417,23 +446,33 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
      * @param user      who sent it
      * @param submitted the world's time when it was sent
      * @param map       the map it copies onto empty maps, or {@link #NO_MAP} for a document on paper
+     * @param film      the film it prints on a Blank Film, by its item, or {@link #NO_FILM} for one on paper
      */
-    public record PrintJob(int id, PrintedDocument document, int copies, String user, long submitted, int map) {
+    public record PrintJob(int id, PrintedDocument document, int copies, String user, long submitted, int map,
+                           ResourceLocation film) {
 
         /** What a job on paper copies: no map. */
         public static final int NO_MAP = -1;
+        /** What a job on paper or onto maps prints: no film. */
+        public static final ResourceLocation NO_FILM = ResourceLocation.withDefaultNamespace("air");
         public static final Codec<PrintJob> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("id").forGetter(PrintJob::id),
                 PrintedDocuments.CODEC.fieldOf("document").forGetter(PrintJob::document),
                 Codec.INT.optionalFieldOf("copies", 1).forGetter(PrintJob::copies),
                 Codec.STRING.optionalFieldOf("user", "").forGetter(PrintJob::user),
                 Codec.LONG.optionalFieldOf("submitted", 0L).forGetter(PrintJob::submitted),
-                Codec.INT.optionalFieldOf("map", NO_MAP).forGetter(PrintJob::map)
+                Codec.INT.optionalFieldOf("map", NO_MAP).forGetter(PrintJob::map),
+                ResourceLocation.CODEC.optionalFieldOf("film", NO_FILM).forGetter(PrintJob::film)
         ).apply(i, PrintJob::new));
 
         /** Whether it copies a map rather than printing on paper. */
         public boolean copiesMap() {
             return map != NO_MAP;
+        }
+
+        /** Whether it prints a film on a Blank Film rather than on paper. */
+        public boolean printsFilm() {
+            return !NO_FILM.equals(film);
         }
     }
 

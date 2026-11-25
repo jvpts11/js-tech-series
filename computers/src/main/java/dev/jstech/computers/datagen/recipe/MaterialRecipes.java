@@ -443,13 +443,15 @@ final class MaterialRecipes {
                 of(Element.COPPER, Forms.FOIL)), List.of(2, 1, 1), ChainParts.FR2_LAMINATE.get(), 1);
         made(output, laminator, "fr4_laminate", List.of(ChainParts.GLASS_FIBRE.get(), of(SeriesCompounds.EPOXY_RESIN,
                 Forms.PLATE), of(Element.COPPER, Forms.FOIL)), List.of(2, 1, 1), ChainParts.FR4_LAMINATE.get(), 1);
-        // A board gained layers with the eras: one laminate in the Vintage and the Legacy, then two, three, four.
+        // A board gained layers with the eras: one laminate in the Vintage and the Legacy, then two, three, four. Each
+        // era's layers are etched through its phototool, which the job lends the etcher and never uses up.
         final int[] laminates = {1, 1, 2, 3, 4};
         for (int i = 0; i < ChainParts.ERAS.size(); i++) {
             final ChainRecipeItems.Saved etched = recipe(kind("board_etcher"), "etched_board_"
                     + ChainParts.ERAS.get(i).path());
             etched.builder().input(i == 0 ? ChainParts.FR2_LAMINATE.get() : ChainParts.FR4_LAMINATE.get(),
                     laminates[i]).fluidInput(liquid(SeriesChemicals.FERRIC_CHLORIDE), 250)
+                    .catalyst(Ingredient.of(ChainParts.PHOTOTOOLS.get(i).get()), 1)
                     .output(ChainParts.ETCHED_BOARDS.get(i).get(), 1);
             etched.save(output);
         }
