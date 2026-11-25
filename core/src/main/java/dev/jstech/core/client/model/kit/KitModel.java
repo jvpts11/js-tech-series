@@ -44,8 +44,11 @@ public record KitModel(ResourceLocation id, ModelDefinition definition, ModelDat
                        Map<String, KitModel> variants, ResourceLocation file, AABB bounds, @Nullable KitModel far) {
 
     private static final float PIXEL = 1.0F / 16.0F;
-    /* The squared stretch below which a part's place holds it as a point. */
-    private static final float COLLAPSED = 1.0E-12F;
+    /*
+     * The squared stretch below which a part's place holds it as a point: a hundred-thousandth a side, over the
+     * millionth a model reader rests a part sized to nothing at so its loop can size it.
+     */
+    private static final float COLLAPSED = 1.0E-10F;
 
     public KitModel {
         Objects.requireNonNull(id, "id");

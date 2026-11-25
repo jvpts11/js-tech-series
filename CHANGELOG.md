@@ -4870,6 +4870,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   by its rest size times the loop's, so a part hidden at rest stayed hidden, and a chain machine's parts that come
   and go and are not there as its loop starts (a heater's glow, the pins pushing a part off) never appeared; they
   now come and go as the machines' approved mocks draw them.
+- (Core) A model's parts sized to nothing at rest no longer count in the room it fills: since they rest a millionth
+  of their size, the chain machines' icons had shrunk to a dot in their slots.
 - (Computers) The Injection Moulder shows a fan frame or a bezel it moulds, and that part's mould on its mould halves,
   as it shows a component's body: it showed neither, its belt and mould empty while it worked.
 - (Computers) Autocrafting: a machine job that gives up or is cancelled takes back to the network what it fed the

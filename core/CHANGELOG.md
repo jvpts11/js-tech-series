@@ -2520,6 +2520,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   by its rest size times the loop's, so a part hidden at rest stayed hidden, and a chain machine's parts that come
   and go and are not there as its loop starts (a heater's glow, the pins pushing a part off) never appeared; they
   now come and go as the machines' approved mocks draw them.
+- A model's parts sized to nothing at rest no longer count in the room it fills: since they rest a millionth
+  of their size, the chain machines' icons had shrunk to a dot in their slots.
 - A machine whose upgrades have it draw more energy a tick takes that much more in through its port: four
   motors, which make it draw four times as much, or lines that work several recipes at once, no longer leave it
   working at half speed once its few seconds' store runs dry.
