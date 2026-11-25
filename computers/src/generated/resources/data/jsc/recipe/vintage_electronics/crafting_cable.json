@@ -7,11 +7,11 @@
     },
     {
       "count": 1,
-      "item": "jscore:pvc_sheet"
+      "item": "minecraft:redstone"
     },
     {
       "count": 1,
-      "item": "minecraft:redstone"
+      "item": "jsc:jacket_crafting_cable"
     }
   ],
   "outputs": [

@@ -36,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
  * lithography program picks on the Mould Blank in the moulder, in one step's time, while the moulder moulds nothing;
  * the mould then stands where its blank was, the tool a job lends the moulder to mould its body in. Any running
  * computer cuts any mould, a list a family: the sockets' bodies, the slots' and the connectors', the fans' frames,
- * and the bezels with the covers.
+ * the bezels with the covers, and the cables' jackets, whose tool is the extrusion die each cable's jacket is pushed
+ * through.
  */
 @TextHolder
 public final class MouldCutting {
@@ -68,6 +69,8 @@ public final class MouldCutting {
     private static final TextKey BEZEL = TextKey.of("jsc.lithography.mould.bezel", "%s bezel");
     private static final TextKey PUMP_COVER = TextKey.of("jsc.lithography.mould.pump_cover", "%s pump cover");
     private static final TextKey ARM_COVER = TextKey.of("jsc.lithography.mould.arm_cover", "%s arm cover");
+    private static final TextKey CABLES = TextKey.of("jsc.lithography.kind.cables", "Cables");
+    private static final TextKey JACKET = TextKey.of("jsc.lithography.mould.jacket", "%s jacket");
     /** The process the computer runs the cutting as, and what it holds while it does. */
     static final String PROCESS = "mould";
     private static final int MEMORY_MB = 8;
@@ -91,17 +94,20 @@ public final class MouldCutting {
                     (component.kind() == BoardParts.Kind.SOCKET ? SOCKET_BODY : BODY).with(part)));
         }
         for (final MouldedParts.Part part : MouldedParts.all()) {
-            out.add(new Offer(Kind.of(part.family()), part.mould().get(), name(part)));
+            out.add(new Offer(Kind.of(part.family()), part.tool().get(), name(part)));
         }
         return List.copyOf(out);
     }
 
-    /** The mould {@code part} is moulded in, a body's, a fan frame's or a bezel's; none for an item no mould makes. */
+    /**
+     * The tool {@code part} is shaped in: the mould of a body, a fan frame or a bezel, or the die a cable's jacket is
+     * extruded through; none for an item the moulder does not make.
+     */
     public static Optional<Item> toolOf(final Item part) {
         return Optional.ofNullable(Tools.BY_PART.get(part));
     }
 
-    /** Whether {@code item} is a mould the moulder cuts. */
+    /** Whether {@code item} is a mould or a die the moulder cuts. */
     public static boolean isTool(final Item item) {
         return Tools.ALL.contains(item);
     }
@@ -140,6 +146,7 @@ public final class MouldCutting {
             case CONNECTORS -> CONNECTORS.text();
             case FANS -> FANS.text();
             case BEZELS -> BEZELS.text();
+            case CABLES -> CABLES.text();
         };
     }
 
@@ -192,6 +199,7 @@ public final class MouldCutting {
             case BEZEL -> BEZEL.with(product);
             case PUMP_COVER -> PUMP_COVER.with(product);
             case ARM_COVER -> ARM_COVER.with(product);
+            case JACKET -> JACKET.with(product);
         };
     }
 
@@ -201,7 +209,8 @@ public final class MouldCutting {
         SLOTS,
         CONNECTORS,
         FANS,
-        BEZELS;
+        BEZELS,
+        CABLES;
 
         /** Its name as the program's picks carry it. */
         public String serializedName() {
@@ -232,6 +241,7 @@ public final class MouldCutting {
             return switch (family) {
                 case FANS -> FANS;
                 case BEZELS -> BEZELS;
+                case CABLES -> CABLES;
             };
         }
     }
@@ -250,7 +260,7 @@ public final class MouldCutting {
     record Cutting(int slot, Item mould, Processing work) {
     }
 
-    /* Each moulded part's mould, by the part, gathered the first time one is asked for, after the items registered. */
+    /* Each moulded part's tool, by the part, gathered the first time one is asked for, after the items registered. */
     private static final class Tools {
 
         static final Map<Item, Item> BY_PART = byPart();
@@ -262,7 +272,7 @@ public final class MouldCutting {
                 out.put(component.body().get(), component.mould().get());
             }
             for (final MouldedParts.Part part : MouldedParts.all()) {
-                out.put(part.item().get(), part.mould().get());
+                out.put(part.item().get(), part.tool().get());
             }
             return Map.copyOf(out);
         }

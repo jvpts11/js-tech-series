@@ -7,11 +7,11 @@
     },
     {
       "count": 1,
-      "item": "jscore:pvc_sheet"
+      "item": "jscore:copper_foil"
     },
     {
       "count": 1,
-      "item": "jscore:copper_foil"
+      "item": "jsc:jacket_leased_line"
     }
   ],
   "outputs": [

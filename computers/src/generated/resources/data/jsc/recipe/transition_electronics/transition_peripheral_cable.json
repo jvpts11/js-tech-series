@@ -7,11 +7,11 @@
     },
     {
       "count": 1,
-      "item": "jscore:pvc_sheet"
+      "item": "minecraft:gold_nugget"
     },
     {
       "count": 1,
-      "item": "minecraft:gold_nugget"
+      "item": "jsc:jacket_transition_peripheral_cable"
     }
   ],
   "outputs": [

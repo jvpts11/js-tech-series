@@ -6,7 +6,7 @@ covers: [jsc:mould_blank]
 ---
 # Cutting a mould
 
-Each socket, slot and connector of a board is made of its own plastic body, each case fan is built on its own frame and rotor, and each case, Personal Computer, monitor, mainframe and server rack takes its own bezel, as each liquid cooler takes its pump cover; the Injection Moulder moulds every one in its own steel mould. A mould is never used up: a job lends it to the moulder and takes it back, and one mould serves every body of its part. Every mould is cut on a Mould Blank, four steel plates made into one at the Electronics Workbench.
+Each socket, slot and connector of a board is made of its own plastic body, each case fan is built on its own frame and rotor, and each case, Personal Computer, monitor, mainframe and server rack takes its own bezel, as each liquid cooler takes its pump cover; the Injection Moulder moulds every one in its own steel mould. It also sheathes each cable in its own jacket, extruded through the cable's own die, a steel tool cut the same way. A mould is never used up: a job lends it to the moulder and takes it back, and one mould serves every body of its part. Every mould is cut on a Mould Blank, four steel plates made into one at the Electronics Workbench.
 
 You cut the mould from the computer linked to the moulder, with Midsoft Lithography, the program that writes a Lithography Station's masks.
 
@@ -21,7 +21,7 @@ The moulder cuts the mould in one step's time, 10 seconds, and the computer hold
 A moulder cuts no mould while it moulds a part: cut the mould when the part leaves.
 
 ```table
-{"caption": "The program's lists", "heads": ["List", "Its moulds"], "rows": [[{"words": "Sockets"}, {"words": "the body of each processor socket"}], [{"words": "Slots"}, {"words": "the body of each memory slot and expansion slot"}], [{"words": "Connectors"}, {"words": "the body of each storage and power connector"}], [{"words": "Fans"}, {"words": "each era's fan frame"}], [{"words": "Bezels"}, {"words": "the bezel of each case, Personal Computer, monitor, mainframe and server rack and of the floppy drive, the liquid coolers' pump covers and the robot arm's cover"}]]}
+{"caption": "The program's lists", "heads": ["List", "Its moulds"], "rows": [[{"words": "Sockets"}, {"words": "the body of each processor socket"}], [{"words": "Slots"}, {"words": "the body of each memory slot and expansion slot"}], [{"words": "Connectors"}, {"words": "the body of each storage and power connector"}], [{"words": "Fans"}, {"words": "each era's fan frame"}], [{"words": "Bezels"}, {"words": "the bezel of each case, Personal Computer, monitor, mainframe and server rack and of the floppy drive, the liquid coolers' pump covers and the robot arm's cover"}], [{"words": "Cables"}, {"words": "the extrusion die of each cable's jacket"}]]}
 ```
 
 ```command

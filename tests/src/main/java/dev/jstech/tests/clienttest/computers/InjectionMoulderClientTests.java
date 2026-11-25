@@ -119,7 +119,7 @@ public final class InjectionMoulderClientTests {
                         "the Injection Moulder to form", level -> "it stands unformed")
                 .thenServer(SETTLE, level -> {
                     final ChainMachineBlockEntity moulder = moulder(ctx, level, terminal);
-                    moulder.getInventory().insertItem(0, new ItemStack(bezel.mould().get()), false);
+                    moulder.getInventory().insertItem(0, new ItemStack(bezel.tool().get()), false);
                     moulder.getInventory().insertItem(1, new ItemStack(MaterialUses.item(SeriesCompounds.PVC,
                             Forms.SHEET).get(), PLASTIC), false);
                 })
@@ -131,7 +131,7 @@ public final class InjectionMoulderClientTests {
                 .then(0, () -> {
                     final ChainMachineBlockEntity shown = (ChainMachineBlockEntity) ctx.mc().level
                             .getBlockEntity(ctx.abs(terminal));
-                    ctx.assertTrue(ChainReflect.held(shown, ChainReflect.MOULD).is(bezel.mould().get()),
+                    ctx.assertTrue(ChainReflect.held(shown, ChainReflect.MOULD).is(bezel.tool().get()),
                             "its mould halves show the bezel's mould: " + ChainReflect.held(shown, ChainReflect.MOULD));
                 })
                 .thenTeleport(SETTLE, IN_FRONT, Direction.SOUTH)

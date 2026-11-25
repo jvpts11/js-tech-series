@@ -1,0 +1,21 @@
+{
+  "type": "jsc:injection_moulder",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:extrusion_die_legacy_peripheral_cable"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:jacket_legacy_peripheral_cable"
+    }
+  ]
+}

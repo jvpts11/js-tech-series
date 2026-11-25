@@ -23,6 +23,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.plastic;
 import static dev.jstech.computers.datagen.recipe.BenchItems.pvc;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
+import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.mouldedFor;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.nugget;
 
 import dev.jstech.computers.chain.ChainParts;
@@ -61,7 +62,8 @@ final class NetworkRecipes {
      * Each cable is what the real one has: the coaxials' braid (copper foil), more copper in the later twisted pairs
      * (their twists are tighter, more copper to the metre), the shielded ones' foil, the long lines' armour (a steel
      * rod), the direct-attach copper of the OSFP and the gold of its plugs. The crafting cable carries redstone, the
-     * line's signal; a peripheral cable takes its era's plugs, tin in the Vintage and gold after.
+     * line's signal; a peripheral cable takes its era's plugs, tin in the Vintage and gold after. Each is sheathed in
+     * its own jacket, extruded of one sheet of PVC or, for the thick ones, two.
      */
     private static void cables(final RecipeOutput output) {
         final Era v = HardwareEra.VINTAGE;
@@ -73,35 +75,38 @@ final class NetworkRecipes {
         final Item foil = copperFoil();
         final Item fibre = ChainParts.OPTICAL_FIBRE.get();
         final Item gold = Items.GOLD_NUGGET;
-        cable(output, v, "thin_coax_cable", wire, 2, foil, 2, pvc(), 1);
-        cable(output, v, "thick_coax_cable", wire, 4, foil, 4, pvc(), 2);
-        cable(output, v, "telephone_line", wire, 2, pvc(), 1);
-        cable(output, v, "crafting_cable", wire, 3, pvc(), 1, Items.REDSTONE, 1);
-        cable(output, v, "vintage_peripheral_cable", wire, 4, pvc(), 1, nugget(Element.TIN), 1);
-        cable(output, l, "ethernet_cable", wire, 4, pvc(), 1);
-        cable(output, l, "hbw_cable", wire, 10, foil, 2, pvc(), 2);
-        cable(output, l, "leased_line", wire, 4, pvc(), 1, foil, 1);
-        cable(output, l, "legacy_peripheral_cable", wire, 4, pvc(), 1, gold, 1);
-        cable(output, t, "cat5e_cable", wire, 5, pvc(), 1);
-        cable(output, t, "cx4_cable", wire, 8, foil, 2, pvc(), 1);
-        cable(output, t, "t3_line", wire, 1, foil, 2, pvc(), 1);
-        cable(output, t, "infiniband_cable", wire, 8, foil, 4, pvc(), 1);
-        cable(output, t, "transition_peripheral_cable", wire, 5, pvc(), 1, gold, 1);
-        cable(output, s, "gigabit_cable", wire, 6, pvc(), 1);
-        cable(output, s, "fibre_cable", fibre, 4, pvc(), 1);
-        cable(output, s, "vldc_cable", fibre, 4, pvc(), 1, steelRod(), 1);
-        cable(output, s, "hpc_cable", fibre, 8, pvc(), 1);
-        cable(output, s, "peripheral_cable", wire, 6, pvc(), 1, gold, 1, foil, 1);
-        cable(output, a, "cat6a_cable", wire, 6, pvc(), 1, foil, 1);
-        cable(output, a, "om5_cable", fibre, 6, pvc(), 1);
-        cable(output, a, "dark_fibre_cable", fibre, 8, pvc(), 1, steelRod(), 1);
-        cable(output, a, "osfp_cable", wire, 16, foil, 8, pvc(), 2, gold, 1);
-        cable(output, a, "advanced_peripheral_cable", wire, 6, pvc(), 1, gold, 2);
+        cable(output, v, "thin_coax_cable", 1, wire, 2, foil, 2);
+        cable(output, v, "thick_coax_cable", 2, wire, 4, foil, 4);
+        cable(output, v, "telephone_line", 1, wire, 2);
+        cable(output, v, "crafting_cable", 1, wire, 3, Items.REDSTONE, 1);
+        cable(output, v, "vintage_peripheral_cable", 1, wire, 4, nugget(Element.TIN), 1);
+        cable(output, l, "ethernet_cable", 1, wire, 4);
+        cable(output, l, "hbw_cable", 2, wire, 10, foil, 2);
+        cable(output, l, "leased_line", 1, wire, 4, foil, 1);
+        cable(output, l, "legacy_peripheral_cable", 1, wire, 4, gold, 1);
+        cable(output, t, "cat5e_cable", 1, wire, 5);
+        cable(output, t, "cx4_cable", 1, wire, 8, foil, 2);
+        cable(output, t, "t3_line", 1, wire, 1, foil, 2);
+        cable(output, t, "infiniband_cable", 1, wire, 8, foil, 4);
+        cable(output, t, "transition_peripheral_cable", 1, wire, 5, gold, 1);
+        cable(output, s, "gigabit_cable", 1, wire, 6);
+        cable(output, s, "fibre_cable", 1, fibre, 4);
+        cable(output, s, "vldc_cable", 1, fibre, 4, steelRod(), 1);
+        cable(output, s, "hpc_cable", 1, fibre, 8);
+        cable(output, s, "peripheral_cable", 1, wire, 6, gold, 1, foil, 1);
+        cable(output, a, "cat6a_cable", 1, wire, 6, foil, 1);
+        cable(output, a, "om5_cable", 1, fibre, 6);
+        cable(output, a, "dark_fibre_cable", 1, fibre, 8, steelRod(), 1);
+        cable(output, a, "osfp_cable", 2, wire, 16, foil, 8, gold, 1);
+        cable(output, a, "advanced_peripheral_cable", 1, wire, 6, gold, 2);
     }
 
-    private static void cable(final RecipeOutput output, final Era era, final String id,
+    /* The cable {@code id}, eight to a recipe, in its jacket, extruded of {@code sheets} of PVC. */
+    private static void cable(final RecipeOutput output, final Era era, final String id, final int sheets,
                               final Object... ingredients) {
-        made(output, era, id, item(id), CABLES, ingredients);
+        final Item cable = item(id);
+        made(output, era, id, cable, CABLES, join(ingredients,
+                new Object[] {mouldedFor(output, cable, pvc(), sheets), 1}));
     }
 
     /*

@@ -107,7 +107,7 @@ public final class MouldingGameTests {
         final BlockPos terminal = formed(helper, machine("injection_moulder"));
         final MouldedParts.Part frame = MouldedParts.fanFrame(HardwareEra.TRANSITION);
         helper.runAfterDelay(SETTLE, () -> {
-            moulder(helper, terminal).getInventory().insertItem(0, new ItemStack(frame.mould().get()), false);
+            moulder(helper, terminal).getInventory().insertItem(0, new ItemStack(frame.tool().get()), false);
             moulder(helper, terminal).getInventory().insertItem(1, new ItemStack(MaterialUses.item(
                     SeriesCompounds.POLYCARBONATE, Forms.SHEET).get(), SHEETS), false);
         });
@@ -115,7 +115,7 @@ public final class MouldingGameTests {
             final MoulderBlockEntity moulder = moulder(helper, terminal);
             helper.assertTrue(moulder.getInventory().getStackInSlot(moulder.layout().firstOutput())
                     .is(frame.item().get()), "the Transition fan frame is moulded from its two sheets");
-            helper.assertTrue(moulder.getInventory().getStackInSlot(0).is(frame.mould().get()),
+            helper.assertTrue(moulder.getInventory().getStackInSlot(0).is(frame.tool().get()),
                     "its mould stays, never used up");
             final List<ProcessingRecipe> fans = recipesMaking(helper, CoolingItems.TRANSITION_CASE_FAN.get());
             helper.assertTrue(fans.size() == 1 && fans.getFirst().inputs().stream().anyMatch(input ->
@@ -128,7 +128,7 @@ public final class MouldingGameTests {
         final BlockPos terminal = formed(helper, machine("injection_moulder"));
         final MouldedParts.Part bezel = MouldedParts.of("legacy_mainframe");
         helper.runAfterDelay(SETTLE, () -> {
-            moulder(helper, terminal).getInventory().insertItem(0, new ItemStack(bezel.mould().get()), false);
+            moulder(helper, terminal).getInventory().insertItem(0, new ItemStack(bezel.tool().get()), false);
             moulder(helper, terminal).getInventory().insertItem(1, new ItemStack(MaterialUses.item(
                     SeriesCompounds.PVC, Forms.SHEET).get(), SHEETS), false);
         });
@@ -136,8 +136,26 @@ public final class MouldingGameTests {
             final MoulderBlockEntity moulder = moulder(helper, terminal);
             helper.assertTrue(moulder.getInventory().getStackInSlot(moulder.layout().firstOutput())
                     .is(bezel.item().get()), "the Legacy Mainframe's bezel is moulded from its two PVC sheets");
-            helper.assertTrue(moulder.getInventory().getStackInSlot(0).is(bezel.mould().get()),
+            helper.assertTrue(moulder.getInventory().getStackInSlot(0).is(bezel.tool().get()),
                     "its mould stays, never used up");
+        });
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = STEP)
+    public static void jacket_isExtrudedThroughItsCablesDie(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("injection_moulder"));
+        final MouldedParts.Part jacket = MouldedParts.of("thick_coax_cable");
+        helper.runAfterDelay(SETTLE, () -> {
+            moulder(helper, terminal).getInventory().insertItem(0, new ItemStack(jacket.tool().get()), false);
+            moulder(helper, terminal).getInventory().insertItem(1, new ItemStack(MaterialUses.item(
+                    SeriesCompounds.PVC, Forms.SHEET).get(), SHEETS), false);
+        });
+        helper.succeedWhen(() -> {
+            final MoulderBlockEntity moulder = moulder(helper, terminal);
+            helper.assertTrue(moulder.getInventory().getStackInSlot(moulder.layout().firstOutput())
+                    .is(jacket.item().get()), "the Thick Coaxial Cable's jacket is extruded from its two PVC sheets");
+            helper.assertTrue(moulder.getInventory().getStackInSlot(0).is(jacket.tool().get()),
+                    "its extrusion die stays, never used up");
         });
     }
 

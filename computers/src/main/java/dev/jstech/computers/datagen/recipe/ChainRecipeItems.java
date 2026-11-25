@@ -104,12 +104,12 @@ final class ChainRecipeItems {
     }
 
     /**
-     * The part moulded for {@code product}, its bezel or its cover, with its Injection Moulder recipe saved:
-     * {@code sheets} of {@code plastic} in the part's own mould.
+     * The part moulded for {@code product}, its bezel, its cover or a cable's jacket, with its Injection Moulder recipe
+     * saved: {@code sheets} of {@code plastic} in the part's own mould or, for a jacket, through its own die.
      */
     static Item mouldedFor(final RecipeOutput output, final ItemLike product, final Item plastic, final int sheets) {
         final MouldedParts.Part part = MouldedParts.of(idOf(product).getPath());
-        moulded(output, part.item().get(), part.mould().get(), plastic, sheets, 1);
+        moulded(output, part.item().get(), part.tool().get(), plastic, sheets, 1);
         return part.item().get();
     }
 

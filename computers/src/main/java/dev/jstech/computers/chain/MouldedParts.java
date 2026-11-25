@@ -23,10 +23,11 @@ import net.minecraft.world.item.Item;
 
 /**
  * The plastic parts the Injection Moulder moulds besides the board components' bodies (computers/docs/design/
- * recipes.md): each era's fan frame, the frame and rotor its case fan is built on, and each case's, screen's and
- * machine's bezel, the moulded front it takes, with the liquid coolers' pump covers and the robot arm's cover. Each is
- * moulded in its own mould, cut on a Mould Blank at the moulder by the computer linked to it and lent to every job;
- * so no product's lot makes another, the products of a family differing by their own bezel.
+ * recipes.md): each era's fan frame, the frame and rotor its case fan is built on, each case's, screen's and
+ * machine's bezel, the moulded front it takes, with the liquid coolers' pump covers and the robot arm's cover, and
+ * each cable's jacket. Each is shaped in its own steel tool, a mould or, for a jacket, an extrusion die, cut on a Mould
+ * Blank at the moulder by the computer linked to it and lent to every job; so no product's lot makes another, the
+ * products of a family differing by their own part.
  */
 public final class MouldedParts {
 
@@ -96,6 +97,32 @@ public final class MouldedParts {
             pumpCover(HardwareEra.ADVANCED, "aqualoop_360_advanced").named("Pump Cover (MF AquaLoop 360, Advanced)"),
             bezel(HardwareEra.VINTAGE, "floppy_drive").named("Bezel (Floppy Drive)"),
             armCover(HardwareEra.VINTAGE, "prebuilder_robot_arm").named("Arm Cover (Robot Arm)"));
+    /** Each cable's jacket, extruded through the cable's own die, in the order of the eras. */
+    public static final List<Part> JACKETS = List.of(
+            jacket(HardwareEra.VINTAGE, "thin_coax_cable").named("Jacket (Thin Coaxial Cable)"),
+            jacket(HardwareEra.VINTAGE, "thick_coax_cable").named("Jacket (Thick Coaxial Cable)"),
+            jacket(HardwareEra.VINTAGE, "telephone_line").named("Jacket (Telephone Line)"),
+            jacket(HardwareEra.VINTAGE, "crafting_cable").named("Jacket (Crafting Cable)"),
+            jacket(HardwareEra.VINTAGE, "vintage_peripheral_cable").named("Jacket (Vintage Peripheral Cable)"),
+            jacket(HardwareEra.LEGACY, "ethernet_cable").named("Jacket (Ethernet Cable)"),
+            jacket(HardwareEra.LEGACY, "hbw_cable").named("Jacket (HBW Cable)"),
+            jacket(HardwareEra.LEGACY, "leased_line").named("Jacket (Leased Line)"),
+            jacket(HardwareEra.LEGACY, "legacy_peripheral_cable").named("Jacket (Legacy Peripheral Cable)"),
+            jacket(HardwareEra.TRANSITION, "cat5e_cable").named("Jacket (Cat 5e Cable)"),
+            jacket(HardwareEra.TRANSITION, "cx4_cable").named("Jacket (10GBASE-CX4 Cable)"),
+            jacket(HardwareEra.TRANSITION, "t3_line").named("Jacket (T3 Line)"),
+            jacket(HardwareEra.TRANSITION, "infiniband_cable").named("Jacket (InfiniBand Cable)"),
+            jacket(HardwareEra.TRANSITION, "transition_peripheral_cable").named("Jacket (Transition Peripheral Cable)"),
+            jacket(HardwareEra.STANDARD, "gigabit_cable").named("Jacket (Gigabit Ethernet Cable)"),
+            jacket(HardwareEra.STANDARD, "fibre_cable").named("Jacket (Fibre Optic Cable)"),
+            jacket(HardwareEra.STANDARD, "vldc_cable").named("Jacket (VLDC Cable)"),
+            jacket(HardwareEra.STANDARD, "hpc_cable").named("Jacket (High Compute Cable)"),
+            jacket(HardwareEra.STANDARD, "peripheral_cable").named("Jacket (Peripheral Cable)"),
+            jacket(HardwareEra.ADVANCED, "cat6a_cable").named("Jacket (Cat 6a Cable)"),
+            jacket(HardwareEra.ADVANCED, "om5_cable").named("Jacket (OM5 Fibre Cable)"),
+            jacket(HardwareEra.ADVANCED, "dark_fibre_cable").named("Jacket (Dark Fibre Cable)"),
+            jacket(HardwareEra.ADVANCED, "osfp_cable").named("Jacket (OSFP Cable)"),
+            jacket(HardwareEra.ADVANCED, "advanced_peripheral_cable").named("Jacket (Advanced Peripheral Cable)"));
 
     private MouldedParts() {
     }
@@ -107,7 +134,7 @@ public final class MouldedParts {
 
     /** Every part, family by family. */
     public static List<Part> all() {
-        return Stream.concat(FAN_FRAMES.stream(), BEZELS.stream()).toList();
+        return Stream.of(FAN_FRAMES, BEZELS, JACKETS).flatMap(List::stream).toList();
     }
 
     /** Era {@code era}'s fan frame. */
@@ -140,10 +167,15 @@ public final class MouldedParts {
         return new Declaration(Piece.ARM_COVER, era, product);
     }
 
-    /** What a part is, the list of the moulds the lithography program offers it in. */
+    private static Declaration jacket(final Era era, final String cable) {
+        return new Declaration(Piece.JACKET, era, cable);
+    }
+
+    /** What a part is, the list of the tools the lithography program offers it in. */
     public enum Family {
         FANS,
-        BEZELS
+        BEZELS,
+        CABLES
     }
 
     /** What a moulded part is to its product. */
@@ -151,7 +183,8 @@ public final class MouldedParts {
         FAN_FRAME(Family.FANS),
         BEZEL(Family.BEZELS),
         PUMP_COVER(Family.BEZELS),
-        ARM_COVER(Family.BEZELS);
+        ARM_COVER(Family.BEZELS),
+        JACKET(Family.CABLES);
 
         private final Family family;
 
@@ -159,7 +192,7 @@ public final class MouldedParts {
             this.family = family;
         }
 
-        /** The list its moulds are offered in. */
+        /** The list its tools are offered in. */
         public Family family() {
             return family;
         }
@@ -172,11 +205,11 @@ public final class MouldedParts {
      * @param era     the era it is first made in
      * @param product the item of the product it is moulded for, "vintage_server_case"
      * @param item    its item
-     * @param mould   the steel mould it is moulded in, cut from a Mould Blank
+     * @param tool    the steel tool it is shaped in, cut from a Mould Blank: its mould, or a jacket's extrusion die
      */
-    public record Part(Piece piece, Era era, String product, ItemEntry<Item> item, ItemEntry<Item> mould) {
+    public record Part(Piece piece, Era era, String product, ItemEntry<Item> item, ItemEntry<Item> tool) {
 
-        /** The list its mould is offered in. */
+        /** The list its tool is offered in. */
         public Family family() {
             return piece.family();
         }
@@ -189,16 +222,21 @@ public final class MouldedParts {
 
     /*
      * A part declared by its piece, era and product, named last, which registers it, its item the piece's and the
-     * product's, "bezel_server_case", and its mould, named after it: "Bezel (Server Case)" gives "Mould (Bezel, Server
-     * Case)". A fan frame's item is the era's, "fan_frame_vintage".
+     * product's, "bezel_server_case", and its tool, named after it: "Bezel (Server Case)" gives "Mould (Bezel, Server
+     * Case)", and a jacket's is its cable's extrusion die, "Extrusion Die (Cat 5e Cable)". A fan frame's item is the
+     * era's, "fan_frame_vintage".
      */
     private record Declaration(Piece piece, Era era, String product) {
 
         Part named(final String english) {
             final String id = piece == Piece.FAN_FRAME ? "fan_frame_" + era.path()
                     : piece.name().toLowerCase(Locale.ROOT) + "_" + product;
-            return new Part(piece, era, product, part(id, era).named(english).register(),
-                    part("mould_" + id, era).named("Mould (" + english.replaceFirst(" \\(", ", ")).register());
+            final ItemEntry<Item> item = part(id, era).named(english).register();
+            final ItemEntry<Item> tool = piece == Piece.JACKET
+                    ? part("extrusion_die_" + product, era).named("Extrusion Die" + english.substring(english
+                            .indexOf(" ("))).register()
+                    : part("mould_" + id, era).named("Mould (" + english.replaceFirst(" \\(", ", ")).register();
+            return new Part(piece, era, product, item, tool);
         }
     }
 }

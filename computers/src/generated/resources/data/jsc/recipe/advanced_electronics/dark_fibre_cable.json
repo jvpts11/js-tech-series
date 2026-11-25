@@ -7,11 +7,11 @@
     },
     {
       "count": 1,
-      "item": "jscore:pvc_sheet"
+      "item": "jscore:steel_rod"
     },
     {
       "count": 1,
-      "item": "jscore:steel_rod"
+      "item": "jsc:jacket_dark_fibre_cable"
     }
   ],
   "outputs": [

@@ -6,7 +6,7 @@ covers: [jsc:mould_blank]
 ---
 # Cortar um molde
 
-Cada soquete, slot e conector de uma placa é feito do seu próprio corpo de plástico, cada ventilador é montado na sua própria estrutura com rotor, e cada gabinete, computador pessoal, monitor, mainframe e rack de servidores leva a sua própria moldura, como cada cooler líquido leva a tampa da sua bomba; a Injetora molda cada uma no seu próprio molde de aço. Um molde nunca se gasta: um trabalho o empresta à injetora e o pega de volta, e um molde serve a todo corpo da sua peça. Todo molde é cortado num Bloco de Molde Virgem, quatro placas de aço feitas numa só na Bancada de Eletrônica.
+Cada soquete, slot e conector de uma placa é feito do seu próprio corpo de plástico, cada ventilador é montado na sua própria estrutura com rotor, e cada gabinete, computador pessoal, monitor, mainframe e rack de servidores leva a sua própria moldura, como cada cooler líquido leva a tampa da sua bomba; a Injetora molda cada uma no seu próprio molde de aço. Ela também reveste cada cabo com a sua própria capa, extrudada pela matriz do próprio cabo, uma ferramenta de aço cortada do mesmo jeito. Um molde nunca se gasta: um trabalho o empresta à injetora e o pega de volta, e um molde serve a todo corpo da sua peça. Todo molde é cortado num Bloco de Molde Virgem, quatro placas de aço feitas numa só na Bancada de Eletrônica.
 
 Você corta o molde pelo computador ligado à injetora, com o Midsoft Lithography, o programa que grava as máscaras de uma Estação de Litografia.
 
@@ -21,7 +21,7 @@ A injetora corta o molde no tempo de um passo, 10 segundos, e o computador reser
 Uma injetora não corta molde enquanto molda uma peça: corte o molde quando a peça sair.
 
 ```table
-{"caption": "As listas do programa", "heads": ["Lista", "Os seus moldes"], "rows": [[{"words": "Soquetes"}, {"words": "o corpo de cada soquete de processador"}], [{"words": "Slots"}, {"words": "o corpo de cada slot de memória e de expansão"}], [{"words": "Conectores"}, {"words": "o corpo de cada conector de armazenamento e de energia"}], [{"words": "Ventiladores"}, {"words": "a estrutura de ventilador de cada era"}], [{"words": "Molduras"}, {"words": "a moldura de cada gabinete, computador pessoal, monitor, mainframe e rack de servidores e da unidade de disquete, as tampas das bombas dos coolers líquidos e a capa do braço robótico"}]]}
+{"caption": "As listas do programa", "heads": ["Lista", "Os seus moldes"], "rows": [[{"words": "Soquetes"}, {"words": "o corpo de cada soquete de processador"}], [{"words": "Slots"}, {"words": "o corpo de cada slot de memória e de expansão"}], [{"words": "Conectores"}, {"words": "o corpo de cada conector de armazenamento e de energia"}], [{"words": "Ventiladores"}, {"words": "a estrutura de ventilador de cada era"}], [{"words": "Molduras"}, {"words": "a moldura de cada gabinete, computador pessoal, monitor, mainframe e rack de servidores e da unidade de disquete, as tampas das bombas dos coolers líquidos e a capa do braço robótico"}], [{"words": "Cabos"}, {"words": "a matriz de extrusão da capa de cada cabo"}]]}
 ```
 
 ```command

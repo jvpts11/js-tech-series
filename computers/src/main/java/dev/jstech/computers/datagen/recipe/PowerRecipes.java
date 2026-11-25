@@ -179,7 +179,7 @@ final class PowerRecipes {
     /* Era {@code era}'s fan frame, moulded at the Injection Moulder from {@code sheets} of {@code plastic}. */
     private static void fanFrame(final RecipeOutput output, final Era era, final Item plastic, final int sheets) {
         final MouldedParts.Part frame = MouldedParts.fanFrame(era);
-        moulded(output, frame.item().get(), frame.mould().get(), plastic, sheets, 1);
+        moulded(output, frame.item().get(), frame.tool().get(), plastic, sheets, 1);
     }
 
     private static Item frame(final Era era) {

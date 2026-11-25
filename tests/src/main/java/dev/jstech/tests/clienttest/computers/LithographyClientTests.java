@@ -205,7 +205,7 @@ public final class LithographyClientTests {
                 .thenScreenshot(SETTLE * 2, "lithography-moulder-fans")
                 .then(SETTLE, () -> app(ctx).writeMask())
                 .thenWaitUntilServer(level -> station(ctx, level, moulder).getInventory().getStackInSlot(0)
-                        .is(frame.mould().get()), WRITE_WAIT, "the moulder to cut the Transition fan frame's mould",
+                        .is(frame.tool().get()), WRITE_WAIT, "the moulder to cut the Transition fan frame's mould",
                         level -> "its slot holds " + station(ctx, level, moulder).getInventory().getStackInSlot(0))
                 .thenScreenshot(SETTLE * 2, "lithography-moulder-cut");
     }
