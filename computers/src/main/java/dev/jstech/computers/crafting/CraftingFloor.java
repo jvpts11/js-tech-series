@@ -8,6 +8,7 @@
 package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.RepeaterBlock;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.CraftingRouterPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
@@ -71,14 +72,7 @@ public final class CraftingFloor {
 
     /** The crafting network the crafting cable beside {@code device} (a Crafting Computer) belongs to. */
     public static CraftingFloor around(final ServerLevel level, final BlockPos device) {
-        final List<BlockPos> starts = new ArrayList<>();
-        for (final Direction d : Direction.values()) {
-            final BlockPos next = device.relative(d);
-            if (holdsCrafting(level, next)) {
-                starts.add(next);
-            }
-        }
-        return scan(level, starts);
+        return scan(level, cablesBeside(level, List.of(device)));
     }
 
     /** The crafting network the crafting cable at {@code cable} belongs to. */
@@ -203,8 +197,29 @@ public final class CraftingFloor {
         return faced == null ? null : machineOf(faced);
     }
 
-    /* Follows the crafting wire from {@code starts}, gathering the cable blocks, the computers and the parts. */
+    /*
+     * Follows the crafting wire from {@code starts}, gathering the cable blocks, the computers and the parts. Every
+     * computer on one cable has to see its interfaces in one order, or each drives a share of them counted from its
+     * own side of the cable and two computers disagree about whose each one is: so once the computers are known, the
+     * cable is followed again from all of them at once, in the order of their places, and its order is that one.
+     */
     private static CraftingFloor scan(final ServerLevel level, final List<BlockPos> starts) {
+        final Followed found = follow(level, starts);
+        final List<BlockPos> computers = new ArrayList<>(found.computers());
+        computers.sort(Comparator.comparingLong(BlockPos::asLong));
+        final Followed ordered = computers.isEmpty() ? found : follow(level, cablesBeside(level, computers));
+        final CraftingFloor floor = new CraftingFloor(level, ordered.cables(), computers);
+        floor.gatherParts();
+        floor.drive();
+        return floor;
+    }
+
+    /*
+     * The crafting cable from {@code starts} out, in the order it is reached, and the computers beside it. A Repeater
+     * the wire runs into carries it on to every cable whose crafting wire meets it on another face, as it carries the
+     * data lines: the cable goes on after it as one network.
+     */
+    private static Followed follow(final ServerLevel level, final List<BlockPos> starts) {
         final CableType crafting = ComputingModule.CRAFTING_CABLE.get();
         final Set<BlockPos> visited = new LinkedHashSet<>();
         final Deque<BlockPos> queue = new ArrayDeque<>();
@@ -218,11 +233,19 @@ public final class CraftingFloor {
             final BlockPos current = queue.poll();
             final CableBlockEntity cable = Cables.at(level, current);
             if (cable == null) {
+                for (final Direction d : Direction.values()) {
+                    final BlockPos next = current.relative(d);
+                    final CableBlockEntity beyond = Cables.at(level, next);
+                    if (beyond != null && beyond.crosses(crafting, d.getOpposite()) && visited.add(next)) {
+                        queue.add(next);
+                    }
+                }
                 continue;
             }
             for (final Direction d : Direction.values()) {
                 final BlockPos next = current.relative(d);
-                if (cable.crosses(crafting, d) && holdsCrafting(level, next) && visited.add(next)) {
+                if (cable.crosses(crafting, d) && (holdsCrafting(level, next) || repeats(level, next))
+                        && visited.add(next)) {
                     queue.add(next);
                 }
                 if (!cable.hasPart(d) && level.isLoaded(next)
@@ -231,12 +254,30 @@ public final class CraftingFloor {
                 }
             }
         }
-        final List<BlockPos> sortedComputers = new ArrayList<>(computers);
-        sortedComputers.sort(Comparator.comparingLong(BlockPos::asLong));
-        final CraftingFloor floor = new CraftingFloor(level, visited, sortedComputers);
-        floor.gatherParts();
-        floor.drive();
-        return floor;
+        return new Followed(visited, computers);
+    }
+
+    /* The crafting cable blocks beside each of {@code devices}, in their order and then the game's order of faces. */
+    private static List<BlockPos> cablesBeside(final ServerLevel level, final List<BlockPos> devices) {
+        final List<BlockPos> out = new ArrayList<>();
+        for (final BlockPos device : devices) {
+            for (final Direction d : Direction.values()) {
+                final BlockPos next = device.relative(d);
+                if (holdsCrafting(level, next) && !out.contains(next)) {
+                    out.add(next);
+                }
+            }
+        }
+        return out;
+    }
+
+    /* Whether the block at {@code pos} is a Repeater, which the crafting wire runs through when it takes it. */
+    private static boolean repeats(final ServerLevel level, final BlockPos pos) {
+        return level.isLoaded(pos) && level.getBlockState(pos).getBlock() instanceof RepeaterBlock;
+    }
+
+    /* The cable blocks followed, in the order reached (a Repeater passed through among them), and the computers. */
+    private record Followed(Set<BlockPos> cables, Set<BlockPos> computers) {
     }
 
     private void gatherParts() {

@@ -42,6 +42,7 @@ import dev.jstech.tests.testkit.computers.ChainMachineSite;
 import dev.jstech.tests.testkit.computers.CraftingRig;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.core.BlockPos;
@@ -277,6 +278,66 @@ public final class CraftingInterfaceGameTests {
                             ItemStack.EMPTY);
                     cc.forgetFloor();
                     helper.assertTrue(cc.floor().driven().isEmpty(), "with no card it drives none");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Two Crafting Computers at the two ends of one crafting cable agree about which interfaces each drives: both see
+     * the cable's interfaces in one order, followed from both computers at once, and share them out in it.
+     */
+    @GameTest(template = ARENA)
+    public static void floor_twoComputersOnOneCableAgreeOnWhichInterfacesEachDrives(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingComputerBlockEntity first = net.cc();
+        for (int z = 3; z <= 6; z++) {
+            CraftingRig.lay(world, new BlockPos(5, 2, z));
+            CraftingRig.addPart(world, new CraftingFloor.Site(new BlockPos(5, 2, z), Direction.EAST),
+                    new CraftingInterfacePart(HardwareEra.STANDARD));
+            CraftingRig.addPart(world, new CraftingFloor.Site(new BlockPos(5, 2, z), Direction.WEST),
+                    new CraftingInterfacePart(HardwareEra.STANDARD));
+        }
+        CraftingRig.lay(world, new BlockPos(5, 2, 7));
+        final CraftingComputerBlockEntity second = world.placeRunningCraftingComputer(new BlockPos(5, 2, 8));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    first.forgetFloor();
+                    second.forgetFloor();
+                    final CraftingFloor one = first.floor();
+                    final CraftingFloor other = second.floor();
+                    helper.assertTrue(one.computers().size() == 2 && one.computers().equals(other.computers()),
+                            "both computers are on the cable: " + one.computers() + " and " + other.computers());
+                    helper.assertTrue(one.interfaces().equals(other.interfaces()),
+                            "both see the interfaces in one order");
+                    for (final CraftingFloor.Site site : one.interfaces()) {
+                        helper.assertTrue(Objects.equals(one.drivenBy(site), other.drivenBy(site)),
+                                "they agree on who drives " + site);
+                    }
+                    final int budget = first.interfaceBudget() + second.interfaceBudget();
+                    helper.assertTrue(one.driven().size() == Math.min(8, budget),
+                            "between them they drive " + Math.min(8, budget) + ", not " + one.driven().size());
+                })
+                .thenSucceed();
+    }
+
+    /** A Repeater on a crafting cable carries it on: an interface beyond it is on the computer's network. */
+    @GameTest(template = ARENA)
+    public static void floor_aRepeaterCarriesTheCraftingCableOn(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingFloor.Site beyond = new CraftingFloor.Site(new BlockPos(5, 2, 5), Direction.EAST);
+        CraftingRig.lay(world, new BlockPos(5, 2, 3));
+        world.setBlock(new BlockPos(5, 2, 4), ComputingModule.ADVANCED_REPEATER.get());
+        CraftingRig.lay(world, beyond.cable());
+        CraftingRig.addPart(world, beyond, new CraftingInterfacePart(HardwareEra.STANDARD));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.cc().forgetFloor();
+                    final CraftingFloor floor = net.cc().floor();
+                    helper.assertTrue(floor.interfaces().contains(abs(world, beyond)),
+                            "the interface beyond the repeater is on the computer's network: " + floor.interfaces());
+                    helper.assertTrue(floor.drivenBy(abs(world, beyond)) != null, "and the computer drives it");
                 })
                 .thenSucceed();
     }
