@@ -53,7 +53,8 @@ public final class HeldIo implements ICraftIo {
             }
         }
         if (moved < amount) {
-            moved += NetworkStorage.of(level, network).select(key, amount - moved, into);
+            // From the network as a job of its own takes from it: what no running operation holds reserved.
+            moved += ICraftIo.network(level, network).select(key, amount - moved, into);
         }
         return moved;
     }

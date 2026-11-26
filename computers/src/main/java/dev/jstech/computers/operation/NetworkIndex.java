@@ -590,6 +590,16 @@ public final class NetworkIndex {
         return total;
     }
 
+    /** How much of {@code key} the operations running now hold reserved on {@code server}. */
+    public long reservedOn(final StorageKey key, final NodeUuid server) {
+        return locks.lockedOn(key, server);
+    }
+
+    /** How much of {@code key} the operations running now hold reserved, on every server. */
+    public long reserved(final StorageKey key) {
+        return locks.totalLocked(key);
+    }
+
     public List<ItemLocation> locations(final StorageKey key) {
         final List<ItemLocation> out = new ArrayList<>();
         for (final ItemLocation location : catalog.getOrDefault(key, List.of())) {

@@ -4510,6 +4510,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   name as it finds an item: `iql CRAFT 1000 jscore:mercury`, and a key's own id such as `gas|jscore:chlorine`; it
   answered that no item was called that. The Craft Planner no longer cuts the player off for a recipe that takes a
   liquid somewhere in its tree: the liquid's line of the tree could not be sent.
+- (Computers) An order or a job that takes from the network leaves what a craft holds reserved: a second order took
+  the solder a first one had reserved, and the first one's step stood waiting for what was gone. An order counting on
+  stock another craft reserved plans to make its own instead.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

@@ -415,7 +415,11 @@ final class MainframeCrafts {
         return planAsync(key, demand, partial, label, null, picked ? machine : null);
     }
 
-    /** Whether the network currently stocks every input a processing run producing {@code quantity} would use. */
+    /**
+     * Whether the network currently stocks every input a processing run producing {@code quantity} would use, free of
+     * what running operations hold reserved: what another craft reserved is that craft's, and an order counting on it
+     * plans to make its own instead.
+     */
     private boolean inputsInStock(final ProcessingPattern machine, final long quantity) {
         if (!(mainframe.getLevel() instanceof ServerLevel serverLevel) || mainframe.networkUuid() == null) {
             return true;
@@ -424,7 +428,7 @@ final class MainframeCrafts {
         final ProcessingPattern.ProcessingOutput primary = machine.primaryOutput();
         final long runs = Sizes.ceilDiv(quantity, primary == null ? 1 : Math.max(1, primary.amount()));
         for (final StorageKey key : machine.inputKeys()) {
-            if (storage.count(key) < machine.need(key, runs)) {
+            if (storage.count(key) - mainframe.networkIndex().reserved(key) < machine.need(key, runs)) {
                 return false;
             }
         }

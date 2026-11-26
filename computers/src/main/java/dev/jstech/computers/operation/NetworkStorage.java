@@ -269,6 +269,32 @@ public final class NetworkStorage {
         return total;
     }
 
+    /**
+     * Like {@link #select(StorageKey, long, IDataSink)}, but leaves on each server what the operations of
+     * {@code index} hold reserved there, read against what the server really holds: a job that is no step of the
+     * craft that reserved a thing never takes it from under that craft.
+     */
+    public long selectUnreserved(final StorageKey key, final long amount, final IDataSink destination,
+                                 final NetworkIndex index) {
+        long moved = 0L;
+        for (final Entry entry : entries) {
+            if (moved >= amount) {
+                break;
+            }
+            final long free = entry.store().count(key) - index.reservedOn(key, entry.node());
+            if (free <= 0L) {
+                continue;
+            }
+            final long wanted = Math.min(amount - moved, free);
+            final long got = pull(entry.store(), key, wanted, destination);
+            moved += got;
+            if (got < wanted) {
+                break; // the destination is full and no other node can help
+            }
+        }
+        return moved;
+    }
+
     public Map<NodeUuid, Long> selectBreakdown(final StorageKey key, final long amount,
                                                final IDataSink destination,
                                                @Nullable final Set<NodeUuid> allowed) {

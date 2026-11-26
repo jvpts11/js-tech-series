@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -27,12 +29,19 @@ public interface ICraftIo {
     /** Deposits {@code amount} of {@code key} into this sink; returns how much was stored. */
     long insert(StorageKey key, long amount);
 
-    /** The default I/O: the network's own storage, exactly as processing operations have always used it. */
+    /**
+     * The default I/O: the network's own storage. It takes only what no running operation holds reserved, so a job of
+     * its own, such as an order a machine runs straight from stock, never takes a craft's reserved ingredient and
+     * leaves that craft's step waiting for what is gone.
+     */
     static ICraftIo network(final ServerLevel level, final NetworkUuid network) {
         return new ICraftIo() {
             @Override
             public long select(final StorageKey key, final long amount, final IDataSink into) {
-                return NetworkStorage.of(level, network).select(key, amount, into);
+                final NetworkStorage storage = NetworkStorage.of(level, network);
+                final MainframeBlockEntity mainframe = NetworkLookup.resolveMainframe(level, network);
+                return mainframe == null ? storage.select(key, amount, into)
+                        : storage.selectUnreserved(key, amount, into, mainframe.networkIndex());
             }
 
             @Override

@@ -18,16 +18,19 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingLog;
+import dev.jstech.computers.crafting.ICraftIo;
 import dev.jstech.computers.crafting.InterfaceRoutes;
 import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.NetworkIndex;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.InterfaceView;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.crafting.CraftingViews;
 import dev.jstech.computers.operation.payload.crafting.InterfaceNames;
+import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableDrawing;
@@ -588,6 +591,37 @@ public final class CraftingInterfaceGameTests {
                     final TestMachineBlockEntity other = world.blockEntity(SECOND_KILN, TestMachineBlockEntity.class);
                     helper.assertTrue(kiln(rig).made() == 8 && other.made() == 8, "each kiln fired eight, not "
                             + kiln(rig).made() + " and " + other.made());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A job of its own never takes what a craft holds reserved: with the cobblestone a craft reserved the only stock, an
+     * order a machine runs straight from stock takes none of it, and the craft makes all it was asked for. Before, a
+     * second order took a craft's reserved solder and the craft's step stood waiting for what was gone.
+     */
+    @GameTest(template = ARENA)
+    public static void stock_aJobOfItsOwnLeavesWhatACraftReserved(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final StorageKey cobblestone = StorageKey.of(Items.COBBLESTONE);
+        final UUID craft = UUID.randomUUID();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.COBBLESTONE, 10);
+                    net.mainframe().reindexAsync(null);
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    final NetworkIndex index = net.mainframe().networkIndex();
+                    helper.assertTrue(index.lock(craft, cobblestone, 6).allocated() == 6, "a craft reserves six");
+                    final NetworkStorage storage = NetworkStorage.of(helper.getLevel(), net.mainframe().networkUuid());
+                    final IDataSink anywhere = (key, amount, simulate) -> amount;
+                    final long taken = ICraftIo.network(helper.getLevel(), net.mainframe().networkUuid())
+                            .select(cobblestone, 10, anywhere);
+                    helper.assertTrue(taken == 4, "a job of its own takes the four nobody reserved, not " + taken);
+                    helper.assertTrue(storage.count(cobblestone) == 6, "the six reserved stay, not "
+                            + storage.count(cobblestone));
+                    index.unlock(craft);
                 })
                 .thenSucceed();
     }
