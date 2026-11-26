@@ -18,6 +18,7 @@ import dev.jstech.core.matter.MatterStack;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The gas tank of an item that holds a gas, as the Core's capability of gases offers it: one tank of one material at a
@@ -69,7 +70,8 @@ public final class ItemGasTank implements IMatterHandler {
     public long insert(final MatterStack given, final boolean simulate) {
         final Optional<MatterStack> held = held();
         if (!given.material().takes(MatterState.GAS)
-                || held.isPresent() && held.get().material() != given.material()) {
+                || held.isPresent() && held.get().material() != given.material()
+                || held.isEmpty() && markOf(this.stack).filter(mark -> mark != given.material()).isPresent()) {
             return 0L;
         }
         final long now = held.map(MatterStack::amount).orElse(0L);
@@ -110,6 +112,35 @@ public final class ItemGasTank implements IMatterHandler {
     /** What the tank holds, or none. */
     public Optional<MatterStack> held() {
         return Optional.ofNullable(this.stack.get(ItemStates.GAS.get()));
+    }
+
+    /** The gas its item is marked for, or none ({@link #markOf}). */
+    @ApiStatus.Experimental
+    public Optional<Material> mark() {
+        return markOf(this.stack);
+    }
+
+    /**
+     * The gas {@code stack} is marked for, or none: empty, it takes that gas alone, and names it wherever a gas is
+     * chosen, as a full one does. A material no longer in the game leaves it unmarked.
+     */
+    @ApiStatus.Experimental
+    public static Optional<Material> markOf(final ItemStack stack) {
+        final ResourceLocation mark = stack.get(ItemStates.GAS_MARK.get());
+        return mark == null ? Optional.empty() : Materials.byId(mark);
+    }
+
+    /**
+     * Marks {@code stack} for {@code gas}, or takes its mark off for none: a gas it could hold, a material whose
+     * state at room temperature is a gas.
+     */
+    @ApiStatus.Experimental
+    public static void mark(final ItemStack stack, final Optional<Material> gas) {
+        if (gas.isPresent() && gas.get().roomState() == MatterState.GAS) {
+            stack.set(ItemStates.GAS_MARK.get(), gas.get().id());
+        } else {
+            stack.remove(ItemStates.GAS_MARK.get());
+        }
     }
 
     private static DataResult<MatterStack> read(final Held held) {

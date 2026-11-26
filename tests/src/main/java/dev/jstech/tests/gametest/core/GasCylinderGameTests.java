@@ -13,13 +13,17 @@ import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesAlloys;
 import dev.jstech.core.jstechseries.SeriesBronze;
+import dev.jstech.core.item.ItemGasTank;
+import dev.jstech.core.jstechseries.SeriesChemicals;
 import dev.jstech.core.jstechseries.SharedCatalogue;
 import dev.jstech.core.jstechseries.cylinder.GasCylinders;
+import dev.jstech.core.jstechseries.cylinder.GasMarking;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialProperties;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.MaterialValues;
+import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
 import dev.jstech.core.matter.MatterStack;
@@ -28,6 +32,7 @@ import dev.jstech.tests.TestVehicles;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -60,6 +65,8 @@ public final class GasCylinderGameTests {
     private static final String ARENA = "empty";
     private static final long HOLDS = 10_000L;
     private static final long STOCKED = 15_000L;
+    /* A height of open sky, over every test's arena. */
+    private static final double OPEN_SKY = 300.0;
     private static final int OPAQUE = 0xFF << 24;
     private static final int HEX = 16;
 
@@ -146,6 +153,70 @@ public final class GasCylinderGameTests {
         use(helper, player, argonAt);
         helper.assertTrue(amountIn(argon) == STOCKED && cylinder.stack(0).map(MatterStack::material)
                 .orElse(null) == Elements.of(Element.CHLORINE), "with chlorine in it, it takes no argon");
+        helper.succeed();
+    }
+
+    /**
+     * An empty cylinder marked for argon fills from argon alone, keeps its mark once emptied, and is painted for argon
+     * all along; a gas had no name in a pattern until a machine had made it into a cylinder.
+     */
+    @GameTest(template = ARENA)
+    public static void marked_fillsOnlyWithItsGasAndKeepsItsMarkEmpty(final GameTestHelper helper) {
+        final BlockPos chlorineAt = new BlockPos(1, 2, 1);
+        final BlockPos argonAt = new BlockPos(3, 2, 1);
+        helper.setBlock(chlorineAt, TestVehicles.PUMP.get());
+        helper.setBlock(argonAt, TestVehicles.PUMP.get());
+        final IMatterHandler chlorine = gasAt(helper, chlorineAt);
+        final IMatterHandler argon = gasAt(helper, argonAt);
+        chlorine.insert(new MatterStack(Elements.of(Element.CHLORINE), STOCKED), false);
+        argon.insert(new MatterStack(Elements.of(Element.ARGON), STOCKED), false);
+        final ServerPlayer player = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.nameUUIDFromBytes(
+                "gas_marked".getBytes(StandardCharsets.UTF_8)), "gas_marked"));
+        final ItemStack marked = GasCylinders.marked(Elements.of(Element.ARGON));
+        helper.assertTrue(GasCylinders.shoulderOf(marked) == GasCylinders.shoulder(Elements.of(Element.ARGON))
+                .orElseThrow(), "marked for argon, its shoulder is argon's");
+        player.setItemInHand(InteractionHand.MAIN_HAND, marked);
+        use(helper, player, chlorineAt);
+        final IMatterHandler cylinder = player.getMainHandItem().getCapability(MatterCapabilities.GAS_ITEM);
+        helper.assertTrue(heldOf(cylinder) == 0 && amountIn(chlorine) == STOCKED,
+                "marked for argon, it takes no chlorine: " + heldOf(cylinder));
+        helper.assertTrue(cylinder.insert(new MatterStack(Elements.of(Element.CHLORINE), HOLDS), true) == 0,
+                "and refuses chlorine poured in, wherever from");
+        use(helper, player, argonAt);
+        helper.assertTrue(heldOf(cylinder) == HOLDS, "it fills with argon: " + heldOf(cylinder));
+        player.setShiftKeyDown(true);
+        use(helper, player, argonAt);
+        helper.assertTrue(heldOf(cylinder) == 0 && ItemGasTank.markOf(player.getMainHandItem())
+                .equals(Optional.of(Elements.of(Element.ARGON))), "emptied, it keeps its mark");
+        helper.succeed();
+    }
+
+    /** Used in the air while sneaking, an empty marked cylinder loses its mark, and is bare steel again. */
+    @GameTest(template = ARENA)
+    public static void marked_sneakingInTheAirClearsTheMark(final GameTestHelper helper) {
+        final ServerPlayer player = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.nameUUIDFromBytes(
+                "gas_clear".getBytes(StandardCharsets.UTF_8)), "gas_clear"));
+        // High over the test world, where nothing stands over its head for the look to meet.
+        final Vec3 at = helper.absoluteVec(new Vec3(2.5, 2.0, 2.5));
+        player.moveTo(at.x, OPEN_SKY, at.z, 0.0F, -90.0F);
+        player.setItemInHand(InteractionHand.MAIN_HAND, GasCylinders.marked(Elements.of(Element.CHLORINE)));
+        player.setShiftKeyDown(true);
+        player.getMainHandItem().use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+        helper.assertTrue(ItemGasTank.markOf(player.getMainHandItem()).isEmpty(),
+                "sneaking and used looking up into the air, its mark comes off");
+        helper.assertTrue(GasCylinders.shoulderOf(player.getMainHandItem())
+                == GasCylinders.SHOULDERS.get().empty(), "and its shoulder is bare steel again");
+        helper.succeed();
+    }
+
+    /** The list a cylinder is marked from holds every gas of the Core, each a gas at room temperature. */
+    @GameTest(template = ARENA)
+    public static void marking_listsEveryGasOfTheCore(final GameTestHelper helper) {
+        final List<Material> gases = GasMarking.gases();
+        helper.assertTrue(gases.stream().allMatch(gas -> gas.roomState() == MatterState.GAS),
+                "only gases: " + gases);
+        helper.assertTrue(gases.containsAll(List.of(Elements.of(Element.HYDROGEN), Elements.of(Element.CHLORINE),
+                Elements.of(Element.ARGON), SeriesChemicals.HYDROGEN_CHLORIDE)), "the chain's gases among them");
         helper.succeed();
     }
 

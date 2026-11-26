@@ -33,9 +33,11 @@ import org.jetbrains.annotations.Nullable;
  * @param rules   the bars of colour drawn on it, as a rule under a heading
  * @param arrow   its arrow, if it has one
  * @param face    the machine's face it is laid on, if it is
+ * @param matter  the matter of the Core the recipe takes and makes, a gas or a plasma, which a viewer finds the recipe
+ *                by; drawn where the page draws it, in a face's sight glass or a line
  */
 public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprites, List<Rule> rules,
-                         Optional<Arrow> arrow, Optional<Face> face) {
+                         Optional<Arrow> arrow, Optional<Face> face, List<Matter> matter) {
 
     /** A slot's frame, in pixels. */
     public static final int SLOT = 18;
@@ -49,6 +51,7 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
         rules = List.copyOf(rules);
         Objects.requireNonNull(arrow, "arrow");
         Objects.requireNonNull(face, "face");
+        matter = List.copyOf(matter);
     }
 
     /** The slots of one role, in the order they were laid. */
@@ -173,6 +176,20 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
         }
     }
 
+    /**
+     * Matter of the Core a recipe takes or makes, as a viewer finds the recipe by it.
+     *
+     * @param role  whether the recipe takes it or makes it
+     * @param stack which, and how much
+     */
+    public record Matter(Role role, MatterStack stack) {
+
+        public Matter {
+            Objects.requireNonNull(role, "role");
+            Objects.requireNonNull(stack, "stack");
+        }
+    }
+
     /** Lays a page out; a kind's layout is handed one for each recipe. */
     public static final class Builder {
 
@@ -180,6 +197,7 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
         private final List<Line> lines = new ArrayList<>();
         private final List<Sprite> sprites = new ArrayList<>();
         private final List<Rule> rules = new ArrayList<>();
+        private final List<Matter> matter = new ArrayList<>();
         private @Nullable Arrow arrow;
         private @Nullable Face face;
 
@@ -255,6 +273,12 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
             return this;
         }
 
+        /** Matter of the Core the recipe takes ({@link Role#INPUT}) or makes ({@link Role#OUTPUT}), to be found by. */
+        public Builder matter(final Role role, final MatterStack stack) {
+            this.matter.add(new Matter(role, stack));
+            return this;
+        }
+
         /** Lays the page on a machine's face, as {@code face} says of it. */
         public Builder face(final Face face) {
             this.face = Objects.requireNonNull(face, "face");
@@ -289,7 +313,7 @@ public record RecipeView(List<Slot> slots, List<Line> lines, List<Sprite> sprite
         /** The page as laid. */
         public RecipeView build() {
             return new RecipeView(this.slots, this.lines, this.sprites, this.rules, Optional.ofNullable(this.arrow),
-                    Optional.ofNullable(this.face));
+                    Optional.ofNullable(this.face), this.matter);
         }
 
         private Builder slot(final Slot slot) {

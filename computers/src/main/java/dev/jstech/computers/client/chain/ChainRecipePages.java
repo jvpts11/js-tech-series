@@ -231,7 +231,9 @@ public final class ChainRecipePages {
                 RecipeFaces.fluid(view, glass, List.of(new FluidStack(MaterialLiquids.fluid(fill.material()).get(),
                         fill.amount())), fill.amount(), glass.tank() < machine.layout().inputTanks());
             } else {
+                // A wafer's step takes every gas it shows, which a viewer finds it by.
                 matter.put(glass.tank(), new MatterStack(fill.material(), fill.amount()));
+                view.matter(RecipeView.Role.INPUT, new MatterStack(fill.material(), fill.amount()));
             }
         }
         view.face(face(machine, picture, matter));
@@ -252,6 +254,7 @@ public final class ChainRecipePages {
         final List<MatterStack> gases = AirSeparationBlockEntity.step();
         for (int i = 0; i < gases.size(); i++) {
             matter.put(first + i, gases.get(i));
+            view.matter(RecipeView.Role.OUTPUT, gases.get(i));
         }
         view.face(face(machine, picture, matter));
     }

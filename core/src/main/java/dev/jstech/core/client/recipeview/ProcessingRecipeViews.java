@@ -129,6 +129,9 @@ public final class ProcessingRecipeViews {
             final ProcessingViewLayout.Point at = layout.output(index++);
             byproduct(page, at.x(), at.y(), byproduct);
         }
+        // The matter it takes and makes is written in its lines, and found by a viewer.
+        recipe.matterInputs().forEach(taken -> page.matter(RecipeView.Role.INPUT, taken));
+        recipe.matterOutputs().forEach(made -> page.matter(RecipeView.Role.OUTPUT, made));
         page.arrow(layout.arrow().x(), layout.arrow().y(), recipe.ticks());
         page.line(layout.textLine().x(), layout.textLine().y(), layout.width(), workLine(recipe), colour);
         final List<Component> lines = lines(recipe);

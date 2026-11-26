@@ -9,6 +9,9 @@ package dev.jstech.computers.storage;
 
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalPort;
+import dev.jstech.core.item.ItemGasTank;
+import dev.jstech.core.material.Material;
+import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
 import dev.jstech.core.matter.MatterStack;
@@ -79,6 +82,11 @@ public final class DataContainers {
                     return Optional.of(StorageKey.matter(matter.state(), held.get().material()));
                 }
             }
+        }
+        // An empty cylinder marked for a gas names it, as a full one does: a gas needs no machine to have made it.
+        final Optional<Material> marked = ItemGasTank.markOf(one);
+        if (marked.isPresent()) {
+            return Optional.of(StorageKey.matter(MatterState.GAS, marked.get()));
         }
         return ChemicalBridges.chemicalOf(one).map(StorageKey::chemical);
     }

@@ -6678,6 +6678,7 @@ stable 4
 10 dev.jstech.core.item.ItemActions.IItemPress  abstract void pressed(ServerPlayer, ItemStack, boolean)
 10 dev.jstech.core.item.ItemGasTank  type final class implements IMatterHandler
 10 dev.jstech.core.item.ItemGasTank  MatterState state()
+102 dev.jstech.core.item.ItemGasTank  Optional<Material> mark()
 10 dev.jstech.core.item.ItemGasTank  Optional<MatterStack> extractAny(long, boolean)
 10 dev.jstech.core.item.ItemGasTank  Optional<MatterStack> held()
 10 dev.jstech.core.item.ItemGasTank  Optional<MatterStack> stack(int)
@@ -6686,6 +6687,8 @@ stable 4
 10 dev.jstech.core.item.ItemGasTank  long extract(Material, long, boolean)
 10 dev.jstech.core.item.ItemGasTank  long insert(MatterStack, boolean)
 10 dev.jstech.core.item.ItemGasTank  new(ItemStack, long)
+102 dev.jstech.core.item.ItemGasTank  static Optional<Material> markOf(ItemStack)
+102 dev.jstech.core.item.ItemGasTank  static void mark(ItemStack, Optional<Material>)
 10 dev.jstech.core.item.ItemInventory  type final class extends ComponentItemHandler
 10 dev.jstech.core.item.ItemInventory  boolean isItemValid(int, ItemStack)
 10 dev.jstech.core.item.ItemInventory  new(ItemStack, int)
@@ -6724,11 +6727,13 @@ stable 4
 10 dev.jstech.core.item.ItemStates  static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> ON
 10 dev.jstech.core.item.ItemStates  static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> INVENTORY
 10 dev.jstech.core.item.ItemStates  static final DeferredHolder<DataComponentType<?>, DataComponentType<MatterStack>> GAS
+102 dev.jstech.core.item.ItemStates  static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> GAS_MARK
 10 dev.jstech.core.item.ItemStates  static final DeferredHolder<DataComponentType<?>, DataComponentType<SimpleFluidContent>> FLUID
 10 dev.jstech.core.item.ItemStates  static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> MODE
 10 dev.jstech.core.item.ItemStates  static void register(IEventBus)
 10 dev.jstech.core.item.ItemStates  static void registerCapabilities(RegisterCapabilitiesEvent, ItemLike, ItemState)
 10 dev.jstech.core.item.ItemTexts  type final class
+102 dev.jstech.core.item.ItemTexts  static Text markedFor(Material)
 10 dev.jstech.core.item.ItemTexts  static final TextKey CHARGES
 10 dev.jstech.core.item.ItemTexts  static final TextKey ENERGY
 10 dev.jstech.core.item.ItemTexts  static final TextKey FLUID
@@ -6737,6 +6742,8 @@ stable 4
 10 dev.jstech.core.item.ItemTexts  static final TextKey GAS_EMPTY
 10 dev.jstech.core.item.ItemTexts  static final TextKey GIVES
 10 dev.jstech.core.item.ItemTexts  static final TextKey ITEMS
+102 dev.jstech.core.item.ItemTexts  static final TextKey MARKED
+102 dev.jstech.core.item.ItemTexts  static final TextKey MARKED_FORMULA
 10 dev.jstech.core.item.ItemTexts  static final TextKey MODE
 10 dev.jstech.core.item.ItemTexts  static final TextKey MODE_HINT
 10 dev.jstech.core.item.ItemTexts  static final TextKey MODE_KEY

@@ -9,6 +9,7 @@ package dev.jstech.core.integration.jei;
 
 import dev.jstech.core.client.recipeview.RecipeFaces;
 import dev.jstech.core.client.recipeview.ViewKinds;
+import dev.jstech.core.material.MatterState;
 import dev.jstech.core.recipeview.RecipeView;
 import dev.jstech.core.recipeview.RecipeViewKind;
 import dev.jstech.core.text.GameText;
@@ -133,6 +134,13 @@ final class DeclaredCategory<T> implements IRecipeCategory<T> {
             final List<Component> lines = ViewKinds.tooltipOf(slot);
             if (!lines.isEmpty()) {
                 made.addRichTooltipCallback((view, tooltip) -> lines.forEach(tooltip::add));
+            }
+        }
+        // The gases it takes and makes, drawn in its sight glasses or written in its lines, are found as JEI's own.
+        for (final RecipeView.Matter matter : page.matter()) {
+            if (matter.stack().material().roomState() == MatterState.GAS) {
+                builder.addInvisibleIngredients(matter.role() == RecipeView.Role.OUTPUT ? RecipeIngredientRole.OUTPUT
+                        : RecipeIngredientRole.INPUT).addIngredient(GasIngredients.TYPE, matter.stack());
             }
         }
     }

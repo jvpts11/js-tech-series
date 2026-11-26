@@ -17,6 +17,7 @@ import dev.jstech.core.client.recipeview.RecipeViewers;
 import dev.jstech.core.client.recipeview.ViewKinds;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.multipart.MicroblockRecipes;
+import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.multipart.MicroblockShowcase;
 import dev.jstech.core.progression.KnowledgeShapedRecipe;
 import dev.jstech.core.progression.KnowledgeShapelessRecipe;
@@ -33,6 +34,7 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.extensions.vanilla.crafting.IExtendableCraftingRecipeCategory;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
+import mezz.jei.api.registration.IModIngredientRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
@@ -68,6 +70,13 @@ public final class CoreJeiPlugin implements IModPlugin {
     @Override
     public ResourceLocation getPluginUid() {
         return ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "jei_plugin");
+    }
+
+    /* The Core's gases among JEI's ingredients, each drawn as the Gas Cylinder painted for it. */
+    @Override
+    public void registerIngredients(final IModIngredientRegistration registration) {
+        registration.register(GasIngredients.TYPE, GasIngredients.all(), new GasIngredients.Helper(),
+                new GasIngredients.Renderer(), MatterStack.CODEC);
     }
 
     @Override
@@ -153,6 +162,13 @@ public final class CoreJeiPlugin implements IModPlugin {
     /** How many recipes JEI shows under that kind of machine, or nothing while JEI is not running. */
     public static OptionalInt recipesShown(final ProcessingKind kind) {
         return recipesShown(kind.id());
+    }
+
+    /** How many of the Core's gases JEI lists among its ingredients, or nothing while it is not on. */
+    public static OptionalInt gasesListed() {
+        final IJeiRuntime running = runtime;
+        return running == null ? OptionalInt.empty()
+                : OptionalInt.of(running.getIngredientManager().getAllIngredients(GasIngredients.TYPE).size());
     }
 
     /** How many recipes JEI shows under the kind of recipe whose id is {@code id}, or nothing while it is not on. */

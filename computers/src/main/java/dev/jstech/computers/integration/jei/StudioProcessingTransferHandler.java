@@ -14,6 +14,8 @@ import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalBridge;
+import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.text.GameText;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
@@ -118,6 +120,11 @@ public final class StudioProcessingTransferHandler implements IUniversalRecipeTr
             return new PatternWorkbench.DataCell(StorageKey.of(fluid.get()), fluid.get().getAmount(), false);
         }
         for (final ITypedIngredient<?> typed : slot.getAllIngredients().toList()) {
+            // A gas of the Core, which a page lists in its sight glasses or its lines.
+            if (typed.getIngredient() instanceof MatterStack gas) {
+                return new PatternWorkbench.DataCell(StorageKey.matter(MatterState.GAS, gas.material()), gas.amount(),
+                        false);
+            }
             final Optional<IChemicalBridge.ChemicalAmount> chemical = ChemicalBridges.chemicalIngredient(typed.getIngredient());
             if (chemical.isPresent()) {
                 final long amount = perTick ? chemical.get().amount() * PER_TICK_BASE_TICKS : chemical.get().amount();

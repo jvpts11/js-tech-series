@@ -15,6 +15,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
+import dev.jstech.core.jstechseries.SeriesChemicals;
 import dev.jstech.core.jstechseries.cylinder.GasCylinders;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MatterState;
@@ -84,5 +85,23 @@ public final class GasCylinderNetworkGameTests {
                             + "names into the store it faces: " + held);
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * An empty cylinder marked for a gas names it, as a full one does: in a pattern's cell it is that gas. A gas had no
+     * name in a pattern until a machine had made it into a cylinder.
+     */
+    @GameTest(template = ARENA)
+    public static void markedCylinder_namesItsGasInAPatternsCell(final GameTestHelper helper) {
+        final Material hydrogenChloride = SeriesChemicals.HYDROGEN_CHLORIDE;
+        final StorageKey key = StorageKey.matter(MatterState.GAS, hydrogenChloride);
+        final ItemStack marked = GasCylinders.marked(hydrogenChloride);
+        helper.assertTrue(DataContainers.named(marked).equals(Optional.of(key)),
+                "an empty cylinder marked for hydrogen chloride names it: " + DataContainers.named(marked));
+        final PatternWorkbench.DataCell cell = PatternWorkbench.DataCell.fromStack(marked);
+        helper.assertTrue(cell != null && cell.key().equals(key), "and places a cell of it: " + cell);
+        helper.assertTrue(DataContainers.named(new ItemStack(GasCylinders.CYLINDER.get())).isEmpty(),
+                "an empty cylinder with no mark names nothing");
+        helper.succeed();
     }
 }

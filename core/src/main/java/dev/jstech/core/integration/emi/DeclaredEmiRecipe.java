@@ -16,6 +16,7 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.WidgetHolder;
 import dev.jstech.core.client.recipeview.RecipeFaces;
+import dev.jstech.core.material.MatterState;
 import dev.jstech.core.recipeview.RecipeView;
 import dev.jstech.core.recipeview.RecipeViewKind;
 import java.util.ArrayList;
@@ -46,7 +47,8 @@ final class DeclaredEmiRecipe<T> extends BasicEmiRecipe {
         this.kind = kind;
         this.recipe = recipe;
         // What goes in and comes out is the recipe's own, the same however much the player knows.
-        for (final RecipeView.Slot slot : kind.view(recipe).slots()) {
+        final RecipeView view = kind.view(recipe);
+        for (final RecipeView.Slot slot : view.slots()) {
             final EmiIngredient held = ingredientOf(slot);
             this.laid.add(held);
             switch (slot.role()) {
@@ -56,6 +58,17 @@ final class DeclaredEmiRecipe<T> extends BasicEmiRecipe {
                     for (final EmiStack made : held.getEmiStacks()) {
                         outputs.add(slot.chance() < 1.0f ? made.copy().setChance(slot.chance()) : made);
                     }
+                }
+            }
+        }
+        // The gases it takes and makes, drawn in its sight glasses or written in its lines, are found as EMI's own.
+        for (final RecipeView.Matter matter : view.matter()) {
+            if (matter.stack().material().roomState() == MatterState.GAS) {
+                final EmiStack gas = new GasEmiStack(matter.stack().material(), matter.stack().amount());
+                if (matter.role() == RecipeView.Role.OUTPUT) {
+                    outputs.add(gas);
+                } else {
+                    inputs.add(gas);
                 }
             }
         }

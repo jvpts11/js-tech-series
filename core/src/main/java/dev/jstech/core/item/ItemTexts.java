@@ -7,8 +7,12 @@
  */
 package dev.jstech.core.item;
 
+import dev.jstech.core.material.Material;
+import dev.jstech.core.material.MaterialProperties;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What a player reads of what an item holds: its mode, whether it is on, its energy, its fluid, its gas and its
@@ -27,6 +31,10 @@ public final class ItemTexts {
     public static final TextKey SWITCHED = TextKey.of("jscore.item.switched", "%s: %s");
     public static final TextKey GAS = TextKey.of("jscore.item.gas", "%s: %s of %s mB");
     public static final TextKey GAS_EMPTY = TextKey.of("jscore.item.gas.empty", "No gas, holds %s mB");
+    /* An empty item marked for a gas: the gas, and its formula where it has one. */
+    public static final TextKey MARKED = TextKey.of("jscore.item.gas.marked", "Empty, marked: %s");
+    public static final TextKey MARKED_FORMULA = TextKey.of("jscore.item.gas.marked_formula",
+            "Empty, marked: %s (%s)");
     public static final TextKey MODE_NO_KEY = TextKey.of("jscore.item.mode.no_key",
             "Turn the mouse wheel while sneaking to change the mode, or give Change Item Mode a key");
     public static final TextKey ENERGY = TextKey.of("jscore.item.energy", "Energy: %s of %s");
@@ -38,5 +46,13 @@ public final class ItemTexts {
     public static final TextKey GIVES = TextKey.of("jscore.item.energy.gives", "Gives up to %s/t");
 
     private ItemTexts() {
+    }
+
+    /** What an empty item marked for {@code gas} says of it: "Empty, marked: Hydrogen Chloride (HCl)". */
+    @ApiStatus.Experimental
+    public static Text markedFor(final Material gas) {
+        return gas.value(MaterialProperties.FORMULA).or(() -> gas.value(MaterialProperties.SYMBOL))
+                .map(formula -> MARKED_FORMULA.with(gas.name(), Text.literal(formula)))
+                .orElseGet(() -> MARKED.with(gas.name()));
     }
 }

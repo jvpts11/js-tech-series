@@ -155,9 +155,11 @@ public final class RecipeFaces {
         final Map<Integer, MatterStack> matter = new HashMap<>();
         for (int k = 0; k < recipe.matterInputs().size(); k++) {
             matter.put(placed.matterInputs().get(k).tank(), recipe.matterInputs().get(k));
+            page.matter(RecipeView.Role.INPUT, recipe.matterInputs().get(k));
         }
         for (int k = 0; k < recipe.matterOutputs().size(); k++) {
             matter.put(placed.matterOutputs().get(k).tank(), recipe.matterOutputs().get(k));
+            page.matter(RecipeView.Role.OUTPUT, recipe.matterOutputs().get(k));
         }
         // Its words are said as the page is laid, which a viewer does each time it shows it.
         final Map<String, String> said = new HashMap<>();

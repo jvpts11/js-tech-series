@@ -713,6 +713,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- (Core) Gases marked on an empty item: J's Core's API is at version 102. `ItemStates.GAS_MARK` keeps the gas an
+  item that holds a gas is marked for; `ItemGasTank.markOf` and `mark` read and set it, and an empty tank marked for a
+  gas takes that gas alone. `ItemTexts.markedFor` says it: "Empty, marked: Hydrogen Chloride (HCl)". Experimental.
 - (Core) Peripherals that say where they hang: J's Core's API is at version 101. `PeripheralLink.noneInReach` says,
   on both sides, whether an unlinked peripheral's last search found no owner its cables reach, as opposed to one with
   no room for it; a peripheral that links tells the players near it, over the hotbar, what it linked to, where and
@@ -4548,6 +4551,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core, Computers) A monitor with no computer in reach says on its glass how a monitor finds its computer, and how
   far its era's peripheral cable reaches; it was dark. A peripheral that links tells the players near it, over the
   hotbar, which computer it linked to, where, and over how many blocks of cable.
+- (Core, Computers) An empty Gas Cylinder used in the air opens the list of every gas of the Core, made yet or not,
+  with a search; Mark marks it for the gas picked, painting its shoulder for it. Marked, it fills with that gas alone
+  and stands for the gas in a pattern's cell or a bus's filter; sneaking and used in the air, it loses its mark. A gas
+  had no name in a pattern until a machine had made it into a cylinder.
+- (Core, Computers) JEI and EMI list the Core's gases, each drawn as the cylinder painted for it, and find the recipes
+  that take or make one; a gas dragged from JEI onto a Pattern Studio cell sets that cell to the gas, and a page sent
+  to the Studio brings its gases with it.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

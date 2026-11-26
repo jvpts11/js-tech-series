@@ -29,6 +29,8 @@ import dev.jstech.core.machine.Machines;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.multiblock.MultiblockViewTexts;
 import dev.jstech.core.multipart.MicroblockShowcase;
+import dev.jstech.core.jstechseries.cylinder.GasMarking;
+import dev.jstech.core.material.Material;
 import dev.jstech.core.progression.IKnowledgeGated;
 import dev.jstech.core.recipeview.RecipeViewKind;
 import dev.jstech.core.text.GameText;
@@ -63,10 +65,16 @@ public final class CoreEmiPlugin implements EmiPlugin {
             "multiblocks");
     /* EMI as the Core's screens ask it, added to the viewers running once EMI reads its plugins. */
     private static final IRecipeViewer VIEWER = new EmiViewer();
+    /* How much of a gas the list shows, a bucket's worth. */
+    private static final long GAS_LISTED = 1_000L;
 
     @Override
     public void register(final EmiRegistry registry) {
         RecipeViewers.add(VIEWER);
+        // The Core's gases among EMI's stacks, each drawn as the Gas Cylinder painted for it.
+        for (final Material gas : GasMarking.gases()) {
+            registry.addEmiStack(new GasEmiStack(gas, GAS_LISTED));
+        }
         final Level level = Minecraft.getInstance().level;
         for (final RecipeViewKind<?> kind : ViewKinds.all()) {
             addKind(registry, kind, level);

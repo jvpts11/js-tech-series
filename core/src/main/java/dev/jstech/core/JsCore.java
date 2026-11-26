@@ -174,6 +174,7 @@ import dev.jstech.core.jstechseries.builder.Assembly;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
 import dev.jstech.core.jstechseries.containment.SharedContainment;
 import dev.jstech.core.jstechseries.cylinder.GasCylinders;
+import dev.jstech.core.jstechseries.cylinder.GasMarking;
 import dev.jstech.core.jstechseries.upgrade.SharedUpgrades;
 import dev.jstech.core.jstechseries.projector.StructureProjector;
 import dev.jstech.core.jstechseries.persistor.PersistorSettings;
@@ -503,6 +504,8 @@ public final class JsCore {
         JsEnergy.register(modEventBus);
         // The components an item keeps its mode, its fluid and its stacks in.
         ItemStates.register(modEventBus);
+        // An empty Gas Cylinder marked for a gas from the list of the Core's gases.
+        GasMarking.listen(modEventBus);
         // The Core's own keys, declared before the player's game makes its key bindings.
         CoreKeys.declare();
         VehicleControlKeys.declare();

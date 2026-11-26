@@ -19,6 +19,7 @@ import dev.jstech.core.gui.tooltip.TooltipBar;
 import dev.jstech.core.gui.tooltip.TooltipContents;
 import dev.jstech.core.gui.tooltip.TooltipSettings;
 import dev.jstech.core.input.CoreKeys;
+import dev.jstech.core.item.ItemGasTank;
 import dev.jstech.core.item.ItemState;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.item.ItemTexts;
@@ -29,6 +30,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.tool.BuildingTools;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
@@ -131,7 +133,12 @@ public final class ItemStateClient {
             tooltip.piece(TooltipBar.of(fluid.getAmount(), state.fluidCapacity(),
                     new TooltipBar.Paint.Fluid(fluid.copy()), grey(said)));
         }
-        if (state.holdsGas()) {
+        final Optional<Material> mark = ItemGasTank.markOf(stack);
+        if (state.holdsGas() && stack.get(ItemStates.GAS.get()) == null && mark.isPresent()) {
+            // Empty, but marked for a gas: which, as the approved tooltip says it.
+            tooltip.line(GameText.component(ItemTexts.markedFor(mark.get())).copy()
+                    .withStyle(ChatFormatting.YELLOW));
+        } else if (state.holdsGas()) {
             final MatterStack gas = stack.get(ItemStates.GAS.get());
             final Text said = gas == null ? ItemTexts.GAS_EMPTY.with(state.gasCapacity())
                     : ItemTexts.GAS.with(gas.material().name(), gas.amount(), state.gasCapacity());

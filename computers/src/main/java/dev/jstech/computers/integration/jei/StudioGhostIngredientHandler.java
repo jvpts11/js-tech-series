@@ -9,6 +9,8 @@ package dev.jstech.computers.integration.jei;
 
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.PatternStudioApp;
+import dev.jstech.core.jstechseries.cylinder.GasCylinders;
+import dev.jstech.core.matter.MatterStack;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import net.minecraft.client.renderer.Rect2i;
@@ -29,7 +31,10 @@ public final class StudioGhostIngredientHandler implements IGhostIngredientHandl
                                                final boolean doStart) {
         final PatternStudioApp studio = PatternStudioApp.active();
         final List<Target<I>> targets = new ArrayList<>();
-        if (studio == null || !screen.isFront(studio) || ingredient.getItemStack().isEmpty()) {
+        // A gas of the Core is dropped as a cylinder marked for it, which the cell reads as the gas.
+        final ItemStack carried = ingredient.getIngredient() instanceof MatterStack gas
+                ? GasCylinders.marked(gas.material()) : ingredient.getItemStack().orElse(ItemStack.EMPTY);
+        if (studio == null || !screen.isFront(studio) || carried.isEmpty()) {
             return targets;
         }
         for (final PatternStudioApp.GhostCell cell : studio.ghostCells()) {
@@ -45,8 +50,7 @@ public final class StudioGhostIngredientHandler implements IGhostIngredientHandl
 
                 @Override
                 public void accept(final I dropped) {
-                    final ItemStack stack = dropped instanceof ItemStack s ? s
-                            : ingredient.getItemStack().orElse(ItemStack.EMPTY);
+                    final ItemStack stack = dropped instanceof ItemStack s ? s : carried;
                     if (!stack.isEmpty()) {
                         studio.dropInto(kind, index, stack);
                     }

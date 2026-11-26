@@ -10,6 +10,7 @@ package dev.jstech.core.jstechseries.cylinder;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
+import dev.jstech.core.item.ItemGasTank;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SharedUses;
 import dev.jstech.core.material.Material;
@@ -26,6 +27,7 @@ import dev.jstech.core.registry.CoreItems;
 import java.util.Optional;
 import java.util.OptionalInt;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The Gas Cylinder the series' mods share: a slim steel cylinder that carries a gas by hand, as a bucket carries a
@@ -83,12 +85,22 @@ public final class GasCylinders {
     public static int shoulderOf(final ItemStack cylinder) {
         final IMatterHandler tank = cylinder.getCapability(MatterCapabilities.GAS_ITEM);
         final Optional<MatterStack> held = tank == null || tank.tanks() == 0 ? Optional.empty() : tank.stack(0);
-        if (held.isEmpty()) {
+        // An empty cylinder marked for a gas is painted for it, as a full one of that gas is.
+        final Optional<Material> painted = held.map(MatterStack::material).or(() -> ItemGasTank.markOf(cylinder));
+        if (painted.isEmpty()) {
             return SHOULDERS.get().empty();
         }
-        final Material gas = held.get().material();
+        final Material gas = painted.get();
         return shoulder(gas).orElseGet(() -> MaterialValues.value(gas, MaterialProperties.COLOUR, true)
                 .map(colour -> OPAQUE | Integer.parseInt(colour.substring(1), HEX)).orElse(SHOULDERS.get().empty()));
+    }
+
+    /** An empty cylinder marked for {@code gas}: painted for it, and taking it alone. */
+    @ApiStatus.Experimental
+    public static ItemStack marked(final Material gas) {
+        final ItemStack cylinder = new ItemStack(CYLINDER.get());
+        ItemGasTank.mark(cylinder, Optional.of(gas));
+        return cylinder;
     }
 
     /* A gas's name as a role of the table names it: carbon_dioxide as carbonDioxide. */

@@ -9,6 +9,7 @@ package dev.jstech.core.jstechseries.cylinder.client;
 
 import dev.jstech.core.client.item.ItemStateClient;
 import dev.jstech.core.jstechseries.cylinder.GasCylinders;
+import dev.jstech.core.jstechseries.cylinder.GasMarking;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
@@ -32,6 +33,8 @@ public final class GasCylindersClient {
                 GasCylinders.CYLINDER.get()));
         // The bar of its tooltip in its shoulder's colour, for a gas the European code names.
         ItemStateClient.paintGas(GasCylinders.CYLINDER::get, GasCylinders::shoulder);
+        // Used in the air while empty, it opens the list of the Core's gases to be marked for one.
+        GasMarking.opener(MarkGasScreen::open);
     }
 
     private static int tint(final ItemStack stack, final int layer) {

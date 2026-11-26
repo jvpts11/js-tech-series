@@ -15,6 +15,7 @@ import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.energy.ItemEnergyStorage;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
+import dev.jstech.core.material.Material;
 import dev.jstech.core.matter.MatterCapabilities;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.text.GameText;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -83,6 +85,13 @@ public final class ItemStates {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<MatterStack>> GAS =
             COMPONENTS.registerComponentType("gas", builder -> builder.persistent(ItemGasTank.CODEC)
                     .networkSynchronized(ByteBufCodecs.fromCodec(ItemGasTank.CODEC)));
+    /**
+     * The gas an item that holds a gas is marked for, by the material's id: empty, it takes that gas alone, and names
+     * it wherever a gas is chosen, as a full one does ({@link ItemGasTank#mark}).
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> GAS_MARK =
+            COMPONENTS.registerComponentType("gas_mark", builder -> builder.persistent(ResourceLocation.CODEC)
+                    .networkSynchronized(ResourceLocation.STREAM_CODEC));
     /**
      * Whether an item that turns on and off is on, as a jetpack or a magnet: one that has never been turned is off. A
      * key action of its mod turns it ({@link ItemActions#toggle}).
@@ -209,8 +218,10 @@ public final class ItemStates {
         }
         if (state.holdsGas()) {
             final MatterStack gas = stack.get(GAS.get());
-            lines.add(gas == null ? ItemTexts.GAS_EMPTY.with(state.gasCapacity())
-                    : ItemTexts.GAS.with(gas.material().name(), gas.amount(), state.gasCapacity()));
+            final Optional<Material> mark = ItemGasTank.markOf(stack);
+            lines.add(gas != null ? ItemTexts.GAS.with(gas.material().name(), gas.amount(), state.gasCapacity())
+                    : mark.isPresent() ? ItemTexts.markedFor(mark.get())
+                    : ItemTexts.GAS_EMPTY.with(state.gasCapacity()));
         }
         if (state.holdsItems()) {
             final long used = stack.getOrDefault(INVENTORY.get(), ItemContainerContents.EMPTY).nonEmptyStream()

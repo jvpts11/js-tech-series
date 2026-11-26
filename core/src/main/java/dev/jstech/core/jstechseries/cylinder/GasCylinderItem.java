@@ -7,26 +7,75 @@
  */
 package dev.jstech.core.jstechseries.cylinder;
 
+import dev.jstech.core.item.ItemGasTank;
+import dev.jstech.core.item.ItemStates;
+import dev.jstech.core.material.Material;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
 import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.text.GameText;
+import java.util.List;
 import java.util.Optional;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
 
 /**
  * The Gas Cylinder in a hand. Used on a block that gives gas, a machine's outlet or a tank, it fills with that block's
  * gas; used while sneaking on a block that takes gas, it empties into it. It carries one gas at a time, so with gas
- * inside it fills only from the same gas. It acts before the block does what it does with a hand, as a bucket does, so
- * a machine's screen does not open in its stead.
+ * inside it fills only from the same gas, and empty but marked for a gas ({@link GasMarking}) only from that one. It
+ * acts before the block does what it does with a hand, as a bucket does, so a machine's screen does not open in its
+ * stead.
  */
 public final class GasCylinderItem extends Item {
 
     public GasCylinderItem(final Properties properties) {
         super(properties);
+    }
+
+    /**
+     * Used in the air while empty: opens the list of the Core's gases to mark it for one, or, sneaking, takes its mark
+     * off. A gas had no name in a pattern until a machine had made it into a cylinder.
+     */
+    @Override
+    public InteractionResultHolder<ItemStack> use(final Level level, final Player player, final InteractionHand hand) {
+        final ItemStack stack = player.getItemInHand(hand);
+        final IMatterHandler tank = stack.getCapability(MatterCapabilities.GAS_ITEM);
+        final boolean inTheAir = getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE).getType()
+                == HitResult.Type.MISS;
+        if (!inTheAir || tank == null || tank.stack(0).isPresent()) {
+            return InteractionResultHolder.pass(stack);
+        }
+        if (player.isSecondaryUseActive()) {
+            if (ItemGasTank.markOf(stack).isEmpty()) {
+                return InteractionResultHolder.pass(stack);
+            }
+            if (!level.isClientSide()) {
+                ItemGasTank.mark(stack, Optional.empty());
+            }
+        } else if (level.isClientSide()) {
+            GasMarking.open(hand);
+        }
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+    }
+
+    @Override
+    public void appendHoverText(final ItemStack stack, final TooltipContext context, final List<Component> tooltip,
+                                final TooltipFlag flag) {
+        if (stack.get(ItemStates.GAS.get()) == null && ItemGasTank.markOf(stack).isPresent()) {
+            tooltip.add(GameText.component(CylinderTexts.FILLS_ONLY).copy().withStyle(ChatFormatting.GRAY));
+            tooltip.add(GameText.component(CylinderTexts.CLEAR).copy().withStyle(ChatFormatting.GRAY));
+        }
     }
 
     @Override
@@ -55,10 +104,13 @@ public final class GasCylinderItem extends Item {
         if (room <= 0) {
             return 0L;
         }
+        // An empty cylinder marked for a gas fills with that gas alone, as a full one with its own.
+        final Optional<Material> wanted = held.map(MatterStack::material)
+                .or(() -> tank instanceof ItemGasTank item ? item.mark() : Optional.empty());
         final Optional<MatterStack> offered;
-        if (held.isPresent()) {
-            final long given = block.extract(held.get().material(), room, true);
-            offered = given > 0 ? Optional.of(held.get().withAmount(given)) : Optional.empty();
+        if (wanted.isPresent()) {
+            final long given = block.extract(wanted.get(), room, true);
+            offered = given > 0 ? Optional.of(new MatterStack(wanted.get(), given)) : Optional.empty();
         } else {
             offered = block.extractAny(room, true);
         }
