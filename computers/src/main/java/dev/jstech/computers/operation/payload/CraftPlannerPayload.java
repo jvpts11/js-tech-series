@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -14,18 +15,17 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
 /**
- * Server to client: the Craft Planner's answer for a chosen target. It reports whether the network can make
- * the item at all, whether the request is fully feasible from stock, how much a single run of the plan
- * yields, the largest feasible amount, the ordered {@link Stage}s the plan runs, and the raw-ingredient bill
- * ({@link #ingredients}, need vs have, short when red). Sent in reply to {@link RequestCraftPlannerPayload}
- * when a target is set.
+ * Server to client: the Craft Planner's answer for a chosen target, an item or a liquid or gas a machine makes. It
+ * reports whether the network can make it at all, whether the request is fully feasible from stock, how much a single
+ * run of the plan yields, the largest feasible amount, the ordered {@link Stage}s the plan runs, and the
+ * raw-ingredient bill ({@link #ingredients}, need vs have, short when red). Sent in reply to
+ * {@link RequestCraftPlannerPayload} when a target is set.
  */
-public record CraftPlannerPayload(ItemStack result, long quantity, boolean craftable, boolean feasible,
+public record CraftPlannerPayload(StorageKey result, long quantity, boolean craftable, boolean feasible,
                                   long produced, long maxFeasible, List<Stage> stages,
                                   List<CraftPlanPayload.Row> ingredients, List<TreeNode> tree)
         implements CustomPacketPayload {
@@ -50,11 +50,11 @@ public record CraftPlannerPayload(ItemStack result, long quantity, boolean craft
      * {@code qty} is how many of it the request needs at this point, and {@code craftable} is false for a raw
      * leaf the network cannot make.
      */
-    public record TreeNode(int depth, ItemStack item, long qty, boolean craftable) {
+    public record TreeNode(int depth, StorageKey item, long qty, boolean craftable) {
         public static final StreamCodec<RegistryFriendlyByteBuf, TreeNode> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.VAR_INT, TreeNode::depth,
-                        ItemStack.STREAM_CODEC, TreeNode::item,
+                        StorageKey.STREAM_CODEC, TreeNode::item,
                         ByteBufCodecs.VAR_LONG, TreeNode::qty,
                         ByteBufCodecs.BOOL, TreeNode::craftable,
                         TreeNode::new);
@@ -67,7 +67,7 @@ public record CraftPlannerPayload(ItemStack result, long quantity, boolean craft
             StreamCodec.of(CraftPlannerPayload::encode, CraftPlannerPayload::decode);
 
     private static void encode(final RegistryFriendlyByteBuf buf, final CraftPlannerPayload p) {
-        ItemStack.STREAM_CODEC.encode(buf, p.result);
+        StorageKey.STREAM_CODEC.encode(buf, p.result);
         buf.writeVarLong(p.quantity);
         buf.writeBoolean(p.craftable);
         buf.writeBoolean(p.feasible);
@@ -79,7 +79,7 @@ public record CraftPlannerPayload(ItemStack result, long quantity, boolean craft
     }
 
     private static CraftPlannerPayload decode(final RegistryFriendlyByteBuf buf) {
-        final ItemStack result = ItemStack.STREAM_CODEC.decode(buf);
+        final StorageKey result = StorageKey.STREAM_CODEC.decode(buf);
         final long quantity = buf.readVarLong();
         final boolean craftable = buf.readBoolean();
         final boolean feasible = buf.readBoolean();

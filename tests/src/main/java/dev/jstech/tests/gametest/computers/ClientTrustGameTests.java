@@ -18,7 +18,6 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -47,7 +46,7 @@ public final class ClientTrustGameTests {
     @GameTest(template = ARENA)
     public static void craftPreview_holdsAHugeQuantityToTheMostACraftAsks(final GameTestHelper helper) {
         final CraftPlanRequestPayload payload = new CraftPlanRequestPayload(BlockPos.ZERO, BlockPos.ZERO,
-                new ItemStack(Items.OAK_PLANKS), Long.MAX_VALUE);
+                StorageKey.of(Items.OAK_PLANKS), Long.MAX_VALUE);
         helper.assertTrue(payload.quantity() == CraftRequest.MOST_DEMAND, "the preview asks no more than a craft");
         helper.succeed();
     }

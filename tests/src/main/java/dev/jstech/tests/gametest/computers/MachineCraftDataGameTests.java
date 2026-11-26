@@ -256,7 +256,7 @@ public final class MachineCraftDataGameTests {
     @GameTest(template = ARENA)
     public static void planRow_keepsAFluidInputsNameAcrossTheWire(final GameTestHelper helper) {
         final StorageKey water = StorageKey.of(new FluidStack(Fluids.WATER, 1));
-        final CraftPlanPayload sent = new CraftPlanPayload(new ItemStack(Items.IRON_INGOT), 4,
+        final CraftPlanPayload sent = new CraftPlanPayload(StorageKey.of(Items.IRON_INGOT), 4,
                 List.of(new CraftPlanPayload.Row(water, 4000, 1000)), false, 1, 0);
         final RegistryFriendlyByteBuf buf =
                 new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());

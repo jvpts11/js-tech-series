@@ -803,7 +803,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         }
         CraftCatalogPayload.Entry found = null;
         for (final CraftCatalogPayload.Entry candidate : catalog) {
-            if (StorageKey.of(candidate.result()).equals(entry.key())) {
+            if (candidate.result().equals(entry.key())) {
                 found = candidate;
                 break;
             }

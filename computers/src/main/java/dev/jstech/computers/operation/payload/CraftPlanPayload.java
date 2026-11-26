@@ -31,7 +31,7 @@ import java.util.List;
  * lists them all and {@code recipe} says which one the rows were planned with; {@code cover} says, per row
  * that is short, what the network would craft to cover it (or that nothing can).
  */
-public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
+public record CraftPlanPayload(StorageKey result, long quantity, List<Row> rows,
                                boolean feasible, long maxFeasible, int estimateTicks,
                                int recipe, List<RecipeChoice> options, List<Text> cover, int stages)
         implements CustomPacketPayload {
@@ -49,7 +49,7 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
             TextCodecs.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_COVER));
 
     /** A plan with no choice of recipe: what a result with a single recipe gets. */
-    public CraftPlanPayload(final ItemStack result, final long quantity, final List<Row> rows,
+    public CraftPlanPayload(final StorageKey result, final long quantity, final List<Row> rows,
                             final boolean feasible, final long maxFeasible, final int estimateTicks) {
         this(result, quantity, rows, feasible, maxFeasible, estimateTicks, 0, List.of(), List.of(), 1);
     }
@@ -134,7 +134,7 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
             StreamCodec.of(CraftPlanPayload::encode, CraftPlanPayload::decode);
 
     private static void encode(final RegistryFriendlyByteBuf buf, final CraftPlanPayload p) {
-        ItemStack.STREAM_CODEC.encode(buf, p.result);
+        StorageKey.STREAM_CODEC.encode(buf, p.result);
         buf.writeVarLong(p.quantity);
         Row.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).encode(buf, first(p.rows, MAX_ROWS));
         buf.writeBoolean(p.feasible);
@@ -147,7 +147,7 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
     }
 
     private static CraftPlanPayload decode(final RegistryFriendlyByteBuf buf) {
-        final ItemStack result = ItemStack.STREAM_CODEC.decode(buf);
+        final StorageKey result = StorageKey.STREAM_CODEC.decode(buf);
         final long quantity = buf.readVarLong();
         final List<Row> rows = Row.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).decode(buf);
         final boolean feasible = buf.readBoolean();

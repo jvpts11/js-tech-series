@@ -11,7 +11,6 @@ import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
@@ -62,7 +61,7 @@ final class CraftTerminalTab extends AbstractTerminalTab {
                 final int index = (row + screen.craftScroll) * CRAFT_COLS + col;
                 if (index < catalog.size()) {
                     final var entry = catalog.get(index);
-                    drawDataIcon(g, StorageKey.of(entry.result()), -1L, sx, sy);
+                    drawDataIcon(g, entry.result(), -1L, sx, sy);
                     final int dot = switch (entry.availability()) {
                         case CraftCatalogPayload.DOT_GREEN -> GREEN();
                         case CraftCatalogPayload.DOT_AMBER -> AMBER();

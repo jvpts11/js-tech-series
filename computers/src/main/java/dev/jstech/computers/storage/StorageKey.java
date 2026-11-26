@@ -13,6 +13,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalBridge;
 import dev.jstech.core.material.Material;
+import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.Materials;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterBridges;
@@ -155,8 +156,11 @@ public final class StorageKey {
     }
 
     /**
-     * The key an item name stands for, as a player writes it: {@code cobblestone} or {@code minecraft:cobblestone}
-     * alike, and {@code jsc:...} for this mod's own. Null for a name no item answers to.
+     * The key a name stands for, as a player writes it: {@code cobblestone} or {@code minecraft:cobblestone} alike,
+     * and {@code jsc:...} for this mod's own. An item answers first; else a liquid by its fluid
+     * ({@code minecraft:water}, {@code jscore:mercury}); else a material of J's Core in the state it takes in a room,
+     * a gas such as {@code jscore:hydrogen}. A key's own id ({@code gas|jscore:chlorine}) names any state. Null for a
+     * name nothing answers to.
      *
      * <p>A name with no namespace is taken as vanilla's, which is what someone typing at a prompt means by
      * {@code iron_ingot}.
@@ -166,12 +170,35 @@ public final class StorageKey {
         if (name == null || name.isBlank()) {
             return null;
         }
+        if (name.indexOf('|') >= 0) {
+            return byId(name.toLowerCase(Locale.ROOT));
+        }
         final String id = name.contains(":") ? name : "minecraft:" + name;
         final ResourceLocation location = ResourceLocation.tryParse(id.toLowerCase(Locale.ROOT));
         if (location == null) {
             return null;
         }
-        return BuiltInRegistries.ITEM.getOptional(location).map(StorageKey::of).orElse(null);
+        final Optional<StorageKey> item = BuiltInRegistries.ITEM.getOptional(location).map(StorageKey::of);
+        if (item.isPresent()) {
+            return item.get();
+        }
+        final FluidStack fluid = BuiltInRegistries.FLUID.getOptional(location)
+                .map(registered -> new FluidStack(registered, 1)).orElse(FluidStack.EMPTY);
+        if (!fluid.isEmpty()) {
+            return StorageKey.of(fluid);
+        }
+        return Materials.byId(location).map(StorageKey::inRoom).orElse(null);
+    }
+
+    /* A material as it is in a room: its registered liquid, or a key of its kind of matter; null for a solid. */
+    @Nullable
+    private static StorageKey inRoom(final Material material) {
+        if (material.roomState() == MatterState.LIQUID) {
+            return MaterialLiquids.of(material)
+                    .map(liquid -> StorageKey.of(new FluidStack(MaterialLiquids.fluid(material).get(), 1)))
+                    .orElse(null);
+        }
+        return Kind.of(material.roomState()).map(kind -> matter(kind, material.id())).orElse(null);
     }
 
     /**

@@ -282,6 +282,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private static final int CARD_H = 52;
     private static final int CARDS_SHOWN = 3;
     private static final int[] CRAFT_STEPS = {-64, -1, 1, 64};
+    private static final int[] FLUID_CRAFT_STEPS = {-1000, -100, 100, 1000};
+    private static final long FLUID_CRAFT_START = 1000L;
     private static final long MAX_CRAFT_QTY = 99_999L;
     /** Two clicks on the same cell this close together open it; one click selects it. */
     private static final long DOUBLE_CLICK_MS = 300L;
@@ -609,7 +611,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** Delivers a craft plan (need/have rows, and the recipes to choose from) to the open NI's craft popup. */
     public static void acceptCraftPlan(final CraftPlanPayload plan) {
         if (active != null && active.craftEntry != null
-                && ItemStack.isSameItemSameComponents(active.craftEntry.result(), plan.result())) {
+                && active.craftEntry.result().equals(plan.result())) {
             active.craftPlan = plan;
             active.craftRecipe = plan.recipe();
             // A choice of recipe grows the popup by the cards and the differences strip; it is placed again on render.
@@ -1149,7 +1151,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final List<StorageKey> out = new ArrayList<>();
         if (tab == TAB_CRAFTING) {
             for (final CraftCatalogPayload.Entry e : crafts) {
-                out.add(StorageKey.of(e.result()));
+                out.add(e.result());
             }
         } else {
             for (final NetworkItemEntry e : sourceEntries()) {
@@ -1243,7 +1245,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
         }
         for (final CraftCatalogPayload.Entry e : crafts) {
-            final StorageKey key = StorageKey.of(e.result());
+            final StorageKey key = e.result();
             if (favourites.contains(key.id()) && seen.add(key.id())) {
                 out.add(new NetworkItemEntry(key, 0L));
             }
@@ -1291,13 +1293,14 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 return;
             }
             final CraftCatalogPayload.Entry e = list.get(index);
-            DesktopItems.item(g, e.result(), cx + 1, cy + 1);
+            // Drawn as the storage tabs draw what they hold: an item, or a liquid or gas a machine makes.
+            DesktopItems.data(g, ctx.font(), e.result(), cx + 1, cy + 1, null);
             mark = switch (e.availability()) {
                 case CraftCatalogPayload.DOT_GREEN -> InteractorPalette.get().dotReady();
                 case CraftCatalogPayload.DOT_AMBER -> InteractorPalette.get().amber();
                 default -> InteractorPalette.get().dotMissing();
             };
-            key = StorageKey.of(e.result());
+            key = e.result();
         } else {
             final List<NetworkItemEntry> items = gridEntries();
             if (index >= items.size()) {
@@ -1384,7 +1387,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
         if (tab == TAB_CRAFTING) {
             final List<CraftCatalogPayload.Entry> list = filteredCrafts();
-            return index < list.size() ? StorageKey.of(list.get(index).result()) : null;
+            return index < list.size() ? list.get(index).result() : null;
         }
         final List<NetworkItemEntry> items = gridEntries();
         return index < items.size() ? items.get(index).key() : null;
@@ -1535,7 +1538,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     @Nullable
     private CraftCatalogPayload.Entry craftEntryFor(final StorageKey key) {
         for (final CraftCatalogPayload.Entry e : crafts) {
-            if (key.equals(StorageKey.of(e.result()))) {
+            if (key.equals(e.result())) {
                 return e;
             }
         }
@@ -2163,7 +2166,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** A craftable result as a network entry: what the network holds of it, or nothing. */
     private NetworkItemEntry entryForResult(final CraftCatalogPayload.Entry e) {
-        final StorageKey key = StorageKey.of(e.result());
+        final StorageKey key = e.result();
         for (final NetworkItemEntry item : networkItems) {
             if (item.key().equals(key)) {
                 return item;
@@ -2194,8 +2197,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final List<CraftCatalogPayload.Entry> out = new ArrayList<>();
         for (final CraftCatalogPayload.Entry e : crafts) {
             final boolean named = q.isEmpty() || e.title().toLowerCase(Locale.ROOT).contains(q)
-                    || e.result().getHoverName().getString().toLowerCase(Locale.ROOT).contains(q);
-            if (named && passesFilters(StorageKey.of(e.result()))) {
+                    || e.result().displayName().getString().toLowerCase(Locale.ROOT).contains(q);
+            if (named && passesFilters(e.result())) {
                 out.add(e);
             }
         }
@@ -2670,7 +2673,12 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final int idx = grid.cellAt(mouseX, mouseY);
             final List<CraftCatalogPayload.Entry> list = filteredCrafts();
             if (idx >= 0 && idx < list.size()) {
-                g.renderTooltip(font, list.get(idx).result(), mouseX, mouseY);
+                final StorageKey key = list.get(idx).result();
+                if (key.isItem()) {
+                    g.renderTooltip(font, key.stack(1), mouseX, mouseY);
+                } else {
+                    g.renderComponentTooltip(font, List.of(key.displayName()), mouseX, mouseY);
+                }
             }
         }
     }
@@ -3078,7 +3086,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     private void openCraftPopup(final CraftCatalogPayload.Entry entry) {
         craftEntry = entry;
-        craftQty = 1;
+        // A liquid or gas is ordered in millibuckets, a bucket of it to begin with.
+        craftQty = entry.result().isItem() ? 1 : FLUID_CRAFT_START;
         craftRecipe = CraftPlanRequestPayload.ANY; // the machine's choice, until the plan says which it took
         craftPriority = OperationPriority.DEFAULT;
         craftPlan = null;
@@ -3103,6 +3112,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         requestCraftPlan();
     }
 
+    /* The {@code at}-th quantity step: items by ones and stacks, a liquid or gas by tenths and whole buckets. */
+    private int craftStep(final int at) {
+        return craftEntry == null || craftEntry.result().isItem() ? CRAFT_STEPS[at] : FLUID_CRAFT_STEPS[at];
+    }
+
     /** Picks a recipe card: the machine remembers it for the item, and the plan is redone with it. */
     private void chooseRecipe(final int index) {
         if (craftEntry == null || craftPlan == null || index < 0 || index >= craftPlan.options().size()) {
@@ -3110,7 +3124,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
         craftRecipe = index;
         PacketDistributor.sendToServer(new SetSettingPayload(host, "recipe",
-                StorageKey.of(craftEntry.result()).id() + "=" + index));
+                craftEntry.result().id() + "=" + index));
         requestCraftPlan();
     }
 
@@ -3225,7 +3239,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 if (craftEntry == null) {
                     return;
                 }
-                DesktopItems.item(g, craftEntry.result(), x(), y() - 1);
+                DesktopItems.data(g, ctx.font(), craftEntry.result(), x(), y() - 1, null);
                 Draw.text(g, ctx.font(), GameText.resolve(CRAFT_ITEM.with(Texts.clip(ctx.font(), craftEntry.title(),
                         width() - 40))), x() + 20, y() + 2, ctx.skin().text());
             }
@@ -3269,9 +3283,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         private CraftPopup() {
             super("", CRAFT_W, CRAFT_H);
             for (int i = 0; i < CRAFT_STEPS.length; i++) {
-                final int step = CRAFT_STEPS[i];
-                steps[i] = add(new Button((step > 0 ? "+" : "") + step, () -> setCraftQty(craftQty + step))
-                        .setLabelScale(Texts.SMALL));
+                final int at = i;
+                steps[i] = add(new Button(() -> {
+                    final int step = craftStep(at);
+                    return (step > 0 ? "+" : "") + step;
+                }, () -> setCraftQty(craftQty + craftStep(at))).setLabelScale(Texts.SMALL));
             }
             for (int i = 0; i < CARDS_SHOWN; i++) {
                 cards[i] = add(new RecipeCard(i));

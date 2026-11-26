@@ -1024,6 +1024,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   folder of each disk. Files are picked as the file explorer picks them: a click takes one, Shift+click the run from
   the one clicked last, Ctrl+click adds or drops one, and Ctrl+A takes them all. Load all takes the folder shown, and
   Download writes into it. A click on a file used to add it to the picked ones or take it out.
+- A liquid or a gas a machine recipe makes can be ordered: the Network Interactor's crafts, the
+  terminal's, a portable's network app and the Craft Planner list it with its own icon, and order it in millibuckets,
+  a bucket to begin with and by tenths and whole buckets. A machine recipe whose result was a liquid was left out of
+  every list, so mercury or phenol could only come as part of something else. A prompt finds a liquid or a gas by its
+  name as it finds an item: `iql CRAFT 1000 jscore:mercury`, and a key's own id such as `gas|jscore:chlorine`; it
+  answered that no item was called that. The Craft Planner no longer cuts the player off for a recipe that takes a
+  liquid somewhere in its tree: the liquid's line of the tree could not be sent.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

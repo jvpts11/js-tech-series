@@ -7,12 +7,12 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
@@ -34,20 +34,20 @@ public record CraftCatalogPayload(List<Entry> entries) implements CustomPacketPa
     /**
      * One craftable result.
      *
-     * @param result       what the recipe makes
+     * @param result       what the recipe makes: an item, or a liquid or gas a machine recipe makes
      * @param availability the stock dot: green, amber or red
      * @param multiStage   whether a multi-stage pipeline makes it
      * @param label        the name the recipe's author gave it, or {@code ""} when it goes by its result
      */
-    public record Entry(ItemStack result, byte availability, boolean multiStage, String label) {
+    public record Entry(StorageKey result, byte availability, boolean multiStage, String label) {
 
-        public Entry(final ItemStack result, final byte availability, final boolean multiStage) {
+        public Entry(final StorageKey result, final byte availability, final boolean multiStage) {
             this(result, availability, multiStage, "");
         }
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Entry> STREAM_CODEC =
                 StreamCodec.composite(
-                        ItemStack.STREAM_CODEC, Entry::result,
+                        StorageKey.STREAM_CODEC, Entry::result,
                         ByteBufCodecs.BYTE, Entry::availability,
                         ByteBufCodecs.BOOL, Entry::multiStage,
                         ByteBufCodecs.stringUtf8(MAX_LABEL), Entry::label,
@@ -55,7 +55,7 @@ public record CraftCatalogPayload(List<Entry> entries) implements CustomPacketPa
 
         /** What the entry is listed as: the recipe's own name, or its result's name when it has none. */
         public String title() {
-            return label.isEmpty() ? result.getHoverName().getString() : label;
+            return label.isEmpty() ? result.displayName().getString() : label;
         }
     }
 

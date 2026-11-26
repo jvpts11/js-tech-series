@@ -258,8 +258,9 @@ final class NetworkAppView implements IMobileAppView {
         final int from = Math.min(page.frame().scroll(), Math.max(0, crafts.size() - rows));
         for (int n = from; n < crafts.size() && n < from + rows; n++) {
             final CraftCatalogPayload.Entry entry = crafts.get(n);
-            final StorageKey key = StorageKey.of(entry.result());
-            y = kit.row(c, y, entry.result(), entry.label().isEmpty() ? name(key) : entry.label(), "",
+            final StorageKey key = entry.result();
+            // As the stock rows show what they hold: an item's own icon, none for a liquid or gas.
+            y = kit.row(c, y, key.stack(1), entry.label().isEmpty() ? name(key) : entry.label(), "",
                     Tone.TEXT, MobileTap.run(() -> choose(page, key)), false);
             c.disc(c.width() - 8, y - kit.rowPitch() + 6, 2.5F, dot(kit, entry.availability()));
         }
@@ -458,7 +459,7 @@ final class NetworkAppView implements IMobileAppView {
     @Nullable
     private static CraftCatalogPayload.Entry entryOf(final PortableNetworkPayload view, final StorageKey key) {
         for (final CraftCatalogPayload.Entry entry : view.crafts()) {
-            if (StorageKey.of(entry.result()).equals(key)) {
+            if (entry.result().equals(key)) {
                 return entry;
             }
         }
@@ -469,7 +470,7 @@ final class NetworkAppView implements IMobileAppView {
     @Nullable
     private static CraftPlanPayload planFor(final StorageKey key, final long amount) {
         final CraftPlanPayload plan = PortableApps.plan();
-        return plan != null && plan.quantity() == amount && StorageKey.of(plan.result()).equals(key) ? plan : null;
+        return plan != null && plan.quantity() == amount && plan.result().equals(key) ? plan : null;
     }
 
     /* The stock dot of a craft: green when it can be made now, amber for some of it, red for none. */

@@ -7,13 +7,13 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * Client to server: the Network Interactor desktop window requested a craft. The same network CRAFT
@@ -21,10 +21,10 @@ import net.minecraft.world.item.ItemStack;
  *
  * @param host       the computer the desktop is bound to
  * @param monitorPos the monitor used, validated against the player's reach
- * @param result     the product to craft
- * @param amount     how many to craft
+ * @param result     the product to craft: an item, or a liquid or gas a machine makes
+ * @param amount     how much to craft, in the product's own units
  */
-public record NiCraftPayload(BlockPos host, BlockPos monitorPos, ItemStack result,
+public record NiCraftPayload(BlockPos host, BlockPos monitorPos, StorageKey result,
                              long amount) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<NiCraftPayload> TYPE =
@@ -34,7 +34,7 @@ public record NiCraftPayload(BlockPos host, BlockPos monitorPos, ItemStack resul
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, NiCraftPayload::host,
                     BlockPos.STREAM_CODEC, NiCraftPayload::monitorPos,
-                    ItemStack.STREAM_CODEC, NiCraftPayload::result,
+                    StorageKey.STREAM_CODEC, NiCraftPayload::result,
                     ByteBufCodecs.VAR_LONG, NiCraftPayload::amount,
                     NiCraftPayload::new);
 

@@ -15,7 +15,6 @@ import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
 import dev.jstech.computers.operation.payload.CraftSubmitPayload;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
@@ -134,9 +133,9 @@ final class TerminalCraftPopup {
         g.fill(px, py, px + POPUP_W, py + POPUP_H, JsTechTheme.panel());
         g.fill(px, py, px + POPUP_W, py + 1, JsTechTheme.accent());
 
-        screen.drawDataIcon(g, StorageKey.of(pattern.result()), -1L, px + 6, py + 5);
+        screen.drawDataIcon(g, pattern.result(), -1L, px + 6, py + 5);
         Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.CRAFT_TITLE.with(
-                        trim(pattern.result().getHoverName().getString(), 18))),
+                        trim(pattern.result().displayName().getString(), 18))),
                 px + 28, py + 8, JsTechTheme.text());
 
         /*

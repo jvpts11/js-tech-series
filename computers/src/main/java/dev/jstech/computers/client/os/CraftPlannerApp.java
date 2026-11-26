@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.payload.CraftPlannerPayload;
 import dev.jstech.computers.operation.payload.NiCraftPayload;
 import dev.jstech.computers.operation.payload.RequestCraftPlannerPayload;
 import dev.jstech.computers.printer.PrintLayout;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
@@ -32,13 +33,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import static dev.jstech.computers.client.os.CraftPlannerTexts.BENCH_RUNS;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.CRAFT;
@@ -105,7 +106,9 @@ public final class CraftPlannerApp implements IDesktopApp {
     private List<CraftCatalogPayload.Entry> catalog = List.of();
     @Nullable
     private CraftPlannerPayload plan;
-    private ItemStack selected = ItemStack.EMPTY;
+    /* The target picked: an item, or a liquid or gas a machine makes; none before one is picked. */
+    @Nullable
+    private StorageKey selected;
     private long qty = 1;
     private boolean treeMode;
     private int frame;
@@ -153,7 +156,7 @@ public final class CraftPlannerApp implements IDesktopApp {
                 Label.Tone.DIM));
 
         pickLabel = root.add(new Label(GameText.resolve(PICK_AN_ITEM), Label.Tone.DIM));
-        nameLabel = root.add(new Label(() -> selected.getHoverName().getString()));
+        nameLabel = root.add(new Label(() -> selected == null ? "" : selected.displayName().getString()));
         qtyMinus = root.add(new Button("-", () -> setQty(qty - step())));
         qtyLabel = root.add(new Label(() -> String.valueOf(qty)).setAlign(Label.Align.CENTER));
         qtyPlus = root.add(new Button("+", () -> setQty(qty + step())));
@@ -178,7 +181,7 @@ public final class CraftPlannerApp implements IDesktopApp {
 
         root.focus(search);
         active = this;
-        PacketDistributor.sendToServer(new RequestCraftPlannerPayload(host, monitorPos, ItemStack.EMPTY, 0));
+        PacketDistributor.sendToServer(RequestCraftPlannerPayload.catalogue(host, monitorPos));
     }
 
     public static void acceptCatalog(final List<CraftCatalogPayload.Entry> entries) {
@@ -197,7 +200,7 @@ public final class CraftPlannerApp implements IDesktopApp {
     public List<String> catalogNames() {
         final List<String> out = new ArrayList<>();
         for (final CraftCatalogPayload.Entry entry : catalogList.items()) {
-            out.add(entry.result().getHoverName().getString());
+            out.add(entry.result().displayName().getString());
         }
         return out;
     }
@@ -245,8 +248,9 @@ public final class CraftPlannerApp implements IDesktopApp {
     }
 
     private void requestPlan() {
-        if (!selected.isEmpty()) {
-            PacketDistributor.sendToServer(new RequestCraftPlannerPayload(host, monitorPos, selected, qty));
+        if (selected != null) {
+            PacketDistributor.sendToServer(new RequestCraftPlannerPayload(host, monitorPos, Optional.of(selected),
+                    qty));
         }
     }
 
@@ -254,7 +258,7 @@ public final class CraftPlannerApp implements IDesktopApp {
     public void onRestored() {
         active = this;
         // The catalog may have grown (recipes loaded meanwhile) and the plan's stock may have moved.
-        PacketDistributor.sendToServer(new RequestCraftPlannerPayload(host, monitorPos, ItemStack.EMPTY, 0));
+        PacketDistributor.sendToServer(RequestCraftPlannerPayload.catalogue(host, monitorPos));
         requestPlan();
     }
 
@@ -309,8 +313,8 @@ public final class CraftPlannerApp implements IDesktopApp {
         final int leftW = Math.max(96, (int) (width * 0.38));
         layout(font, px, py, width - 12, ph, leftW);
         g.fill(px + leftW - 3, py, px + leftW - 2, py + ph, skin.edge());
-        if (!selected.isEmpty()) {
-            itemIcon(g, selected, px + leftW, py, 16);
+        if (selected != null) {
+            keyIcon(g, font, selected, px + leftW, py, 16);
             if (pillLabel.visible()) {
                 final int pillW = font.width(pillLabel.text()) + 8;
                 g.fill(pillLabel.x() - 4, pillLabel.y() - 2, pillLabel.x() - 4 + pillW, pillLabel.y() + 9,
@@ -334,7 +338,7 @@ public final class CraftPlannerApp implements IDesktopApp {
 
         final int rx = x + leftW;
         final int rw = w - leftW;
-        final boolean picked = !selected.isEmpty();
+        final boolean picked = selected != null;
         pickLabel.setVisible(!picked);
         pickLabel.setBounds(rx + 2, y + 4, rw - 4, 8);
         for (final var c : List.of(nameLabel, qtyMinus, qtyLabel, qtyPlus)) {
@@ -408,9 +412,9 @@ public final class CraftPlannerApp implements IDesktopApp {
 
     private void renderCatalogRow(final GuiGraphics g, final UiContext ctx, final CraftCatalogPayload.Entry e, final int index,
                                   final int x, final int y, final int w, final int h, final boolean hovered, final boolean selectedRow) {
-        final boolean sel = ItemStack.isSameItemSameComponents(e.result(), selected);
+        final boolean sel = e.result().equals(selected);
         ctx.skin().listRow(g, x, y, w, h, hovered, sel);
-        itemIcon(g, e.result(), x + 1, y, 12);
+        keyIcon(g, ctx.font(), e.result(), x + 1, y, 12);
         Draw.text(g, ctx.font(), Texts.clip(ctx.font(), e.title(), w - 18), x + 15, y + 3,
                 sel ? ctx.skin().accent() : ctx.skin().text());
     }
@@ -418,7 +422,7 @@ public final class CraftPlannerApp implements IDesktopApp {
     private void catalogClicked(final int index, final int button, final double mx, final double my) {
         final List<CraftCatalogPayload.Entry> shown = filtered();
         if (button == 0 && index >= 0 && index < shown.size()) {
-            select(shown.get(index).result().copy());
+            select(shown.get(index).result());
         }
     }
 
@@ -436,7 +440,7 @@ public final class CraftPlannerApp implements IDesktopApp {
         final boolean ok = r.have() >= r.need();
         final String s = GameText.resolve(ok ? HAVE.with(JsTechTheme.fmt(r.have()))
                 : NEED_HAVE.with(JsTechTheme.fmt(r.need()), JsTechTheme.fmt(r.have())));
-        itemIcon(g, r.item(), x + 1, y - 1, 11);
+        keyIcon(g, font, r.key(), x + 1, y - 1, 11);
         Draw.text(g, font, Texts.clip(font, r.name().getString(), w - 21 - font.width(s)), x + 15, y,
                 ctx.skin().text());
         Draw.text(g, font, s, x + w - font.width(s), y, ok ? PALETTE.get().good() : PALETTE.get().missing());
@@ -450,9 +454,9 @@ public final class CraftPlannerApp implements IDesktopApp {
         if (n.depth() > 0) {
             g.fill(x + 2 + (n.depth() - 1) * 9 + 3, y + 4, ix - 1, y + 5, ctx.skin().edge());
         }
-        itemIcon(g, n.item(), ix, y - 1, 10);
+        keyIcon(g, font, n.item(), ix, y - 1, 10);
         final String label =
-                GameText.resolve(TREE_NODE.with(JsTechTheme.fmt(n.qty()), n.item().getHoverName().getString()));
+                GameText.resolve(TREE_NODE.with(JsTechTheme.fmt(n.qty()), n.item().displayName().getString()));
         Draw.text(g, font, Texts.clip(font, label, w - (ix - x) - 13 - 40), ix + 12, y, ctx.skin().text());
         if (!n.craftable()) {
             final String raw = GameText.resolve(RAW);
@@ -462,8 +466,8 @@ public final class CraftPlannerApp implements IDesktopApp {
 
     // state
 
-    private void select(final ItemStack stack) {
-        this.selected = stack;
+    private void select(final StorageKey target) {
+        this.selected = target;
         this.qty = 1;
         this.plan = null;
         treeList.setScroll(0);
@@ -481,7 +485,7 @@ public final class CraftPlannerApp implements IDesktopApp {
     }
 
     private void craft() {
-        if (!selected.isEmpty() && shortRows().isEmpty()) {
+        if (selected != null && shortRows().isEmpty()) {
             PacketDistributor.sendToServer(new NiCraftPayload(host, monitorPos, selected, qty));
         }
     }
@@ -534,7 +538,7 @@ public final class CraftPlannerApp implements IDesktopApp {
      * figure stands right-aligned under its head, a missing count under the needs.
      */
     private void print() {
-        if (plan == null || selected.isEmpty()) {
+        if (plan == null || selected == null) {
             return;
         }
         final List<CraftPlanPayload.Row> missing = shortRows();
@@ -578,7 +582,7 @@ public final class CraftPlannerApp implements IDesktopApp {
         }
         final int first = firstColumn(stages, ingredients, lacking);
         final List<String> lines = new ArrayList<>();
-        lines.add(GameText.resolve(PRINT_TARGET.with(JsTechTheme.fmt(qty), selected.getHoverName().getString())));
+        lines.add(GameText.resolve(PRINT_TARGET.with(JsTechTheme.fmt(qty), selected.displayName().getString())));
         lines.add("");
         lines.add(GameText.resolve(STAGES));
         lines.addAll(tableLines(stages, List.of(), first));
@@ -641,23 +645,21 @@ public final class CraftPlannerApp implements IDesktopApp {
         final List<CraftCatalogPayload.Entry> out = new ArrayList<>();
         for (final CraftCatalogPayload.Entry e : catalog) {
             if (e.title().toLowerCase(Locale.ROOT).contains(q)
-                    || e.result().getHoverName().getString().toLowerCase(Locale.ROOT).contains(q)) {
+                    || e.result().displayName().getString().toLowerCase(Locale.ROOT).contains(q)) {
                 out.add(e);
             }
         }
         return out;
     }
 
-    private void itemIcon(final GuiGraphics g, final ItemStack stack, final int x, final int y, final int size) {
-        if (stack.isEmpty()) {
-            g.fill(x + 1, y + 1, x + size - 1, y + size - 1, skin.fieldBg());
-            return;
-        }
+    /* What a key is drawn as at {@code size} pixels: an item's own icon, a liquid's or gas's as the storage shows it. */
+    private void keyIcon(final GuiGraphics g, final Font font, final StorageKey key, final int x, final int y,
+                         final int size) {
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         final float s = size / 16.0f;
         g.pose().scale(s, s, 1);
-        DesktopItems.item(g, stack, 0, 0);
+        DesktopItems.data(g, font, key, 0, 0, null);
         g.pose().popPose();
     }
 

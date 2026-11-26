@@ -57,7 +57,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -194,14 +193,17 @@ public final class CraftingPayloads {
                 }
                 dot = any ? CraftCatalogPayload.DOT_AMBER : CraftCatalogPayload.DOT_RED;
             }
-            entries.put(key, new CraftCatalogPayload.Entry(pattern.result().copy(), dot,
+            entries.put(key, new CraftCatalogPayload.Entry(key, dot,
                     mainframe.hasMultiStageRecipe(key),
                     TextBounds.clip(pattern.name(), CraftCatalogPayload.MAX_LABEL)));
             if (entries.size() >= CraftCatalogPayload.MAX_ENTRIES) {
                 break;
             }
         }
-        // Machine recipes (processing / multi-stage) the network can run, shown by their primary item result.
+        /*
+         * Machine recipes (processing / multi-stage) the network can run, shown by their primary result: an item, or
+         * a liquid or gas, which is ordered in its own units as the network stores it.
+         */
         for (final var recipe : mainframe.networkMachineRecipes()) {
             if (entries.size() >= CraftCatalogPayload.MAX_ENTRIES) {
                 break;
@@ -209,10 +211,6 @@ public final class CraftingPayloads {
             final StorageKey key = recipe.resultKey();
             if (key == null || entries.containsKey(key)) {
                 continue;
-            }
-            final ItemStack result = key.stack(1);
-            if (result.isEmpty()) {
-                continue; // a fluid result: the item catalog cannot render it yet (v1)
             }
             byte dot = CraftCatalogPayload.DOT_AMBER;
             if (recipe.proc().isPresent()) {
@@ -229,7 +227,7 @@ public final class CraftingPayloads {
                         : (any ? CraftCatalogPayload.DOT_AMBER : CraftCatalogPayload.DOT_RED);
             }
             final String label = recipe.proc().map(p -> p.name()).orElse(recipe.multi().map(m -> m.name()).orElse(""));
-            entries.put(key, new CraftCatalogPayload.Entry(result, dot, recipe.multi().isPresent(),
+            entries.put(key, new CraftCatalogPayload.Entry(key, dot, recipe.multi().isPresent(),
                     TextBounds.clip(label, CraftCatalogPayload.MAX_LABEL)));
         }
         return List.copyOf(entries.values());
@@ -242,7 +240,7 @@ public final class CraftingPayloads {
             return;
         }
         sendPlan(player, level, host.networkUuid(), payload.result(), payload.quantity(), payload.recipe(),
-                count -> rememberedRecipe(host, StorageKey.of(payload.result()), count));
+                count -> rememberedRecipe(host, payload.result(), count));
     }
 
     /**
@@ -251,13 +249,13 @@ public final class CraftingPayloads {
      * are. A machine's dialog and a portable's network app ask it alike.
      */
     public static void sendPlan(final ServerPlayer player, final ServerLevel level, final NetworkUuid network,
-                                final ItemStack result, final long quantity, final int asked,
+                                final StorageKey result, final long quantity, final int asked,
                                 final IntUnaryOperator remembered) {
         final MainframeBlockEntity mainframe = quantity <= 0L ? null : resolveMainframe(level, network);
         if (mainframe == null) {
             return;
         }
-        final StorageKey key = StorageKey.of(result);
+        final StorageKey key = result;
         // A craft's plan is the network's engine's to make; with none running, the dialog is told so.
         final ICraftPlanning planner = mainframe.networkOperations().planner();
         if (planner == null) {
@@ -453,7 +451,7 @@ public final class CraftingPayloads {
         if (mainframe == null) {
             return;
         }
-        final StorageKey resultKey = StorageKey.of(payload.result());
+        final StorageKey resultKey = payload.result();
         final Runnable refresh = () -> {
             dispatchTerminalOpsLog(player, net, level);
             dispatchActiveOperations(player, net, level);

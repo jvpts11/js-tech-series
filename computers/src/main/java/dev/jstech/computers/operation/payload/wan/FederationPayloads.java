@@ -204,7 +204,7 @@ public final class FederationPayloads {
             if (out.size() >= FederationStatePayload.MOST_CRAFTABLE) {
                 break;
             }
-            out.add(StorageKey.of(entry.result()));
+            out.add(entry.result());
         }
         return out;
     }

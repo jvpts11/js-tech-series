@@ -395,8 +395,7 @@ public final class NetworkInteractorPayloads {
     private static void handleNiCraft(final NiCraftPayload payload, final ServerPlayer player,
                                       final ServerLevel level) {
         final var host = niHost(player, level, payload.host(), payload.monitorPos());
-        if (host == null || host.networkUuid() == null || payload.amount() <= 0L
-                || payload.result().isEmpty()) {
+        if (host == null || host.networkUuid() == null || payload.amount() <= 0L) {
             return;
         }
         final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
@@ -410,7 +409,7 @@ public final class NetworkInteractorPayloads {
          * The shared entry point runs a machine or multi-stage recipe directly, else plans a recursive
          * craft; refreshNi resends the Network Interactor now and again when the operation settles.
          */
-        mainframe.networkOperations().craft(CraftRequest.of(StorageKey.of(payload.result()), safeAmount, true,
+        mainframe.networkOperations().craft(CraftRequest.of(payload.result(), safeAmount, true,
                 host.originLabel(MoveLabels.INTERACTOR), refreshNi));
         refreshNi.run();
     }

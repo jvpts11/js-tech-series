@@ -67,7 +67,7 @@ public final class CraftPlannerPayloads {
             dispatchCraftCatalog(player, host.networkUuid(), level);
         } else {
             PacketDistributor.sendToPlayer(player, collectCraftPlanner(level, host.networkUuid(),
-                    StorageKey.of(payload.target()), Math.max(1, payload.quantity())));
+                    payload.target().get(), Math.max(1, payload.quantity())));
         }
     }
 
@@ -82,8 +82,7 @@ public final class CraftPlannerPayloads {
         // A craft's plan is the network's engine's to make: with none running there is nothing to show.
         final ICraftPlanning planner = mf == null ? null : mf.networkOperations().planner();
         if (planner == null) {
-            return new CraftPlannerPayload(key.stack(1), quantity, false, false, 0L, 0L,
-                    List.of(), List.of(), List.of());
+            return new CraftPlannerPayload(key, quantity, false, false, 0L, 0L, List.of(), List.of(), List.of());
         }
         final var patterns = mf.networkPatterns();
         final var machines = mf.networkProcessingPatterns();
@@ -91,8 +90,7 @@ public final class CraftPlannerPayloads {
         final var plan = planner.plan(key, quantity, patterns, machines, stock);
         final var whole = wholePlan(planner, plan, key, quantity, patterns, machines, stock);
         if (whole.steps().isEmpty()) {
-            return new CraftPlannerPayload(key.stack(1), quantity, false, false, 0L, 0L,
-                    List.of(), List.of(), List.of());
+            return new CraftPlannerPayload(key, quantity, false, false, 0L, 0L, List.of(), List.of(), List.of());
         }
         final long maxFeasible = planner.maxFeasible(key, quantity, patterns, machines, stock);
         final List<CraftPlannerPayload.Stage> stages = new ArrayList<>();
@@ -113,7 +111,7 @@ public final class CraftPlannerPayloads {
         }
         final List<CraftPlannerPayload.TreeNode> tree = new ArrayList<>();
         treeWalk(key, Math.max(1, quantity), 0, patterns, machines, tree, new HashSet<>());
-        return new CraftPlannerPayload(key.stack(1), quantity, true, plan.feasible(), plan.produced(),
+        return new CraftPlannerPayload(key, quantity, true, plan.feasible(), plan.produced(),
                 maxFeasible, stages, ingredients, tree);
     }
 
@@ -192,7 +190,8 @@ public final class CraftPlannerPayloads {
             }
         }
         final boolean craftable = inputs != null;
-        out.add(new CraftPlannerPayload.TreeNode(depth, key.stack(1), need, craftable));
+        // By its key: a liquid or gas ingredient has no item stack, and an empty one cannot be sent.
+        out.add(new CraftPlannerPayload.TreeNode(depth, key, need, craftable));
         if (!craftable || !visiting.add(key)) {
             return;
         }
