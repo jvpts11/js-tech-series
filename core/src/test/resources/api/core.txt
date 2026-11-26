@@ -1333,12 +1333,14 @@ stable 4
 10 dev.jstech.core.client.config.IConfigChooser  abstract Component describe(ConfigKey<?>, Object)
 10 dev.jstech.core.client.config.IConfigChooser  abstract Screen open(Screen, ConfigDraft, ConfigKey<?>)
 10 dev.jstech.core.client.gui.component.AmountStepper  type final class extends Panel
+104 dev.jstech.core.client.gui.component.AmountStepper  AmountStepper editAmount()
 10 dev.jstech.core.client.gui.component.AmountStepper  AmountStepper setAmount(long)
 10 dev.jstech.core.client.gui.component.AmountStepper  AmountStepper setOnChange(LongConsumer)
 10 dev.jstech.core.client.gui.component.AmountStepper  AmountStepper setRange(long, long)
 10 dev.jstech.core.client.gui.component.AmountStepper  UiComponent setBounds(int, int, int, int)
 10 dev.jstech.core.client.gui.component.AmountStepper  long amount()
 10 dev.jstech.core.client.gui.component.AmountStepper  new()
+104 dev.jstech.core.client.gui.component.AmountStepper  void render(GuiGraphics, UiContext)
 10 dev.jstech.core.client.gui.component.Breadcrumbs  type final class extends UiComponent
 10 dev.jstech.core.client.gui.component.Breadcrumbs  Breadcrumbs setOnEmptyClick(Runnable)
 10 dev.jstech.core.client.gui.component.Breadcrumbs  String crumbAt(double)
@@ -2184,6 +2186,7 @@ stable 4
 10 dev.jstech.core.client.gui.logic.StepperMath  static long doubled(long, long, long)
 10 dev.jstech.core.client.gui.logic.StepperMath  static long halved(long, long, long)
 10 dev.jstech.core.client.gui.logic.StepperMath  static long increment(long, long, long)
+104 dev.jstech.core.client.gui.logic.StepperMath  static long typed(String, long, long)
 10 dev.jstech.core.client.gui.logic.TableModel  type final class<R>
 10 dev.jstech.core.client.gui.logic.TableModel  List<Column<R>> columns()
 10 dev.jstech.core.client.gui.logic.TableModel  List<R> shown()

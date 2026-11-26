@@ -173,6 +173,17 @@ public final class CraftingChainClientTests {
                 })
                 .thenWaitUntilServer(level -> cc(ctx, level).studio().procTimeout() == 600, SCREEN_WAIT,
                         "the typed timeout to reach the workbench", level -> "timeout=" + cc(ctx, level).studio().procTimeout())
+                // The amount popup opens with the amount selected: digits typed replace it, and Done keeps them.
+                .then(0, () -> studio(ctx).openAmountFor(false, 0))
+                .thenAssert(1, () -> studio(ctx).isAmountPopupOpen(), "Shift and a click open the amount popup")
+                .then(0, () -> ctx.type("12"))
+                .then(1, () -> ctx.assertTrue(studio(ctx).popupAmount() == 12,
+                        "the digits typed are the amount; got " + studio(ctx).popupAmount()))
+                .thenScreenshot(2, "amount-typed")
+                .then(0, () -> ctx.clickDesktop(studioPoint(ctx, studio(ctx).amountDoneCenter())))
+                .thenWaitUntilServer(level -> cc(ctx, level).studio().procInput(0).amount() == 12, SCREEN_WAIT,
+                        "the typed amount to reach the workbench",
+                        level -> "amount=" + cc(ctx, level).studio().procInput(0).amount())
                 .thenScreenshot(2, "machine-draft")
                 // Burn, and prove the .craft lands on the disc in the encoder.
                 .then(0, () -> ctx.clickDesktop(studioPoint(ctx, studio(ctx).barButtonCenter(0))))

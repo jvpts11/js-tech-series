@@ -814,13 +814,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         }
         final PatternStudioStatePayload.ProcCell cell = procCell(output ? state.outputs() : state.inputs(), index);
         if (shift && cell != null) {
-            amountForOutput = output;
-            amountCell = index;
-            amount.setAmount(cell.cell().amount());
-            lasts.setAmount(cell.lasts());
-            amountPopup.setPreferredSize(AMOUNT_POPUP_W, output ? AMOUNT_POPUP_H : LASTING_POPUP_H);
-            amountPopup.open();
-            amountPopup.placeIn(lastX, lastY, lastW, lastH);
+            openAmount(output, index, cell);
         } else if (button == 1) {
             if (output && cell != null) {
                 send(PatternStudioEditPayload.number(host, monitorPos, PatternStudioEditPayload.PROC_SET_CHANCE,
@@ -1274,6 +1268,19 @@ public final class PatternStudioApp implements IInventoryBandApp {
         amountDone.setBounds(p.right() - 49, p.bottom() - BTN_H - 5, 44, BTN_H);
     }
 
+    private void openAmount(final boolean output, final int index, final PatternStudioStatePayload.ProcCell cell) {
+        amountForOutput = output;
+        amountCell = index;
+        amount.setAmount(cell.cell().amount());
+        lasts.setAmount(cell.lasts());
+        amountPopup.setPreferredSize(AMOUNT_POPUP_W, output ? AMOUNT_POPUP_H : LASTING_POPUP_H);
+        amountPopup.open();
+        amountPopup.placeIn(lastX, lastY, lastW, lastH);
+        // The amount opens selected: digits typed straight away replace it.
+        amountPopup.focus(amount);
+        amount.editAmount();
+    }
+
     private void commitAmount(final long value) {
         send(PatternStudioEditPayload.number(host, monitorPos,
                 amountForOutput ? PatternStudioEditPayload.PROC_SET_OUTPUT_AMOUNT : PatternStudioEditPayload.PROC_SET_INPUT_AMOUNT,
@@ -1527,6 +1534,25 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     public boolean isAmountPopupOpen() {
         return amountPopup.isOpen();
+    }
+
+    /** Opens the amount popup on a processing cell that holds something, as Shift and a click on it do. */
+    public void openAmountFor(final boolean output, final int index) {
+        final PatternStudioStatePayload.ProcCell cell =
+                state == null ? null : procCell(output ? state.outputs() : state.inputs(), index);
+        if (cell != null) {
+            openAmount(output, index, cell);
+        }
+    }
+
+    /** The amount the popup holds now, what is being typed into it included. */
+    public long popupAmount() {
+        return amount.amount();
+    }
+
+    /** The centre of the amount popup's Done. */
+    public int[] amountDoneCenter() {
+        return local(amountDone.center());
     }
 
     public int railTab() {

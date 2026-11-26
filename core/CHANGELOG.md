@@ -580,6 +580,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- Amounts typed into a stepper: J's Core's API is at version 104. An `AmountStepper`'s amount is a field that
+  takes digits, the amount at every one typed; `editAmount` hands it the keyboard with the amount selected, and
+  `StepperMath.typed` reads digits into an amount inside a range, a number too long for a long as the maximum.
+  Experimental.
 - Upgrade bays kept to their limit and their tab: J's Core's API is at version 103. `MachineMenu` gathers alike
   stacks by a double click only from the slots shown (`canTakeItemForPickAll`), and its bays take a stack only as far
   as the machine's own limit for it.
@@ -2374,6 +2378,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - JEI and EMI list the Core's gases, each drawn as the cylinder painted for it, and find the recipes
   that take or make one; a gas dragged from JEI onto a Pattern Studio cell sets that cell to the gas, and a page sent
   to the Studio brings its gases with it.
+- An amount stepper takes digits: its number is a field, so 1000 is typed rather than stepped to.
+  The Pattern Studio's amount popup opens with the amount selected, and the digits typed straight away replace it.
 - Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
   cables beside them still show. They still move only near the player.
 - The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its

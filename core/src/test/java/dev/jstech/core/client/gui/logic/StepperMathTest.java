@@ -46,4 +46,20 @@ public class StepperMathTest {
     public void halved_roundsNegativeValuesDown() {
         assertEquals(-2, StepperMath.halved(-3, -10, 10));
     }
+
+    @Test
+    public void typed_readsTheDigitsInsideTheRange() {
+        assertEquals(9654, StepperMath.typed("9654", 1, 100_000));
+        assertEquals(64, StepperMath.typed("064", 1, 100));
+        assertEquals(1, StepperMath.typed("0", 1, 100));
+        assertEquals(100, StepperMath.typed("250", 1, 100));
+        assertEquals(12, StepperMath.typed("1 2", 1, 100));
+    }
+
+    @Test
+    public void typed_readsANumberTooLongForALongAsTheMaximum() {
+        final long max = Long.MAX_VALUE / 4;
+        assertEquals(max, StepperMath.typed("99999999999999999999999", 1, max));
+        assertEquals(max, StepperMath.typed(Long.toString(Long.MAX_VALUE), 1, max));
+    }
 }

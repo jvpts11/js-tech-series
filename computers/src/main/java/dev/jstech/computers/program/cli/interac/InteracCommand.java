@@ -252,7 +252,8 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
 
     /** What the network holds, most first, with where each thing lives. */
     private static void list(final CliContext ctx, final InteracWords words) {
-        final String text = words.item();
+        // A number is searched for like any word: a list is never of an amount.
+        final String text = words.text();
         final List<ICliComputer.StoredItem> rows = InteracRows.search(ctx.computer(), text,
                 words.option("sort", "count"), MOST_ROWS * 8);
         if (rows.isEmpty()) {

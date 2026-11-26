@@ -267,6 +267,15 @@ class CliShellTest {
     }
 
     @Test
+    void run_iqlHandsTheStatementOnAsTypedWithItsQuotes() {
+        computer.onNetwork = true;
+        final String query = joined("iql QUERY items WHERE name = 'Iron Ingot'");
+        assertEquals("QUERY items WHERE name = 'Iron Ingot'", computer.lastStatement, query);
+        final String set = joined("iql SET INTERFACE 'Kiln A'  EXCLUSIVE ON");
+        assertEquals("SET INTERFACE 'Kiln A'  EXCLUSIVE ON", computer.lastStatement, set);
+    }
+
+    @Test
     void run_operationQueryReadsStorageInsteadOfExecuting() {
         computer.onNetwork = true;
         computer.stock.add(new ICliComputer.StoredItem("cobblestone", 100));
@@ -310,6 +319,7 @@ class CliShellTest {
         boolean onNetwork = true;
         boolean explode;
         String lastCall = "";
+        String lastStatement = "";
         final List<StoredItem> stock = new ArrayList<>();
         /*
          * The shell these tests drive is the DOS command set by default, so the machine under it says it is a
@@ -449,6 +459,7 @@ class CliShellTest {
 
         /** Answers a whole statement as an engine would: a read from the stock, an action through execute. */
         @Override public StatementResult runStatement(final String statement, final int rowLimit) {
+            lastStatement = statement;
             final IqlParseResult parsed = IqlParser.tryParse(statement);
             final IqlOperation op = parsed.operation();
             if (op.verb() == IqlVerb.QUERY || op.verb() == IqlVerb.COUNT) {

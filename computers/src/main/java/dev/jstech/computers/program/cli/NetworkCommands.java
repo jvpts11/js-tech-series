@@ -128,7 +128,9 @@ final class NetworkCommands {
                 ctx.out().error(USAGE_HINT);
                 return;
             }
-            final IqlParseResult parsed = IqlParser.tryParse(ctx.rest(0));
+            // The statement as typed: the shell's words have lost the quotes around a name of several words.
+            final String statement = ctx.typed();
+            final IqlParseResult parsed = IqlParser.tryParse(statement);
             if (!parsed.ok()) {
                 ctx.out().error(SYNTAX.with(parsed.error()));
                 return;
@@ -142,7 +144,7 @@ final class NetworkCommands {
              * The whole statement goes to the network's engine, so a definition (a view, a procedure, a job) is
              * answered here exactly as in the studio, instead of being parsed as an action it is not.
              */
-            final ICliComputer.StatementResult outcome = ctx.computer().runStatement(ctx.rest(0), QUERY_LIMIT);
+            final ICliComputer.StatementResult outcome = ctx.computer().runStatement(statement, QUERY_LIMIT);
             if (!outcome.ok()) {
                 ctx.out().error(outcome.said());
                 return;

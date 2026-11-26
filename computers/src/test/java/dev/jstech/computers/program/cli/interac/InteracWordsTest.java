@@ -95,6 +95,16 @@ class InteracWordsTest {
     }
 
     @Test
+    void text_keepsANumberAsPartOfWhatIsSearchedFor() {
+        final InteracWords words = of("list", "9654");
+
+        assertEquals(9654L, words.quantity());
+        assertEquals("", words.item());
+        assertEquals("9654", words.text());
+        assertEquals("Iron Ingot", of("list", "\"Iron", "Ingot\"").text());
+    }
+
+    @Test
     void quantity_isNotThereWhenTheWordsOpenWithAName() {
         final InteracWords words = of("where", "diamond");
 

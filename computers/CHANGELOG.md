@@ -1073,6 +1073,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the network and it is logged as dropped.
 - A CRAFT has a colour of its own, purple, and a RUN teal, in every view of the Operations; as writes
   they were amber, and a RUN blue. The palette `jsc:operation/types` gains `craft` and `run`.
+- An amount stepper takes digits: its number is a field, so 1000 is typed rather than stepped to.
+  The Pattern Studio's amount popup opens with the amount selected, and the digits typed straight away replace it.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
@@ -1284,6 +1286,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Network Interactor's search starts empty on another tab picked: what was typed on one tab narrowed
   the next tab's list.
 - A desktop's icons no longer light under the pointer through a window standing over them.
+- `iql` at a command line hands the statement on as it was typed: a name in quotes, `'Kiln A'`, reached
+  the language without its quotes and the statement failed.
+- `interac list 9654` looks for 9654 in the names held; a number alone was read as an amount and the
+  whole stock listed.
 - The Injection Moulder shows a fan frame or a bezel it moulds, and that part's mould on its mould halves,
   as it shows a component's body: it showed neither, its belt and mould empty while it worked.
 - Autocrafting: a machine job that gives up or is cancelled takes back to the network what it fed the

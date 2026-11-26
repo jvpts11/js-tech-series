@@ -37,4 +37,24 @@ public final class StepperMath {
     public static long halved(final long value, final long min, final long max) {
         return clamp(Math.floorDiv(value, 2L), min, max);
     }
+
+    /**
+     * The amount {@code digits} spell, kept inside the range: what is typed into a stepper. Anything but a digit is
+     * passed over, and a number too long for a {@code long} reads as the maximum.
+     */
+    public static long typed(final String digits, final long min, final long max) {
+        long value = 0;
+        for (int i = 0; i < digits.length(); i++) {
+            final char c = digits.charAt(i);
+            if (c < '0' || c > '9') {
+                continue;
+            }
+            final int digit = c - '0';
+            if (value > (Long.MAX_VALUE - digit) / 10) {
+                return max;
+            }
+            value = value * 10 + digit;
+        }
+        return clamp(value, min, max);
+    }
 }

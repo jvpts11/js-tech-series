@@ -713,6 +713,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- (Core) Amounts typed into a stepper: J's Core's API is at version 104. An `AmountStepper`'s amount is a field that
+  takes digits, the amount at every one typed; `editAmount` hands it the keyboard with the amount selected, and
+  `StepperMath.typed` reads digits into an amount inside a range, a number too long for a long as the maximum.
+  Experimental.
 - (Core) Upgrade bays kept to their limit and their tab: J's Core's API is at version 103. `MachineMenu` gathers alike
   stacks by a double click only from the slots shown (`canTakeItemForPickAll`), and its bays take a stack only as far
   as the machine's own limit for it.
@@ -4568,6 +4572,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the network and it is logged as dropped.
 - (Computers) A CRAFT has a colour of its own, purple, and a RUN teal, in every view of the Operations; as writes
   they were amber, and a RUN blue. The palette `jsc:operation/types` gains `craft` and `run`.
+- (Core, Computers) An amount stepper takes digits: its number is a field, so 1000 is typed rather than stepped to.
+  The Pattern Studio's amount popup opens with the amount selected, and the digits typed straight away replace it.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
@@ -5005,6 +5011,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The Network Interactor's search starts empty on another tab picked: what was typed on one tab narrowed
   the next tab's list.
 - (Computers) A desktop's icons no longer light under the pointer through a window standing over them.
+- (Computers) `iql` at a command line hands the statement on as it was typed: a name in quotes, `'Kiln A'`, reached
+  the language without its quotes and the statement failed.
+- (Computers) `interac list 9654` looks for 9654 in the names held; a number alone was read as an amount and the
+  whole stock listed.
 - (Core) A stack of upgrades dropped on a machine's bay goes in only as far as its kind's limit: sixteen motors went
   in where four count, of every kind of motor together.
 - (Core) Emptying a machine by hand leaves its upgrades in their bays: a double click gathering alike items, or shift

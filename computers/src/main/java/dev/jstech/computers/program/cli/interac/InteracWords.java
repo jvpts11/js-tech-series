@@ -143,12 +143,15 @@ public record InteracWords(String verb, List<String> words, Map<String, String> 
      * everything otherwise, with the quotes a player may have put around a name of several words taken off.
      */
     public String item() {
-        final List<String> naming = quantity() < 0L ? this.words : this.words.subList(1, this.words.size());
-        final String joined = String.join(" ", naming).trim();
-        if (joined.length() > 1 && joined.startsWith("\"") && joined.endsWith("\"")) {
-            return joined.substring(1, joined.length() - 1);
-        }
-        return joined;
+        return unquoted(quantity() < 0L ? this.words : this.words.subList(1, this.words.size()));
+    }
+
+    /**
+     * Every word as one piece of text, a number among them: what a search looks for, where a number is part of
+     * the name and never a quantity.
+     */
+    public String text() {
+        return unquoted(this.words);
     }
 
     /** Reads one {@code --option}, taking the word after it when that option is one that takes a value. */
@@ -180,5 +183,14 @@ public record InteracWords(String verb, List<String> words, Map<String, String> 
         } else {
             options.put(parts[0], parts.length == 2 ? parts[1] : "");
         }
+    }
+
+    /* The words as one piece of text, with the quotes a player may have put around a name of several words off. */
+    private static String unquoted(final List<String> naming) {
+        final String joined = String.join(" ", naming).trim();
+        if (joined.length() > 1 && joined.startsWith("\"") && joined.endsWith("\"")) {
+            return joined.substring(1, joined.length() - 1);
+        }
+        return joined;
     }
 }
