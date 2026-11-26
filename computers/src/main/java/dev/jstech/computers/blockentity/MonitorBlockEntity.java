@@ -185,6 +185,24 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
         return starvedFreeKb.get();
     }
 
+    /**
+     * Whether, linked to nothing, its screen found no computer its cables reach: alone, its own search; in a big
+     * screen, every member's, since any of them may hang it from one. Its glass then says how a monitor finds one.
+     */
+    public boolean noComputerInReach() {
+        final MonitorPanel big = panel();
+        if (big == null || level == null) {
+            return link.noneInReach();
+        }
+        for (final BlockPos member : big.members()) {
+            if (!(Loaded.blockEntity(level, member) instanceof MonitorBlockEntity monitor)
+                    || !monitor.link.noneInReach()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public void setRemoteSession(@Nullable final BlockPos machine) {
         this.remoteSession = machine;

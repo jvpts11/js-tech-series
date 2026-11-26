@@ -118,6 +118,7 @@ import dev.jstech.tests.clienttest.computers.OutOfMemoryClientTests;
 import dev.jstech.tests.clienttest.computers.PanelStylesClientTests;
 import dev.jstech.tests.clienttest.computers.PatternEncoderClientTests;
 import dev.jstech.tests.clienttest.computers.PeripheralCableClientTests;
+import dev.jstech.tests.clienttest.computers.PortMarkClientTests;
 import dev.jstech.tests.clienttest.computers.PowerClientTests;
 import dev.jstech.tests.clienttest.computers.PrinterClientTests;
 import dev.jstech.tests.clienttest.computers.ProphetClientTests;
@@ -551,6 +552,7 @@ public final class ClientTestSuite {
             BusWindowClientTests.class,
             BusModelClientTests.class,
             PeripheralCableClientTests.class,
+            PortMarkClientTests.class,
             RedstoneInterfaceClientTests.class,
             NetworkInteractorClientTests.class,
             NetworkServicesClientTests.class,

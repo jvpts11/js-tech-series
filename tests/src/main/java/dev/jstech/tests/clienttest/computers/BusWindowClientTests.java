@@ -17,6 +17,8 @@ import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.client.bus.AbstractBusScreen;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -127,6 +129,43 @@ public final class BusWindowClientTests {
                         SCREEN_WAIT, "the Standard bus to wait for the hours from 18:00 to 06:00",
                         level -> "conditions " + bus(ctx, level, 3).conditions())
                 .thenScreenshot(SETTLE, "standard-with-the-hours")
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    /**
+     * A bus on a run of thin coax longer than the cable reaches: its OFFLINE lamp, pointed at, says how long the run is
+     * past the last router and how far the cable reaches; it only said OFFLINE.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void busLamp_tellsARunPastItsCablesReach(final ClientTestContext ctx) {
+        final int run = new DataLink(DataLine.ACCESS, HardwareEra.VINTAGE).range() - 2;
+        final BlockPos corner = MAINFRAME.east(3 + run);
+        final BlockPos end = corner.south(run);
+        ctx.thenBuild(0, world -> {
+                    world.placeRunningMainframe(MAINFRAME);
+                    world.setBlock(MAINFRAME.east(), ComputingModule.HBW_CABLE);
+                    world.setBlock(MAINFRAME.east(2), ComputingModule.PERSONAL_ROUTER.get());
+                    for (int i = 0; i <= run; i++) {
+                        world.setBlock(MAINFRAME.east(3 + i), ComputingModule.THIN_COAX_CABLE);
+                    }
+                    for (int i = 1; i <= run; i++) {
+                        world.setBlock(corner.south(i), ComputingModule.THIN_COAX_CABLE);
+                    }
+                })
+                .thenServer(SETTLE, level -> {
+                    if (level.getBlockEntity(ctx.abs(end)) instanceof CableBlockEntity cable) {
+                        cable.addPart(Direction.SOUTH, ComputingParts.VINTAGE_EXPORT.get().create());
+                    }
+                })
+                .thenTeleport(SETTLE, end.south(3), Direction.NORTH);
+        open(ctx, end)
+                .thenWaitUntil(() -> screen(ctx).getMenu().state().reach().past(), SCREEN_WAIT,
+                        "the bus's window to hear its run is past its cable's reach")
+                .thenAssert(0, () -> !screen(ctx).getMenu().state().linked(), "the bus reaches no network")
+                .then(SETTLE, () -> ctx.pointAt(screen(ctx).getGuiLeft() + BusLayout.LAMP_X + 2.5,
+                        screen(ctx).getGuiTop() + BusLayout.LAMP_Y + 2.5))
+                .thenScreenshot(SETTLE, "offline-run-past-reach")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }

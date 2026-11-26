@@ -23,6 +23,7 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
@@ -31,6 +32,7 @@ import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -181,8 +183,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         super.render(g, mouseX, mouseY, partialTick);
         if (BusDraw.inside(mouseX, mouseY, leftPos + BusLayout.LAMP_X, topPos + BusLayout.LAMP_Y,
                 BusLayout.LAMP_SIZE, BusLayout.LAMP_SIZE)) {
-            g.renderTooltip(font, GameText.component(linked() ? BusTexts.LINKED : BusTexts.OFFLINE), mouseX,
-                    mouseY);
+            g.renderComponentTooltip(font, lampLines(), mouseX, mouseY);
         } else if (tab == BusLayout.TAB_CONFIGURE) {
             final List<Component> lines = configure.tooltip(mouseX, mouseY, leftPos, topPos);
             if (!lines.isEmpty()) {
@@ -355,5 +356,24 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
 
     private boolean linked() {
         return menu.state() != null && menu.state().linked();
+    }
+
+    /*
+     * What the link lamp says: LINKED, or OFFLINE, and for a bus whose run of cable is longer than its cable reaches,
+     * how long the run is, how far the cable reaches and what renews it.
+     */
+    private List<Component> lampLines() {
+        if (linked()) {
+            return List.of(GameText.component(BusTexts.LINKED));
+        }
+        final List<Component> lines = new ArrayList<>();
+        lines.add(GameText.component(BusTexts.OFFLINE).copy().withStyle(ChatFormatting.RED));
+        final BusStatePayload.Reach reach = menu.state() == null ? BusStatePayload.Reach.NONE : menu.state().reach();
+        if (reach.past()) {
+            lines.add(GameText.component(BusTexts.RUN_PAST.with(reach.run())));
+            lines.add(GameText.component(BusTexts.CABLE_REACHES.with(reach.cable(), reach.most())));
+            lines.add(GameText.component(BusTexts.RENEWS));
+        }
+        return lines;
     }
 }

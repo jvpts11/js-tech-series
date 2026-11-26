@@ -6,5 +6,6 @@
   "pickedBar": "#FFC0C0C0",
   "pickedText": "#FF000000",
   "plain": "#FFC0C0C0",
-  "title": "#FFFFFFFF"
+  "title": "#FFFFFFFF",
+  "warn": "#FFFFFF55"
 }

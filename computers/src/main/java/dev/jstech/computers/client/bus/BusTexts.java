@@ -45,6 +45,11 @@ final class BusTexts {
     static final TextKey NAME_FIELD = TextKey.of("jsc.bus.screen.name_field", "name");
     static final TextKey LINKED = TextKey.of("jsc.bus.screen.linked", "LINKED");
     static final TextKey OFFLINE = TextKey.of("jsc.bus.screen.offline", "OFFLINE");
+    /* Why it is offline, when its run of cable is longer than its cable reaches. */
+    static final TextKey RUN_PAST = TextKey.of("jsc.bus.screen.run_past",
+            "Its cable runs %s cables past the last router;");
+    static final TextKey CABLE_REACHES = TextKey.of("jsc.bus.screen.cable_reaches", "%s reaches %s");
+    static final TextKey RENEWS = TextKey.of("jsc.bus.screen.renews", "A router or a repeater on the way renews it");
     static final TextKey INVENTORY = TextKey.of("jsc.bus.screen.inventory", "INVENTORY");
 
     static final TextKey TAB_CONFIGURE = TextKey.of("jsc.bus.screen.tab_configure", "CONFIGURE");

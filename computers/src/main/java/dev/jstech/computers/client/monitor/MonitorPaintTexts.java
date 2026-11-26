@@ -19,6 +19,14 @@ final class MonitorPaintTexts {
             "This monitor needs %s; %s are free.");
     static final TextKey NO_VRAM_WAIT = TextKey.of("jsc.monitor.osd.no_vram_wait",
             "It lights when the card has room.");
+    static final TextKey NO_SIGNAL = TextKey.of("jsc.monitor.osd.no_signal", "NO SIGNAL");
+    /* How a monitor finds the computer it hangs from, while none is in reach. */
+    static final TextKey NO_COMPUTER_RULE = TextKey.of("jsc.monitor.osd.no_computer_rule",
+            "A monitor hangs from the nearest computer: one against it, or one its era's peripheral cable leads to,"
+                    + " up to the cable's reach.");
+    /* The monitor's era, and how many cables its era's peripheral cable reaches. */
+    static final TextKey NO_COMPUTER_REACH = TextKey.of("jsc.monitor.osd.no_computer_reach",
+            "%s cable reaches %s. None in reach.");
 
     private MonitorPaintTexts() {
     }

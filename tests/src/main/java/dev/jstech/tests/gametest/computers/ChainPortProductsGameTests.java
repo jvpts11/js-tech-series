@@ -12,6 +12,7 @@ import static dev.jstech.tests.testkit.computers.ChainMachineSite.machine;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.machineAt;
 
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
+import dev.jstech.computers.chain.machine.PortMark;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesChemicals;
@@ -86,6 +87,34 @@ public final class ChainPortProductsGameTests {
                     inlets.forEach(inlet -> bound.addAll(reactor.portProducts(inlet)));
                     helper.assertTrue(bound.equals(Set.of(hydrogen.id(), chloride.id())),
                             "one inlet each for hydrogen chloride and hydrogen: " + bound);
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Each of the reactor's gas inlets wears its gas's pipe marking on its faces out of the machine, as plants mark
+     * their pipes, flowing in; no face inside the machine wears one.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void siemens_eachGasInletWearsItsGasMarking(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("siemens_reactor"));
+        helper.startSequence()
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    final ChainMachineBlockEntity reactor = machineAt(helper, terminal);
+                    final List<BlockPos> inlets = ports(reactor, PortKind.GAS_INPUT);
+                    final Set<ResourceLocation> marked = new HashSet<>();
+                    for (final PortMark mark : reactor.marks()) {
+                        final BlockPos at = BlockPos.of(mark.pos());
+                        helper.assertTrue(inlets.contains(at) && mark.in(), "a marking on a gas inlet, in: " + mark);
+                        helper.assertTrue(reactor.portProducts(at).equals(Set.of(mark.product())),
+                                "naming the gas its inlet takes: " + mark);
+                        helper.assertFalse(reactor.structure().structure().orElseThrow().parts()
+                                .contains(at.relative(mark.face()).asLong()), "on a face out of the machine: " + mark);
+                        marked.add(mark.product());
+                    }
+                    helper.assertTrue(marked.equals(Set.of(Elements.of(Element.HYDROGEN).id(),
+                            SeriesChemicals.HYDROGEN_CHLORIDE.id())), "both gases are marked: " + reactor.marks());
                 })
                 .thenSucceed();
     }

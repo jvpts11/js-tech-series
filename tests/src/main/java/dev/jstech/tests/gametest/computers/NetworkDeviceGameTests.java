@@ -9,8 +9,10 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.RouterBlock;
+import dev.jstech.computers.block.part.ExportBusPart;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.jstechseries.network.DataLine;
@@ -21,6 +23,7 @@ import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.level.block.Blocks;
@@ -181,6 +184,39 @@ public final class NetworkDeviceGameTests {
                 .thenExecute(() -> TestCables.lay(helper, repeater, ComputingModule.THIN_COAX_CABLE))
                 .thenWaitUntil(() -> helper.assertTrue(pc.networkUuid() == null,
                         "with a cable in the repeater's place the run is too long, and the computer is off"))
+                .thenSucceed();
+    }
+
+    /**
+     * A bus on a run of cable longer than its cable reaches tells how long the run is and how far its cable reaches:
+     * its window only said OFFLINE.
+     */
+    @GameTest(template = BENCH, timeoutTicks = 400)
+    public static void bus_onARunTooLongTellsHowFarItRuns(final GameTestHelper helper) {
+        final int reach = new DataLink(DataLine.ACCESS, HardwareEra.VINTAGE).range();
+        final int run = reach - 2;
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        world.placeRunningMainframe(new BlockPos(1, 2, 2));
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
+        for (int i = 0; i <= run; i++) {
+            world.setBlock(new BlockPos(4 + i, 2, 2), ComputingModule.THIN_COAX_CABLE);
+        }
+        final BlockPos corner = new BlockPos(4 + run, 2, 2);
+        for (int i = 1; i <= run; i++) {
+            world.setBlock(corner.south(i), ComputingModule.THIN_COAX_CABLE);
+        }
+        final ExportBusPart bus = new ExportBusPart(HardwareEra.VINTAGE);
+        TestCables.cable(helper, corner.south(run)).addPart(Direction.EAST, bus);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(bus.reachPast().past(), "the bus's run is past its reach"))
+                .thenExecute(() -> {
+                    final BusStatePayload.Reach past = bus.reachPast();
+                    helper.assertTrue(past.run() == 2 * run + 1 && past.most() == reach,
+                            "its run of " + (2 * run + 1) + " cables against a reach of " + reach + "; got " + past);
+                    helper.assertTrue(past.cable().english().contains("Coax"), "named by its cable; got "
+                            + past.cable().english());
+                })
                 .thenSucceed();
     }
 

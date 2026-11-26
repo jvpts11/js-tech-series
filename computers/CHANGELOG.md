@@ -1045,6 +1045,20 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   full bucket on a Liquid Inlet poured its water out beside the machine.
 - A bucket of a liquid left-clicked onto the Network Interactor's grid hands over its liquid and comes
   back empty, as a right click does: a left click stored the bucket itself, with its liquid in it, as an item.
+- A machine's port bound to one product wears a pipe marking on its faces out of the machine, as plants
+  mark their pipes: a band in the colour the product's cylinder shoulder wears, its formula and an arrow the way it
+  flows. A Crafting Input Router feeding such a port says what the port takes, and when its filter sends something
+  else, what it sends, where it said the port took nothing.
+- A Crafting Interface set against its machine no longer lists its inputs as having no router on its
+  cable: it feeds the machine directly.
+- A mask on a Lithography page of JEI wears a ring in its slot's corner, as every slot of what a
+  machine needs and never uses up does now; its tooltip and a line under the page say it stays in the station, and that a
+  pattern made from the page keeps it in the machine.
+- A bus whose run of cable is longer than its cable reaches says so on its OFFLINE lamp: how many cables
+  the run has past the last router, how far its cable reaches, and that a router or a repeater on the way renews it.
+- A monitor with no computer in reach says on its glass how a monitor finds its computer, and how
+  far its era's peripheral cable reaches; it was dark. A peripheral that links tells the players near it, over the
+  hotbar, which computer it linked to, where, and over how many blocks of cable.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

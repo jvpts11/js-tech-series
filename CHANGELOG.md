@@ -713,6 +713,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- (Core) Peripherals that say where they hang: J's Core's API is at version 101. `PeripheralLink.noneInReach` says,
+  on both sides, whether an unlinked peripheral's last search found no owner its cables reach, as opposed to one with
+  no room for it; a peripheral that links tells the players near it, over the hotbar, what it linked to, where and
+  over how many cables. Experimental.
 - (Core) A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
   machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
   ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.
@@ -4530,6 +4534,20 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   full bucket on a Liquid Inlet poured its water out beside the machine.
 - (Computers) A bucket of a liquid left-clicked onto the Network Interactor's grid hands over its liquid and comes
   back empty, as a right click does: a left click stored the bucket itself, with its liquid in it, as an item.
+- (Computers) A machine's port bound to one product wears a pipe marking on its faces out of the machine, as plants
+  mark their pipes: a band in the colour the product's cylinder shoulder wears, its formula and an arrow the way it
+  flows. A Crafting Input Router feeding such a port says what the port takes, and when its filter sends something
+  else, what it sends, where it said the port took nothing.
+- (Computers) A Crafting Interface set against its machine no longer lists its inputs as having no router on its
+  cable: it feeds the machine directly.
+- (Core, Computers) A mask on a Lithography page of JEI wears a ring in its slot's corner, as every slot of what a
+  machine needs and never uses up does now; its tooltip and a line under the page say it stays in the station, and that a
+  pattern made from the page keeps it in the machine.
+- (Computers) A bus whose run of cable is longer than its cable reaches says so on its OFFLINE lamp: how many cables
+  the run has past the last router, how far its cable reaches, and that a router or a repeater on the way renews it.
+- (Core, Computers) A monitor with no computer in reach says on its glass how a monitor finds its computer, and how
+  far its era's peripheral cable reaches; it was dark. A peripheral that links tells the players near it, over the
+  hotbar, which computer it linked to, where, and over how many blocks of cable.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

@@ -794,8 +794,14 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
         final List<Integer> warnings = new ArrayList<>();
         s.warnings().forEach(warning -> warnings.add(Math.max(1, warningLines(warning).size())));
         final int valueRoom = CraftingInterfaceLayout.RIGHT - CraftingInterfaceLayout.CONTROL_X;
+        /*
+         * The inputs and their routers are listed only for an interface that feeds through its own cable: one against
+         * its machine hands it every input itself, so it has no router to show, and its inputs read in red as having
+         * none.
+         */
+        final int inputs = pattern == null || s.mode() != InterfaceView.CABLE ? 0 : pattern.inputs().size();
         return new CraftingInterfaceLayout.Shape(s.capacity(), lines(GameText.resolve(InterfaceTexts.PATTERN_NOTE),
-                CraftingInterfaceLayout.ROW_W), pattern == null ? 0 : pattern.inputs().size(),
+                CraftingInterfaceLayout.ROW_W), inputs,
                 lines(GameText.resolve(s.exclusive() ? InterfaceTexts.EXCLUSIVE_NOTE : InterfaceTexts.SHARED_NOTE),
                         CraftingInterfaceLayout.ROW_W),
                 Math.min(2, lines(GameText.resolve(s.feeds()), valueRoom)), warnings,

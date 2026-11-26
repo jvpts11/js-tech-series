@@ -22,7 +22,6 @@ import dev.jstech.computers.chain.machine.WaferPages;
 import dev.jstech.computers.lithography.FilmPrinting;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.program.Programs;
-import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.client.recipeview.RecipeFaces;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -48,6 +47,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -92,6 +92,9 @@ public final class ChainRecipePages {
     private static final int FOOT_Y = 121;
     /* A slot is laid by its frame, a pixel round the item it shows. */
     private static final int INSET = 1;
+    /* The line under a lithography page's face, saying its ringed mask stays in the station: its gap and room. */
+    private static final int NOTE_GAP = 4;
+    private static final int NOTE_ROOM = NOTE_GAP + LINE + 2;
     private static final int TICKS_A_SECOND = 20;
     /* Each step's pages, worked out the first time a viewer asks, with each page's number among its step's. */
     private static final Supplier<Map<WaferPages.Step, List<WaferPages.Page>>> WAFER =
@@ -139,7 +142,8 @@ public final class ChainRecipePages {
                     .recipes(level -> WAFER.get().get(step))
                     .workstations(() -> machines(WAFER.get().get(step)))
                     .icon(() -> new ItemStack(terminal(iconMachine(step))))
-                    .size(RecipeFaces.width(), RecipeFaces.height(ChainFaces.of(iconMachine(step)).orElseThrow()))
+                    .size(RecipeFaces.width(), RecipeFaces.height(ChainFaces.of(iconMachine(step)).orElseThrow())
+                            + (step == WaferPages.Step.LITHOGRAPHY ? NOTE_ROOM : 0))
                     .layout(ChainRecipePages::wafer)
                     .ids(page -> ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "wafer/" + name + "/"
                             + NUMBERS.get().get(page)))
@@ -200,7 +204,10 @@ public final class ChainRecipePages {
             if (machine.layout().isOutput(port.slot())) {
                 view.output(port.x(), port.y(), held);
             } else if (WaferPages.tool(held.getFirst())) {
-                view.catalyst(port.x(), port.y(), held).tooltip(ProcessingRecipeViews.catalyst());
+                view.catalyst(port.x(), port.y(), held)
+                        .tooltip(GameText.component(ChainPagesLook.MASK_STAYS).copy().withStyle(ChatFormatting.GREEN))
+                        .tooltip(GameText.component(ChainPagesLook.PATTERN_KEEPS).copy()
+                                .withStyle(ChatFormatting.GRAY));
             } else {
                 view.input(port.x(), port.y(), held);
             }
@@ -228,6 +235,10 @@ public final class ChainRecipePages {
             }
         }
         view.face(face(machine, picture, matter));
+        if (page.step() == WaferPages.Step.LITHOGRAPHY) {
+            view.line(0, RecipeFaces.height(picture) + NOTE_GAP, RecipeFaces.width(),
+                    GameText.component(ChainPagesLook.MASK_RINGED), ChainPagesLook.PALETTE.get().dim());
+        }
     }
 
     /*

@@ -580,6 +580,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- Peripherals that say where they hang: J's Core's API is at version 101. `PeripheralLink.noneInReach` says,
+  on both sides, whether an unlinked peripheral's last search found no owner its cables reach, as opposed to one with
+  no room for it; a peripheral that links tells the players near it, over the hotbar, what it linked to, where and
+  over how many cables. Experimental.
 - A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
   machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
   ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.
@@ -2351,6 +2355,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A machine that makes only from exactly what a recipe takes no longer stops at a lot bigger than a stack: the
   rest of an input lying in a second slot is the recipe's too, and only something the recipe does not take stops it.
   (Computers) The wafer machines the same, so a Packaging Line fed many wafers' packages at once packages them all.
+- A mask on a Lithography page of JEI wears a ring in its slot's corner, as every slot of what a
+  machine needs and never uses up does now; its tooltip and a line under the page say it stays in the station, and that a
+  pattern made from the page keeps it in the machine.
+- A monitor with no computer in reach says on its glass how a monitor finds its computer, and how
+  far its era's peripheral cable reaches; it was dark. A peripheral that links tells the players near it, over the
+  hotbar, which computer it linked to, where, and over how many blocks of cable.
 - Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
   cables beside them still show. They still move only near the player.
 - The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its

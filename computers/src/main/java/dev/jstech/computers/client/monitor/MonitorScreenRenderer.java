@@ -19,6 +19,8 @@ import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.core.client.live.LiveScreen;
 import dev.jstech.core.client.live.LiveScreens;
 import dev.jstech.core.gui.Tube;
+import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.live.LiveRate;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -108,6 +110,14 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
                             MonitorPainter.outOfVideoMemory(g, w, h, need, free), MonitorGlass.WIDTH,
                     MonitorGlass.HEIGHT, scale, kind.tube(), distance);
             LiveScreens.draw(pose, buffers, osd, glass[0], glass[1], glass[2], glass[3], LightTexture.FULL_BRIGHT);
+        } else if (screen.switchedOn() && screen.noComputerInReach()) {
+            // No computer in reach: the monitor's own menu says how a monitor finds the one it hangs from.
+            final Era era = kind.era();
+            final int reach = PeripheralLine.range(era);
+            final LiveScreen rule = LiveScreens.ask(new RuleKey(screen.getBlockPos()), (g, w, h, partial) ->
+                            MonitorPainter.noComputer(g, w, h, era, reach), MonitorGlass.WIDTH,
+                    MonitorGlass.HEIGHT, scale, kind.tube(), distance);
+            LiveScreens.draw(pose, buffers, rule, glass[0], glass[1], glass[2], glass[3], LightTexture.FULL_BRIGHT);
         }
         pose.popPose();
     }
@@ -200,6 +210,10 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
 
     /** The key a monitor's own menu is kept under while it says the monitor has no video memory. */
     private record OsdKey(BlockPos monitor) {
+    }
+
+    /** The key a monitor's own menu is kept under while it says no computer is in reach. */
+    private record RuleKey(BlockPos monitor) {
     }
 
     private record Bezels(int transition, int transitionStrip, int standard, int standardChin, int color,

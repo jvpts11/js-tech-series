@@ -13,7 +13,9 @@ import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.Eras;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -42,11 +44,31 @@ import java.util.Map;
  * @param places      for an External Storage Bus, how many slots and tanks its inventory has
  * @param placesUsed  and how many of them hold something
  * @param crafting    for a crafting part, what it is part of, its warnings and what it credited
+ * @param reach       for a bus that reaches no network because the run of cable it is on is longer than its cable
+ *                    reaches, how long the run is and how far the cable reaches; {@link Reach#NONE} otherwise
  */
 public record BusStatePayload(int containerId, BusSettings settings, List<ItemStack> filter, boolean linked,
                               long speed, long carries, Era skin, List<BusActivity.Entry> activity,
-                              int places, int placesUsed, CraftingView crafting)
+                              int places, int placesUsed, CraftingView crafting, Reach reach)
         implements CustomPacketPayload {
+
+    /**
+     * A run of data cable longer than its cable reaches, which carries nothing across.
+     *
+     * @param run   how many cables the run has
+     * @param most  how many its cable reaches
+     * @param cable the cable's name
+     */
+    public record Reach(int run, int most, Text cable) {
+
+        /** No run past its reach: the bus reaches its network, or misses it for another cause. */
+        public static final Reach NONE = new Reach(0, 0, Text.EMPTY);
+
+        /** Whether it tells of a run past its reach. */
+        public boolean past() {
+            return most > 0 && run > most;
+        }
+    }
 
     public static final CustomPacketPayload.Type<BusStatePayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "bus_state"));
@@ -118,6 +140,9 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
         buf.writeVarInt(p.places);
         buf.writeVarInt(p.placesUsed);
         CraftingView.write(buf, p.crafting);
+        buf.writeVarInt(p.reach.run());
+        buf.writeVarInt(p.reach.most());
+        TextCodecs.STREAM_CODEC.encode(buf, p.reach.cable());
     }
 
     private static BusStatePayload read(final RegistryFriendlyByteBuf buf) {
@@ -172,10 +197,11 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
         final int places = buf.readVarInt();
         final int placesUsed = buf.readVarInt();
         final CraftingView crafting = CraftingView.read(buf);
+        final Reach reach = new Reach(buf.readVarInt(), buf.readVarInt(), TextCodecs.STREAM_CODEC.decode(buf));
         final BusSettings settings = new BusSettings(name, era, filter, exclude, keep, max, itemKeep, itemMax,
                 priority, conditions, tags, fuzzy, powered, onDemand, setBy, external, access);
         return new BusStatePayload(containerId, settings, filterStacks, linked, speed, carries, skin, activity,
-                places, placesUsed, crafting);
+                places, placesUsed, crafting, reach);
     }
 
     private static void writeStrings(final FriendlyByteBuf buf, final List<String> values) {

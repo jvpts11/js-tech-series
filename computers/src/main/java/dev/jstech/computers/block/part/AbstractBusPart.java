@@ -17,23 +17,30 @@ import dev.jstech.computers.bus.BusFeature;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.cable.Wire;
+import dev.jstech.core.grid.CoreGrids;
+import dev.jstech.core.grid.Grid;
+import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.util.Utf8Text;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.WeakHashMap;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -252,6 +259,24 @@ public abstract sealed class AbstractBusPart implements IFacePart
     /** Whether the bus's cable reaches a network now: asked of the cable, for a bus that does not tick, too. */
     public boolean reachesNetwork() {
         return network() != null;
+    }
+
+    /**
+     * How long the run of data cable the bus is on is, and how far its cable reaches, when the run is longer and so
+     * carries nothing across; {@link BusStatePayload.Reach#NONE} when it is not, or the bus is on no data cable. A bus
+     * past its cable's reach only said OFFLINE.
+     */
+    public BusStatePayload.Reach reachPast() {
+        final ServerLevel level = serverLevel();
+        final Wire wire = level == null ? null : DataWires.networkWire(host);
+        final OptionalLong number = wire == null ? OptionalLong.empty()
+                : Cables.number(level, host.getBlockPos(), wire.type());
+        if (number.isEmpty()) {
+            return BusStatePayload.Reach.NONE;
+        }
+        final Grid grid = CoreGrids.of(level, GridKind.DATA);
+        return grid.runTooLong(number.getAsLong()) ? new BusStatePayload.Reach(grid.runLength(number.getAsLong()),
+                wire.type().range(), GameText.of(wire.type().stack().getHoverName())) : BusStatePayload.Reach.NONE;
     }
 
     public String name() {

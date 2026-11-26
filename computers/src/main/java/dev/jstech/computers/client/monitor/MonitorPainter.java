@@ -27,6 +27,7 @@ import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.live.LiveGraphics;
 import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -41,6 +42,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -60,7 +62,8 @@ public final class MonitorPainter {
 
     /** The inks of a text screen on a monitor's face. */
     private static final Palette<Inks> INKS = Palettes.declare(JsComputers.MODID, "monitor/picture", new Inks(
-            0xFF000000, 0xFFFFFFFF, 0xFFC0C0C0, 0xFF808080, 0xFF55FF55, 0xFFFF5555, 0xFFC0C0C0, 0xFF000000));
+            0xFF000000, 0xFFFFFFFF, 0xFFC0C0C0, 0xFF808080, 0xFF55FF55, 0xFFFF5555, 0xFFC0C0C0, 0xFF000000,
+            0xFFFFFF55));
     private static final int ROW = 10;
     private static final int MARGIN = 6;
     /* What a monitor's glass keeps clear round itself, which an area for the desktop leaves for it. */
@@ -131,6 +134,39 @@ public final class MonitorPainter {
         Draw.textCentered(g, font, title, width / 2, by + MARGIN, inks.title());
         Draw.textCentered(g, font, need, width / 2, by + MARGIN + ROW + 2, inks.plain());
         Draw.textCentered(g, font, wait, width / 2, by + MARGIN + 2 * ROW + 2, inks.dim());
+    }
+
+    /**
+     * The monitor's own menu, on dark glass, saying it has no signal for want of a computer, and the rule it hangs from
+     * one by: the nearest, against it or at the end of its era's peripheral cable, up to how far that cable reaches.
+     * A monitor with no computer only said NO SIGNAL when clicked, and nothing on its glass.
+     */
+    public static void noComputer(final GuiGraphics g, final int width, final int height, final Era era,
+                                  final int reach) {
+        final Inks inks = INKS.get();
+        final Font font = Minecraft.getInstance().font;
+        g.fill(0, 0, width, height, inks.ground());
+        // Inside what the glass shows: the picture runs past it on every side.
+        final int boxW = width - 2 * GLASS_SIDES - 2 * MARGIN;
+        final List<FormattedCharSequence> rule = font.split(GameText.component(MonitorPaintTexts.NO_COMPUTER_RULE),
+                boxW - 2 * MARGIN);
+        final List<FormattedCharSequence> reaches = font.split(GameText.component(
+                MonitorPaintTexts.NO_COMPUTER_REACH.with(era.text(), reach)), boxW - 2 * MARGIN);
+        final int boxH = ROW * (1 + rule.size() + reaches.size()) + 2 * MARGIN;
+        final int bx = (width - boxW) / 2;
+        final int by = Math.max(GLASS_ENDS, (height - boxH) / 2);
+        g.fill(bx, by, bx + boxW, by + boxH, inks.pickedText());
+        Draw.outline(g, bx, by, boxW, boxH, inks.dim());
+        int y = by + MARGIN;
+        Draw.text(g, font, GameText.resolve(MonitorPaintTexts.NO_SIGNAL), bx + MARGIN, y, inks.bad());
+        for (final FormattedCharSequence line : rule) {
+            y += ROW;
+            Draw.text(g, font, line, bx + MARGIN, y, inks.plain());
+        }
+        for (final FormattedCharSequence line : reaches) {
+            y += ROW;
+            Draw.text(g, font, line, bx + MARGIN, y, inks.warn());
+        }
     }
 
     /** The desktop drawn for the face of the monitor at {@code monitor}, or null while it draws none. */
@@ -271,6 +307,6 @@ public final class MonitorPainter {
     }
 
     private record Inks(int ground, int title, int plain, int dim, int good, int bad, int pickedBar,
-                        int pickedText) {
+                        int pickedText, int warn) {
     }
 }

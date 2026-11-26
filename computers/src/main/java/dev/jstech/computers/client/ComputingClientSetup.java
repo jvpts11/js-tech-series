@@ -21,6 +21,7 @@ import dev.jstech.computers.client.chain.ChainMachineItemRenderer;
 import dev.jstech.computers.client.chain.ChainMachineRenderer;
 import dev.jstech.computers.client.chain.ChainRecipePages;
 import dev.jstech.computers.client.chain.ChainRigs;
+import dev.jstech.computers.client.chain.PortMarkPainter;
 import dev.jstech.computers.client.portable.CameraShots;
 import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.client.portable.PortableItemRenderer;
@@ -340,12 +341,15 @@ public final class ComputingClientSetup {
                 : new ComputerTerminalScreen(menu, inv, title);
     }
 
-    /* A chain machine's renderer: the Prebuilder's and the Preinstaller's move with the work they are given. */
+    /*
+     * A chain machine's renderer, drawing the pipe markings of its ports bound to one product: the Prebuilder's and
+     * the Preinstaller's move with the work they are given.
+     */
     private static BlockEntityRenderer<ChainMachineBlockEntity> chainRenderer(final ChainMachine machine) {
-        return switch (machine.id()) {
+        return PortMarkPainter.marked(switch (machine.id()) {
             case "prebuilder" -> PrebuilderRenderer.create(machine);
             case "preinstaller" -> PreinstallerRenderer.create(machine);
             default -> ChainMachineRenderer.create(machine);
-        };
+        });
     }
 }

@@ -135,6 +135,26 @@ public final class MonitorClientTests {
                 .thenWaitUntil(() -> LiveScreens.held() == 0, 300, "the picture to be let go far off");
     }
 
+    /**
+     * A monitor with no computer in reach says on its glass how a monitor finds the computer it hangs from and how far
+     * its era's peripheral cable reaches: it stood dark, and a player could not tell why.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void monitor_withNoComputerInReachSaysHowItFindsOne(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> world.placeMonitor(ROW, Direction.NORTH, ComputingModule.MONITOR.get()))
+                .thenServer(SETTLE, level -> {
+                    final Vec3 glass = Vec3.atCenterOf(ctx.abs(ROW));
+                    final Vec3 at = glass.add(0.0, -1.0, 2.2);
+                    final Vec3 look = glass.subtract(at.add(0.0, ctx.serverPlayer().getEyeHeight(), 0.0));
+                    final float yaw = (float) Math.toDegrees(Math.atan2(-look.x, look.z));
+                    final float pitch = (float) -Math.toDegrees(Math.atan2(look.y, look.horizontalDistance()));
+                    ctx.serverPlayer().teleportTo(ctx.serverLevel(), at.x, at.y, at.z, yaw, pitch);
+                })
+                .thenWaitUntil(() -> clientMonitor(ctx, ROW) != null && clientMonitor(ctx, ROW).noComputerInReach(),
+                        LIGHT_WAIT, "the monitor to hear that no computer is in reach")
+                .thenScreenshot(SETTLE * 8, "no-computer-in-reach");
+    }
+
     @ClientTest(timeoutTicks = 3600)
     public static void tube_showsMcDosInAmberOnAnAmberMonitor(final ClientTestContext ctx) {
         openVintagePrompt(ctx, ComputingModule.AMBER_MONITOR.get())

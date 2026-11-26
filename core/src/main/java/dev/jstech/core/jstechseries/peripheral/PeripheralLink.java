@@ -9,10 +9,16 @@ package dev.jstech.core.jstechseries.peripheral;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.BlockEntityFields;
+import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -29,13 +35,22 @@ public final class PeripheralLink {
     public static final int SEARCH_INTERVAL_TICKS = 10;
 
     private final ValueField<Long> owner;
+    /*
+     * Whether its last search found no owner the cables reach, sent to the players who see it so a monitor can say
+     * so on its glass; not saved, since a loaded peripheral searches at once.
+     */
+    private final BoolField noneInReach;
     private final PeripheralCableType type;
     private final ILinkWorld world;
     /* Ticks left before the next search; not saved, so a loaded peripheral checks its link at once. */
     private int cooldown;
 
+    /** How near a player stands to a peripheral to be told, over the hotbar, what it linked to. */
+    private static final int TELL_RANGE = 16;
+
     public PeripheralLink(final BlockEntityFields fields, final PeripheralCableType type, final ILinkWorld world) {
         this.owner = fields.nullable("LinkedOwner", Codec.LONG).save().toClient();
+        this.noneInReach = fields.flag("NoneInReach", false).toClient();
         this.type = type;
         this.world = world;
         // A peripheral broken or replaced frees its place on its owner for another.
@@ -62,6 +77,15 @@ public final class PeripheralLink {
     public @Nullable BlockPos ownerPos() {
         final Long at = owner.get();
         return at == null ? null : BlockPos.of(at);
+    }
+
+    /**
+     * Whether, unlinked, its last search found no owner its cables reach, as opposed to one that had no room for it;
+     * on both sides.
+     */
+    @ApiStatus.Experimental
+    public boolean noneInReach() {
+        return owner.get() == null && noneInReach.get();
     }
 
     /** The validator linked this peripheral to the owner at {@code ownerPos}. */
@@ -94,8 +118,10 @@ public final class PeripheralLink {
             }
             cooldown = SEARCH_INTERVAL_TICKS + (int) Math.floorMod(here, 4L);
             final OptionalLong found = world.discoverOwner(level, here);
-            if (found.isPresent()) {
-                world.validator(level).tryEstablishLink(found.getAsLong(), here);
+            noneInReach.set(found.isEmpty());
+            if (found.isPresent() && world.validator(level).tryEstablishLink(found.getAsLong(), here)
+                    instanceof ILinkResult.Established made) {
+                tellNear(level, self, made);
             }
             return;
         }
@@ -118,6 +144,28 @@ public final class PeripheralLink {
             linkedTo.onEndpointUnlinked(self.asLong());
         }
         unlinked();
+    }
+
+    /*
+     * Tells the players near a peripheral that just linked what it linked to, where that stands and over how many
+     * cables: a monitor placed only lit, or did not, and a player could not tell which computer it hung from.
+     */
+    private static void tellNear(final ServerLevel level, final BlockPos self, final ILinkResult.Established made) {
+        final BlockPos at = BlockPos.of(made.ownerPos());
+        final Text what = GameText.of(level.getBlockState(self).getBlock().getName());
+        final Text to = GameText.of(level.getBlockState(at).getBlock().getName());
+        final Text where = Text.literal(at.getX() + ", " + at.getY() + ", " + at.getZ());
+        final Text said = switch (made.pathLength()) {
+            case 0 -> LinkTexts.AGAINST.with(what, to, where);
+            case 1 -> LinkTexts.ONE_CABLE.with(what, to, where);
+            default -> LinkTexts.CABLES.with(what, to, where, made.pathLength());
+        };
+        final Component line = GameText.component(said);
+        for (final ServerPlayer player : level.players()) {
+            if (player.blockPosition().distSqr(self) <= (double) TELL_RANGE * TELL_RANGE) {
+                player.displayClientMessage(line, true);
+            }
+        }
     }
 
     /** How the links of one kind of cable are found in a world; the mod that lays the cables says. */

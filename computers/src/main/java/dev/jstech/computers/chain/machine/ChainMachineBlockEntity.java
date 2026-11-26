@@ -38,11 +38,13 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -71,6 +73,8 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     /* The entries it told to draw nothing while its shape stands, by position; kept with it, so a shape that came
      * apart while it was away still lets them draw again. */
     private final ValueField<List<Long>> flagged;
+    /* The pipe markings on its ports bound to one product, worked out at each check of its shape, for its renderer. */
+    private final ValueField<List<PortMark>> marks;
     private final LithoLink link;
     /* Whether its shape stood at the last check, so its forming is told the advancements once. */
     private boolean stood;
@@ -98,6 +102,7 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
         this.makes = fields().value("Makes", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
         this.flows = fields().value("Flows", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
         this.flagged = fields().value("Flagged", Codec.LONG.listOf(), List.<Long>of()).save();
+        this.marks = fields().value("Marks", PortMark.CODEC.listOf(), List.<PortMark>of()).toClient();
         this.link = new LithoLink(machine);
         fields().mirror(ChainFormedBlock.FORMED, this::formed);
         fields().whenBroken((level, at) -> unflag(level));
@@ -239,8 +244,10 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
         if (formed.isEmpty()) {
             stood = false;
             unflag(level);
+            marks.set(List.of());
             return;
         }
+        marks.set(marksOf(formed.get()));
         if (!stood) {
             stood = true;
             JscEvents.awardOperator(this, JscEvents.CHAIN_FORMED, ChainMachines.familyOf(machine));
@@ -324,6 +331,36 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
         if (!fluids.equals(flows.get())) {
             flows.set(fluids);
         }
+    }
+
+    /*
+     * The pipe markings of {@code formed}'s ports bound to one product, on each face of them out of the machine, where
+     * a pipe meets them; a port bound to several products, or by role, names none of its own.
+     */
+    private List<PortMark> marksOf(final ShapeMatch.Formed formed) {
+        if (formed != boundFor) {
+            bind(formed);
+        }
+        final Set<Long> parts = new HashSet<>(formed.parts());
+        final List<PortMark> out = new ArrayList<>();
+        for (final Map.Entry<Long, Set<ResourceLocation>> port : bound.entrySet()) {
+            final PortKind kind = formed.ports().get(port.getKey());
+            if (port.getValue().size() != 1 || kind == null) {
+                continue;
+            }
+            final BlockPos at = BlockPos.of(port.getKey());
+            for (final Direction face : Direction.Plane.HORIZONTAL) {
+                if (!parts.contains(at.relative(face).asLong())) {
+                    out.add(new PortMark(port.getKey(), face, port.getValue().iterator().next(), kind.input()));
+                }
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    /** The pipe markings on its ports bound to one product, on both sides. */
+    public List<PortMark> marks() {
+        return marks.get();
     }
 
     /* Works out where its bound ports stand in {@code formed}, the structure it stands in now. */

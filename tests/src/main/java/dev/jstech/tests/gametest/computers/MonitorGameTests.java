@@ -25,6 +25,7 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,14 +35,20 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -49,6 +56,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 /**
  * The monitors of every era: a monitor against its computer needs no cable, flat panels side by side join into one
@@ -93,6 +101,34 @@ public final class MonitorGameTests {
         helper.assertTrue(said.size() == 1 && said.getFirst().getContents() instanceof TranslatableContents line
                 && "block.jsc.monitor.build_incomplete".equals(line.getKey()), "the monitor says the parts: " + said);
         helper.succeed();
+    }
+
+    /**
+     * A monitor alone finds no computer in reach, which its glass says, and once a computer is put against it, it
+     * links and tells the player near it which computer it hangs from and where: a player placing a monitor saw it
+     * light, or not, and nothing more.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void monitor_saysNoneIsInReachAndTellsWhereItLinked(final GameTestHelper helper) {
+        helper.setBlock(PC.east(), facing(ComputingModule.MONITOR.get(), Direction.WEST));
+        final MonitorBlockEntity monitor = entity(helper, PC.east());
+        final List<Component> said = new ArrayList<>();
+        final ServerPlayer player = listening(helper, PC.east(3), said);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(monitor.noComputerInReach(),
+                        "alone, the monitor finds no computer in reach"))
+                .thenExecute(() -> cardPc(helper, HardwareItems.CPU_INTEGRA_SERVO_1231_V3.get()))
+                .thenWaitUntil(() -> helper.assertTrue(helper.absolutePos(PC).equals(monitor.ownerPos()),
+                        "it links to the computer put against it"))
+                .thenExecute(() -> {
+                    helper.getLevel().getServer().getPlayerList().remove(player);
+                    helper.assertFalse(monitor.noComputerInReach(), "and no longer says none is in reach");
+                    helper.assertTrue(said.stream().anyMatch(line -> line.getContents()
+                                    instanceof TranslatableContents told
+                                    && "jscore.peripheral.linked.against".equals(told.getKey())),
+                            "the player near it is told it linked against its computer: " + said);
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA)
@@ -519,6 +555,31 @@ public final class MonitorGameTests {
 
     private static BlockState facing(final Block block, final Direction facing) {
         return block.defaultBlockState().setValue(MonitorBlock.FACING, facing);
+    }
+
+    /* A player standing at {@code at}; what the game tells it over its hotbar is kept in {@code said}. */
+    private static ServerPlayer listening(final GameTestHelper helper, final BlockPos at, final List<Component> said) {
+        final ServerLevel level = helper.getLevel();
+        final CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(),
+                "watcher"), false);
+        final ServerPlayer player = new ServerPlayer(level.getServer(), level, cookie.gameProfile(),
+                cookie.clientInformation()) {
+            @Override
+            public void displayClientMessage(final Component message, final boolean actionBar) {
+                said.add(message);
+            }
+        };
+        final Connection connection = new Connection(PacketFlow.SERVERBOUND);
+        new EmbeddedChannel(connection);
+        NetworkRegistry.configureMockConnection(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        for (int id = 0; id <= 8; id++) {
+            player.connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(id));
+        }
+        player.setGameMode(GameType.SURVIVAL);
+        final Vec3 there = helper.absoluteVec(Vec3.atBottomCenterOf(at));
+        player.moveTo(there.x, there.y, there.z, 0, 0);
+        return player;
     }
 
     /* A Standard personal computer with that processor and a graphics card, switched off. */

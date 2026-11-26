@@ -7257,6 +7257,7 @@ stable 4
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  BlockPos ownerPos()
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  Optional<Long> linkedOwner()
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  PeripheralCableType cableType()
+101 dev.jstech.core.jstechseries.peripheral.PeripheralLink  boolean noneInReach()
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  new(BlockEntityFields, PeripheralCableType, ILinkWorld)
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  static final int SEARCH_INTERVAL_TICKS
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  void linked(long)

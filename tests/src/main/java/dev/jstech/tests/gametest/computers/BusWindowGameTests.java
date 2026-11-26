@@ -195,7 +195,8 @@ public final class BusWindowGameTests {
         final CraftingView crafting = new CraftingView(List.of(new CraftingView.Line(CraftingView.GOOD,
                 Text.literal("TIED TO"), Text.literal("Kiln A"), Text.EMPTY)), List.of(), List.of());
         final BusStatePayload sent = new BusStatePayload(7, bus.settings(), bus.filterStacks(), true, 64L, 256L,
-                HardwareEra.ADVANCED, bus.activity().entries(), 27, 14, crafting);
+                HardwareEra.ADVANCED, bus.activity().entries(), 27, 14, crafting,
+                new BusStatePayload.Reach(53, 48, Text.literal("Legacy Access Cable")));
         final RegistryFriendlyByteBuf wire = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         try {
@@ -208,6 +209,8 @@ public final class BusWindowGameTests {
                     && got.skin() == HardwareEra.ADVANCED && got.containerId() == 7 && got.places() == 27
                     && got.placesUsed() == 14, "and the rest");
             helper.assertTrue(got.crafting().equals(sent.crafting()), "the crafting lines; got " + got.crafting());
+            helper.assertTrue(got.reach().equals(sent.reach()) && got.reach().past(),
+                    "the run past its cable's reach; got " + got.reach());
             helper.assertTrue(wire.readableBytes() == 0, "with nothing left over on the wire");
         } finally {
             wire.release();

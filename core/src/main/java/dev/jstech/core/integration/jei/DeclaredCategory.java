@@ -120,6 +120,10 @@ final class DeclaredCategory<T> implements IRecipeCategory<T> {
             if (page.face().isEmpty() && slot.framed()) {
                 made.setStandardSlotBackground();
             }
+            // A slot of what is never used up wears a ring in its corner; an icon beside a line of text does not.
+            if (slot.role() == RecipeView.Role.CATALYST && slot.framed()) {
+                made.setOverlay(LastingRing.INSTANCE, 0, 0);
+            }
             if (slot.holdsFluid()) {
                 made.setFluidRenderer(slot.capacity(), false, slot.width(), slot.height())
                         .addIngredients(NeoForgeTypes.FLUID_STACK, slot.fluids());

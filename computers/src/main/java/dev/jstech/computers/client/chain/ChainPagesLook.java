@@ -27,6 +27,12 @@ final class ChainPagesLook {
     static final TextKey IMPLANT = TextKey.of("jsc.jei.wafer.implant", "Ion Implantation");
     static final TextKey DEPOSITION = TextKey.of("jsc.jei.wafer.deposition", "Deposition");
     static final TextKey PACKAGING = TextKey.of("jsc.jei.wafer.packaging", "Packaging");
+    /* A wafer page's mask, in its slot's tooltip and under the face: it is not used up, and a pattern keeps it. */
+    static final TextKey MASK_STAYS = TextKey.of("jsc.jei.wafer.mask_stays", "Not used up: it stays in the station");
+    static final TextKey PATTERN_KEEPS = TextKey.of("jsc.jei.wafer.pattern_keeps",
+            "A pattern made from this page keeps it in the machine");
+    static final TextKey MASK_RINGED = TextKey.of("jsc.jei.wafer.mask_ringed",
+            "The mask (ringed) stays in the station");
     static final TextKey AIR_SEPARATION = TextKey.of("jsc.recipe_view.air_separation", "Air Separation");
     static final TextKey MASK_WRITING = TextKey.of("jsc.jei.mask_writing", "Mask Writing");
     static final TextKey SECONDS = TextKey.of("jsc.jei.mask_writing.seconds", "%s s");

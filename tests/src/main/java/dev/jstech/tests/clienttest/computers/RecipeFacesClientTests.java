@@ -187,6 +187,13 @@ public final class RecipeFacesClientTests {
                     .thenScreenshot(SETTLE * 2, "viewer-face-" + machine)
                     .then(SETTLE, () -> ctx.mc().setScreen(null));
         }
+        // A Lithography page: its mask ringed in its slot's corner, and the line under the face saying it stays.
+        final ResourceLocation lithography = ChainRecipePages.step(WaferPages.Step.LITHOGRAPHY).orElseThrow().id();
+        ctx.thenWaitUntil(() -> shown(lithography) > 0, VIEWER_WAIT, "the viewer's Lithography pages")
+                .then(0, () -> ctx.assertTrue(show(lithography), "the viewer opens on the Lithography pages"))
+                .thenWaitUntil(() -> ctx.mc().screen != null, VIEWER_WAIT, "the viewer's recipe screen")
+                .thenScreenshot(SETTLE * 2, "viewer-wafer-lithography")
+                .then(SETTLE, () -> ctx.mc().setScreen(null));
     }
 
     /* The kind the chain machine {@code id} works. */

@@ -28,6 +28,11 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.material.Material;
+import dev.jstech.core.material.MaterialProperties;
+import dev.jstech.core.material.Materials;
+import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -37,9 +42,12 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +67,11 @@ public final class CraftingViews {
     private static final TextKey MACHINE_FACE = TextKey.of("jsc.crafting.view.machine_face", "%s, %s face");
     private static final TextKey ACCEPTS = TextKey.of("jsc.crafting.view.accepts", "accepts here");
     private static final TextKey REFUSES = TextKey.of("jsc.crafting.view.refuses", "takes nothing here");
+    /* A port bound to its products: what it takes, and what a router whose filter is another sends. */
+    private static final TextKey TAKES_HERE = TextKey.of("jsc.crafting.view.takes_here", "takes %s here");
+    private static final TextKey TAKES_ONLY = TextKey.of("jsc.crafting.view.takes_only",
+            "takes only %s; this router sends %s");
+    private static final TextKey PRODUCT_FORMULA = TextKey.of("jsc.crafting.view.product_formula", "%s (%s)");
     private static final TextKey NOTHING_THERE = TextKey.of("jsc.crafting.view.nothing_there",
             "no machine on that face");
     private static final TextKey ROUTES = TextKey.of("jsc.crafting.view.routes", "ROUTES");
@@ -485,8 +498,47 @@ public final class CraftingViews {
         for (final StorageKey key : router.filterKeys()) {
             accepts |= port.insert(key, 1L, true) > 0L;
         }
+        /*
+         * A port bound to its products says which, by name and formula, and what this router sends when that is not
+         * one of them: "takes nothing here" left the player to guess why a Siemens Reactor's inlet refused hydrogen.
+         */
+        final Set<ResourceLocation> products = boundProducts(level, machine);
+        if (!products.isEmpty()) {
+            final Text takes = productsText(products);
+            if (accepts) {
+                return new CraftingView.Line(CraftingView.GOOD, FEEDS.text(), where, TAKES_HERE.with(takes));
+            }
+            final List<Text> sends = new ArrayList<>();
+            router.filterKeys().forEach(key -> sends.add(GameText.of(key.displayName())));
+            return new CraftingView.Line(CraftingView.PLAIN, FEEDS.text(), where,
+                    TAKES_ONLY.with(takes, TextLists.join(", ", sends)));
+        }
         return new CraftingView.Line(accepts ? CraftingView.GOOD : CraftingView.PLAIN, FEEDS.text(), where,
                 (accepts ? ACCEPTS : REFUSES).text());
+    }
+
+    /* The products the machine port at {@code at} is bound to, by id; none for a port that takes anything. */
+    private static Set<ResourceLocation> boundProducts(final ServerLevel level, final BlockPos at) {
+        return level.getBlockEntity(at) instanceof MultiblockPartBlockEntity part
+                && level.getBlockEntity(part.terminalPos()) instanceof MachineBlockEntity terminal
+                ? terminal.portProducts(at) : Set.of();
+    }
+
+    /* Bound products by name, each with its formula where its material has one: "Hydrogen Chloride (HCl)". */
+    private static Text productsText(final Set<ResourceLocation> products) {
+        final List<Text> names = new ArrayList<>();
+        for (final ResourceLocation id : products) {
+            final Optional<Material> material = Materials.byId(id);
+            if (material.isEmpty()) {
+                names.add(Text.literal(id.toString()));
+                continue;
+            }
+            final Optional<String> formula = material.get().value(MaterialProperties.FORMULA)
+                    .or(() -> material.get().value(MaterialProperties.SYMBOL));
+            names.add(formula.isPresent() ? PRODUCT_FORMULA.with(material.get().name(), Text.literal(formula.get()))
+                    : material.get().name());
+        }
+        return TextLists.join(" or ", names);
     }
 
     /* Another router of the cable whose filter takes {@code key} too, by its name, or null. */

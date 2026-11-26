@@ -276,7 +276,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
         final BusStatePayload now = new BusStatePayload(containerId, part.settings(), part.filterStacks(),
                 linked, part.speed(), part.cableCarries(), skin, part.activity().entries(),
                 external == null ? 0 : external.places(), external == null ? 0 : external.placesUsed(),
-                craftingView(level));
+                craftingView(level), linked ? BusStatePayload.Reach.NONE : part.reachPast());
         if (always || state == null || !same(state, now)) {
             state = now;
             PacketDistributor.sendToPlayer(player, now);
@@ -312,7 +312,8 @@ public abstract class AbstractBusMenu extends CoreMenu {
     private static boolean same(final BusStatePayload a, final BusStatePayload b) {
         return a.settings().equals(b.settings()) && a.linked() == b.linked() && a.speed() == b.speed()
                 && a.carries() == b.carries() && a.skin() == b.skin() && a.activity().equals(b.activity())
-                && a.places() == b.places() && a.placesUsed() == b.placesUsed() && a.crafting().equals(b.crafting());
+                && a.places() == b.places() && a.placesUsed() == b.placesUsed() && a.crafting().equals(b.crafting())
+                && a.reach().equals(b.reach());
     }
 
     /**
