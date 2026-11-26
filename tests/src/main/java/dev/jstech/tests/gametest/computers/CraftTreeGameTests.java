@@ -26,6 +26,8 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.material.Fluids;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -99,6 +101,34 @@ public final class CraftTreeGameTests {
         helper.assertTrue(diamond.feasible() && diamond.steps().size() == 2
                 && diamond.steps().getFirst().runs() == 1, "one ore sorted once gives both the recipe takes; missing "
                 + diamond.missing() + ", steps " + diamond.steps());
+        helper.succeed();
+    }
+
+    /**
+     * A liquid a machine gives beside its result is made by running that machine when the stock is short of it, as
+     * coal tar comes off the Coke Oven beside the coke: a phenol order with a quarter of its tar in stock said nothing
+     * on the network made the rest.
+     */
+    @GameTest(template = ARENA)
+    public static void plan_makesALiquidAMachineGivesBesideItsResult(final GameTestHelper helper) {
+        final StorageKey tar = StorageKey.of(new FluidStack(Fluids.WATER, 1));
+        final ProcessingPattern coke = new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(storageKey(Items.COAL), 1L)),
+                List.of(new ProcessingPattern.ProcessingOutput(storageKey(Items.CHARCOAL), 1L,
+                                ProcessingPattern.FULL_CHANCE),
+                        new ProcessingPattern.ProcessingOutput(tar, 250L, ProcessingPattern.FULL_CHANCE)),
+                ProcessingPattern.DEFAULT_TIMEOUT_TICKS);
+        final ProcessingPattern phenol = new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(tar, 1000L)),
+                List.of(new ProcessingPattern.ProcessingOutput(storageKey(Items.SLIME_BALL), 1L,
+                        ProcessingPattern.FULL_CHANCE)), ProcessingPattern.DEFAULT_TIMEOUT_TICKS);
+        final Map<StorageKey, Long> stock = Map.of(tar, 250L, storageKey(Items.COAL), 4L);
+        final CraftPlanner.Plan plan = CraftPlanner.plan(storageKey(Items.SLIME_BALL), 1, List.of(),
+                List.of(coke, phenol), stock);
+        helper.assertTrue(plan.feasible(), "the rest of the tar comes from the coke oven; missing " + plan.missing());
+        helper.assertTrue(plan.steps().size() == 2 && plan.steps().getFirst().machine() == coke
+                && plan.steps().getFirst().runs() == 3, "three runs of coke give the 750 mB short; steps "
+                + plan.steps());
         helper.succeed();
     }
 
