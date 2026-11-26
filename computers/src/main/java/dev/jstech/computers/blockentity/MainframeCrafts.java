@@ -11,6 +11,7 @@ import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftPlanning;
 import dev.jstech.computers.crafting.CraftRouting;
+import dev.jstech.computers.crafting.CraftingDispatch;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ICraftIo;
 import dev.jstech.computers.crafting.MultiStagePattern;
@@ -402,17 +403,31 @@ final class MainframeCrafts {
 
     /**
      * Runs a processing recipe for {@code demand} of {@code key}: the bare machine run where the network stocks every
-     * input the whole demand takes, else the whole tree as one craft, the machine making the result where the player
-     * {@code picked} it. A tree that does not close is never cut down to a run of its last step that starves for what
-     * nothing makes: it fails saying what raw thing it is short of, or with {@code partial} makes what it can.
+     * input the whole demand takes and one machine runs the recipe, else the whole tree as one craft, the machine
+     * making the result where the player {@code picked} it. Where more than one machine runs the recipe, the craft
+     * shares the runs among them, as it shares any machine step: two Deposition Chambers of one recipe each take half
+     * the wafers, where a bare run went to one and left the other idle. A tree that does not close is never cut down
+     * to a run of its last step that starves for what nothing makes: it fails saying what raw thing it is short of, or
+     * with {@code partial} makes what it can.
      */
     @Nullable
     private INetworkOperation runProcessing(final ProcessingPattern machine, final StorageKey key, final long demand,
                                             final boolean partial, final String label, final boolean picked) {
         if (inputsInStock(machine, demand)) {
-            return machineRun(machine, demand, label, null);
+            if (!sharedAmongMachines(machine, demand)) {
+                return machineRun(machine, demand, label, null);
+            }
+            return planAsync(key, demand, partial, label, null, machine);
         }
         return planAsync(key, demand, partial, label, null, picked ? machine : null);
+    }
+
+    /* Whether {@code demand} takes more than one run of {@code machine} and more than one machine runs it. */
+    private boolean sharedAmongMachines(final ProcessingPattern machine, final long demand) {
+        final ProcessingPattern.ProcessingOutput primary = machine.primaryOutput();
+        final long runs = Sizes.ceilDiv(demand, primary == null ? 1 : Math.max(1, primary.amount()));
+        return runs > 1 && mainframe.getLevel() instanceof ServerLevel serverLevel
+                && CraftingDispatch.machinesFor(serverLevel, mainframe.craftingComputerPositions(), machine) > 1;
     }
 
     /**

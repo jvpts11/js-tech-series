@@ -4513,6 +4513,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) An order or a job that takes from the network leaves what a craft holds reserved: a second order took
   the solder a first one had reserved, and the first one's step stood waiting for what was gone. An order counting on
   stock another craft reserved plans to make its own instead.
+- (Computers) An order of a machine's own result is shared among the machines that hold its recipe, as a craft's
+  step is: of sixteen wafers two Deposition Chambers each take eight, where the whole order went to one and the
+  other stood idle.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

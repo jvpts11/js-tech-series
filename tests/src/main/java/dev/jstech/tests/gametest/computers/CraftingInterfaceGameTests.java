@@ -24,6 +24,7 @@ import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkIndex;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.InterfaceView;
@@ -588,6 +589,40 @@ public final class CraftingInterfaceGameTests {
                             "the craft completes: " + record.cause());
                     helper.assertTrue(stored(helper, Items.STONE) == 16, "sixteen stone in the network, not "
                             + stored(helper, Items.STONE));
+                    final TestMachineBlockEntity other = world.blockEntity(SECOND_KILN, TestMachineBlockEntity.class);
+                    helper.assertTrue(kiln(rig).made() == 8 && other.made() == 8, "each kiln fired eight, not "
+                            + kiln(rig).made() + " and " + other.made());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * An order of a machine's own result, its inputs all in stock, is shared among the machines holding the recipe as a
+     * craft's step is: it went whole to one kiln and the other stood idle.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void jobs_aDirectOrderSharesItsRunsBetweenTwoMachines(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+        final CraftingInterfacePart second = secondKiln(world);
+        final ProcessingPattern cobble = CraftingRig.pattern(Items.COBBLESTONE, Items.STONE, 200);
+        final AtomicReference<INetworkOperation> order = new AtomicReference<>();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.COBBLESTONE, 64);
+                    rig.hold(cobble);
+                    second.place(NetworkRecipe.ofProcessing(cobble));
+                    net.cc().forgetFloor();
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    order.set(net.mainframe().submitCraftRequest(StorageKey.of(Items.STONE), 16, false, "direct",
+                            null));
+                    helper.assertTrue(order.get() != null, "the order is taken");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(stored(helper, Items.STONE) == 16,
+                        "sixteen stone come back, not " + stored(helper, Items.STONE)))
+                .thenExecute(() -> {
                     final TestMachineBlockEntity other = world.blockEntity(SECOND_KILN, TestMachineBlockEntity.class);
                     helper.assertTrue(kiln(rig).made() == 8 && other.made() == 8, "each kiln fired eight, not "
                             + kiln(rig).made() + " and " + other.made());
