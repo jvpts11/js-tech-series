@@ -7848,6 +7848,7 @@ stable 4
 10 dev.jstech.core.machine.MachineMenu  List<Slot> faceSlots()
 10 dev.jstech.core.machine.MachineMenu  MachineBlockEntity machine()
 11 dev.jstech.core.machine.MachineMenu  MachineHistory history()
+103 dev.jstech.core.machine.MachineMenu  boolean canTakeItemForPickAll(ItemStack, Slot)
 10 dev.jstech.core.machine.MachineMenu  int tab()
 12 dev.jstech.core.machine.MachineMenu  int tabs()
 10 dev.jstech.core.machine.MachineMenu  new(int, Inventory, MachineBlockEntity)

@@ -11,6 +11,7 @@ import com.mojang.authlib.GameProfile;
 import dev.jstech.core.connect.RelativeFace;
 import dev.jstech.core.inventory.FaceMode;
 import dev.jstech.core.inventory.ItemFilter;
+import dev.jstech.core.jstechseries.upgrade.SharedUpgrades;
 import dev.jstech.core.machine.ComparatorReads;
 import dev.jstech.core.machine.MachineFill;
 import dev.jstech.core.machine.MachineMenu;
@@ -30,6 +31,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -38,6 +40,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.SlotItemHandler;
 
 /**
  * The machine screen's menu on the server: each control sets its part of the machine for its owner (the switch, the
@@ -51,6 +54,9 @@ public final class MachineMenuGameTests {
 
     private static final String ARENA = "empty";
     private static final BlockPos AT = new BlockPos(2, 2, 2);
+    /* A stack of motors, and how many motors of every kind fit in a machine together. */
+    private static final int MOTORS = 16;
+    private static final int MOST_MOTORS = 4;
 
     private MachineMenuGameTests() {
     }
@@ -179,6 +185,78 @@ public final class MachineMenuGameTests {
                 "nor does a recipe of a kind the machine does not work");
         helper.assertTrue(machine.getInventory().getStackInSlot(0).isEmpty(), "its inputs stay empty");
         helper.succeed();
+    }
+
+    /**
+     * A stack of motors dropped on a bay goes in only as far as the motors' shared limit: four motors in all, of
+     * whichever kinds, the rest left in hand. A machine took sixteen and used four.
+     */
+    @GameTest(template = ARENA)
+    public static void bays_takeNoMoreMotorsDroppedThanTheirLimit(final GameTestHelper helper) {
+        final FakePlayer owner = player(helper, "motor_owner");
+        final TestKitMachine.KitMachineBlockEntity machine = machine(helper, owner);
+        owner.getInventory().clearContent();
+        owner.getInventory().setItem(0, new ItemStack(SharedUpgrades.BRUSHLESS_MOTOR.get(), MOTORS));
+        owner.getInventory().setItem(1, new ItemStack(SharedUpgrades.INDUCTION_MOTOR.get(), MOTORS));
+        final MachineMenu menu = new MachineMenu(0, owner.getInventory(), machine);
+        final int first = TestKitMachine.LAYOUT.firstUpgrade();
+        // A stack carried onto each bay, as a player drops it there.
+        for (int bay = 0; bay < TestKitMachine.LAYOUT.upgrades(); bay++) {
+            menu.setCarried(owner.getInventory().removeItemNoUpdate(bay));
+            menu.clicked(machineSlot(menu, machine, first + bay), 0, ClickType.PICKUP, owner);
+            owner.getInventory().setItem(bay, menu.getCarried());
+            menu.setCarried(ItemStack.EMPTY);
+        }
+        int motors = 0;
+        for (int bay = 0; bay < TestKitMachine.LAYOUT.upgrades(); bay++) {
+            motors += machine.getInventory().getStackInSlot(first + bay).getCount();
+        }
+        final String where = "bays " + machine.getInventory().getStackInSlot(first) + ", "
+                + machine.getInventory().getStackInSlot(first + 1) + "; inventory " + owner.getInventory().getItem(0)
+                + ", " + owner.getInventory().getItem(1);
+        helper.assertTrue(motors == MOST_MOTORS, "four motors in the bays, of both kinds together: " + where);
+        helper.assertTrue(owner.getInventory().getItem(0).getCount() + owner.getInventory().getItem(1).getCount()
+                == 2 * MOTORS - MOST_MOTORS, "and the rest left in the inventory: " + where);
+        helper.succeed();
+    }
+
+    /**
+     * Emptying a machine by hand leaves its upgrades in their bays: a double click gathering motors on the machine's
+     * own tab takes none from the bays of the tab not shown, and a bay is not of the outputs' inventory for moving
+     * every alike stack at once.
+     */
+    @GameTest(template = ARENA)
+    public static void handDrain_leavesTheUpgradesInTheirBays(final GameTestHelper helper) {
+        final FakePlayer owner = player(helper, "drain_owner");
+        final TestKitMachine.KitMachineBlockEntity machine = machine(helper, owner);
+        final int bay = TestKitMachine.LAYOUT.firstUpgrade();
+        machine.getInventory().setStackInSlot(bay, new ItemStack(SharedUpgrades.BRUSHLESS_MOTOR.get(), MOST_MOTORS));
+        machine.getInventory().setStackInSlot(TestKitMachine.OUT, new ItemStack(SharedUpgrades.BRUSHLESS_MOTOR.get(),
+                2));
+        final MachineMenu menu = new MachineMenu(0, owner.getInventory(), machine);
+        final Slot baySlot = menu.slots.get(machineSlot(menu, machine, bay));
+        final Slot output = menu.slots.get(machineSlot(menu, machine, TestKitMachine.OUT));
+        final Slot input = menu.slots.get(machineSlot(menu, machine, 0));
+        helper.assertTrue(!baySlot.isSameInventory(output) && output.isSameInventory(input),
+                "a bay is not of the outputs' inventory for moving alike stacks; an input is");
+        menu.setCarried(new ItemStack(SharedUpgrades.BRUSHLESS_MOTOR.get()));
+        menu.clicked(machineSlot(menu, machine, 0), 0, ClickType.PICKUP_ALL, owner);
+        helper.assertTrue(machine.getInventory().getStackInSlot(bay).getCount() == MOST_MOTORS,
+                "a double click gathering motors leaves the bay's: " + machine.getInventory().getStackInSlot(bay));
+        helper.assertTrue(menu.getCarried().getCount() == 3, "and gathers the output's: " + menu.getCarried());
+        helper.succeed();
+    }
+
+    /* The menu's slot of the machine's inventory slot {@code index}. */
+    private static int machineSlot(final MachineMenu menu, final TestKitMachine.KitMachineBlockEntity machine,
+                                   final int index) {
+        for (int k = 0; k < menu.slots.size(); k++) {
+            if (menu.slots.get(k) instanceof SlotItemHandler held && held.getItemHandler() == machine.getInventory()
+                    && held.getSlotIndex() == index) {
+                return k;
+            }
+        }
+        throw new IllegalStateException("no slot of the machine's slot " + index);
     }
 
     @SuppressWarnings("unchecked")

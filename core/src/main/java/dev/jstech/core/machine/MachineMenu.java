@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.machine;
 
+import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.connect.RelativeFace;
 import dev.jstech.core.energy.EnergyProtection;
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -154,6 +155,12 @@ public final class MachineMenu extends CoreMenu {
     /** The menu on the player's side, for the machine whose place the server wrote. */
     public MachineMenu(final int containerId, final Inventory inventory, final RegistryFriendlyByteBuf buf) {
         this(containerId, inventory, MenuOpening.blockEntity(inventory, buf, MachineBlockEntity.class));
+    }
+
+    /* A double click gathers alike stacks from the slots shown alone: never from a bay of a tab not shown. */
+    @Override
+    public boolean canTakeItemForPickAll(final ItemStack stack, final Slot slot) {
+        return slot.isActive() && super.canTakeItemForPickAll(stack, slot);
     }
 
     /** The machine. */
@@ -337,9 +344,30 @@ public final class MachineMenu extends CoreMenu {
             return this.shownOn == EVERY_TAB || tab == this.shownOn;
         }
 
+        /*
+         * Moving every stack alike at once, shift and a double click, goes through the slots of one inventory: a slot
+         * of another tab is not of it here, so emptying the machine by hand leaves its upgrades in their bays.
+         */
+        @Override
+        public boolean isSameInventory(final Slot other) {
+            return other instanceof TabSlot slot && (slot.shownOn == this.shownOn || slot.shownOn == EVERY_TAB
+                    || this.shownOn == EVERY_TAB) && super.isSameInventory(other);
+        }
+
         @Override
         public boolean mayPlace(final ItemStack stack) {
             return !this.output && super.mayPlace(stack);
+        }
+
+        /*
+         * The game's slot asks the machine only how much any stack may fill it, so an upgrade dropped on a bay went in
+         * past its kind's share: sixteen motors where four count. The machine's own limit for this stack holds too.
+         */
+        @Override
+        public int getMaxStackSize(final ItemStack stack) {
+            final int own = super.getMaxStackSize(stack);
+            return getItemHandler() instanceof FieldItemHandler field
+                    ? Math.min(own, field.stackLimitOf(getSlotIndex(), stack)) : own;
         }
     }
 }

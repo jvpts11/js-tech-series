@@ -713,6 +713,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- (Core) Upgrade bays kept to their limit and their tab: J's Core's API is at version 103. `MachineMenu` gathers alike
+  stacks by a double click only from the slots shown (`canTakeItemForPickAll`), and its bays take a stack only as far
+  as the machine's own limit for it.
 - (Core) Gases marked on an empty item: J's Core's API is at version 102. `ItemStates.GAS_MARK` keeps the gas an
   item that holds a gas is marked for; `ItemGasTank.markOf` and `mark` read and set it, and an empty tank marked for a
   gas takes that gas alone. `ItemTexts.markedFor` says it: "Empty, marked: Hydrogen Chloride (HCl)". Experimental.
@@ -4989,6 +4992,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Core) A stack of upgrades dropped on a machine's bay goes in only as far as its kind's limit: sixteen motors went
+  in where four count, of every kind of motor together.
+- (Core) Emptying a machine by hand leaves its upgrades in their bays: a double click gathering alike items, or shift
+  and a double click moving them all, took them from the bays of the tab not shown.
 - (Core) A part of a glTF model that rests sized to nothing and that its loop shows later shows: the Core sized a bone
   by its rest size times the loop's, so a part hidden at rest stayed hidden, and a chain machine's parts that come
   and go and are not there as its loop starts (a heater's glow, the pins pushing a part off) never appeared; they
