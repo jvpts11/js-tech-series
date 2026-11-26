@@ -713,6 +713,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- (Core) Multiblocks named by their mods: J's Core's API is at version 105. `Projectables.addNames` lets a mod name
+  its multiblocks in words of its own, asked before the key `multiblock.<namespace>.<path>`, so the projector and the
+  builder call a machine's shape what the machine is called. A container screen that draws a frame round its image
+  says so through `IPanelScreen`, and a small window lowers the scale for the whole of it. Experimental.
 - (Core) Amounts typed into a stepper: J's Core's API is at version 104. An `AmountStepper`'s amount is a field that
   takes digits, the amount at every one typed; `editAmount` hands it the keyboard with the amount selected, and
   `StepperMath.typed` reads digits into an amount inside a range, a number too long for a long as the maximum.
@@ -4574,6 +4578,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   they were amber, and a RUN blue. The palette `jsc:operation/types` gains `craft` and `run`.
 - (Core, Computers) An amount stepper takes digits: its number is a field, so 1000 is typed rather than stepped to.
   The Pattern Studio's amount popup opens with the amount selected, and the digits typed straight away replace it.
+- (Core) A click with an empty hand on a wire's arm into a block opens that block, as a click on its face does: the
+  arms of two wires side by side fill most of a face, and a machine could not be opened from that side.
+- (Computers) Quince's own computers are Russets, not PCs: their parts' screen says RUSSET and "Name this
+  computer...".
+- (Computers) On a small window a desktop rises into the room over its monitor, so the recipe viewer's buttons in the
+  window's bottom corners no longer cover the name and the light on the monitor's chin.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
@@ -5015,6 +5025,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the language without its quotes and the statement failed.
 - (Computers) `interac list 9654` looks for 9654 in the names held; a number alone was read as an amount and the
   whole stock listed.
+- (Computers) A bus clicked onto a face of a block with cables on two of its sides goes on the cable that face
+  touches: it went on whichever cable came first in a fixed order of sides, the one above among them.
+- (Computers) MC-NET's prompt with no space on it says `install interactor` puts one on from its disc in a drive; it
+  named `netgetter`, a package manager MC-NET does not have.
+- (Computers) The Structure Projector and the Multiblock Builder call the chain's machines by their names
+  ("Advanced Lithography Station") and no longer by the words of their ids ("Lithography Advanced").
+- (Core) The Multiblock Builder calls a multiblock the same aimed at its terminal as in front of a projector: a dock
+  was the "Shipyard Terminal" one way and the "Small Shipyard" the other. Its header gives up the size line before it
+  cuts the name.
+- (Computers) A monitor's screen opens whole on a small window: the interface's scale goes low enough for the frame
+  round the glass, whose top and chin fell out of an 854 by 480 window.
+- (Computers) What keeps the recipe viewers off a Quince all-in-one's frame is its own face, not its era's monitor.
 - (Core) A stack of upgrades dropped on a machine's bay goes in only as far as its kind's limit: sixteen motors went
   in where four count, of every kind of motor together.
 - (Core) Emptying a machine by hand leaves its upgrades in their bays: a double click gathering alike items, or shift

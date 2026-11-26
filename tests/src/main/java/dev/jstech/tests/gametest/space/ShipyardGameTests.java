@@ -25,6 +25,7 @@ import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.Projectables;
 import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
@@ -66,6 +67,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -242,6 +244,11 @@ public final class ShipyardGameTests {
                     + " forms closed");
             helper.assertBlockPresent(FormedParts.BLOCK.get(), DECK_DOWN);
             helper.assertBlockPresent(FormedParts.BLOCK.get(), CRANE_OVER_THE_BAY);
+            // Aimed at its terminal, the builder calls the dock what the projector calls it, not by its terminal.
+            final BuilderPlan plan = BuilderPlan.of(level, terminal, helper.makeMockPlayer(GameType.CREATIVE),
+                    BuilderState.DEFAULT).orElseThrow();
+            helper.assertTrue(plan.name().equals(Projectables.name(ShipyardStructure.ID)),
+                    "the builder names the dock as the projector does; got " + plan.name());
         });
     }
 

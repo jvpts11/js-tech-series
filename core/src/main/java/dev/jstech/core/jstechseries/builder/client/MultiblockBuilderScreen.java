@@ -280,8 +280,18 @@ public final class MultiblockBuilderScreen extends Screen implements IPanelScree
     /* The page to build, as the approved design lays it out. */
     private void build(final GuiGraphics g, final NetworkProbeScreen.Colours c, final BuilderPlan plan) {
         final Colours b = PALETTE.get();
-        header(g, c, plan.name(), BuilderTexts.HEADER.with(plan.preview().sizeX(), plan.preview().sizeY(),
-                plan.preview().sizeZ(), facing(plan.facing()).text()));
+        // The name wins the header: the size gives up which way it faces, then itself, before the name is cut.
+        final int nameWidth = this.font.width(GameText.resolve(plan.name()));
+        Text size = BuilderTexts.HEADER.with(plan.preview().sizeX(), plan.preview().sizeY(),
+                plan.preview().sizeZ(), facing(plan.facing()).text());
+        if (nameWidth > headerRoom(size)) {
+            size = BuilderTexts.HEADER_SIZE.with(plan.preview().sizeX(), plan.preview().sizeY(),
+                    plan.preview().sizeZ());
+        }
+        if (nameWidth > headerRoom(size)) {
+            size = Text.EMPTY;
+        }
+        header(g, c, plan.name(), size);
         final int x = ProbeLayout.TEXT_LEFT;
         final Text toPlace = BuilderTexts.TO_PLACE.text();
         small(g, toPlace, x, BuilderLayout.TO_PLACE_Y, c.cyan());
@@ -498,8 +508,7 @@ public final class MultiblockBuilderScreen extends Screen implements IPanelScree
     private void header(final GuiGraphics g, final NetworkProbeScreen.Colours c, final Text title, final Text right) {
         g.fill(x(ProbeLayout.DISPLAY_LEFT), y(ProbeLayout.DISPLAY_TOP), x(ProbeLayout.DISPLAY_RIGHT),
                 y(ProbeLayout.DISPLAY_TOP + ProbeLayout.HEADER_HEIGHT), c.head());
-        final int rightWidth = width(right);
-        final int room = ProbeLayout.DISPLAY_RIGHT - ProbeLayout.DISPLAY_LEFT - 9 - rightWidth;
+        final int room = headerRoom(right);
         Draw.text(g, this.font, this.font.plainSubstrByWidth(GameText.resolve(title), room),
                 x(ProbeLayout.DISPLAY_LEFT + 3), y(ProbeLayout.DISPLAY_TOP + 2), c.white());
         smallRight(g, right, ProbeLayout.DISPLAY_RIGHT - 3, ProbeLayout.DISPLAY_TOP + 3, c.headText());
@@ -576,6 +585,11 @@ public final class MultiblockBuilderScreen extends Screen implements IPanelScree
 
     private int width(final Text text) {
         return (int) Math.ceil(this.font.width(GameText.resolve(text)) * ProbeLayout.SMALL);
+    }
+
+    /* The room the header leaves its title beside {@code right}, the small figure at its right. */
+    private int headerRoom(final Text right) {
+        return ProbeLayout.DISPLAY_RIGHT - ProbeLayout.DISPLAY_LEFT - 9 - width(right);
     }
 
     private int x(final int x) {

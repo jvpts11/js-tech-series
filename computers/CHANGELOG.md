@@ -1075,6 +1075,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   they were amber, and a RUN blue. The palette `jsc:operation/types` gains `craft` and `run`.
 - An amount stepper takes digits: its number is a field, so 1000 is typed rather than stepped to.
   The Pattern Studio's amount popup opens with the amount selected, and the digits typed straight away replace it.
+- Quince's own computers are Russets, not PCs: their parts' screen says RUSSET and "Name this
+  computer...".
+- On a small window a desktop rises into the room over its monitor, so the recipe viewer's buttons in the
+  window's bottom corners no longer cover the name and the light on the monitor's chin.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
@@ -1290,6 +1294,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the language without its quotes and the statement failed.
 - `interac list 9654` looks for 9654 in the names held; a number alone was read as an amount and the
   whole stock listed.
+- A bus clicked onto a face of a block with cables on two of its sides goes on the cable that face
+  touches: it went on whichever cable came first in a fixed order of sides, the one above among them.
+- MC-NET's prompt with no space on it says `install interactor` puts one on from its disc in a drive; it
+  named `netgetter`, a package manager MC-NET does not have.
+- The Structure Projector and the Multiblock Builder call the chain's machines by their names
+  ("Advanced Lithography Station") and no longer by the words of their ids ("Lithography Advanced").
+- A monitor's screen opens whole on a small window: the interface's scale goes low enough for the frame
+  round the glass, whose top and chin fell out of an 854 by 480 window.
+- What keeps the recipe viewers off a Quince all-in-one's frame is its own face, not its era's monitor.
 - The Injection Moulder shows a fan frame or a bezel it moulds, and that part's mould on its mould halves,
   as it shows a component's body: it showed neither, its belt and mould empty while it worked.
 - Autocrafting: a machine job that gives up or is cancelled takes back to the network what it fed the

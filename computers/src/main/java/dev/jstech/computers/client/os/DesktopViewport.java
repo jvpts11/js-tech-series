@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.os.PanelStyle;
@@ -26,6 +27,11 @@ final class DesktopViewport {
     private final DesktopState desktop;
     /** How big the desktop draws everything, as a percentage of its designed size; 0 stands for the default. */
     private int scalePercent;
+
+    /* How tall a recipe viewer's buttons stand in the window's bottom corners, with the gap under them. */
+    private static final int CORNER_BUTTONS = 24;
+    /* What is kept above the frame however high the glass rises. */
+    private static final int TOP_EDGE = 2;
 
     DesktopViewport(final DesktopState desktop) {
         this.desktop = desktop;
@@ -78,8 +84,17 @@ final class DesktopViewport {
         return (desktop.surface().surfaceWidth() - glassWidth()) / 2;
     }
 
+    /*
+     * The glass is centred, unless its frame would reach down into the window's bottom corners: a recipe viewer keeps
+     * a button in each of them whatever room it has, and there they covered the name and the light on the frame's
+     * chin. The glass then rises into what the frame leaves above it, as far as that goes, and stays its size.
+     */
     int top() {
-        return (desktop.surface().surfaceHeight() - glassHeight()) / 2;
+        final int height = desktop.surface().surfaceHeight();
+        final int centred = (height - glassHeight()) / 2;
+        final MonitorFrameStyle.Geometry frame = desktop.frameAt(centred);
+        final int over = frame.bottom() - (height - CORNER_BUTTONS);
+        return centred - Math.max(0, Math.min(over, frame.y() - TOP_EDGE));
     }
 
     /** The screen x of a desktop-local x, for a hook that hands a test a point to click. */

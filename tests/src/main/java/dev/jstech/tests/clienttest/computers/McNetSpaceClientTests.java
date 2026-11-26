@@ -44,6 +44,12 @@ public final class McNetSpaceClientTests {
     private static final int SETTLE = 4;
     private static final int SCREEN_WAIT = 200;
     private static final int BOOT_WAIT = 400;
+    /* The smallest window the game opens, at the scale it opens at, and the window the tests run in. */
+    private static final int SMALL_WIDTH = 854;
+    private static final int SMALL_HEIGHT = 480;
+    private static final int SMALL_SCALE = 2;
+    private static final int TEST_WIDTH = 960;
+    private static final int TEST_HEIGHT = 640;
 
     private static final BlockPos COMPUTER = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
@@ -126,6 +132,41 @@ public final class McNetSpaceClientTests {
                 .thenWaitUntil(() -> space(ctx).activeHeading() == ComputerTerminalMenu.TAB_LOCAL,
                         SCREEN_WAIT, "clicking a heading to switch to it")
                 .thenScreenshot(2, "mcnet_space_local");
+    }
+
+    /**
+     * On the smallest window the game opens, 854 by 480 at a scale of 2, the space opens whole: its headings at the
+     * top, the hotbar at the bottom and the monitor's frame round them all inside the window.
+     */
+    @ClientTest(timeoutTicks = 1800)
+    public static void theSpace_opensWholeOnASmallWindow(final ClientTestContext ctx) {
+        final int[] chosen = new int[1];
+        ctx.afterTest(() -> ctx.mc().execute(() -> {
+            ctx.mc().options.guiScale().set(chosen[0]);
+            GLFW.glfwSetWindowSize(ctx.mc().getWindow().getWindow(), TEST_WIDTH, TEST_HEIGHT);
+            ctx.mc().resizeDisplay();
+        }));
+        ctx.then(0, () -> {
+                    chosen[0] = ctx.mc().options.guiScale().get();
+                    GLFW.glfwSetWindowSize(ctx.mc().getWindow().getWindow(), SMALL_WIDTH, SMALL_HEIGHT);
+                })
+                .thenWaitUntil(() -> ctx.mc().getWindow().getWidth() == SMALL_WIDTH, SCREEN_WAIT,
+                        "the window to be 854 by 480")
+                .then(0, () -> {
+                    ctx.mc().options.guiScale().set(SMALL_SCALE);
+                    ctx.mc().resizeDisplay();
+                });
+        atTheMachine(ctx)
+                .thenAwaitScreen(ComputerTerminalScreen.class, BOOT_WAIT)
+                .then(SETTLE, () -> {
+                    final var frame = space(ctx).frameBounds();
+                    final int width = ctx.mc().getWindow().getGuiScaledWidth();
+                    final int height = ctx.mc().getWindow().getGuiScaledHeight();
+                    ctx.assertTrue(frame.x() >= 0 && frame.y() >= 0 && frame.right() <= width
+                                    && frame.bottom() <= height,
+                            "the frame lies whole in the " + width + " by " + height + " window: " + frame);
+                })
+                .thenScreenshot(2, "mcnet_space_854x480");
     }
 
     /**

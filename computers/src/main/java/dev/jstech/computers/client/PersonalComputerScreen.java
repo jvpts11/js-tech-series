@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.block.QuinceComputerBlock;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.gui.layout.PersonalComputerLayout;
 import dev.jstech.computers.menu.PersonalComputerMenu;
@@ -14,8 +15,10 @@ import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.level.Level;
 
 /**
  * The Personal Computer's assembly screen: its era's tower case, and on its front panel what it moves a tick, its RAM
@@ -35,12 +38,18 @@ public class PersonalComputerScreen extends AbstractTowerAssemblyScreen<Personal
 
     @Override
     protected String machineTitle() {
-        return GameText.resolve(AssemblyTexts.TITLE_PC);
+        return GameText.resolve(quince() ? AssemblyTexts.TITLE_RUSSET : AssemblyTexts.TITLE_PC);
     }
 
     @Override
     protected TextKey nameHint() {
-        return AssemblyTexts.NAME_THIS_PC;
+        return quince() ? AssemblyTexts.NAME_THIS_COMPUTER : AssemblyTexts.NAME_THIS_PC;
+    }
+
+    /* Whether the machine is one of Quince's own, which are Russets and never PCs. */
+    private boolean quince() {
+        final Level level = Minecraft.getInstance().level;
+        return level != null && level.getBlockState(menu.computerPos()).getBlock() instanceof QuinceComputerBlock;
     }
 
     @Override

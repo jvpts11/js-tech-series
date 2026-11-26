@@ -49,7 +49,7 @@ public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessio
         this.monitorPos = menu.monitorPos();
         this.activeChannel = pending == null ? -1 : pending.activeChannel();
         this.channels = pending == null ? List.of() : pending.channels();
-        this.imageHeight = this.panelHeight();
+        this.imageHeight = this.listHeight();
     }
 
     /** The bar the rack is showing, said before the session that shows it is opened. */
@@ -64,7 +64,8 @@ public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessio
         return this.getMenu().hardwareEra();
     }
 
-    private int panelHeight() {
+    /* How tall the switch's list of channels stands, for the channels it has. */
+    private int listHeight() {
         return KvmChannelLayout.height(channels.size());
     }
 
@@ -115,7 +116,7 @@ public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessio
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = left();
         final int y = top();
-        JsTechTheme.window(g, x, y, KvmChannelLayout.WIDTH, panelHeight());
+        JsTechTheme.window(g, x, y, KvmChannelLayout.WIDTH, listHeight());
         JsTechTheme.headerBar(g, x + KvmChannelLayout.HEADER_X, y + KvmChannelLayout.HEADER_Y,
                 KvmChannelLayout.HEADER_W);
         JsTechTheme.text(g, font, GameText.resolve(MonitorScreenTexts.KVM_TITLE), x + KvmChannelLayout.TITLE_X,

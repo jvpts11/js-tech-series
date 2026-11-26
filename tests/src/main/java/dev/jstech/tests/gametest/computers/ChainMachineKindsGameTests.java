@@ -11,6 +11,7 @@ import dev.jstech.computers.block.WorkbenchBlock;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineTerminalBlock;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.core.multiblock.Projectables;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
@@ -45,6 +46,19 @@ public final class ChainMachineKindsGameTests {
     private static final String ARENA = "empty";
 
     private ChainMachineKindsGameTests() {
+    }
+
+    /**
+     * The projector and the builder call a machine's shape what the machine is called in its windows: they read the
+     * words of its id, "Lithography Advanced", where the machine is the Advanced Lithography Station.
+     */
+    @GameTest(template = ARENA)
+    public static void shape_isCalledWhatItsMachineIs(final GameTestHelper helper) {
+        for (final ChainMachine machine : ChainMachines.all()) {
+            helper.assertTrue(Projectables.name(machine.patternId()).equals(machine.nameKey().text()),
+                    machine.id() + "'s shape is called " + machine.english());
+        }
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
@@ -1077,9 +1078,14 @@ final class DesktopState {
      * rather than over it.
      */
     MonitorFrameStyle.Geometry frameBounds() {
+        return frameAt(view.top());
+    }
+
+    /** The frame round the glass were its top edge at {@code glassTop}, the screen's y. */
+    MonitorFrameStyle.Geometry frameAt(final int glassTop) {
         // The frame wraps the glass as it is on the screen, whatever the desktop inside it is scaled to.
-        return MonitorFrameStyle.forEra(prefs.era())
-                .geometry(view.left(), view.top(), view.glassWidth(), view.glassHeight());
+        return MonitorFrame.boundsOf(view.left(), glassTop, view.glassWidth(), view.glassHeight(), prefs.era(),
+                monitorPos);
     }
 
     /** The platform the installed system stands on, Frames as the safe default for a machine with no system. */

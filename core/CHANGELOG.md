@@ -580,6 +580,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- Multiblocks named by their mods: J's Core's API is at version 105. `Projectables.addNames` lets a mod name
+  its multiblocks in words of its own, asked before the key `multiblock.<namespace>.<path>`, so the projector and the
+  builder call a machine's shape what the machine is called. A container screen that draws a frame round its image
+  says so through `IPanelScreen`, and a small window lowers the scale for the whole of it. Experimental.
 - Amounts typed into a stepper: J's Core's API is at version 104. An `AmountStepper`'s amount is a field that
   takes digits, the amount at every one typed; `editAmount` hands it the keyboard with the amount selected, and
   `StepperMath.typed` reads digits into an amount inside a range, a number too long for a long as the maximum.
@@ -2380,6 +2384,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   to the Studio brings its gases with it.
 - An amount stepper takes digits: its number is a field, so 1000 is typed rather than stepped to.
   The Pattern Studio's amount popup opens with the amount selected, and the digits typed straight away replace it.
+- A click with an empty hand on a wire's arm into a block opens that block, as a click on its face does: the
+  arms of two wires side by side fill most of a face, and a machine could not be opened from that side.
 - Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
   cables beside them still show. They still move only near the player.
 - The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its
@@ -2560,6 +2566,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   one.
 
 ### Fixed
+- The Multiblock Builder calls a multiblock the same aimed at its terminal as in front of a projector: a dock
+  was the "Shipyard Terminal" one way and the "Small Shipyard" the other. Its header gives up the size line before it
+  cuts the name.
 - A stack of upgrades dropped on a machine's bay goes in only as far as its kind's limit: sixteen motors went
   in where four count, of every kind of motor together.
 - Emptying a machine by hand leaves its upgrades in their bays: a double click gathering alike items, or shift

@@ -699,6 +699,7 @@
   "jscore.builder.have": "você tem %s",
   "jscore.builder.have_short": "tem %s",
   "jscore.builder.header": "%s x %s x %s, VIRADO AO %s",
+  "jscore.builder.header_size": "%s x %s x %s",
   "jscore.builder.held": "SEGURO",
   "jscore.builder.held_line": "HOLD continua",
   "jscore.builder.hold": "HOLD",

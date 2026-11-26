@@ -882,6 +882,7 @@
   "jscore.builder.have": "you have %s",
   "jscore.builder.have_short": "have %s",
   "jscore.builder.header": "%s x %s x %s, FACING %s",
+  "jscore.builder.header_size": "%s x %s x %s",
   "jscore.builder.held": "HELD",
   "jscore.builder.held_line": "HOLD carries on",
   "jscore.builder.hold": "HOLD",

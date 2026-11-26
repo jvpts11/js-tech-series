@@ -38,6 +38,8 @@ import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.multiblock.PortProducts;
+import dev.jstech.core.multiblock.Projectables;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -89,6 +91,8 @@ public final class ChainMachines {
     static {
         // Its machines of recipes take the series' shared upgrades in their upgrade slots.
         SharedUpgrades.all().forEach(upgrade -> SharedUses.declare(JsComputers.MODID, upgrade::get));
+        // A machine's shape is called what the machine is, in the projector and the builder as in its windows.
+        Projectables.addNames(ChainMachines::nameOfShape);
         // The Crusher's four outputs: the crushed ore and up to three byproducts, as zinc ore gives indium, germanium
         // and sulfur; the work starts only when all of it fits.
         machine("crusher").named("Crusher").step(8, 2_000).slots(1, 4, 0, 0, 0, 0)
@@ -323,6 +327,15 @@ public final class ChainMachines {
     /** The machine of {@code id}, if it is one. */
     public static Optional<ChainMachine> byId(final String id) {
         return Optional.ofNullable(DECLARED.get(id)).map(Declared::machine);
+    }
+
+    /* The name of the machine whose shape is {@code patternId}, or none for any other shape. */
+    private static Optional<Text> nameOfShape(final ResourceLocation patternId) {
+        final String prefix = "chain/";
+        if (!JsComputers.MODID.equals(patternId.getNamespace()) || !patternId.getPath().startsWith(prefix)) {
+            return Optional.empty();
+        }
+        return byId(patternId.getPath().substring(prefix.length())).map(machine -> machine.nameKey().text());
     }
 
     /**

@@ -224,9 +224,13 @@ public final class CableBlock extends Block implements EntityBlock, SimpleWaterl
     @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player, final BlockHitResult hit) {
-        final Direction face = aimOf(level, pos, player).part();
-        if (face == null || !(level.getBlockEntity(pos) instanceof CableBlockEntity cable)) {
+        if (!(level.getBlockEntity(pos) instanceof CableBlockEntity cable)) {
             return InteractionResult.PASS;
+        }
+        final CableBlockEntity.Aim aim = aimOf(level, pos, player);
+        final Direction face = aim.part();
+        if (face == null) {
+            return aim.wire() != null ? throughTheArm(level, pos, player, cable) : InteractionResult.PASS;
         }
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
@@ -236,6 +240,43 @@ public final class CableBlock extends Block implements EntityBlock, SimpleWaterl
             return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;
+    }
+
+    /*
+     * A wire's arm into a block stands in front of that block's face, and the arms of two wires side by side fill
+     * most of it, so the block could not be opened from that side. A click with an empty hand does nothing to a wire,
+     * so it goes on to the block the eye meets through the cable, when a wire crosses into it: as if that block's
+     * face had been clicked.
+     */
+    private static InteractionResult throughTheArm(final Level level, final BlockPos pos, final Player player,
+                                                   final CableBlockEntity cable) {
+        final Vec3 eye = player.getEyePosition();
+        final Vec3 look = player.getViewVector(1.0F);
+        // Where the ray leaves the cable's block: the side whose plane it reaches first going out.
+        Direction out = null;
+        double leaves = Double.MAX_VALUE;
+        for (final Direction.Axis axis : Direction.Axis.values()) {
+            final double step = look.get(axis);
+            if (step == 0.0) {
+                continue;
+            }
+            final double at = (pos.get(axis) + (step > 0.0 ? 1.0 : 0.0) - eye.get(axis)) / step;
+            if (at < leaves) {
+                leaves = at;
+                out = Direction.fromAxisAndDirection(axis,
+                        step > 0.0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE);
+            }
+        }
+        if (out == null || cable.wiresThrough(out).isEmpty()) {
+            return InteractionResult.PASS;
+        }
+        final BlockPos beyond = pos.relative(out);
+        final BlockState there = level.getBlockState(beyond);
+        if (there.isAir() || there.getBlock() instanceof CableBlock) {
+            return InteractionResult.PASS;
+        }
+        return there.useWithoutItem(level, player,
+                new BlockHitResult(eye.add(look.scale(leaves)), out.getOpposite(), beyond, false));
     }
 
     /* A torch, a lever, a button or a plate on the cable has no collision, as the game's own has none. */

@@ -11391,6 +11391,7 @@ stable 4
 12 dev.jstech.core.multiblock.Projectables  static Optional<String> terminalOf(ResourceLocation)
 10 dev.jstech.core.multiblock.Projectables  static Text name(ResourceLocation)
 10 dev.jstech.core.multiblock.Projectables  static final String KEY_PREFIX
+105 dev.jstech.core.multiblock.Projectables  static void addNames(Function<ResourceLocation, Optional<Text>>)
 10 dev.jstech.core.multiblock.Projectables  static void addSource(Supplier<Map<ResourceLocation, IStructureShape>>)
 12 dev.jstech.core.multiblock.Projectables  static void addTerminals(Function<ResourceLocation, Optional<String>>)
 12 dev.jstech.core.multiblock.Quota  type record(String name, IBlockMatcher counts, Limit limit)

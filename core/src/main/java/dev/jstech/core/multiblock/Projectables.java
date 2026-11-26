@@ -35,8 +35,18 @@ public final class Projectables {
     /* Who knows a multiblock's terminal block besides its pattern: the kits whose terminals name their shape. */
     private static final List<Function<ResourceLocation, Optional<String>>> TERMINALS =
             new CopyOnWriteArrayList<>();
+    /* Who names a multiblock in words of its own, before the key its language files may give. */
+    private static final List<Function<ResourceLocation, Optional<Text>>> NAMES = new CopyOnWriteArrayList<>();
 
     private Projectables() {
+    }
+
+    /**
+     * Adds a way to name a multiblock by its id, for the multiblocks a mod already calls something of its own (a
+     * machine named in its windows): asked in the order added, before the key {@code multiblock.<namespace>.<path>}.
+     */
+    public static void addNames(final Function<ResourceLocation, Optional<Text>> source) {
+        NAMES.add(source);
     }
 
     /** Adds the multiblocks {@code source} gives, after those known already; an id known already keeps its first. */
@@ -94,10 +104,17 @@ public final class Projectables {
     }
 
     /**
-     * What a multiblock is called: the sentence of the key {@code multiblock.<namespace>.<path>}, which its mod's
-     * language files give it, or its id's path with its words capitalised when none does.
+     * What a multiblock is called: the name a kit gives it, else the sentence of the key
+     * {@code multiblock.<namespace>.<path>}, which its mod's language files give it, or its id's path with its words
+     * capitalised when none does.
      */
     public static Text name(final ResourceLocation id) {
+        for (final Function<ResourceLocation, Optional<Text>> source : NAMES) {
+            final Optional<Text> named = source.apply(id);
+            if (named.isPresent()) {
+                return named.get();
+            }
+        }
         final String english = words(id.getPath());
         return TextKey.of(KEY_PREFIX + id.getNamespace() + "." + id.getPath().replace('/', '.'),
                 english.isBlank() ? id.getPath() : english).text();

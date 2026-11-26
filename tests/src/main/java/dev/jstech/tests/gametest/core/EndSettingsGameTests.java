@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.core;
 
 import com.mojang.authlib.GameProfile;
+import dev.jstech.core.cable.CableBlock;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableEndMenu;
@@ -36,10 +37,12 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
@@ -178,6 +181,32 @@ public final class EndSettingsGameTests {
         helper.succeed();
     }
 
+    /**
+     * A click with an empty hand on a wire's arm into a block opens that block, as a click on its face would: the arms
+     * of two wires side by side fill most of a face, and the block could not be opened from that side.
+     */
+    @GameTest(template = ARENA)
+    public static void arm_clickedWithAnEmptyHandOpensTheBlockItReaches(final GameTestHelper helper) {
+        helper.setBlock(AT.east(), Blocks.BARREL);
+        TestCables.lay(helper, AT, TestCableTypes.ITEM_LINE);
+        helper.assertFalse(TestCables.cable(helper, AT).wiresThrough(Direction.EAST).isEmpty(),
+                "the item line reaches into the barrel");
+        final BlockPos cable = helper.absolutePos(AT);
+        final ScreenWatcher player = new ScreenWatcher(helper.getLevel());
+        player.moveTo(cable.getX() - 1.5, cable.getY() + 0.5 - player.getEyeHeight(), cable.getZ() + 0.5, -90.0F,
+                0.0F);
+        // A living thing looks where its head turns, which placing it does not turn.
+        player.setYHeadRot(-90.0F);
+        helper.assertTrue(CableBlock.aimOf(helper.getLevel(), cable, player).wire() != null,
+                "the eye meets the item line");
+        helper.getLevel().getBlockState(cable).useWithoutItem(helper.getLevel(), player,
+                new BlockHitResult(Vec3.atCenterOf(cable), Direction.WEST, cable, false));
+        helper.assertTrue(player.opened != null
+                && player.opened.createMenu(0, player.getInventory(), player) instanceof ChestMenu,
+                "the barrel behind the arm opens; got " + player.opened);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void wrench_opensTheScreenWhenSneaking(final GameTestHelper helper) {
         TestCables.lay(helper, AT, TestCableTypes.PLAIN_PIPE);
@@ -232,6 +261,13 @@ public final class EndSettingsGameTests {
         @Override
         public OptionalInt openMenu(@Nullable final MenuProvider provider,
                                     final Consumer<RegistryFriendlyByteBuf> extraData) {
+            this.opened = provider;
+            return OptionalInt.empty();
+        }
+
+        /* What a vanilla block opens, with no extra data. */
+        @Override
+        public OptionalInt openMenu(@Nullable final MenuProvider provider) {
             this.opened = provider;
             return OptionalInt.empty();
         }

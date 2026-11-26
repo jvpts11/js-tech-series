@@ -122,17 +122,22 @@ public class CablePartItem extends Item {
         }
 
         /*
-         * Clicked another block (e.g. a chest): mount on an adjacent cable so the bus faces that
-         * block. Prefer the cable behind the clicked face, then any other adjacent cable.
+         * Clicked another block (e.g. a chest): mount on an adjacent cable so the bus faces that block. The cable
+         * the clicked face touches comes first, then the one on the far side of the block, then any other: with
+         * cables on two sides, a part clicked onto one face went on whichever cable came first in a fixed order.
          */
-        final Direction behind = context.getClickedFace().getOpposite();
-        final InteractionResult viaBehind = tryAdjacentCable(context, clicked, behind);
-        if (viaBehind != InteractionResult.PASS) {
-            return viaBehind;
+        final Direction toward = context.getClickedFace();
+        final Direction behind = toward.getOpposite();
+        boolean cableBeside = false;
+        for (final Direction direction : List.of(toward, behind)) {
+            final InteractionResult result = tryAdjacentCable(context, clicked, direction);
+            if (result != InteractionResult.PASS) {
+                return result;
+            }
+            cableBeside |= level.getBlockEntity(clicked.relative(direction)) instanceof CableBlockEntity;
         }
-        boolean cableBeside = level.getBlockEntity(clicked.relative(behind)) instanceof CableBlockEntity;
         for (final Direction direction : Direction.values()) {
-            if (direction != behind) {
+            if (direction != toward && direction != behind) {
                 final InteractionResult result = tryAdjacentCable(context, clicked, direction);
                 if (result != InteractionResult.PASS) {
                     return result;

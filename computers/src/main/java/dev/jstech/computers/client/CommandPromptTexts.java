@@ -25,7 +25,8 @@ final class CommandPromptTexts {
     static final TextKey DOS_VERSION = TextKey.of("jsc.console.dos_version", "%s  Version 1.0  [Network Build]");
     static final TextKey BASE_MEMORY = TextKey.of("jsc.console.base_memory", "%sK base memory");
     static final TextKey NO_SPACE = TextKey.of("jsc.console.no_space", "No operating space is installed.");
-    static final TextKey PUTS_ONE_ON = TextKey.of("jsc.console.puts_one_on", "%s puts one on.");
+    static final TextKey PUTS_ONE_ON = TextKey.of("jsc.console.puts_one_on",
+            "%s puts one on, from its disc in a drive.");
     static final TextKey SHELL_VERSION = TextKey.of("jsc.console.shell_version", "%s Shell v1.0");
     static final TextKey HELP_HINT =
             TextKey.of("jsc.console.help_hint", "type '%s' for commands, TAB to complete");

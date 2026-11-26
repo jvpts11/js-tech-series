@@ -119,6 +119,18 @@ public final class MonitorFrame {
         }
     }
 
+    /**
+     * The bounds of the frame {@link #renderBody} draws round the glass {@code (sx, sy, sw, sh)} on the block at
+     * {@code screen}: an all-in-one's face is a slim monitor's, whatever its era's monitor is. What keeps the recipe
+     * viewers' buttons off the frame has to be this, or they land on an all-in-one's name.
+     */
+    public static MonitorFrameStyle.Geometry boundsOf(final int sx, final int sy, final int sw, final int sh,
+                                                      @Nullable final Era era, @Nullable final BlockPos screen) {
+        final MonitorFrameStyle style = faceAt(screen) != null ? MonitorFrameStyle.LCD
+                : MonitorFrameStyle.forEra(era == null ? HardwareEra.STANDARD : era);
+        return style.geometry(sx, sy, sw, sh);
+    }
+
     /** The face of the all-in-one at {@code screen}, or null when no all-in-one stands there. */
     @Nullable
     public static AioFace faceAt(@Nullable final BlockPos screen) {

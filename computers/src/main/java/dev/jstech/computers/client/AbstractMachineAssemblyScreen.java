@@ -259,6 +259,11 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    /** What the header calls the machine: "PC", "RUSSET", "MAINFRAME". */
+    public final String headerTitle() {
+        return machineTitle();
+    }
+
     /** Where everything stands on this machine's screen, worked out once for the machine's era. */
     public final AssemblyGeometry geometry() {
         if (geometry == null) {

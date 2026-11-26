@@ -18,8 +18,8 @@ import dev.jstech.core.jstechseries.theme.client.EraThemes;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
 import dev.jstech.core.jstechseries.tier.Era;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
+import dev.jstech.core.client.gui.screen.IPanelScreen;
 import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
  * J's Core's container screen.
  */
 public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> extends CoreContainerScreen<T>
-        implements IKeepsViewersClear, ITouchGlass {
+        implements IKeepsViewersClear, ITouchGlass, IPanelScreen {
 
     /** The skin this screen paints with for the current render pass; STANDARD until {@link #init} resolves it. */
     protected EraTheme theme = EraThemes.STANDARD;
@@ -255,10 +255,7 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
      * bezel rather than over it.
      */
     public MonitorFrameStyle.Geometry frameBounds() {
-        final Era era = screenEra();
-        return MonitorFrameStyle
-                .forEra(era == null ? HardwareEra.STANDARD : era)
-                .geometry(leftPos, topPos, imageWidth, imageHeight);
+        return MonitorFrame.boundsOf(leftPos, topPos, imageWidth, imageHeight, screenEra(), screenPos());
     }
 
     /** The monitor body: the recipe viewers' lists sit beside it rather than over its bezel. */
@@ -266,6 +263,29 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
     public List<Rect2i> areasKeptClear() {
         final MonitorFrameStyle.Geometry body = frameBounds();
         return List.of(new Rect2i(body.x(), body.y(), body.w(), body.h()));
+    }
+
+    /*
+     * What has to fit the window: on a monitor, the glass and the monitor round it, kept centred as the glass is, so a
+     * small window lowers the interface's scale far enough for the frame's top and its chin too; the glass alone left
+     * them out of the window. A screen on no monitor draws its image alone.
+     */
+    @Override
+    public int panelWidth() {
+        if (!(menu instanceof IMonitorMenu)) {
+            return imageWidth;
+        }
+        final MonitorFrameStyle.Geometry frame = frameBounds();
+        return imageWidth + 2 * Math.max(0, Math.max(leftPos - frame.x(), frame.right() - leftPos - imageWidth));
+    }
+
+    @Override
+    public int panelHeight() {
+        if (!(menu instanceof IMonitorMenu)) {
+            return imageHeight;
+        }
+        final MonitorFrameStyle.Geometry frame = frameBounds();
+        return imageHeight + 2 * Math.max(0, Math.max(topPos - frame.y(), frame.bottom() - topPos - imageHeight));
     }
 
     @Override

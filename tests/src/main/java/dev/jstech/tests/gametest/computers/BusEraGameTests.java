@@ -126,6 +126,29 @@ public final class BusEraGameTests {
         helper.succeed();
     }
 
+    /**
+     * A bus clicked onto one face of a block with cables on two of its sides goes on the cable that face touches,
+     * facing the block: it went on the cable above, the first in a fixed order of sides.
+     */
+    @GameTest(template = ARENA)
+    public static void bus_clickedOnAFaceGoesOnTheCableThatFaceTouches(final GameTestHelper helper) {
+        final BlockPos chest = new BlockPos(3, 2, 3);
+        helper.setBlock(chest, Blocks.CHEST);
+        TestCables.lay(helper, chest.north(), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, chest.above(), ComputingModule.HBW_CABLE);
+        final Item bus = ComputingModule.IMPORT_BUS_ITEM.get();
+        final BlockPos abs = helper.absolutePos(chest);
+        final BlockHitResult where = new BlockHitResult(Vec3.atCenterOf(abs).relative(Direction.NORTH, 0.5),
+                Direction.NORTH, abs, false);
+        bus.useOn(new UseOnContext(helper.getLevel(), helper.makeMockPlayer(GameType.CREATIVE),
+                InteractionHand.MAIN_HAND, new ItemStack(bus), where));
+        helper.assertTrue(TestCables.cable(helper, chest.north()).hasPart(Direction.SOUTH),
+                "the bus goes on the cable the clicked north face touches, facing the chest");
+        helper.assertFalse(TestCables.cable(helper, chest.above()).hasPart(Direction.DOWN),
+                "the cable above the chest keeps its face free");
+        helper.succeed();
+    }
+
     /** A bus never moves faster than its cable carries: the Advanced bus on the Legacy's Ethernet moves at 16. */
     @GameTest(template = ARENA)
     public static void advanced_movesNoFasterThanItsCable(final GameTestHelper helper) {

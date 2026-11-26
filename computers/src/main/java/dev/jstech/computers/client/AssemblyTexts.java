@@ -27,6 +27,8 @@ final class AssemblyTexts {
 
     // Which computer the screen is.
     static final TextKey TITLE_PC = TextKey.of("jsc.assembly.title_pc", "PC");
+    /** Quince's own computers, which are no PCs: the Russet line, from the 128K to the Studio. */
+    static final TextKey TITLE_RUSSET = TextKey.of("jsc.assembly.title_russet", "RUSSET");
     static final TextKey TITLE_CRAFTING = TextKey.of("jsc.assembly.title_crafting", "CC");
     static final TextKey TITLE_CLUSTER_MANAGEMENT = TextKey.of("jsc.assembly.title_cluster_management", "CMC");
     static final TextKey TITLE_MAINFRAME = TextKey.of("jsc.assembly.title_mainframe", "MAINFRAME");

@@ -13,6 +13,7 @@ import dev.jstech.computers.QuinceItems;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.client.PersonalComputerScreen;
 import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
@@ -60,6 +61,15 @@ public final class QuinceClientTests {
     /* A point every Quince all-in-one has glass at, in sixty-fourths of its front: the middle of the 128K's. */
     private static final int ON_THE_GLASS_X = 32;
     private static final int ON_THE_GLASS_Y = 22;
+    /* The smallest window the game opens, at the scale it opens at, and the window the tests run in. */
+    private static final int SMALL_WIDTH = 854;
+    private static final int SMALL_HEIGHT = 480;
+    private static final int SMALL_SCALE = 2;
+    private static final int TEST_WIDTH = 960;
+    private static final int TEST_HEIGHT = 640;
+    /* A point on the qRusset G3's face under its glass, where a click opens its parts. */
+    private static final int ON_THE_CASE_X = 32;
+    private static final int ON_THE_CASE_Y = 50;
     private static final int WINDOW_WAIT = 200;
     private static final String FILES = "jsc:files";
     /* The startup disk's root, as its icon opens it. */
@@ -117,6 +127,53 @@ public final class QuinceClientTests {
                 .thenAssert(SETTLE, () -> seeker(ctx).counted() == seeker(ctx).names().size() + 1,
                         "the Seeker's figures count the disk's folders and the stored items' folder")
                 .thenScreenshot(SETTLE, "os9-desktop");
+    }
+
+    /* Quince's all-in-one is a Russet, never a PC: its parts' screen, opened on its case under the glass, says so. */
+    @ClientTest(timeoutTicks = 1200)
+    public static void qrussetG3_partsScreenCallsItARusset(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    world.setBlock(MACHINE, ComputingModule.QRUSSET_G3.getFirst().get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+                    build(world.blockEntity(MACHINE, PersonalComputerBlockEntity.class),
+                            QuinceItems.BOARD_QRUSSET_G3.get());
+                })
+                .thenTeleport(SETTLE, PLAYER, Direction.SOUTH)
+                .thenRightClickFront(SETTLE, MACHINE, ON_THE_CASE_X, ON_THE_CASE_Y)
+                .thenAwaitScreen(PersonalComputerScreen.class, WINDOW_WAIT)
+                .then(SETTLE, () -> ctx.assertTrue(
+                        "RUSSET".equals(ctx.screen(PersonalComputerScreen.class).headerTitle()),
+                        "the header calls it a Russet; got " + ctx.screen(PersonalComputerScreen.class).headerTitle()))
+                .thenScreenshot(SETTLE, "g3-parts")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(WINDOW_WAIT);
+    }
+
+    /*
+     * On the smallest window the game opens, 854 by 480 at a scale of 2, the G3's face fills the screen: the recipe
+     * viewers' buttons keep off its face, the name on its chin among it.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void qrussetG3_onASmallWindowKeepsTheViewersOffItsName(final ClientTestContext ctx) {
+        final int[] chosen = new int[1];
+        ctx.afterTest(() -> ctx.mc().execute(() -> {
+            ctx.mc().options.guiScale().set(chosen[0]);
+            GLFW.glfwSetWindowSize(ctx.mc().getWindow().getWindow(), TEST_WIDTH, TEST_HEIGHT);
+            ctx.mc().resizeDisplay();
+        }));
+        ctx.then(0, () -> {
+                    chosen[0] = ctx.mc().options.guiScale().get();
+                    GLFW.glfwSetWindowSize(ctx.mc().getWindow().getWindow(), SMALL_WIDTH, SMALL_HEIGHT);
+                })
+                .thenWaitUntil(() -> ctx.mc().getWindow().getWidth() == SMALL_WIDTH, WINDOW_WAIT,
+                        "the window to be 854 by 480")
+                .then(0, () -> {
+                    ctx.mc().options.guiScale().set(SMALL_SCALE);
+                    ctx.mc().resizeDisplay();
+                });
+        atDesktop(ctx, ComputingModule.QRUSSET_G3.getFirst().get(), QuinceItems.BOARD_QRUSSET_G3.get(),
+                "quince_os_9")
+                .thenScreenshot(SETTLE, "g3-854x480");
     }
 
     @ClientTest(timeoutTicks = 2400)

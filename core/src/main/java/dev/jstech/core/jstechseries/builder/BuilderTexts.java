@@ -17,6 +17,8 @@ public final class BuilderTexts {
     public static final TextKey TITLE = TextKey.of("jscore.builder.title", "MULTIBLOCK BUILDER");
     public static final TextKey AIMED = TextKey.of("jscore.builder.aimed", "AIMED");
     public static final TextKey HEADER = TextKey.of("jscore.builder.header", "%s x %s x %s, FACING %s");
+    /** The size alone, where a long name leaves no room for which way it faces. */
+    public static final TextKey HEADER_SIZE = TextKey.of("jscore.builder.header_size", "%s x %s x %s");
     public static final TextKey NORTH = TextKey.of("jscore.builder.north", "NORTH");
     public static final TextKey EAST = TextKey.of("jscore.builder.east", "EAST");
     public static final TextKey SOUTH = TextKey.of("jscore.builder.south", "SOUTH");

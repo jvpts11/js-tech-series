@@ -17,6 +17,8 @@ import dev.jstech.core.multiblock.IStructureShape;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockBlocks;
 import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
+import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PatternById;
 import dev.jstech.core.multiblock.Projectables;
@@ -246,10 +248,21 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
         return facing == null ? Direction.NORTH : facing;
     }
 
-    /* What the multiblock is called: the name of the multiblock its shape is, else its terminal's. */
+    /*
+     * What the multiblock is called: the name of the multiblock its shape is, as the projector calls it, else its
+     * terminal's. A pattern declared in code is known by the id it was declared by: the projector lists the copy of it
+     * its file holds, and the builder called the same multiblock by its terminal ("Shipyard Terminal") there and by
+     * its name ("Small Shipyard") in front of a projector.
+     */
     private static Text nameOf(final IStructureShape shape, final BlockState terminal) {
         if (shape instanceof PatternById byId) {
             return Projectables.name(byId.id());
+        }
+        if (shape instanceof MultiblockPattern pattern) {
+            final Optional<ResourceLocation> declared = MultiblockPatterns.idOf(pattern);
+            if (declared.isPresent()) {
+                return Projectables.name(declared.get());
+            }
         }
         for (final Map.Entry<ResourceLocation, IStructureShape> shown : Projectables.all().entrySet()) {
             if (shown.getValue() == shape) {

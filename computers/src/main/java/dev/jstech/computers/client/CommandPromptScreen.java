@@ -275,14 +275,14 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             } else if (netStyle()) {
                 /*
                  * A network system with no space on it is a prompt and nothing else, so the first thing it
-                 * says is what it is and how to give it a face again. It is the same relationship a Linux
-                 * has with its desktop, and the same answer: the interface is a package, so fetch one.
+                 * says is what it is and how to give it a face again. It has no package manager: the space
+                 * is installed from its disc, as any program on it is.
                  */
                 push(menu.osLabel() + " 1.0", CliStyle.ACCENT);
                 push(Branding.systemCopyright(menu.osLabel(), screenEra()), CliStyle.DIM);
                 push("", CliStyle.PLAIN);
                 push(CommandPromptTexts.NO_SPACE.text(), CliStyle.WARN);
-                push(CommandPromptTexts.PUTS_ONE_ON.with(Text.literal("netgetter install interactor")), CliStyle.DIM);
+                push(CommandPromptTexts.PUTS_ONE_ON.with(Text.literal("install interactor")), CliStyle.DIM);
                 push("", CliStyle.PLAIN);
             } else {
                 push(CommandPromptTexts.SHELL_VERSION.with(Branding.houseOf(menu.osLabel()).name()), CliStyle.ACCENT);
