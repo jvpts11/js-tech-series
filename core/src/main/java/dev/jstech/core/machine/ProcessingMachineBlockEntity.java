@@ -14,6 +14,7 @@ import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.content.ModContent;
 import dev.jstech.core.energy.PartialWork;
 import dev.jstech.core.heat.HeatBody;
 import dev.jstech.core.heat.HeatClimate;
@@ -29,6 +30,7 @@ import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +47,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -421,6 +424,45 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
     /** Picks the recipe named {@code id} among those its inputs make; none goes back to the first that fits. */
     public void chooseRecipe(final @Nullable ResourceLocation id) {
         chosenRecipe.set(id);
+    }
+
+    /**
+     * Every item the recipes of the kinds this machine works take, each once, in the order the recipes list them: what
+     * an empty item inlet of its screen says it takes. The kinds are those every mod declared with this machine among
+     * their machines.
+     */
+    public List<ItemStack> recipeItems() {
+        final Level world = getLevel();
+        if (world == null) {
+            return List.of();
+        }
+        final Item self = getBlockState().getBlock().asItem();
+        final List<ItemStack> out = new ArrayList<>();
+        final Set<Item> seen = new HashSet<>();
+        for (final ModContent content : ModContent.all()) {
+            for (final ProcessingKind kind : content.declaredProcessing()) {
+                if (kind.machines().stream().noneMatch(machine -> machine.asItem() == self)) {
+                    continue;
+                }
+                for (final RecipeHolder<ProcessingRecipe> holder : kind.all(world)) {
+                    for (final SizedIngredient input : holder.value().inputs()) {
+                        final ItemStack[] items = input.ingredient().getItems();
+                        if (items.length > 0 && seen.add(items[0].getItem())) {
+                            out.add(items[0].copyWithCount(1));
+                        }
+                    }
+                }
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    /**
+     * A line its screen says under what an empty item inlet takes, where the machine works what goes in a way its face
+     * does not show; none by default.
+     */
+    public Optional<Text> inletNote() {
+        return Optional.empty();
     }
 
     /**

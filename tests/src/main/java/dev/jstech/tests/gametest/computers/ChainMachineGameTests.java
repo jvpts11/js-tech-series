@@ -17,9 +17,11 @@ import static dev.jstech.tests.testkit.computers.ChainMachineSite.machineAt;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.place;
 import static dev.jstech.tests.testkit.computers.ChainMachineSite.stands;
 
+import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.audio.ChainSounds;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainFormedBlock;
+import dev.jstech.computers.chain.machine.ChainInletNotes;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachineTerminalBlock;
@@ -45,14 +47,24 @@ import dev.jstech.tests.testkit.computers.TestComputerEnergy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -76,6 +88,78 @@ public final class ChainMachineGameTests {
     private static final String ENERGY = TestComputerEnergy.BATCH;
 
     private ChainMachineGameTests() {
+    }
+
+    /**
+     * A water bucket used on the cell's Liquid Inlet empties into the cell and comes back empty; used on its Gas Outlet
+     * it stays full. Either way the entry takes the click, so the bucket is never used on the world beside it: on the
+     * Liquid Inlet it poured its water out by the machine.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void liquidInlet_aBucketEmptiesIntoItAndNeverPoursOut(final GameTestHelper helper) {
+        final ChainMachine cell = machine("electrolytic_cell");
+        final BlockPos terminal = formed(helper, cell);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(machineAt(helper, terminal).formed(), "the cell formed"))
+                .thenExecute(() -> {
+                    final ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
+                            new GameProfile(UUID.randomUUID(), "bucket"));
+                    final BlockPos inlet = helper.absolutePos(place(cell, "liquid_inlet"));
+                    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WATER_BUCKET));
+                    helper.assertTrue(useHeld(player, inlet).consumesAction(), "the inlet takes the bucket's click");
+                    helper.assertTrue(player.getMainHandItem().is(Items.BUCKET), "the bucket comes back empty; holds "
+                            + player.getMainHandItem());
+                    final IFluidHandler tanks = helper.getLevel().getCapability(Capabilities.FluidHandler.BLOCK,
+                            inlet, Direction.UP);
+                    helper.assertTrue(tanks != null && held(tanks, Fluids.WATER) == FluidType.BUCKET_VOLUME,
+                            "the cell holds the bucket's water");
+                    final BlockPos outlet = helper.absolutePos(place(cell, "gas_outlet"));
+                    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WATER_BUCKET));
+                    helper.assertTrue(useHeld(player, outlet).consumesAction(), "the gas outlet takes the click too");
+                    helper.assertTrue(player.getMainHandItem().is(Items.WATER_BUCKET), "and the bucket stays full");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * An empty item inlet of the cell's screen says what it takes: the items of the cell's own recipes, and how the cell
+     * makes its brine. A player read the inlet under the word BRINE as where the brine goes.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void cell_saysWhatItsItemInletsTake(final GameTestHelper helper) {
+        final ChainMachine cell = machine("electrolytic_cell");
+        final BlockPos terminal = formed(helper, cell);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(machineAt(helper, terminal).formed(), "the cell formed"))
+                .thenExecute(() -> {
+                    final List<ItemStack> takes = machineAt(helper, terminal).recipeItems();
+                    helper.assertTrue(!takes.isEmpty(), "the cell's recipes take items");
+                    helper.assertTrue(takes.stream().map(ItemStack::getItem).distinct().count() == takes.size(),
+                            "each item once; got " + takes);
+                    helper.assertTrue(machineAt(helper, terminal).inletNote().isPresent(),
+                            "the cell says how it makes its brine");
+                    helper.assertTrue(ChainInletNotes.of("rolling_mill").isEmpty(),
+                            "a machine with nothing to add says nothing more");
+                })
+                .thenSucceed();
+    }
+
+    /* Uses what {@code player} holds on the top of the block at {@code pos}, as a right click does. */
+    private static InteractionResult useHeld(final ServerPlayer player, final BlockPos pos) {
+        return player.gameMode.useItemOn(player, player.serverLevel(), player.getMainHandItem(),
+                InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atCenterOf(pos).add(0, 0.5, 0), Direction.UP, pos,
+                        false));
+    }
+
+    /* How much of {@code fluid} the tanks of {@code handler} hold together. */
+    private static int held(final IFluidHandler handler, final Fluid fluid) {
+        int total = 0;
+        for (int tank = 0; tank < handler.getTanks(); tank++) {
+            if (handler.getFluidInTank(tank).is(fluid)) {
+                total += handler.getFluidInTank(tank).getAmount();
+            }
+        }
+        return total;
     }
 
     @GameTest(template = ARENA)

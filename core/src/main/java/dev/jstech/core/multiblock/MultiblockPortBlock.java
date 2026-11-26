@@ -27,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The block of a multiblock's port, which a mod registers once for each kind with its own look, and puts in
- * {@link MultiblockPorts#PORTS}: a dye used on it gives it that colour, and the same dye again takes it off.
+ * {@link MultiblockPorts#PORTS}: a dye used on it gives it that colour, and the same dye again takes it off; a bucket
+ * used on a liquid port moves its liquid through it ({@link PortBuckets}).
  */
 public class MultiblockPortBlock extends Block implements EntityBlock {
 
@@ -48,9 +49,11 @@ public class MultiblockPortBlock extends Block implements EntityBlock {
     protected ItemInteractionResult useItemOn(final ItemStack stack, final BlockState state, final Level level,
                                               final BlockPos pos, final Player player, final InteractionHand hand,
                                               final BlockHitResult hit) {
-        if (!(stack.getItem() instanceof DyeItem dye)
-                || !(level.getBlockEntity(pos) instanceof MultiblockPortBlockEntity port)) {
+        if (!(level.getBlockEntity(pos) instanceof MultiblockPortBlockEntity port)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (!(stack.getItem() instanceof DyeItem dye)) {
+            return PortBuckets.use(stack, port.port(), level, pos, player, hand, hit.getDirection());
         }
         if (!level.isClientSide()) {
             final DyeColor colour = dye.getDyeColor();

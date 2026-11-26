@@ -1915,6 +1915,8 @@
   "jscore.machine.screen.line_low": "TENS. BAIXA",
   "jscore.machine.screen.line_ok": "LINHA OK",
   "jscore.machine.screen.liq": "LÍQ",
+  "jscore.machine.screen.inlet": "Entrada de itens",
+  "jscore.machine.screen.inlet_takes": "Recebe os itens das receitas desta máquina:",
   "jscore.machine.screen.lock_hint": "Ctrl e clique para travar no que ele tem",
   "jscore.machine.screen.locked": "Travado em %s: Ctrl e clique para destravar",
   "jscore.machine.screen.low": "BAIXO",

@@ -8121,6 +8121,8 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey HEA
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey HIGH
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey IGNORE
+100 dev.jstech.core.machine.MachineScreenTexts  static final TextKey INLET
+100 dev.jstech.core.machine.MachineScreenTexts  static final TextKey INLET_TAKES
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_DAMAGED
 11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_EFFICIENCY
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_FUSE_BLOWN
@@ -8456,8 +8458,10 @@ stable 4
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  FieldFluidTank outputTank(int)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  Layout layout()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  List<FaceSlot> mainSlots()
+100 dev.jstech.core.machine.ProcessingMachineBlockEntity  List<ItemStack> recipeItems()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  MatterTanks matter()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  Optional<ResourceLocation> chosenRecipe()
+100 dev.jstech.core.machine.ProcessingMachineBlockEntity  Optional<Text> inletNote()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  ProcessingInput input()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  ProcessingInput input(int)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  SlotLocks locks()
@@ -11330,6 +11334,8 @@ stable 4
 10 dev.jstech.core.multiblock.Place.Gather  String serializedName()
 10 dev.jstech.core.multiblock.Place.Valued  type record(String key, Map<String, Double> byBlock, Gather how)
 10 dev.jstech.core.multiblock.Place.Valued  Double of(IBlockProvider, long, String)
+100 dev.jstech.core.multiblock.PortBuckets  type final class
+100 dev.jstech.core.multiblock.PortBuckets  static ItemInteractionResult use(ItemStack, PortKind, Level, BlockPos, Player, InteractionHand, Direction)
 10 dev.jstech.core.multiblock.PortKind  type enum implements IStableName
 10 dev.jstech.core.multiblock.PortKind  ENERGY_INPUT
 10 dev.jstech.core.multiblock.PortKind  ENERGY_OUTPUT

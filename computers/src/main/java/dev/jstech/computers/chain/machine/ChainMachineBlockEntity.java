@@ -34,6 +34,8 @@ import dev.jstech.core.multiblock.PatternById;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.multiblock.PortProducts;
 import dev.jstech.core.multiblock.ShapeMatch;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -105,6 +107,12 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     /** The machine it runs. */
     public ChainMachine machine() {
         return machine;
+    }
+
+    /** What its screen says under what an empty item inlet takes, where its machine has a note of its own. */
+    @Override
+    public Optional<Text> inletNote() {
+        return ChainInletNotes.of(machine.id()).map(TextKey::text);
     }
 
     /** Whether its shape stands whole round it. */

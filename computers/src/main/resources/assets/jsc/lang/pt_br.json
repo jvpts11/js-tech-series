@@ -522,6 +522,7 @@
   "jsc.chain_machine.deposition_chamber": "Câmara de Deposição",
   "jsc.chain_machine.display_line": "Linha de Telas",
   "jsc.chain_machine.electrolytic_cell": "Célula Eletrolítica",
+  "jsc.chain_machine.electrolytic_cell.inlet_note": "A salmoura se faz no tanque acima, com o sal e a água",
   "jsc.chain_machine.grinder": "Moedor",
   "jsc.chain_machine.induction_furnace": "Forno de Indução",
   "jsc.chain_machine.ion_implanter": "Implantador de Íons",

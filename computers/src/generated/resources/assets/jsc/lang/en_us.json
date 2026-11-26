@@ -2812,6 +2812,7 @@
   "jsc.chain_machine.deposition_chamber": "Deposition Chamber",
   "jsc.chain_machine.display_line": "Display Line",
   "jsc.chain_machine.electrolytic_cell": "Electrolytic Cell",
+  "jsc.chain_machine.electrolytic_cell.inlet_note": "Brine is made in the tank above from the salt and the water",
   "jsc.chain_machine.grinder": "Grinder",
   "jsc.chain_machine.induction_furnace": "Induction Furnace",
   "jsc.chain_machine.injection_moulder": "Injection Moulder",

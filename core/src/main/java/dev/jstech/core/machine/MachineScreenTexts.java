@@ -30,6 +30,10 @@ public final class MachineScreenTexts {
     public static final TextKey OFF = TextKey.of("jscore.machine.screen.off", "OFF");
     public static final TextKey LOCKED = TextKey.of("jscore.machine.screen.locked",
             "Locked to %s: Ctrl and click to unlock");
+    /* What an empty item inlet says: what it is, then the items the machine's recipes take. */
+    public static final TextKey INLET = TextKey.of("jscore.machine.screen.inlet", "Item inlet");
+    public static final TextKey INLET_TAKES = TextKey.of("jscore.machine.screen.inlet_takes",
+            "Takes the items of this machine's recipes:");
     public static final TextKey LOCK_HINT = TextKey.of("jscore.machine.screen.lock_hint",
             "Ctrl and click to lock it to what it holds");
     public static final TextKey METER_RANGE = TextKey.of("jscore.machine.screen.meter_range", "x%s");

@@ -707,6 +707,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A window kept on the desktop: J's Core's API is at version 99. `WindowGeometry.resolve` takes whether a
   floating window stays inside the work area, shrinking to fit it, never below its minimum, and moving in.
   Experimental.
+- (Core) What an inlet takes, and buckets on ports: J's Core's API is at version 100.
+  `ProcessingMachineBlockEntity.recipeItems` gives every item the recipes of the kinds a machine works take, each once,
+  and `inletNote` a line its screen says under them, none by default; `MachineScreenTexts.INLET` and `INLET_TAKES` word
+  an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
+  inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
+  port; `MultiblockPortBlock` uses it. Experimental.
 - (Core) A machine's tools: J's Core's API is at version 97. `ProcessingMachineBlockEntity.usesAsTool` says the
   machine works with a thing and never uses it up, a mask or a mould, which a job that brings it may take back when it
   ends. A recipe page's catalyst is the recipe viewer's catalyst in JEI, as it already was in EMI. Experimental.
@@ -4516,6 +4522,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) An order of a machine's own result is shared among the machines that hold its recipe, as a craft's
   step is: of sixteen wafers two Deposition Chambers each take eight, where the whole order went to one and the
   other stood idle.
+- (Computers) The Electrolytic Cell's BRINE is on a plate on its brine tank, where it read as the name of the item
+  inlet under it. An empty item inlet of a machine's screen says what it takes: the items of the machine's recipes,
+  and on the cell how its brine is made from the salt and the water; that Ctrl and a click lock it is said under them.
+- (Computers) A bucket used on a machine's liquid inlet empties into it and comes back empty, and an empty one used on
+  a liquid outlet fills from it; a bucket used on any liquid or gas entry of a machine never pours into the world. A
+  full bucket on a Liquid Inlet poured its water out beside the machine.
+- (Computers) A bucket of a liquid left-clicked onto the Network Interactor's grid hands over its liquid and comes
+  back empty, as a right click does: a left click stored the bucket itself, with its liquid in it, as an item.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

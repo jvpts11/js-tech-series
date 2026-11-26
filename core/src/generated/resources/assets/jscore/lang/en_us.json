@@ -2201,6 +2201,8 @@
   "jscore.machine.screen.hea": "HEA",
   "jscore.machine.screen.high": "HIGH",
   "jscore.machine.screen.ignore": "IGNORE",
+  "jscore.machine.screen.inlet": "Item inlet",
+  "jscore.machine.screen.inlet_takes": "Takes the items of this machine's recipes:",
   "jscore.machine.screen.lcd.damaged": "DAMAGED",
   "jscore.machine.screen.lcd.efficiency": "EFF %s%%",
   "jscore.machine.screen.lcd.fuse_blown": "FUSE OUT",

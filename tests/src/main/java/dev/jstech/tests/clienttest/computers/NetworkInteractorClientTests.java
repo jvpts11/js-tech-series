@@ -18,6 +18,7 @@ import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.testkit.client.ClientTestFailure;
@@ -29,10 +30,14 @@ import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.material.Fluids;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -125,6 +130,60 @@ public final class NetworkInteractorClientTests {
                 .thenAwaitNoScreen(SCREEN_WAIT)
                 // The items go, so the tests after this one start with an empty inventory.
                 .thenServer(0, level -> ctx.serverPlayer().getInventory().clearContent());
+    }
+
+    /**
+     * A water bucket taken up from the band and left-clicked onto the network's grid hands over its water and comes
+     * back empty, as a right click does: a left click stored the bucket itself, water and all, as an item.
+     */
+    @ClientTest(timeoutTicks = 1800)
+    public static void interactor_aLeftClickedBucketHandsOverItsWater(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+                    TestWorldBuilder.installDesktop(net.cc(), FRAMES_XP, Programs.CRAFTING_MANAGER);
+                    net.cc().togglePower();
+                    net.cc().togglePower();
+                    world.placeMonitor(MONITOR, Direction.EAST);
+                    net.seed(Items.COBBLESTONE, 4);
+                })
+                .thenServer(0, level -> {
+                    ctx.serverPlayer().getInventory().clearContent();
+                    ctx.serverPlayer().getInventory().setItem(0, new ItemStack(Items.WATER_BUCKET));
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .then(2, () -> launch(ctx))
+                .thenWaitUntil(() -> interactor(ctx) != null, SCREEN_WAIT, "the Network Interactor window")
+                .then(2, () -> ctx.clickDesktop(point(ctx, interactor(ctx).networkTabCenter())))
+                .thenWaitUntil(() -> interactor(ctx).listedNames().contains("Cobblestone"), SCREEN_WAIT,
+                        "the network grid to list the stone")
+                .then(2, () -> ctx.clickDesktop(point(ctx, interactor(ctx).inventoryBandSlotCenter(HOTBAR_BAND_CELL))))
+                .then(2, () -> ctx.clickDesktop(point(ctx, interactor(ctx).gridFirstCellCenter())))
+                .thenWaitUntilServer(level -> NetworkStorage.of(level, mainframe(ctx, level).networkUuid())
+                                .count(StorageKey.of(new FluidStack(Fluids.WATER, 1))) == FluidType.BUCKET_VOLUME,
+                        SCREEN_WAIT, "the bucket's water to go into the network",
+                        level -> "water=" + NetworkStorage.of(level, mainframe(ctx, level).networkUuid())
+                                .count(StorageKey.of(new FluidStack(Fluids.WATER, 1))))
+                .thenServer(2, level -> {
+                    ctx.assertTrue(NetworkStorage.of(level, mainframe(ctx, level).networkUuid())
+                                    .count(StorageKey.of(Items.WATER_BUCKET)) == 0,
+                            "the bucket itself is not stored");
+                    ctx.assertTrue(ctx.serverPlayer().containerMenu.getCarried().is(Items.BUCKET)
+                                    || ctx.serverPlayer().getInventory().countItem(Items.BUCKET) == 1,
+                            "the empty bucket comes back");
+                })
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .then(2, () -> {
+                    if (ctx.mc().screen != null) {
+                        ctx.key(GLFW.GLFW_KEY_ESCAPE);
+                    }
+                })
+                .thenAwaitNoScreen(SCREEN_WAIT)
+                .thenServer(0, level -> {
+                    ctx.serverPlayer().containerMenu.setCarried(ItemStack.EMPTY);
+                    ctx.serverPlayer().getInventory().clearContent();
+                });
     }
 
     /**
@@ -649,6 +708,10 @@ public final class NetworkInteractorClientTests {
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_A, GLFW.GLFW_MOD_CONTROL))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_BACKSPACE))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE));
+    }
+
+    private static MainframeBlockEntity mainframe(final ClientTestContext ctx, final ServerLevel level) {
+        return TestWorldBuilder.at(level, ctx.origin()).blockEntity(MAINFRAME, MainframeBlockEntity.class);
     }
 
     private static NetworkInteractorApp interactor(final ClientTestContext ctx) {

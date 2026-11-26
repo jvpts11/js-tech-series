@@ -1037,6 +1037,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - An order of a machine's own result is shared among the machines that hold its recipe, as a craft's
   step is: of sixteen wafers two Deposition Chambers each take eight, where the whole order went to one and the
   other stood idle.
+- The Electrolytic Cell's BRINE is on a plate on its brine tank, where it read as the name of the item
+  inlet under it. An empty item inlet of a machine's screen says what it takes: the items of the machine's recipes,
+  and on the cell how its brine is made from the salt and the water; that Ctrl and a click lock it is said under them.
+- A bucket used on a machine's liquid inlet empties into it and comes back empty, and an empty one used on
+  a liquid outlet fills from it; a bucket used on any liquid or gas entry of a machine never pours into the world. A
+  full bucket on a Liquid Inlet poured its water out beside the machine.
+- A bucket of a liquid left-clicked onto the Network Interactor's grid hands over its liquid and comes
+  back empty, as a right click does: a left click stored the bucket itself, with its liquid in it, as an item.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

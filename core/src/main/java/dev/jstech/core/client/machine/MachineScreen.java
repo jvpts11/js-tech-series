@@ -50,8 +50,11 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -85,6 +88,9 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
     /* How far a row of bins' window's top runs on, hidden, under the face's; how far in its band of plate stands. */
     private static final int TRAY_RUN_ON = 6;
     private static final int TRAY_BAND_INSET = 4;
+    /* The most items an empty inlet names, and how wide its tooltip's lines run, in pixels. */
+    private static final int MOST_INLET_ITEMS = 16;
+    private static final int TIP_WIDTH = 200;
 
     public MachineScreen(final MachineMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -241,8 +247,10 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
         }
         if (this.hoveredSlot != null && lockable(this.hoveredSlot)) {
             final ItemStack locked = lockedTo(this.hoveredSlot);
-            return List.of(GameText.component(locked.isEmpty() ? MachineScreenTexts.LOCK_HINT.text()
-                    : MachineScreenTexts.LOCKED.with(GameText.of(locked.getHoverName()))));
+            if (!locked.isEmpty()) {
+                return List.of(GameText.component(MachineScreenTexts.LOCKED.with(GameText.of(locked.getHoverName()))));
+            }
+            return inletTip((ProcessingMachineBlockEntity) this.menu.machine());
         }
         if (!onFace(view)) {
             return List.of();
@@ -294,6 +302,38 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
         return slot != null && this.menu.tab() == MachineMenu.MAIN && this.menu.faceSlots().contains(slot)
                 && this.menu.machine() instanceof ProcessingMachineBlockEntity processing
                 && processing.layout().isInput(slot.getContainerSlot());
+    }
+
+    /*
+     * What an empty item inlet says: that it is one, the items the machine's recipes take, how the machine works them
+     * where its face does not show it, and that Ctrl and a click lock it. A player read the slot under the cell's
+     * BRINE as where its brine goes.
+     */
+    private List<Component> inletTip(final ProcessingMachineBlockEntity machine) {
+        final List<Component> lines = new ArrayList<>();
+        lines.add(GameText.component(MachineScreenTexts.INLET.text()));
+        final List<ItemStack> takes = machine.recipeItems();
+        if (!takes.isEmpty()) {
+            lines.add(GameText.component(MachineScreenTexts.INLET_TAKES.text()).copy().withStyle(ChatFormatting.GRAY));
+            // By name, so a player finds one where they look for it; as many as a tooltip holds.
+            final List<String> names = new ArrayList<>();
+            for (final ItemStack item : takes) {
+                names.add(item.getHoverName().getString());
+            }
+            names.sort(String.CASE_INSENSITIVE_ORDER);
+            addWrapped(lines, String.join(", ", names.subList(0, Math.min(MOST_INLET_ITEMS, names.size())))
+                    + (names.size() > MOST_INLET_ITEMS ? ", ..." : ""));
+        }
+        machine.inletNote().ifPresent(note -> addWrapped(lines, GameText.resolve(note)));
+        addWrapped(lines, GameText.resolve(MachineScreenTexts.LOCK_HINT.text()));
+        return lines;
+    }
+
+    /* {@code text} as grey lines no wider than a tooltip of the screen reads well. */
+    private void addWrapped(final List<Component> lines, final String text) {
+        for (final FormattedText line : this.font.getSplitter().splitLines(text, TIP_WIDTH, Style.EMPTY)) {
+            lines.add(Component.literal(line.getString()).withStyle(ChatFormatting.GRAY));
+        }
     }
 
     private ItemStack lockedTo(final Slot slot) {

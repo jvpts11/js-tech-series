@@ -358,10 +358,12 @@ public final class NetworkInteractorPayloads {
         }
         /*
          * Left click deposits the whole stack as items; a right-click hands over ONE: one item, or what a
-         * held container holds, and a held empty container over a fluid or chemical entry fills from it.
+         * held container holds, and a held empty container over a fluid or chemical entry fills from it. A held
+         * container of a liquid or a gas hands over what it holds on either click: a left click stored the bucket
+         * itself, with its water in it, as an item.
          */
         final DataHandoff.ISource source = DataHandoff.cursor(player);
-        final boolean one = !payload.whole();
+        final boolean one = !payload.whole() || DataContainers.holdsData(source.get());
         final int amount = one ? 1 : source.get().getCount();
         final boolean fill = one && payload.entry().isPresent()
                 && DataContainers.canTake(source.get(), payload.entry().get());
