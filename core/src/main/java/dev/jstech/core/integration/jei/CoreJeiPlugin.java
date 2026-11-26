@@ -171,6 +171,12 @@ public final class CoreJeiPlugin implements IModPlugin {
                 : OptionalInt.of(running.getIngredientManager().getAllIngredients(GasIngredients.TYPE).size());
     }
 
+    /** What JEI's search field holds, or nothing while JEI is not on. */
+    public static Optional<String> searchText() {
+        final IJeiRuntime running = runtime;
+        return running == null ? Optional.empty() : Optional.of(running.getIngredientFilter().getFilterText());
+    }
+
     /** How many recipes JEI shows under the kind of recipe whose id is {@code id}, or nothing while it is not on. */
     public static OptionalInt recipesShown(final ResourceLocation id) {
         final IJeiRuntime running = runtime;

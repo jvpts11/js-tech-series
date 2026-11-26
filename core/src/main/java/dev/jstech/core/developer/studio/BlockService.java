@@ -10,6 +10,8 @@ package dev.jstech.core.developer.studio;
 import dev.jstech.core.blockentity.FieldFlow;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.util.Loaded;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,14 +52,18 @@ final class BlockService implements IStudioService {
             return;
         }
         out.putString(StudioKeys.BLOCK, BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString());
+        // Asked whole, as an agent asks, nothing is cut: the fields come a page at a time, every item is named.
+        final boolean whole = args.getBoolean(StudioKeys.WHOLE);
         final BlockEntity entity = level.getBlockEntity(pos);
         if (entity != null) {
-            out.put(StudioKeys.FIELDS, NbtLines.listed(NbtLines.of(entity.saveWithoutMetadata(
-                    level.registryAccess()))));
+            final CompoundTag saved = entity.saveWithoutMetadata(level.registryAccess());
+            out.put(StudioKeys.FIELDS, NbtLines.listed(whole
+                    ? NbtLines.part(saved, args.getString(StudioKeys.PATH), args.getInt(StudioKeys.SKIP))
+                    : NbtLines.of(saved)));
         }
         final ListTag faces = new ListTag();
         for (final Direction side : Direction.values()) {
-            faces.add(face(level, pos, side));
+            faces.add(face(level, pos, side, whole ? Integer.MAX_VALUE : ITEMS_NAMED));
         }
         out.put(StudioKeys.FACES, faces);
         if (entity instanceof SyncedBlockEntity synced) {
@@ -78,8 +84,12 @@ final class BlockService implements IStudioService {
         reply.accept(out);
     }
 
-    /* What one face offers, read through the capabilities as a pipe or a cable there would. */
-    private static CompoundTag face(final ServerLevel level, final BlockPos pos, final Direction side) {
+    /*
+     * What one face offers, read through the capabilities as a pipe or a cable there would: the first {@code named}
+     * kinds of item it holds, each with all it holds of it counted together.
+     */
+    private static CompoundTag face(final ServerLevel level, final BlockPos pos, final Direction side,
+                                    final int named) {
         final CompoundTag face = new CompoundTag();
         face.putString(StudioKeys.SIDE, side.getSerializedName());
         final @Nullable IEnergyStorage energy = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, side);
@@ -90,13 +100,16 @@ final class BlockService implements IStudioService {
         final @Nullable IItemHandler items = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, side);
         if (items != null) {
             face.putInt(StudioKeys.SLOTS, items.getSlots());
-            final ListTag held = new ListTag();
-            for (int slot = 0; slot < items.getSlots() && held.size() < ITEMS_NAMED; slot++) {
+            final Map<String, Integer> kinds = new LinkedHashMap<>();
+            for (int slot = 0; slot < items.getSlots(); slot++) {
                 final ItemStack stack = items.getStackInSlot(slot);
-                if (!stack.isEmpty()) {
-                    held.add(counted(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), stack.getCount()));
+                final String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+                if (!stack.isEmpty() && (kinds.containsKey(id) || kinds.size() < named)) {
+                    kinds.merge(id, stack.getCount(), Integer::sum);
                 }
             }
+            final ListTag held = new ListTag();
+            kinds.forEach((id, count) -> held.add(counted(id, count)));
             face.put(StudioKeys.ITEMS, held);
         }
         final @Nullable IFluidHandler fluid = level.getCapability(Capabilities.FluidHandler.BLOCK, pos, side);

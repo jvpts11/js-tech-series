@@ -43,9 +43,18 @@ public final class ScreenGestures {
         return making;
     }
 
+    /**
+     * Moves the pointer to the screen's point ({@code x}, {@code y}), as a hand moves the mouse before it clicks or
+     * turns the wheel: a screen that reads where the pointer stands from its moves reads it there.
+     */
+    public static void moveTo(final Screen screen, final double x, final double y) {
+        make(() -> screen.mouseMoved(x, y));
+    }
+
     /** Presses {@code button} at the screen's point ({@code x}, {@code y}) and lets it go there, as a click does. */
     public static void click(final Screen screen, final double x, final double y, final int button) {
         make(() -> {
+            screen.mouseMoved(x, y);
             press(screen, x, y, button);
             release(screen, x, y, button);
         });
@@ -71,6 +80,7 @@ public final class ScreenGestures {
                                           final Supplier<Optional<double[]>> to, final int button) {
         final List<Optional<double[]>> went = new ArrayList<>();
         make(() -> {
+            screen.mouseMoved(x, y);
             press(screen, x, y, button);
             final Optional<double[]> end = to.get();
             went.add(end);
@@ -83,6 +93,7 @@ public final class ScreenGestures {
                 final double atY = y + (toY - y) * move / DRAG_MOVES;
                 final double dx = atX - lastX;
                 final double dy = atY - lastY;
+                screen.mouseMoved(atX, atY);
                 if (!ClientHooks.onScreenMouseDragPre(screen, atX, atY, button, dx, dy)) {
                     screen.mouseDragged(atX, atY, button, dx, dy);
                     ClientHooks.onScreenMouseDragPost(screen, atX, atY, button, dx, dy);
@@ -98,6 +109,7 @@ public final class ScreenGestures {
     /** Turns the wheel {@code notches} at the screen's point ({@code x}, {@code y}): up when more than nought. */
     public static void scroll(final Screen screen, final double x, final double y, final double notches) {
         make(() -> {
+            screen.mouseMoved(x, y);
             // The game's own hook reads the pointer from the window; this gesture's point is its own.
             if (!NeoForge.EVENT_BUS.post(new ScreenEvent.MouseScrolled.Pre(screen, x, y, 0.0, notches))
                     .isCanceled()) {

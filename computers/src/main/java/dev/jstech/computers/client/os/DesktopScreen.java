@@ -17,6 +17,7 @@ import dev.jstech.computers.config.ComputersClientConfig;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.developer.ScreenGestures;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.live.TubeFilter;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
@@ -62,6 +63,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private KeySink keySink;
     /** Whether the game's own pointer is hidden over the glass, where the desktop draws its own. */
     private boolean osPointerHidden;
+    /*
+     * Where an agent's gesture last moved the pointer, until the mouse itself moves: the desktop is drawn with the
+     * pointer there, so its programs read it where the agent's wheel and clicks are, as they read the hand's.
+     */
+    @Nullable
+    private double[] agentPointer;
 
     static final int TASKBAR_H = 24;
     // Frames 11 taskbar: each centered item (Start + one per program) occupies this slot.
@@ -247,10 +254,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * mouse. It is drawn from the mouse to a fraction of a pixel, read this frame.
          */
         final Window window = minecraft.getWindow();
-        final double mx = finer(mouseX, minecraft.mouseHandler.xpos(), window.getGuiScaledWidth(),
-                window.getScreenWidth());
-        final double my = finer(mouseY, minecraft.mouseHandler.ypos(), window.getGuiScaledHeight(),
-                window.getScreenHeight());
+        final double[] agent = agentPointer;
+        final double mx = agent != null ? agent[0] : finer(mouseX, minecraft.mouseHandler.xpos(),
+                window.getGuiScaledWidth(), window.getScreenWidth());
+        final double my = agent != null ? agent[1] : finer(mouseY, minecraft.mouseHandler.ypos(),
+                window.getGuiScaledHeight(), window.getScreenHeight());
         // Off the glass the pointer is over the monitor's frame, so nothing on the desktop lights under it.
         final boolean onGlass = view.onGlass(mx, my);
         final double lx = view.localX(mx);
@@ -326,6 +334,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Override
     public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
         return input.keyReleased(key, scanCode, modifiers) || super.keyReleased(key, scanCode, modifiers);
+    }
+
+    @Override
+    public void mouseMoved(final double mouseX, final double mouseY) {
+        agentPointer = ScreenGestures.making() ? new double[] {mouseX, mouseY} : null;
+        super.mouseMoved(mouseX, mouseY);
     }
 
     @Override

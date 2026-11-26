@@ -31,6 +31,7 @@ import dev.jstech.core.developer.mcp.McpHold;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
 import dev.jstech.core.developer.studio.RecordedTest;
+import dev.jstech.core.integration.jei.CoreJeiPlugin;
 import dev.jstech.core.text.GameText;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.JsTests;
@@ -59,6 +60,8 @@ import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -87,6 +90,9 @@ public final class McpPlayClientTests {
 
     private static final int WAIT = 600;
     private static final int SETTLE = 3;
+    /* Where the recipe viewer's search field stands, from the window's right edge and its foot. */
+    private static final int VIEWER_SEARCH_FROM_RIGHT = 80;
+    private static final int VIEWER_SEARCH_FROM_FOOT = 16;
     private static final BlockPos STAND = new BlockPos(0, 2, 0);
     private static final BlockPos MACHINE = new BlockPos(0, 2, -3);
     private static final BlockPos WALK_TO = new BlockPos(3, 2, 0);
@@ -137,6 +143,42 @@ public final class McpPlayClientTests {
     private static boolean readingsDeclared;
 
     private McpPlayClientTests() {
+    }
+
+    /*
+     * The agent's hand reaches the recipe viewer beside a screen as the player's does: a click on its search field,
+     * words typed, a Backspace, and a letter's key pressed, which writes the letter as the keyboard does.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void tools_reachTheRecipeViewersSearchAndWriteWithKeys(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final int[] search = new int[2];
+        ctx.afterTest(() -> {
+            McpGame.turn(false);
+            ctx.mc().setScreen(null);
+        });
+        pair(ctx, sent, key, port);
+        ctx.then(0, () -> ctx.mc().setScreen(new InventoryScreen(ctx.player())))
+                .thenWaitUntil(() -> ctx.mc().screen instanceof AbstractContainerScreen<?>, WAIT, "the inventory")
+                .then(SETTLE * 4, () -> {
+                    // The viewer's search field, at the foot of its list in the window's bottom right corner.
+                    search[0] = ctx.mc().screen.width - VIEWER_SEARCH_FROM_RIGHT;
+                    search[1] = ctx.mc().screen.height - VIEWER_SEARCH_FROM_FOOT;
+                });
+        run(ctx, sent, key, port, new Step("screen_click", () -> "{\"x\":" + search[0] + ",\"y\":" + search[1]
+                + "}", result -> ctx.assertTrue(result.has("clicked"), "the click is made: " + result)));
+        run(ctx, sent, key, port, new Step("screen_type", "{\"text\":\"dirt\"}", result -> { }));
+        ctx.thenAssert(SETTLE, () -> CoreJeiPlugin.searchText().orElse("").equals("dirt"),
+                "the words go into the viewer's search: " + CoreJeiPlugin.searchText());
+        run(ctx, sent, key, port, new Step("key_press", "{\"key\":\"backspace\"}", result -> { }));
+        ctx.thenAssert(SETTLE, () -> CoreJeiPlugin.searchText().orElse("").equals("dir"),
+                "Backspace takes the last letter off: " + CoreJeiPlugin.searchText());
+        run(ctx, sent, key, port, new Step("key_press", "{\"key\":\"t\"}", result -> { }));
+        ctx.thenAssert(SETTLE, () -> CoreJeiPlugin.searchText().orElse("").equals("dirt"),
+                "a letter's key writes the letter: " + CoreJeiPlugin.searchText())
+                .thenScreenshot(SETTLE, "viewer-search");
     }
 
     @ClientTest(timeoutTicks = 4000)

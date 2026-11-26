@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.mcp;
 
+import dev.jstech.core.client.gui.component.DrawnComponents;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.data.BuiltNode;
 import dev.jstech.core.client.gui.data.IDataScreen;
@@ -30,6 +31,8 @@ final class PlayScreens {
 
     /* How deep widgets are looked for in the widgets that hold them, past any loop of them. */
     private static final int MOST_DEPTH = 8;
+    /* How a component drawn is named: this, and its place in the last frame's drawing. */
+    private static final String DRAWN = "drawn:";
 
     private PlayScreens() {
     }
@@ -41,7 +44,28 @@ final class PlayScreens {
             seen.parts().addAll(shown.shownParts());
         }
         walk(screen.children(), null, seen, 0);
+        drawn(screen, seen);
         return seen;
+    }
+
+    /*
+     * The components the last frame drew, a desktop's programs' among them, each a part named by its place in the
+     * drawing and read by the words a player reads on it; one off the screen, or that says nothing, is left out.
+     */
+    private static void drawn(final Screen screen, final Seen seen) {
+        final List<DrawnComponents.Drawn> drawn = DrawnComponents.lastFrame();
+        for (int i = 0; i < drawn.size(); i++) {
+            final DrawnComponents.Drawn each = drawn.get(i);
+            // A button is read by its face's words; anything else by what it says of itself.
+            final String words = each.component().pressLabel().orElseGet(() -> each.component().narration())
+                    .getString().strip();
+            final boolean onScreen = each.x() + each.width() > 0 && each.y() + each.height() > 0
+                    && each.x() < screen.width && each.y() < screen.height;
+            if (!words.isEmpty() && onScreen) {
+                seen.parts().add(ShownPart.of(DRAWN + i, words, each.x(), each.y(), each.width(), each.height(),
+                        each.component().enabled()));
+            }
+        }
     }
 
     /** The point the component or the part named {@code name} is clicked at: a file's component, else a named part. */

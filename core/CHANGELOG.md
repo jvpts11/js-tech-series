@@ -580,6 +580,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- What the components drew: J's Core's API is at version 106. While `DrawnComponents.keep` is on, each frame
+  keeps every component a panel drew and the box it covers on the screen, the moves and the scale of what drew it
+  counted in, and `lastFrame` gives the last whole frame's. Experimental.
 - Multiblocks named by their mods: J's Core's API is at version 105. `Projectables.addNames` lets a mod name
   its multiblocks in words of its own, asked before the key `multiblock.<namespace>.<path>`, so the projector and the
   builder call a machine's shape what the machine is called. A container screen that draws a frame round its image
@@ -2386,6 +2389,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   The Pattern Studio's amount popup opens with the amount selected, and the digits typed straight away replace it.
 - A click with an empty hand on a wire's arm into a block opens that block, as a click on its face does: the
   arms of two wires side by side fill most of a face, and a machine could not be opened from that side.
+- The MCP server's `block_read` reads a block whole: every kind of item a face holds, all of each counted
+  together, and its fields uncut, 200 at a time, those under `fields` alone and from `skip` on. `screen_tree` lists
+  the components the screen's last frame drew, a desktop's programs' buttons, fields and labels among them, each
+  where it stands on the screen.
 - Machines are drawn as far as the player sees the world: they no longer vanish past 64 blocks while the
   cables beside them still show. They still move only near the player.
 - The Machine Upgrades page of the manual says what to do when a machine with motors works slower than its
@@ -2569,6 +2576,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Multiblock Builder calls a multiblock the same aimed at its terminal as in front of a projector: a dock
   was the "Shipyard Terminal" one way and the "Small Shipyard" the other. Its header gives up the size line before it
   cuts the name.
+- The MCP server's `block_read` takes a block's x, y and z given apart; they were taken for no place, and the
+  block the player looked at was read instead. Its `key_press` writes the character a key writes, as the keyboard
+  does, where a letter's key wrote nothing. Its `screen_scroll` moves the pointer first and turns the wheel once the
+  screen is drawn with it there, so a desktop's program scrolls the list under it, not the one under the mouse.
 - A stack of upgrades dropped on a machine's bay goes in only as far as its kind's limit: sixteen motors went
   in where four count, of every kind of motor together.
 - Emptying a machine by hand leaves its upgrades in their bays: a double click gathering alike items, or shift

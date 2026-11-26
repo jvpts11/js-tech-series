@@ -713,6 +713,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- (Core) What the components drew: J's Core's API is at version 106. While `DrawnComponents.keep` is on, each frame
+  keeps every component a panel drew and the box it covers on the screen, the moves and the scale of what drew it
+  counted in, and `lastFrame` gives the last whole frame's. Experimental.
 - (Core) Multiblocks named by their mods: J's Core's API is at version 105. `Projectables.addNames` lets a mod name
   its multiblocks in words of its own, asked before the key `multiblock.<namespace>.<path>`, so the projector and the
   builder call a machine's shape what the machine is called. A container screen that draws a frame round its image
@@ -4584,6 +4587,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   computer...".
 - (Computers) On a small window a desktop rises into the room over its monitor, so the recipe viewer's buttons in the
   window's bottom corners no longer cover the name and the light on the monitor's chin.
+- (Core) The MCP server's `block_read` reads a block whole: every kind of item a face holds, all of each counted
+  together, and its fields uncut, 200 at a time, those under `fields` alone and from `skip` on. `screen_tree` lists
+  the components the screen's last frame drew, a desktop's programs' buttons, fields and labels among them, each
+  where it stands on the screen.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
@@ -5037,6 +5044,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) A monitor's screen opens whole on a small window: the interface's scale goes low enough for the frame
   round the glass, whose top and chin fell out of an 854 by 480 window.
 - (Computers) What keeps the recipe viewers off a Quince all-in-one's frame is its own face, not its era's monitor.
+- (Core) The MCP server's `block_read` takes a block's x, y and z given apart; they were taken for no place, and the
+  block the player looked at was read instead. Its `key_press` writes the character a key writes, as the keyboard
+  does, where a letter's key wrote nothing. Its `screen_scroll` moves the pointer first and turns the wheel once the
+  screen is drawn with it there, so a desktop's program scrolls the list under it, not the one under the mouse.
 - (Core) A stack of upgrades dropped on a machine's bay goes in only as far as its kind's limit: sixteen motors went
   in where four count, of every kind of motor together.
 - (Core) Emptying a machine by hand leaves its upgrades in their bays: a double click gathering alike items, or shift

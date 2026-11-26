@@ -22,6 +22,8 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.developer.ScreenGestures;
+import dev.jstech.core.client.gui.component.DrawnComponents;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.TestMachines;
@@ -250,6 +252,13 @@ public final class NetworkInteractorClientTests {
                 .then(1, () -> ctx.assertTrue(interactor(ctx).searchText().equals("iron")
                                 && interactor(ctx).listedNames().equals(List.of("Iron Ingot")),
                         "the search and the category filter stack; got " + interactor(ctx).listedNames()))
+                // An agent's Backspace and its typing, through the gestures its tools make, edit the search alike.
+                .then(1, () -> ScreenGestures.key(ctx.mc().screen, GLFW.GLFW_KEY_BACKSPACE))
+                .then(1, () -> ctx.assertTrue(interactor(ctx).searchText().equals("iro"),
+                        "the agent's Backspace reaches the search; got " + interactor(ctx).searchText()))
+                .then(1, () -> ScreenGestures.type(ctx.mc().screen, 'n'))
+                .then(1, () -> ctx.assertTrue(interactor(ctx).searchText().equals("iron"),
+                        "and its typing; got " + interactor(ctx).searchText()))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).categoryFilterCenter())))
                 .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).filterMenuPoint("Any category"))))
@@ -674,6 +683,20 @@ public final class NetworkInteractorClientTests {
                 .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).operationRowCenter(0))))
                 .thenWaitUntil(() -> interactor(ctx).operationButtonsShown(), SCREEN_WAIT,
                         "Pause and Cancel in the order's detail")
+                // An agent reading the screen sees the program's buttons, each where it stands on the screen.
+                .then(0, () -> DrawnComponents.keep(true))
+                .then(SETTLE, () -> {
+                    final int[] pause = point(ctx, interactor(ctx).operationPauseCenter());
+                    final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+                    final double x = desktop.desktopX() + pause[0] * desktop.desktopScale();
+                    final double y = desktop.desktopY() + pause[1] * desktop.desktopScale();
+                    final boolean seen = DrawnComponents.lastFrame().stream().anyMatch(drawn -> drawn.component()
+                            .pressLabel().map(label -> label.getString().equals("Pause")).orElse(false)
+                            && x >= drawn.x() && x < drawn.x()
+                            + drawn.width() && y >= drawn.y() && y < drawn.y() + drawn.height());
+                    DrawnComponents.keep(false);
+                    ctx.assertTrue(seen, "the Pause the agent reads stands where it is drawn");
+                })
                 // The advancements the build earned would stand over the detail in the pictures.
                 .then(1, () -> ctx.mc().getToasts().clear())
                 .thenScreenshot(4, "ops-order-detail")

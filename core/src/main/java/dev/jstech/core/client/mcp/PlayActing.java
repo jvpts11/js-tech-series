@@ -46,6 +46,7 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * What an agent does as the player, through the input the player uses: the movement keys held, the view turned as
@@ -93,6 +94,8 @@ public final class PlayActing {
     private static final String TICKS = "ticks";
     private static final int MOST_HOLD = 4_800;
     private static final int LET_GO_TICKS = 5;
+    /* The ticks a wheel turned by an agent waits after its pointer moved, for the screen to be drawn with it there. */
+    private static final int SCROLL_AFTER = 2;
     private static final String AT_ABOUT = "A point of the block to look at, in sixteenths of it from its lowest "
             + "corner, as a model's coordinates count (0 to 16 each): a port or a button on a face; with a face, the "
             + "point is on that face. Its middle, or the face's, when left out.";
@@ -185,12 +188,13 @@ public final class PlayActing {
                         .whole("y", "The point's y.", 0, 10_000, true)
                         .whole("notches", "How far it turns: up when more than 0, down when less.", -MOST_NOTCHES,
                                 MOST_NOTCHES, true)
-                        .build(), McpPermission.ACT, call -> onScreen(call, PlayActing::scroll)),
+                        .build(), McpPermission.ACT, PlayActing::scrollThere),
                 new McpTool("screen_type", "Types words into the screen open, a character at a time, as the keyboard "
                         + "does.", McpSchema.object().words("text", "What to type.", true).build(),
                         McpPermission.ACT, call -> onScreen(call, PlayActing::type)),
                 new McpTool("key_press", "Presses a key, by its name (escape, enter, tab, e, f3...): on the screen "
-                        + "open, or in the world, where the actions bound to it act.", McpSchema.object()
+                        + "open, where a key that writes a character writes it too, or in the world, where the actions "
+                        + "bound to it act.", McpSchema.object()
                         .words("key", "The key's name.", true).build(), McpPermission.ACT, PlayActing::key),
                 new McpTool("key_hold", "Holds a key or a key mapping down for a number of ticks, as a finger on it "
                         + "does, then lets go: a key by its name (w, space, left.control...), or a mapping of the game "
@@ -716,6 +720,24 @@ public final class PlayActing {
                 McpTexts.NOT_ON_SCREEN.with(asked.get())) : McpCall.wrong(x, McpWords.A_NUMBER.with(0, screen.width));
     }
 
+    /*
+     * The pointer moved to the point first and the wheel turned there once the screen has been drawn with it: a
+     * screen that scrolls what lies under the pointer as it last drew it, a desktop's program among them, scrolls
+     * there and not where the mouse itself stands.
+     */
+    private static CompletableFuture<McpResult> scrollThere(final McpCall call) {
+        return PlayTasks.run(call, SCROLL_AFTER + 1, (game, tick) -> {
+            if (game.screen == null) {
+                return Optional.of(McpResult.failed(McpTexts.NO_SCREEN.text()));
+            }
+            if (tick == 1) {
+                call.whole("x").ifPresent(x -> call.whole("y").ifPresent(y -> ScreenGestures.moveTo(game.screen, x,
+                        y)));
+            }
+            return tick < SCROLL_AFTER ? Optional.empty() : Optional.of(scroll(game.screen, call));
+        });
+    }
+
     private static McpResult scroll(final Screen screen, final McpCall call) {
         final Optional<Long> x = call.whole("x");
         final Optional<Long> y = call.whole("y");
@@ -802,6 +824,15 @@ public final class PlayActing {
         });
     }
 
+    /* The character the key {@code key} writes on this keyboard, or 0 for a key that writes none (Tab, an arrow). */
+    private static char written(final int key) {
+        if (key == GLFW.GLFW_KEY_SPACE) {
+            return ' ';
+        }
+        final String name = GLFW.glfwGetKeyName(key, 0);
+        return name != null && name.length() == 1 ? name.charAt(0) : 0;
+    }
+
     /* The keyboard's key of the name {@code name}, as the game names keys: e, space, left.control. */
     private static Optional<InputConstants.Key> keyNamed(final String name) {
         try {
@@ -823,6 +854,11 @@ public final class PlayActing {
         return game.submit(() -> {
             if (game.screen != null) {
                 ScreenGestures.key(game.screen, key.getValue());
+                // A key that writes something writes it too, as the keyboard sends its character after the press.
+                final char written = written(key.getValue());
+                if (game.screen != null && written != 0) {
+                    ScreenGestures.type(game.screen, written);
+                }
                 if (game.screen != null) {
                     ScreenGestures.keyUp(game.screen, key.getValue());
                 }

@@ -14,6 +14,7 @@ import dev.jstech.core.developer.mcp.McpOnServer;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
 import dev.jstech.core.developer.mcp.McpServer;
+import dev.jstech.core.developer.studio.NbtLines;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.testkit.gametest.GameTestPlayers;
@@ -22,6 +23,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,8 +31,15 @@ import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.ServerOpListEntry;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +56,12 @@ public final class McpServerGameTests {
     private static final String ARENA = "empty";
     private static final String BATCH = "mcp_server";
     private static final BlockPos AT = new BlockPos(2, 2, 2);
+    private static final BlockPos CHEST = new BlockPos(4, 2, 2);
+    private static final int CHEST_STACKS = 5;
+    private static final int STACK = 10;
+    /* A list longer than a page of fields, of values longer than a page cuts them to. */
+    private static final int LONG_LIST = 250;
+    private static final int LONG_VALUE = 120;
     private static final int OPERATOR = 4;
     private static final int WAIT = 200;
     /** The real time a tick waits for the network, in milliseconds. */
@@ -96,6 +111,25 @@ public final class McpServerGameTests {
                     helper.assertTrue(!result.has("isError") && result.getAsJsonObject("structuredContent")
                             .get("block").getAsString().equals(TestKitMachine.BLOCK.getId().toString()),
                             "the operator's world is read: " + result);
+                    // A chest of five stacks of two kinds, read by its x, y and z given apart.
+                    helper.setBlock(CHEST, Blocks.CHEST);
+                    final ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(CHEST);
+                    for (int slot = 0; slot < CHEST_STACKS; slot++) {
+                        chest.setItem(slot, new ItemStack(slot % 2 == 0 ? Items.STONE : Items.DIRT, STACK));
+                    }
+                    final BlockPos at = helper.absolutePos(CHEST);
+                    next.set(post(port, key.get(), tool("block_read", "{\"x\":" + at.getX() + ",\"y\":" + at.getY()
+                            + ",\"z\":" + at.getZ() + "}")));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(waited(next.get()::isDone), "the chest is read"))
+                .thenExecute(() -> {
+                    final JsonObject read = result(next.get().join()).getAsJsonObject("structuredContent");
+                    helper.assertTrue(read.get("block").getAsString().equals("minecraft:chest"),
+                            "x, y and z given apart name the place: " + read);
+                    final String faces = read.get("faces").toString();
+                    helper.assertTrue(faces.contains("\"count\":" + STACK * 3 + ",\"id\":\"minecraft:stone\"")
+                                    && faces.contains("\"count\":" + STACK * 2 + ",\"id\":\"minecraft:dirt\""),
+                            "a face names every kind it holds, all of each counted together: " + faces);
                     next.set(post(port, key.get(), tool("commands_run", "{\"command\":\"/time set 1000\"}")));
                 })
                 .thenWaitUntil(() -> helper.assertTrue(waited(next.get()::isDone), "the command is run"))
@@ -116,6 +150,32 @@ public final class McpServerGameTests {
                     leave(operator);
                 })
                 .thenSucceed();
+    }
+
+    /*
+     * What an agent reads of a block's fields comes whole, a page at a time: a list too long for one ends its first
+     * page saying how many to skip to read on, the values never cut, and a path asked for leaves the other fields out.
+     */
+    @GameTest(template = ARENA)
+    public static void fields_areReadWholeAPageAtATime(final GameTestHelper helper) {
+        final CompoundTag tag = new CompoundTag();
+        final ListTag patterns = new ListTag();
+        for (int i = 0; i < LONG_LIST; i++) {
+            patterns.add(StringTag.valueOf("p".repeat(LONG_VALUE)));
+        }
+        tag.put("Patterns", patterns);
+        tag.putString("Name", "kept");
+        final Map<String, String> first = NbtLines.part(tag, "Patterns", 0);
+        final String next = Integer.toString(NbtLines.MOST - 1);
+        helper.assertTrue(first.size() == NbtLines.MOST && next.equals(first.get("...")),
+                "the first page is full and says where the next begins: " + first.size() + " " + first.get("..."));
+        helper.assertTrue(first.entrySet().stream().filter(line -> !line.getKey().equals("..."))
+                .allMatch(line -> line.getValue().length() == LONG_VALUE), "no value is cut");
+        helper.assertFalse(first.containsKey("Name"), "the fields not asked for are left out");
+        final Map<String, String> rest = NbtLines.part(tag, "Patterns", NbtLines.MOST - 1);
+        helper.assertTrue(rest.size() == LONG_LIST - (NbtLines.MOST - 1) && !rest.containsKey("..."),
+                "skipping what was read reads the rest, to its end: " + rest.size());
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = BATCH)

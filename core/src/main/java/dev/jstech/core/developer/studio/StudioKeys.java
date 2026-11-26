@@ -13,6 +13,9 @@ public final class StudioKeys {
     public static final String POS = "pos";
     public static final String BLOCK = "block";
     public static final String FIELDS = "fields";
+    /** A block's reading asked whole: every item each face holds, and its fields uncut, a page at a time. */
+    public static final String WHOLE = "whole";
+    public static final String SKIP = "skip";
     public static final String FACES = "faces";
     public static final String FLOW = "flow";
     public static final String ENERGY_IN = "energy_in";

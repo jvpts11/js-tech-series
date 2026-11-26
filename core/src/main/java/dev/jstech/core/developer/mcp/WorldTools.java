@@ -34,6 +34,8 @@ import net.minecraft.nbt.StringTag;
 public final class WorldTools {
 
     private static final String PLACE = "place";
+    private static final String FIELDS = "fields";
+    private static final String SKIP = "skip";
     private static final String FROM = "from";
     private static final String TO = "to";
     private static final int MOST_SECONDS = 30;
@@ -45,12 +47,20 @@ public final class WorldTools {
     /** The tools, asking through {@code ask}, a place left out being the block {@code looked} says. */
     public static List<McpTool> of(final IAsk ask, final ILookedAt looked) {
         return List.of(
-                new McpTool("block_read", "Reads a block: its id, every field its block entity saves (what players "
-                        + "wrote marked as theirs), what each face offers (energy, slots and what they hold, tanks), "
-                        + "and, for a block entity of J's Core, the energy, items and fluid that crossed its faces "
-                        + "since it loaded.", McpSchema.object().place(PLACE, "The block; left out, the block the "
-                        + "player looks at.", false).build(), McpPermission.READ,
-                        call -> placed(call, looked, pos -> ask.ask(call, StudioServices.BLOCK, at(pos))
+                new McpTool("block_read", "Reads a block: its id, every field its block entity saves, whole (what "
+                        + "players wrote marked as theirs), what each face offers (energy, slots and every kind of "
+                        + "item they hold counted together, tanks), and, for a block entity of J's Core, the energy, "
+                        + "items and fluid that crossed its faces since it loaded. The fields come " + NbtLines.MOST
+                        + " at a time: past that, the line \"...\" holds the skip that reads on.",
+                        McpSchema.object().place(PLACE, "The block; left out, the block the player looks at.", false)
+                                .whole("x", "The block's x, given with y and z in place of a place.",
+                                        Integer.MIN_VALUE, Integer.MAX_VALUE, false)
+                                .whole("y", "The block's y.", Integer.MIN_VALUE, Integer.MAX_VALUE, false)
+                                .whole("z", "The block's z.", Integer.MIN_VALUE, Integer.MAX_VALUE, false)
+                                .words(FIELDS, "Only the fields whose paths begin with these words.", false)
+                                .whole(SKIP, "How many of the fields asked to skip, to read on.", 0, Integer.MAX_VALUE,
+                                        false).build(), McpPermission.READ,
+                        call -> placed(call, looked, pos -> ask.ask(call, StudioServices.BLOCK, wholeAt(pos, call))
                                 .thenApply(answer -> answered(answer, WorldTools::block)))),
                 new McpTool("block_save_round_trip", "Saves a block entity and reads it back as a world closed and "
                         + "opened again does, field by field, and says which fields came back changed.",
@@ -182,6 +192,16 @@ public final class WorldTools {
             final Optional<BlockPos> pos = placeOf(given.get());
             return pos.isPresent() ? then.apply(pos.get()) : done(McpCall.wrong(PLACE, McpWords.A_PLACE.text()));
         }
+        // A place written as its x, y and z apart is the same place: it was taken for no place, the block looked at.
+        final Optional<Long> x = call.whole("x");
+        final Optional<Long> y = call.whole("y");
+        final Optional<Long> z = call.whole("z");
+        if (x.isPresent() && y.isPresent() && z.isPresent()) {
+            return then.apply(new BlockPos(x.get().intValue(), y.get().intValue(), z.get().intValue()));
+        }
+        if (x.isPresent() || y.isPresent() || z.isPresent()) {
+            return done(McpCall.wrong(x.isEmpty() ? "x" : y.isEmpty() ? "y" : "z", McpWords.A_PLACE.text()));
+        }
         return looked.lookedAt(call).thenCompose(pos -> pos.isPresent() ? then.apply(pos.get())
                 : done(McpCall.wrong(PLACE, McpWords.A_PLACE.text())));
     }
@@ -219,6 +239,15 @@ public final class WorldTools {
     private static CompoundTag at(final BlockPos pos) {
         final CompoundTag args = new CompoundTag();
         args.putLong(StudioKeys.POS, pos.asLong());
+        return args;
+    }
+
+    /* A block asked whole, as an agent reads it: the fields the call asks for, from where it asks, none of it cut. */
+    private static CompoundTag wholeAt(final BlockPos pos, final McpCall call) {
+        final CompoundTag args = at(pos);
+        args.putBoolean(StudioKeys.WHOLE, true);
+        args.putString(StudioKeys.PATH, call.text(FIELDS).orElse(""));
+        args.putInt(StudioKeys.SKIP, (int) Math.max(0, Math.min(Integer.MAX_VALUE, call.whole(SKIP).orElse(0L))));
         return args;
     }
 

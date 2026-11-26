@@ -97,7 +97,9 @@ public final class PlaySeeing {
                         + "named component with its place, size and words, which screen_click clicks by name; its "
                         + "widgets, those in its lists and bars too, with their words; the parts a screen drawn in "
                         + "code names, its tabs, cards and the like, with their words and where a click lands, "
-                        + "clicked and dragged by name; on a container's, its slots and what they hold.",
+                        + "clicked and dragged by name; every component the last frame drew that says something, a "
+                        + "desktop's programs' buttons, fields and labels among them, named drawn:<n>, where it "
+                        + "stands on the screen; on a container's, its slots and what they hold.",
                         McpSchema.object().build(), McpPermission.READ, call -> Play.withPlayer(player -> tree())),
                 new McpTool("screen_picture", "A picture of the game's window as it was last drawn, at most 960 "
                         + "pixels wide.", McpSchema.object().build(), McpPermission.READ,

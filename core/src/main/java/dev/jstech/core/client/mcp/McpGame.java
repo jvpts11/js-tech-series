@@ -10,6 +10,7 @@ package dev.jstech.core.client.mcp;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.Command;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.client.gui.component.DrawnComponents;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.studio.StudioScreen;
 import dev.jstech.core.developer.DeveloperMode;
@@ -57,6 +58,7 @@ import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -93,6 +95,8 @@ public final class McpGame {
             }
         });
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, event -> mark(event.getGuiGraphics()));
+        // While an agent can read the screen, each frame's components are kept for it, a frame at a time.
+        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Post.class, event -> DrawnComponents.frameEnded());
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, event -> event.getDispatcher().register(
                 Commands.literal("jstech").then(Commands.literal("mcp")
                         .then(Commands.literal("on").executes(context -> say(turn(true))))
@@ -128,6 +132,7 @@ public final class McpGame {
         if (!on) {
             final McpServer server = running;
             running = null;
+            DrawnComponents.keep(false);
             // A call still acting lets go of the player's keys, as when every client is cut off, and a world held
             // for the agents runs on its own again.
             ACTING.forEach(McpCall::takeBack);
@@ -150,6 +155,7 @@ public final class McpGame {
             final McpServer server = McpServer.start(new McpProtocol(new GameHost(), System::currentTimeMillis,
                     new DeveloperMcpLogger()), port);
             running = server;
+            DrawnComponents.keep(true);
             return McpTexts.ON.with(server.port());
         } catch (final IOException failed) {
             return McpTexts.FAILED.with(port, String.valueOf(failed.getMessage()));

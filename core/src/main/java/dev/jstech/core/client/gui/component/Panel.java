@@ -113,6 +113,7 @@ public class Panel extends UiComponent {
         for (final UiComponent child : children) {
             if (child.visible()) {
                 child.renderMoved(g, ctx);
+                DrawnComponents.drawn(g, child);
             }
         }
     }

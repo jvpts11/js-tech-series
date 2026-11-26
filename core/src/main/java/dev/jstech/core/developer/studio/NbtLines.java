@@ -7,7 +7,9 @@
  */
 package dev.jstech.core.developer.studio;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -51,6 +53,31 @@ public final class NbtLines {
             out.put(line.getKey(), line.getValue());
         }
         out.put(CUT, CUT);
+        return out;
+    }
+
+    /**
+     * {@code tag}'s values whose paths begin with {@code prefix}, whole and never cut, from the {@code skip}th of them
+     * on, {@link #MOST} at most: when more follow, the last line, a path of three dots, holds how many to skip to read
+     * on from there. What an agent reads a block's long lists by, a page at a time.
+     */
+    public static Map<String, String> part(final CompoundTag tag, final String prefix, final int skip) {
+        final List<Map.Entry<String, String>> matching = new ArrayList<>();
+        for (final Map.Entry<String, String> line : whole(tag).entrySet()) {
+            if (line.getKey().startsWith(prefix)) {
+                matching.add(line);
+            }
+        }
+        final Map<String, String> out = new LinkedHashMap<>();
+        final int from = Math.max(0, Math.min(skip, matching.size()));
+        final boolean more = matching.size() - from > MOST;
+        final int to = more ? from + MOST - 1 : matching.size();
+        for (final Map.Entry<String, String> line : matching.subList(from, to)) {
+            out.put(line.getKey(), line.getValue());
+        }
+        if (more) {
+            out.put(CUT, Integer.toString(to));
+        }
         return out;
     }
 
