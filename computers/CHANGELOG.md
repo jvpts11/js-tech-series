@@ -1018,6 +1018,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   it: pasting one there did nothing and said nothing. A move takes the folder away only once all of it is across.
   Shift+click selects the run from the row clicked last, Ctrl+click adds a row or takes it out, and a copy or a cut
   after Ctrl+A takes everything selected instead of nothing.
+- The Crafting Manager reads recipe files from the computer's own disk as well as from a disc: "From"
+  chooses the disk among the computer's own and the medium in each linked drive, named with the drive letters the
+  file explorer gives them. A double click opens a folder, `..` goes back up, and the Manager remembers the last
+  folder of each disk. Files are picked as the file explorer picks them: a click takes one, Shift+click the run from
+  the one clicked last, Ctrl+click adds or drops one, and Ctrl+A takes them all. Load all takes the folder shown, and
+  Download writes into it. A click on a file used to add it to the picked ones or take it out.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does

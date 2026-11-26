@@ -15,6 +15,7 @@ import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
 import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
 import dev.jstech.computers.operation.payload.crafting.CraftPlaces;
+import dev.jstech.computers.operation.payload.crafting.CraftSources;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
@@ -63,6 +64,7 @@ public final class CraftingManagerMediaGameTests {
     private static final BlockPos FLOPPY_DRIVE = new BlockPos(5, 2, 3);
     private static final BlockPos DVD_DRIVE = new BlockPos(5, 2, 1);
     private static final BlockPos ENCODER = new BlockPos(1, 2, 4);
+    private static final String FURNACE = "Recipes/Furnace";
 
     @GameTest(template = ARENA)
     public static void craftManagerState_showsTheDriveWhoseDiscHoldsTheCrafts(final GameTestHelper helper) {
@@ -221,10 +223,87 @@ public final class CraftingManagerMediaGameTests {
         helper.succeed();
     }
 
+    /**
+     * The Manager reads the computer's own disk as well as a disc: it lists the disk among the sources, walks into its
+     * folders and back to the top for a folder that is not there, and a medium it does not read is answered with the
+     * one the computer shows first.
+     */
+    @GameTest(template = ARENA)
+    public static void listing_walksTheFoldersOfTheComputersOwnDisk(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final CraftingComputerBlockEntity cc = net.cc();
+                    final ServerLevel level = helper.getLevel();
+                    putRecipe(helper, cc.systemDisk(), FURNACE);
+                    helper.assertTrue(DiskFilesystem.mkdir(cc.systemDisk(), "Recipes/Old", FilesystemKind.HIERARCHICAL),
+                            "a second folder goes beside the first");
+                    helper.assertTrue(CraftSources.sources(level, cc).stream().anyMatch(source -> source.usable()
+                                    && source.key().equals(CraftManagerStatePayload.SYSTEM_DISK)),
+                            "the computer's own disk is a source; got " + CraftSources.sources(level, cc));
+                    final CraftSources.Listing recipes = CraftSources.listing(level, cc,
+                            CraftManagerStatePayload.SYSTEM_DISK, "Recipes");
+                    helper.assertTrue(recipes.key().equals(CraftManagerStatePayload.SYSTEM_DISK)
+                                    && recipes.folder().equals("Recipes")
+                                    && recipes.folders().equals(List.of("Furnace", "Old")) && recipes.files().isEmpty(),
+                            "Recipes holds two folders and no file; got " + recipes);
+                    final CraftSources.Listing furnace = CraftSources.listing(level, cc,
+                            CraftManagerStatePayload.SYSTEM_DISK, FURNACE);
+                    helper.assertTrue(furnace.files().equals(List.of("oak_planks.craft")),
+                            "the furnace folder lists its recipe by name; got " + furnace.files());
+                    helper.assertTrue(CraftSources.listing(level, cc, CraftManagerStatePayload.SYSTEM_DISK, "Gone")
+                                    .folder().isEmpty(),
+                            "a folder that is not there lists the disk's top");
+                    helper.assertTrue(CraftSources.listing(level, cc, "media:12345", "").key().isEmpty(),
+                            "a medium the computer does not read gives the computer's choice, here none");
+                })
+                .thenSucceed();
+    }
+
+    /** A recipe loads from a folder of the computer's own disk, and one downloaded goes into the folder open. */
+    @GameTest(template = ARENA)
+    public static void folder_aRecipeLoadsFromAFolderAndDownloadsIntoIt(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final CraftingComputerBlockEntity cc = net.cc();
+                    final ServerLevel level = helper.getLevel();
+                    final String name = putRecipe(helper, cc.systemDisk(), FURNACE);
+                    final CraftSources.Volume disk = CraftSources.resolve(level, cc,
+                            CraftManagerStatePayload.SYSTEM_DISK);
+                    helper.assertTrue(disk != null, "the computer's own disk resolves");
+                    helper.assertTrue(CraftManagerPayloads.loadFromMedia(cc, level, disk, FURNACE, List.of(name), -1,
+                            false).loaded() == 1, "the recipe in the folder goes into the card's ROM");
+                    helper.assertTrue(DiskFilesystem.mkdir(cc.systemDisk(), "Backup", FilesystemKind.HIERARCHICAL),
+                            "a folder to download into");
+                    final int ref = CraftManagerPayloads.buildCraftManagerState(cc, level).entries().getFirst().ref();
+                    helper.assertTrue(CraftManagerPayloads.downloadTo(cc, level, disk, "Backup", List.of(ref)) == 1,
+                            "one recipe is written");
+                    helper.assertTrue(DiskFilesystem.exists(cc.systemDisk(), "Backup/oak_planks.craft"),
+                            "it is written into the folder open, not at the disk's top");
+                })
+                .thenSucceed();
+    }
+
+    /* Writes the oak planks recipe into {@code folder} of {@code disk}, making the folder; returns the file's name. */
+    private static String putRecipe(final GameTestHelper helper, final ItemStack disk, final String folder) {
+        final ItemStack scratch = new ItemStack(ComputingModule.DVD_RW.get());
+        final String file = CraftFiles.writeBench(scratch, CraftFiles.oakPlanks(), helper.getLevel().registryAccess());
+        helper.assertTrue(DiskFilesystem.mkdirs(disk, folder, FilesystemKind.HIERARCHICAL), "the folder is made");
+        helper.assertTrue(DiskFilesystem.write(disk, FsPaths.join(folder, file), FileType.CRAFT,
+                        DiskFilesystem.read(scratch, file).orElseThrow(), 1_000_000L, FilesystemKind.HIERARCHICAL)
+                        == DiskFilesystem.WriteResult.OK, "the recipe is written into the folder");
+        return file;
+    }
+
     /* How many recipes loading {@code file} from {@code media} into the place numbered {@code place} put in. */
     private static int load(final GameTestHelper helper, final CraftingComputerBlockEntity cc, final ItemStack media,
                             final String file, final int place) {
-        return CraftManagerPayloads.loadFromMedia(cc, helper.getLevel(), media, List.of(file), place, false).loaded();
+        return CraftManagerPayloads.loadFromMedia(cc, helper.getLevel(),
+                new CraftSources.Volume("media:0", media, FilesystemKind.HIERARCHICAL), "", List.of(file), place,
+                false).loaded();
     }
 
     /* The numbers of the places that are interfaces the computer drives, in order. */

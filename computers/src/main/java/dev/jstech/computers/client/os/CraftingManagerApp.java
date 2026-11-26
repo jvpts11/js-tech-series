@@ -57,7 +57,6 @@ import static dev.jstech.computers.client.os.CraftingManagerTexts.EXCLUSIVE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.FIRST_WITH_ROOM;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.HINT;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.IDLE;
-import static dev.jstech.computers.client.os.CraftingManagerTexts.INSERT_A_DISC;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.INTERFACES_TAB;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.INTERFACE_COLUMN;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.INTO;
@@ -66,19 +65,17 @@ import static dev.jstech.computers.client.os.CraftingManagerTexts.JOBS_COLUMN;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.KIND_NOTE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.LOAD;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.LOAD_ALL;
-import static dev.jstech.computers.client.os.CraftingManagerTexts.MEDIA;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.MODE_COLUMN;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.MOVE_TO;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.NOT_EXCLUSIVE;
-import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_CRAFT_FILES;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_INTERFACES;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_MACHINE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_RECIPES;
-import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_REMOVABLE_MEDIA;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.PATTERNS;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.PATTERNS_COLUMN;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.PAUSE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.PAUSED;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.PICKED_NOTE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.PICK_MOVE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.PICK_PLACE;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.PLACE_COUNT;
@@ -93,14 +90,15 @@ import static dev.jstech.computers.client.os.CraftingManagerTexts.THIS_COMPUTER;
 import static dev.jstech.computers.client.os.CraftingManagerTexts.WAITING;
 
 /**
- * The Crafting Manager desktop app: moves {@code .craft} recipe files between a removable medium in a linked drive and
- * the places a Crafting Computer keeps recipes in, and sets the interfaces it drives.
+ * The Crafting Manager desktop app: moves {@code .craft} recipe files between a disk the computer reads (its own, or
+ * a removable medium in a linked drive) and the places a Crafting Computer keeps recipes in, and sets the interfaces
+ * it drives.
  *
- * <p>Recipes: the left pane lists the {@code .craft} files on the medium; the right pane lists what the computer
- * keeps, by place: the ROM of each Crafting Card with its bench recipes, then each Crafting Interface it drives with
- * its processing and pipeline recipes. Load puts a selection into the place chosen in "into" (or the first with room
- * of the right kind), Move to takes a recipe to another place, Download writes recipes back onto the medium and
- * Remove takes them out. Interfaces: each interface with its machine, how full it is, its mode, what it is doing and
+ * <p>Recipes: the left pane ({@link CraftSourcePane}) lists a folder of the disk chosen; the right pane lists what the
+ * computer keeps, by place: the ROM of each Crafting Card with its bench recipes, then each Crafting Interface it
+ * drives with its processing and pipeline recipes. Load puts a selection into the place chosen in "into" (or the first
+ * with room of the right kind), Move to takes a recipe to another place, Download writes recipes into the folder
+ * shown and Remove takes them out. Interfaces: each interface with its machine, how full it is, its mode, what it is doing and
  * its most jobs, which can be set there, and the cards with how many interfaces each drives and its ROM. Every action
  * needs a Crafting Card; without one the app shows a banner and disables the buttons.
  */
@@ -109,9 +107,6 @@ public final class CraftingManagerApp implements IDesktopApp {
 
     private final BlockPos host;
     private OsSkin skin = OsSkin.fallback();
-    private String mediaVolumeKey = "";
-    private Text mediaLabel = Text.EMPTY;
-    private List<String> mediaFiles = List.of();
     private List<WirePlace> places = List.of();
     private List<WireInterface> interfaces = List.of();
     private int budget;
@@ -126,7 +121,6 @@ public final class CraftingManagerApp implements IDesktopApp {
     private int into = -1;
     /* Whether the place picker that is open chooses where Load goes or where the selection moves. */
     private boolean pickingMove;
-    private final Set<Integer> selectedMedia = new LinkedHashSet<>();
     /* The refs of the selected recipes. */
     private final Set<Integer> selectedRefs = new LinkedHashSet<>();
     private int lastMouseX;
@@ -145,12 +139,11 @@ public final class CraftingManagerApp implements IDesktopApp {
     private final Panel root = new Panel();
     private final TabStrip tabs;
     private final Label warnLabel;
-    private final Label mediaHeader;
+    /* The disk recipe files come from and go to, and the folder of it shown. */
+    private final CraftSourcePane source;
     private final Label romHeader;
     /* Narrows the places list to the recipes whose name, or whose place's name, holds what is typed. */
     private final SearchField search;
-    private final ListView<String> mediaList;
-    private final Label mediaEmpty;
     private final ListView<Row> placeList;
     private final Label placesEmpty;
     private final Label statusLabel;
@@ -212,22 +205,17 @@ public final class CraftingManagerApp implements IDesktopApp {
         tabs = root.add(new TabStrip(List.of(GameText.resolve(RECIPES_TAB), GameText.resolve(INTERFACES_TAB)))
                 .setOnSelect(i -> tab = i));
         warnLabel = root.add(new Label(GameText.resolve(CARD_REQUIRED_TO_MANAGE)).setColor(PALETTE.get().warnText()));
-        mediaHeader = root.add(new Label(() -> GameText.resolve(mediaVolumeKey.isEmpty() ? NO_REMOVABLE_MEDIA.text()
-                : MEDIA.with(mediaLabel)), Label.Tone.DIM));
+        source = new CraftSourcePane(root, this::request);
         romHeader = root.add(new Label(GameText.resolve(THIS_COMPUTER), Label.Tone.DIM));
         search = root.add(new SearchField(SEARCH_MAX));
         search.setPlaceholder(GameText.resolve(SEARCH_RECIPES));
-        mediaList = root.add(new ListView<String>(() -> mediaFiles, ROW_H, this::renderMediaRow)
-                .setPadding(1)
-                .setOnClick((index, button, mx, my) -> toggle(selectedMedia, index)));
-        mediaEmpty = root.add(new Label(
-                () -> GameText.resolve(mediaVolumeKey.isEmpty() ? INSERT_A_DISC : NO_CRAFT_FILES), Label.Tone.DIM));
         placeList = root.add(new ListView<Row>(this::rows, ROW_H, this::renderPlaceRow)
                 .setPadding(1)
                 .setOnClick(this::placeRowClicked));
         placesEmpty = root.add(new Label(GameText.resolve(NO_RECIPES), Label.Tone.DIM));
-        statusLabel = root.add(new Label(() -> status.isEmpty() ? GameText.resolve(KIND_NOTE) : status)
-                .setColor(() -> statusWarns && !status.isEmpty() ? PALETTE.get().warnText() : skin.dim()));
+        statusLabel = root.add(new Label(this::statusText)
+                .setColor(() -> statusWarns && !status.isEmpty() && source.picked().isEmpty() ? PALETTE.get().warnText()
+                        : skin.dim()));
         loadButton = root.add(new Button(GameText.resolve(LOAD), this::loadSelected));
         intoButton = root.add(new Button(this::intoLabel, () -> openPicker(false)));
         loadAllButton = root.add(new Button(GameText.resolve(LOAD_ALL), this::loadAll));
@@ -263,9 +251,7 @@ public final class CraftingManagerApp implements IDesktopApp {
         if (active == null) {
             return;
         }
-        active.mediaVolumeKey = payload.mediaVolumeKey();
-        active.mediaLabel = payload.mediaLabel();
-        active.mediaFiles = payload.mediaFiles();
+        active.source.accept(payload);
         active.places = payload.places();
         active.interfaces = payload.interfaces();
         active.budget = payload.budget();
@@ -277,7 +263,6 @@ public final class CraftingManagerApp implements IDesktopApp {
             active.statusWarns = payload.statusWarns();
         }
         active.loaded = true;
-        active.selectedMedia.removeIf(i -> i >= active.mediaFiles.size());
         final Set<Integer> refs = new LinkedHashSet<>();
         payload.entries().forEach(entry -> refs.add(entry.ref()));
         active.selectedRefs.retainAll(refs);
@@ -308,6 +293,7 @@ public final class CraftingManagerApp implements IDesktopApp {
          */
         active = this;
         this.skin = osSkin;
+        source.setSkin(osSkin);
     }
 
     @Override
@@ -356,14 +342,11 @@ public final class CraftingManagerApp implements IDesktopApp {
             g.fill(x + 1, y + TAB_H + 1, x + width - 1, y + TAB_H + 1 + HEADER_H, PALETTE.get().warnBand());
         }
         if (tab == 0) {
-            g.fill(mediaHeader.x() - 3, mediaHeader.y() - 2, mediaHeader.right() + 3, mediaHeader.y() - 2 + HEADER_H,
-                    skin.panelBg());
+            source.renderGround(g);
             g.fill(romHeader.x() - 3, romHeader.y() - 2, romHeader.right() + 3, romHeader.y() - 2 + HEADER_H,
                     skin.panelBg());
-            for (final ListView<?> list : List.of(mediaList, placeList)) {
-                g.fill(list.x(), list.y(), list.right(), list.bottom(), skin.fieldBg());
-                Draw.outline(g, list.x(), list.y(), list.width(), list.height(), skin.edge());
-            }
+            g.fill(placeList.x(), placeList.y(), placeList.right(), placeList.bottom(), skin.fieldBg());
+            Draw.outline(g, placeList.x(), placeList.y(), placeList.width(), placeList.height(), skin.edge());
             final int barY = loadButton.y() - PAD;
             g.fill(x + 1, barY - 10, x + width - 1, barY, skin.panelBg());
             g.fill(x + 1, barY, x + width - 1, y + height - 1, skin.panelBg());
@@ -380,14 +363,15 @@ public final class CraftingManagerApp implements IDesktopApp {
 
     @Override
     public boolean modalActive() {
-        return placePicker.isOpen();
+        return shownPicker() != null;
     }
 
     @Override
     public void renderModal(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                             final int height, final int mouseX, final int mouseY) {
-        if (placePicker.isOpen()) {
-            placePicker.renderIn(g, new UiContext(skin, font, mouseX, mouseY, 0f), x, y, width, height);
+        final Popup picker = shownPicker();
+        if (picker != null) {
+            picker.renderIn(g, new UiContext(skin, font, mouseX, mouseY, 0f), x, y, width, height);
         }
     }
 
@@ -396,8 +380,9 @@ public final class CraftingManagerApp implements IDesktopApp {
         if (!loaded) {
             return;
         }
-        if (placePicker.isOpen()) {
-            placePicker.mouseClicked(mouseX, mouseY, button);
+        final Popup picker = shownPicker();
+        if (picker != null) {
+            picker.mouseClicked(mouseX, mouseY, button);
             return;
         }
         root.mouseClicked(mouseX, mouseY, button);
@@ -410,8 +395,9 @@ public final class CraftingManagerApp implements IDesktopApp {
 
     @Override
     public boolean mouseScrolled(final double delta) {
-        if (placePicker.isOpen()) {
-            return placePicker.mouseScrolled(lastMouseX, lastMouseY, delta);
+        final Popup picker = shownPicker();
+        if (picker != null) {
+            return picker.mouseScrolled(lastMouseX, lastMouseY, delta);
         }
         if (root.mouseScrolled(lastMouseX, lastMouseY, delta)) {
             return true;
@@ -419,31 +405,33 @@ public final class CraftingManagerApp implements IDesktopApp {
         final int step = delta > 0 ? -ROWS_PER_NOTCH : ROWS_PER_NOTCH;
         if (tab == 1) {
             interfaceList.setScroll(interfaceList.scroll() + step);
-        } else if (rows().size() > mediaFiles.size()) {
+        } else if (rows().size() > source.rowCount()) {
             placeList.setScroll(placeList.scroll() + step);
         } else {
-            mediaList.setScroll(mediaList.scroll() + step);
+            source.scroll(step);
         }
         return true;
     }
 
+    /** Ctrl+A takes every file of the folder shown, unless the search has the keyboard. */
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
-        if (placePicker.isOpen()) {
-            return placePicker.keyPressed(key, scanCode, modifiers);
+        final Popup picker = shownPicker();
+        if (picker != null) {
+            return picker.keyPressed(key, scanCode, modifiers);
         }
-        return root.keyPressed(key, scanCode, modifiers);
+        return root.keyPressed(key, scanCode, modifiers) || tab == 0 && source.keyPressed(key, modifiers);
     }
 
     /** Its search takes typing while it has the keyboard. */
     @Override
     public boolean takesTyping() {
-        return !placePicker.isOpen() && IDesktopApp.typingIn(root);
+        return shownPicker() == null && IDesktopApp.typingIn(root);
     }
 
     @Override
     public boolean charTyped(final char c) {
-        return !placePicker.isOpen() && root.charTyped(c);
+        return shownPicker() == null && root.charTyped(c);
     }
 
     public boolean isLoaded() {
@@ -462,8 +450,44 @@ public final class CraftingManagerApp implements IDesktopApp {
         return status;
     }
 
+    /** The {@code .craft} files of the folder shown. */
     public List<String> mediaFiles() {
-        return mediaFiles;
+        return source.files();
+    }
+
+    /** The folders of the folder shown. */
+    public List<String> folders() {
+        return source.folders();
+    }
+
+    /** The folder shown, {@code ""} for the top of its disk. */
+    public String folder() {
+        return source.folder();
+    }
+
+    /** The disk shown: {@link CraftManagerStatePayload#SYSTEM_DISK}, a medium's key, or {@code ""} for none. */
+    public String sourceKey() {
+        return source.key();
+    }
+
+    /** The files picked in the folder shown. */
+    public List<String> pickedFiles() {
+        return source.picked();
+    }
+
+    /** Centre of the button that opens the choice of disks. */
+    public int[] sourceButtonCenter() {
+        return source.sourceButtonCenter();
+    }
+
+    /** Centre of the {@code index}-th disk the open choice of disks lists. */
+    public int[] sourceRowCenter(final int index) {
+        return source.sourceRowCenter(index);
+    }
+
+    /** Centre of the row of the folder called {@code name} in the folder shown, or of {@code ..}. */
+    public int[] folderRowCenter(final String name) {
+        return source.folderRowCenter(name);
     }
 
     /** What the computer keeps, by place, as received. */
@@ -506,9 +530,9 @@ public final class CraftingManagerApp implements IDesktopApp {
         return buttons[Math.max(0, Math.min(buttons.length - 1, index))].center();
     }
 
-    /** Centre of the {@code index}-th visible row of the media (left) list. */
+    /** Centre of the row of the {@code index}-th {@code .craft} file of the folder shown. */
     public int[] mediaRowCenter(final int index) {
-        return mediaList.rowCenter(index);
+        return source.fileRowCenter(index);
     }
 
     /** Centre of the {@code index}-th visible row of the places (right) list, headers counted. */
@@ -540,7 +564,23 @@ public final class CraftingManagerApp implements IDesktopApp {
     }
 
     private void request() {
-        PacketDistributor.sendToServer(new RequestCraftManagerPayload(host));
+        PacketDistributor.sendToServer(new RequestCraftManagerPayload(host, source.askedSource(),
+                source.askedFolder(), source.view()));
+    }
+
+    /* The picker that is open, of disks or of places, or none. */
+    @Nullable
+    private Popup shownPicker() {
+        return source.pickerOpen() ? source.picker() : placePicker.isOpen() ? placePicker : null;
+    }
+
+    /* While files are picked, how to pick more; else what the last action came to, or which recipe goes where. */
+    private String statusText() {
+        final int picked = source.picked().size();
+        if (picked > 0) {
+            return GameText.resolve(PICKED_NOTE.with(picked));
+        }
+        return status.isEmpty() ? GameText.resolve(KIND_NOTE) : status;
     }
 
     /** Places the tab's components from the content rectangle; the other tab's are hidden. */
@@ -560,17 +600,14 @@ public final class CraftingManagerApp implements IDesktopApp {
         final int rightW = width - PAD * 3 - leftW;
         final int leftX = x + PAD;
         final int rightX = leftX + leftW + PAD;
-        mediaHeader.setVisible(recipes);
-        mediaHeader.setBounds(leftX + 3, top + 2, leftW - 6, 8);
+        if (lastFont != null) {
+            source.layout(lastFont, recipes, leftX, top, leftW, listTop, listH);
+        }
         // "This computer" on the left of its band, the search on its right half.
         romHeader.setVisible(recipes);
         romHeader.setBounds(rightX + 3, top + 2, rightW / 2 - 6, 8);
         search.setVisible(recipes);
         search.setBounds(rightX + rightW / 2, top, rightW - rightW / 2, HEADER_H);
-        mediaList.setVisible(recipes);
-        mediaList.setBounds(leftX, listTop, leftW, listH);
-        mediaEmpty.setVisible(recipes && mediaFiles.isEmpty());
-        mediaEmpty.setBounds(leftX + 4, listTop + 4, leftW - 8, 8);
         placeList.setVisible(recipes);
         placeList.setBounds(rightX, listTop, rightW, listH);
         placesEmpty.setVisible(recipes && places.isEmpty());
@@ -579,9 +616,10 @@ public final class CraftingManagerApp implements IDesktopApp {
         statusLabel.setBounds(x + 4, barY - 9, width - 8, 8);
         final boolean anySelected = !selectedRefs.isEmpty();
         final Button[] bar = {loadButton, intoButton, loadAllButton, downloadButton, removeButton, moveButton};
+        final boolean disk = !source.key().isEmpty();
         final boolean[] enabled = {
-                hasCard && !selectedMedia.isEmpty(), hasCard && !places.isEmpty(),
-                hasCard && !mediaVolumeKey.isEmpty(), hasCard && anySelected && !mediaVolumeKey.isEmpty(),
+                hasCard && !source.picked().isEmpty(), hasCard && !places.isEmpty(),
+                hasCard && disk, hasCard && anySelected && disk,
                 hasCard && anySelected, hasCard && anySelected,
         };
         // The "into" button takes twice a plain one: it names the place.
@@ -678,12 +716,6 @@ public final class CraftingManagerApp implements IDesktopApp {
         return GameText.resolve(INTO.with(Text.literal(Texts.clip(lastFont, where, room))));
     }
 
-    private void renderMediaRow(final GuiGraphics g, final UiContext ctx, final String file, final int index,
-                                final int x, final int y, final int w, final int h, final boolean hovered,
-                                final boolean selected) {
-        renderSelectableRow(g, ctx, file, selectedMedia.contains(index), x, y, w, h, hovered, 3);
-    }
-
     private void renderPlaceRow(final GuiGraphics g, final UiContext ctx, final Row row, final int index, final int x,
                                 final int y, final int w, final int h, final boolean hovered,
                                 final boolean selected) {
@@ -698,7 +730,9 @@ public final class CraftingManagerApp implements IDesktopApp {
             Draw.text(g, ctx.font(), count, x + w - countW - 3, y + 2, ctx.skin().dim());
             return;
         }
-        final String name = (row.entry().inMedia() ? "= " : "") + GameText.resolve(row.entry().name());
+        // Marked when the folder shown holds a file of its name.
+        final String name = (source.files().contains(row.entry().fileName()) ? "= " : "")
+                + GameText.resolve(row.entry().name());
         renderSelectableRow(g, ctx, name, selectedRefs.contains(row.entry().ref()), x, y, w, h, hovered, 10);
     }
 
@@ -871,26 +905,31 @@ public final class CraftingManagerApp implements IDesktopApp {
         Draw.text(g, ctx.font(), Texts.clip(ctx.font(), line, w - 6), x + 3, y + 2, ctx.skin().text());
     }
 
+    /*
+     * Each action is answered with what the computer keeps, not with a folder; the folder shown is asked for again
+     * after it, so a file the action wrote or took away shows at once.
+     */
     private void loadSelected() {
-        final List<String> files = new ArrayList<>();
-        for (final int i : selectedMedia) {
-            if (i < mediaFiles.size()) {
-                files.add(mediaFiles.get(i));
-            }
-        }
+        final List<String> files = source.picked();
         if (!files.isEmpty()) {
-            PacketDistributor.sendToServer(new LoadFromMediaPayload(host, mediaVolumeKey, files, false, into));
+            PacketDistributor.sendToServer(new LoadFromMediaPayload(host, source.key(), source.folder(), files, false,
+                    into));
+            source.clearPicked();
+            request();
         }
     }
 
     private void loadAll() {
-        PacketDistributor.sendToServer(new LoadFromMediaPayload(host, mediaVolumeKey, List.of(), true, into));
+        PacketDistributor.sendToServer(new LoadFromMediaPayload(host, source.key(), source.folder(), List.of(), true,
+                into));
+        request();
     }
 
     private void downloadSelected() {
         for (final List<Integer> batch : batches(List.copyOf(selectedRefs), DownloadToMediaPayload.MAX_INDICES)) {
-            PacketDistributor.sendToServer(new DownloadToMediaPayload(host, mediaVolumeKey, batch));
+            PacketDistributor.sendToServer(new DownloadToMediaPayload(host, source.key(), source.folder(), batch));
         }
+        request();
     }
 
     /* The highest first, a batch at a time: removing them in that order never moves one still to go. */
@@ -901,6 +940,8 @@ public final class CraftingManagerApp implements IDesktopApp {
             PacketDistributor.sendToServer(new RemoveRomCraftPayload(host, batch));
         }
         selectedRefs.clear();
+        // A bench recipe taken away takes its copy under crafts/ on the computer's disk with it.
+        request();
     }
 
     /* What is picked, cut into batches no larger than a payload carries. */

@@ -55,14 +55,14 @@ public final class MachinePayloadGameTests {
     @GameTest(template = ARENA)
     public static void craftManagerState_streamCodecRoundTrip(final GameTestHelper helper) {
         final List<CraftManagerStatePayload.WireRomEntry> rom = List.of(
-                new CraftManagerStatePayload.WireRomEntry(0, Text.literal("Iron Block"), true,
+                new CraftManagerStatePayload.WireRomEntry(0, Text.literal("Iron Block"), "iron_block.craft",
                         CraftManagerStatePayload.BENCH),
-                new CraftManagerStatePayload.WireRomEntry(1, Text.literal("Gold Block"), false,
+                new CraftManagerStatePayload.WireRomEntry(1, Text.literal("Gold Block"), "gold_block.craft",
                         CraftManagerStatePayload.BENCH));
         final List<CraftManagerStatePayload.WireRomEntry> held = List.of(
-                new CraftManagerStatePayload.WireRomEntry(256, Text.literal("Stone"), false,
+                new CraftManagerStatePayload.WireRomEntry(256, Text.literal("Stone"), "stone.craft",
                         CraftManagerStatePayload.PROCESSING),
-                new CraftManagerStatePayload.WireRomEntry(257, Text.literal("Iron line"), true,
+                new CraftManagerStatePayload.WireRomEntry(257, Text.literal("Iron line"), "iron_line.craft",
                         CraftManagerStatePayload.PIPELINE));
         final List<CraftManagerStatePayload.WirePlace> places = List.of(
                 new CraftManagerStatePayload.WirePlace(true, Text.literal("Crafting Card, slot 1"), 2, 5, 5, rom),
@@ -72,9 +72,14 @@ public final class MachinePayloadGameTests {
                         CraftManagerStatePayload.RUNNING, Text.literal("Stone x4"), 0),
                 new CraftManagerStatePayload.WireInterface(2, Text.literal("Press"), 0, 3, true,
                         CraftManagerStatePayload.NO_MACHINE, Text.EMPTY, 2));
-        final CraftManagerStatePayload payload = new CraftManagerStatePayload("media:42",
-                Text.literal("Floppy (A:)"), List.of("alpha.craft", "beta.craft"), places, true,
-                Text.literal("Loaded 2"), true, interfaces, 5, 1);
+        final List<CraftManagerStatePayload.WireSource> sources = List.of(
+                new CraftManagerStatePayload.WireSource(CraftManagerStatePayload.SYSTEM_DISK,
+                        Text.literal("Local Disk"), true),
+                new CraftManagerStatePayload.WireSource("media:7", Text.literal("Frames 11 Setup"), false),
+                new CraftManagerStatePayload.WireSource("media:42", Text.literal("Floppy"), true));
+        final CraftManagerStatePayload payload = new CraftManagerStatePayload(3, sources, "media:42",
+                Text.literal("Floppy"), "Recipes/Furnace", List.of("Old", "New"), List.of("alpha.craft", "beta.craft"),
+                places, true, Text.literal("Loaded 2"), true, interfaces, 5, 1);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }
@@ -107,8 +112,9 @@ public final class MachinePayloadGameTests {
 
     @GameTest(template = ARENA)
     public static void craftManagerState_emptyListsRoundTrip(final GameTestHelper helper) {
-        final CraftManagerStatePayload payload = new CraftManagerStatePayload("", Text.EMPTY, List.of(), List.of(),
-                false, Text.EMPTY, false, List.of(), 0, 0);
+        final CraftManagerStatePayload payload = new CraftManagerStatePayload(CraftManagerStatePayload.NO_LISTING,
+                List.of(), "", Text.EMPTY, "", List.of(), List.of(), List.of(), false, Text.EMPTY, false, List.of(), 0,
+                0);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }
@@ -120,8 +126,8 @@ public final class MachinePayloadGameTests {
         for (int p = 0; p < CraftManagerStatePayload.MAX_PLACES; p++) {
             final List<CraftManagerStatePayload.WireRomEntry> entries = new ArrayList<>();
             for (int e = 0; e < CraftManagerStatePayload.MAX_ENTRIES; e++) {
-                entries.add(new CraftManagerStatePayload.WireRomEntry(p * 256 + e, Text.literal("r" + e), e % 2 == 0,
-                        (byte) (e % 3)));
+                entries.add(new CraftManagerStatePayload.WireRomEntry(p * 256 + e, Text.literal("r" + e),
+                        "r" + e + ".craft", (byte) (e % 3)));
             }
             places.add(new CraftManagerStatePayload.WirePlace(p % 2 == 0, Text.literal("place " + p),
                     CraftManagerStatePayload.MAX_ENTRIES, 16, p % 5, entries));
@@ -131,8 +137,8 @@ public final class MachinePayloadGameTests {
             interfaces.add(new CraftManagerStatePayload.WireInterface(i, Text.literal("i" + i), i % 9, 9,
                     i % 2 == 0, (byte) (i % 5), Text.literal("d" + i), i % 4));
         }
-        final CraftManagerStatePayload payload = new CraftManagerStatePayload("media:1", Text.literal("Disc"),
-                List.of(), places, true, Text.EMPTY, false, interfaces, 36, 3);
+        final CraftManagerStatePayload payload = new CraftManagerStatePayload(0, List.of(), "media:1",
+                Text.literal("Disc"), "", List.of(), List.of(), places, true, Text.EMPTY, false, interfaces, 36, 3);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }

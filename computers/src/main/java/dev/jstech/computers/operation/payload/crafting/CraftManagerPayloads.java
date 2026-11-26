@@ -28,14 +28,10 @@ import dev.jstech.computers.operation.payload.RequestCraftManagerPayload;
 import dev.jstech.computers.operation.payload.SetCraftInterfacePayload;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.os.FilesystemKind;
-import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
-import dev.jstech.computers.os.media.FormattedMediaItem;
-import dev.jstech.computers.os.media.IMediaDrive;
-import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -45,7 +41,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -58,8 +53,6 @@ import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.m
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.mirrorFileName;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.reconcileCraftsFolder;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.unmirror;
-import static dev.jstech.computers.operation.payload.files.FileAccess.commitMedia;
-import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
 
 /**
  * The Crafting Manager's payloads: recipes loaded from media into a place of the Crafting Computer (a card's ROM or
@@ -109,13 +102,13 @@ public final class CraftManagerPayloads {
     }
 
     /**
-     * Builds a full {@link CraftManagerStatePayload} for {@code cc}: picks the linked drive whose writable removable
-     * medium holds {@code .craft} files (or, when none does, the first one holding writable media, so a download
-     * still has a target), lists that medium's files, then what the computer keeps by place and its interfaces.
+     * Builds a full {@link CraftManagerStatePayload} for {@code cc} as a view that does not walk its disks first sees
+     * it: the top of the disk the computer shows first (see {@link CraftSources#listing}), then what the computer
+     * keeps by place and its interfaces.
      */
     public static CraftManagerStatePayload buildCraftManagerState(final CraftingComputerBlockEntity cc,
                                                                    final ServerLevel level) {
-        return buildCraftManagerState(cc, level, Text.EMPTY, false);
+        return buildCraftManagerState(cc, level, CraftSources.listing(level, cc, "", ""), 0, Text.EMPTY, false);
     }
 
     /** What a place is called in a window: a card by its name and slot, an interface as {@code names} calls it. */
@@ -134,7 +127,9 @@ public final class CraftManagerPayloads {
         }
         // Self-heal the crafts/ mirror against the cards' ROM before presenting the state.
         reconcileCraftsFolder(cc, level);
-        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
+        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level,
+                CraftSources.listing(level, cc, payload.source(), payload.folder()), payload.view(), Text.EMPTY,
+                false));
     }
 
     /**
@@ -162,43 +157,40 @@ public final class CraftManagerPayloads {
         }
     }
 
-    /** Loads the {@code .craft} files the player chose on a removable medium and shows them the Manager again. */
+    /** Loads the {@code .craft} files the player chose in a folder of a disk and shows them the Manager again. */
     private static void handleLoadFromMedia(final LoadFromMediaPayload payload, final ServerPlayer player,
                                             final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
             return;
         }
-        final String key = payload.mediaVolumeKey();
-        if (!key.startsWith("media:")) {
+        final CraftSources.Volume volume = CraftSources.resolve(level, cc, payload.mediaVolumeKey());
+        if (volume == null) {
             return;
         }
-        final ItemStack media = mediaStackFor(level, cc, key);
-        if (media.isEmpty()) {
-            return;
-        }
-        final Loaded loaded = loadFromMedia(cc, level, media, payload.fileNames(), payload.place(),
+        final Loaded loaded = loadFromMedia(cc, level, volume, payload.folder(), payload.fileNames(), payload.place(),
                 payload.allMissing());
-        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, loaded.status(), loaded.full()));
+        PacketDistributor.sendToPlayer(player, answer(cc, level, loaded.status(), loaded.full()));
     }
 
     /**
-     * Loads {@code .craft} files from {@code media} into {@code cc}: a bench recipe into a card's ROM, a processing or
-     * pipeline recipe into an interface, the place numbered {@code place} when the player chose one of the recipe's
-     * kind, else the first with room. With {@code allMissing}, every file on the medium the computer does not keep yet
-     * is loaded instead of {@code fileNames}.
+     * Loads {@code .craft} files from {@code folder} of {@code volume} into {@code cc}: a bench recipe into a card's
+     * ROM, a processing or pipeline recipe into an interface, the place numbered {@code place} when the player chose
+     * one of the recipe's kind, else the first with room. With {@code allMissing}, every file in the folder the
+     * computer does not keep yet is loaded instead of {@code fileNames}.
      */
     public static Loaded loadFromMedia(final CraftingComputerBlockEntity cc, final ServerLevel level,
-                                       final ItemStack media, final List<String> fileNames, final int place,
-                                       final boolean allMissing) {
+                                       final CraftSources.Volume volume, final String folder,
+                                       final List<String> fileNames, final int place, final boolean allMissing) {
+        final ItemStack media = volume.disk();
         final List<String> toLoad = new ArrayList<>();
         if (allMissing) {
-            for (final DiskFilesystem.FileEntry e : DiskFilesystem.list(media, "", FilesystemKind.HIERARCHICAL)) {
+            for (final DiskFilesystem.FileEntry e : DiskFilesystem.list(media, folder, volume.kind())) {
                 if (e.type() == FileType.CRAFT) {
                     toLoad.add(e.path());
                 }
             }
         } else {
-            toLoad.addAll(fileNames);
+            fileNames.forEach(name -> toLoad.add(FsPaths.join(folder, name)));
         }
         int loaded = 0;
         int parsed = 0;
@@ -261,7 +253,7 @@ public final class CraftManagerPayloads {
             }
         }
         cc.setChanged();
-        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
+        PacketDistributor.sendToPlayer(player, answer(cc, level, Text.EMPTY, false));
     }
 
     /** Moves a recipe to another place of the same kind: a pattern to another interface, a bench recipe to a card. */
@@ -292,7 +284,7 @@ public final class CraftManagerPayloads {
             }
         }
         cc.setChanged();
-        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, status, false));
+        PacketDistributor.sendToPlayer(player, answer(cc, level, status, false));
     }
 
     /** Sets one thing of an interface from the Interfaces tab, as a hand in its own window would. */
@@ -312,25 +304,34 @@ public final class CraftManagerPayloads {
                 }
             }
         }
-        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
+        PacketDistributor.sendToPlayer(player, answer(cc, level, Text.EMPTY, false));
     }
 
-    /** Writes the chosen recipes as {@code .craft} files onto a removable medium. */
+    /** Writes the chosen recipes as {@code .craft} files into a folder of a disk the computer reads. */
     private static void handleDownloadToMedia(final DownloadToMediaPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
             return;
         }
-        final String key = payload.mediaVolumeKey();
-        if (!key.startsWith("media:")) {
+        final CraftSources.Volume volume = CraftSources.resolve(level, cc, payload.mediaVolumeKey());
+        if (volume == null) {
             return;
         }
-        final ItemStack media = mediaStackFor(level, cc, key);
-        if (media.isEmpty()) {
-            return;
-        }
+        downloadTo(cc, level, volume, payload.folder(), payload.romIndices());
+        PacketDistributor.sendToPlayer(player, answer(cc, level, Text.EMPTY, false));
+    }
+
+    /**
+     * Writes the recipes {@code refs} name as {@code .craft} files into {@code folder} of {@code volume}, or into its
+     * top when that folder is not on it; returns how many were written.
+     */
+    public static int downloadTo(final CraftingComputerBlockEntity cc, final ServerLevel level,
+                                 final CraftSources.Volume volume, final String folder, final List<Integer> refs) {
+        final ItemStack media = volume.disk();
+        final String into = volume.folderOf(folder);
         final CraftPlaces places = CraftPlaces.of(cc, level);
-        for (final int ref : payload.romIndices()) {
+        int written = 0;
+        for (final int ref : refs) {
             final CraftPlaces.Place place = places.at(CraftPlaces.placeOf(ref));
             final int entry = CraftPlaces.entryOf(ref);
             if (place == null || entry < 0 || entry >= place.recipes().size()) {
@@ -341,49 +342,37 @@ public final class CraftManagerPayloads {
             if (content.isEmpty()) {
                 continue;
             }
-            final String base = mirrorFileName(recipe);
+            final String base = FsPaths.join(into, mirrorFileName(recipe));
             /*
-             * A recipe already on the disc under this name is never overwritten: a different one gets the next free
+             * A recipe already in the folder under this name is never overwritten: a different one gets the next free
              * suffix, the same one is simply there already. The encoder writes by the same rule.
              */
             final String fileName = DiskFilesystem.uniquePath(media, base, ".craft", content.get());
-            DiskFilesystem.write(media, fileName, FileType.CRAFT, content.get(), mediaFreeWeightFor(media),
-                    FilesystemKind.HIERARCHICAL, level.getGameTime());
+            if (DiskFilesystem.write(media, fileName, FileType.CRAFT, content.get(), volume.free(cc), volume.kind(),
+                    level.getGameTime()) == DiskFilesystem.WriteResult.OK) {
+                written++;
+            }
         }
-        // Kept by whatever holds the medium: a reader, a dock's tray or a drive or port on the computer's own front.
-        commitMedia(level, cc, key);
-        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
+        // Kept by the computer for its own disk; by whatever holds a medium: a reader, a dock's tray, a drive or port.
+        volume.commit(level, cc);
+        return written;
     }
 
-    /** The same, carrying a status line, and whether that line warns: something the player has to act on. */
+    /*
+     * The answer to an action: what the computer keeps now and a status line, and whether that line warns, something
+     * the player has to act on. It lists no folder; the view keeps the one it shows and asks for it again.
+     */
+    private static CraftManagerStatePayload answer(final CraftingComputerBlockEntity cc, final ServerLevel level,
+                                                   final Text status, final boolean warns) {
+        return buildCraftManagerState(cc, level, null, CraftManagerStatePayload.NO_LISTING, status, warns);
+    }
+
+    /* The state with {@code listing}, the folder it lists, or none, as the answer to the view numbered {@code view}. */
     private static CraftManagerStatePayload buildCraftManagerState(final CraftingComputerBlockEntity cc,
-                                                                    final ServerLevel level, final Text status,
+                                                                    final ServerLevel level,
+                                                                    @Nullable final CraftSources.Listing listing,
+                                                                    final int view, final Text status,
                                                                     final boolean warns) {
-        String mediaVolumeKey = "";
-        Text mediaLabel = Text.EMPTY;
-        List<String> mediaFiles = List.of();
-        /*
-         * A computer commonly has more than one drive linked (a floppy drive, a DVD drive, a dock), and the one with
-         * a blank medium in it may well come first: the disc the player just wrote is the one they mean.
-         */
-        for (final IMediaDrive drive : MachineMedia.of(cc, level).drives()) {
-            final ItemStack m = drive.medium();
-            if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt) || !fmt.writable()) {
-                continue;
-            }
-            final List<String> files = craftFileListFromMedia(m);
-            if (mediaVolumeKey.isEmpty() || !files.isEmpty()) {
-                mediaVolumeKey = drive.volume().key();
-                final String label = VolumeLabel.of(m, "");
-                mediaLabel = label.isEmpty() ? CraftTexts.REMOVABLE_DRIVE.text()
-                        : Text.literal(TextBounds.clip(label, 64));
-                mediaFiles = files;
-            }
-            if (!files.isEmpty()) {
-                break;
-            }
-        }
-        final Set<String> onMedia = new HashSet<>(mediaFiles);
         final CraftPlaces places = CraftPlaces.of(cc, level);
         final List<CraftManagerStatePayload.WirePlace> wirePlaces = new ArrayList<>();
         final List<CraftManagerStatePayload.WireInterface> interfaces = new ArrayList<>();
@@ -397,9 +386,9 @@ public final class CraftManagerPayloads {
             final List<NetworkRecipe> recipes = place.recipes();
             for (int e = 0; e < recipes.size(); e++) {
                 final NetworkRecipe recipe = recipes.get(e);
-                final String fileName = mirrorFileName(recipe) + ".craft";
+                final String fileName = TextBounds.clip(mirrorFileName(recipe) + ".craft", FsPaths.MAX_NAME_LENGTH);
                 entries.add(new CraftManagerStatePayload.WireRomEntry(CraftPlaces.ref(p, e), recipe.displayText(),
-                        onMedia.contains(fileName), recipe.bench().isPresent() ? CraftManagerStatePayload.BENCH
+                        fileName, recipe.bench().isPresent() ? CraftManagerStatePayload.BENCH
                                 : recipe.multi().isPresent() ? CraftManagerStatePayload.PIPELINE
                                 : CraftManagerStatePayload.PROCESSING));
             }
@@ -412,8 +401,15 @@ public final class CraftManagerPayloads {
             }
         }
         final int waiting = floor == null ? 0 : floor.interfaces().size() - floor.driven().size();
-        return new CraftManagerStatePayload(mediaVolumeKey, mediaLabel, mediaFiles, wirePlaces,
-                cc.craftingCardFactor() > 0.0, status, warns, interfaces, cc.interfaceBudget(), Math.max(0, waiting));
+        final boolean hasCard = cc.craftingCardFactor() > 0.0;
+        if (listing == null) {
+            return new CraftManagerStatePayload(CraftManagerStatePayload.NO_LISTING, List.of(), "", Text.EMPTY, "",
+                    List.of(), List.of(), wirePlaces, hasCard, status, warns, interfaces, cc.interfaceBudget(),
+                    Math.max(0, waiting));
+        }
+        return new CraftManagerStatePayload(view, listing.sources(), listing.key(), listing.label(), listing.folder(),
+                listing.folders(), listing.files(), wirePlaces, hasCard, status, warns, interfaces,
+                cc.interfaceBudget(), Math.max(0, waiting));
     }
 
     /* One interface as the Interfaces tab lists it: its machine, how full it is, its mode and what it is doing. */
@@ -484,10 +480,5 @@ public final class CraftManagerPayloads {
         }
         return recipe.bench().isPresent() ? CraftFile.serialize(recipe.bench().get(), level.registryAccess())
                 : Optional.empty();
-    }
-
-    /** Computes the remaining free weight on a removable medium: what it holds less its files and stored items. */
-    private static long mediaFreeWeightFor(final ItemStack media) {
-        return media.getItem() instanceof FormattedMediaItem ? FormattedMediaItem.freeWeight(media) : 0L;
     }
 }

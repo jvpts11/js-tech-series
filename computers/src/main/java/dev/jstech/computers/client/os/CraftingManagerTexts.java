@@ -21,9 +21,13 @@ final class CraftingManagerTexts {
     static final TextKey INTERFACES_TAB = TextKey.of("jsc.crafting_manager.interfaces_tab", "Interfaces");
     static final TextKey CARD_REQUIRED_TO_MANAGE = TextKey.of("jsc.crafting_manager.card_required_to_manage",
             "A Crafting Card is required to manage recipes.");
-    static final TextKey NO_REMOVABLE_MEDIA =
-            TextKey.of("jsc.crafting_manager.no_removable_media", "Removable media: none");
-    static final TextKey MEDIA = TextKey.of("jsc.crafting_manager.media", "Media: %s");
+    /* The disk recipe files are read from: "From", then a button that names it and opens the choice of disks. */
+    static final TextKey FROM = TextKey.of("jsc.crafting_manager.from", "From");
+    static final TextKey SOURCE = TextKey.of("jsc.crafting_manager.source", "%s ▾");
+    static final TextKey NO_DISK = TextKey.of("jsc.crafting_manager.no_disk", "no disc");
+    static final TextKey PICK_SOURCE = TextKey.of("jsc.crafting_manager.pick_source", "Read recipes from");
+    static final TextKey PICKED_NOTE = TextKey.of("jsc.crafting_manager.picked_note",
+            "%s selected: Shift+click takes a run, Ctrl+click adds or drops one, Ctrl+A takes them all.");
     static final TextKey THIS_COMPUTER = TextKey.of("jsc.crafting_manager.this_computer", "This computer");
     static final TextKey INSERT_A_DISC =
             TextKey.of("jsc.crafting_manager.insert_a_disc", "Insert a disc into a linked drive");

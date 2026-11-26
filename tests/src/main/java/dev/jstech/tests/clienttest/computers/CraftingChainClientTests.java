@@ -31,6 +31,7 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.gui.layout.CraftingInterfaceLayout;
 import dev.jstech.computers.integration.jei.payload.SetProcessingPatternPayload;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
 import dev.jstech.computers.operation.payload.InterfaceView;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.CraftFile;
@@ -337,6 +338,71 @@ public final class CraftingChainClientTests {
                 .thenWaitUntil(() -> !craftingManager(ctx).mediaFiles().isEmpty(), SCREEN_WAIT,
                         "the restored window to list the floppy's .craft on its own")
                 .thenScreenshot(2, "crafting-manager-refreshed")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    /**
+     * The Crafting Manager reads the computer's own disk: "From" chooses it, a double click opens a folder of it, and
+     * a recipe picked there loads as one from a disc does.
+     */
+    @ClientTest(timeoutTicks = 1800)
+    public static void craftingManager_loadsARecipeFromAFolderOfTheComputersOwnDisk(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+                    net.cc().getHardware().setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
+                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
+                    TestWorldBuilder.installDesktop(net.cc(), FRAMES_XP, Programs.CRAFTING_MANAGER);
+                    net.cc().togglePower();
+                    net.cc().togglePower();
+                    world.placeMonitor(MONITOR, Direction.EAST);
+                    final ItemStack disk = net.cc().systemDisk();
+                    ctx.assertTrue(DiskFilesystem.mkdirs(disk, "Recipes", FilesystemKind.HIERARCHICAL)
+                                    && DiskFilesystem.write(disk, "Recipes/oak_planks.craft", FileType.CRAFT,
+                                    CraftFile.serialize(CraftFiles.oakPlanks(), world.level().registryAccess())
+                                            .orElseThrow(), FLOPPY_ROOM, FilesystemKind.HIERARCHICAL)
+                                    == DiskFilesystem.WriteResult.OK,
+                            "the recipe goes into Recipes on the computer's own disk");
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels()
+                                .contains(CRAFTING_MANAGER_LAUNCHER), SCREEN_WAIT,
+                        "the Crafting Manager to be listed as installed")
+                .then(0, () -> {
+                    final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+                    ctx.click(desktop.startButtonX(), desktop.startButtonY());
+                })
+                .then(1, () -> {
+                    final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+                    final int item = desktop.launcherLabels().indexOf(CRAFTING_MANAGER_LAUNCHER);
+                    ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+                })
+                .thenWaitUntil(() -> craftingManager(ctx) != null && craftingManager(ctx).isLoaded(),
+                        SCREEN_WAIT, "the Crafting Manager window with its state")
+                // With no disc in a drive, "From" offers the computer's own disk.
+                .then(0, () -> ctx.clickDesktop(craftingManager(ctx).sourceButtonCenter()))
+                .thenWaitUntil(() -> craftingManager(ctx).modalActive(), SCREEN_WAIT, "the choice of disks to open")
+                .thenScreenshot(2, "crafting-manager-from")
+                .then(0, () -> ctx.clickDesktop(craftingManager(ctx).sourceRowCenter(0)))
+                .thenWaitUntil(() -> craftingManager(ctx).sourceKey().equals(CraftManagerStatePayload.SYSTEM_DISK)
+                                && craftingManager(ctx).folders().contains("Recipes"), SCREEN_WAIT,
+                        "the computer's own disk to list its folders",
+                        () -> "disk=" + craftingManager(ctx).sourceKey() + " folders=" + craftingManager(ctx).folders())
+                .then(0, () -> {
+                    final int[] folder = craftingManager(ctx).folderRowCenter("Recipes");
+                    ctx.clickDesktop(folder);
+                    ctx.clickDesktop(folder);
+                })
+                .thenWaitUntil(() -> craftingManager(ctx).folder().equals("Recipes")
+                                && craftingManager(ctx).mediaFiles().equals(List.of("oak_planks.craft")), SCREEN_WAIT,
+                        "a double click to open Recipes and list its recipe")
+                .thenScreenshot(2, "crafting-manager-folder")
+                .then(0, () -> ctx.clickDesktop(craftingManager(ctx).mediaRowCenter(0)))
+                .then(2, () -> ctx.clickDesktop(craftingManager(ctx).actionButtonCenter(0)))
+                .thenWaitUntil(() -> !craftingManager(ctx).romNames().isEmpty(), SCREEN_WAIT,
+                        "the recipe from the folder to go into the ROM")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }

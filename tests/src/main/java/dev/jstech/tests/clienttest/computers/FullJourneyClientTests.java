@@ -629,21 +629,17 @@ public final class FullJourneyClientTests {
                         () -> "files=" + (app(ctx, "Crafting Manager", CraftingManagerApp.class) == null ? "no app"
                                 : app(ctx, "Crafting Manager", CraftingManagerApp.class).mediaFiles())
                                 + " server=" + ctx.server().submit(() -> drivesOf(ctx, ctx.serverLevel())).join())
-                .then(0, () -> {
-                    final CraftingManagerApp app = app(ctx, "Crafting Manager", CraftingManagerApp.class);
-                    final List<String> files = app.mediaFiles();
-                    for (int i = 0; i < files.size(); i++) {
-                        /*
-                         * The bench craft rides inside the multi-stage one, so only the plain bench file stays out;
-                         * the multi-stage file shares its result's name and carries the encoder's "_2" suffix.
-                         */
-                        if (!files.get(i).equals("iron_nugget.craft")) {
-                            ctx.clickDesktop(app.mediaRowCenter(i));
-                        }
-                    }
-                })
-                .then(2, () -> ctx.clickDesktop(app(ctx, "Crafting Manager", CraftingManagerApp.class).actionButtonCenter(0)))
-                .thenWaitUntil(() -> app(ctx, "Crafting Manager", CraftingManagerApp.class).romNames().size() == 2, SCREEN_WAIT,
+                /*
+                 * The bench craft rides inside the multi-stage one, so only the plain bench file stays out; the two
+                 * others are not side by side, so each is clicked and loaded on its own.
+                 */
+                .then(0, () -> clickLoadableFile(ctx, 0))
+                .then(2, () -> ctx.clickDesktop(manager(ctx).actionButtonCenter(0)))
+                .thenWaitUntil(() -> manager(ctx).romNames().size() == 1, SCREEN_WAIT,
+                        "the first recipe to go into the interface")
+                .then(2, () -> clickLoadableFile(ctx, 1))
+                .then(2, () -> ctx.clickDesktop(manager(ctx).actionButtonCenter(0)))
+                .thenWaitUntil(() -> manager(ctx).romNames().size() == 2, SCREEN_WAIT,
                         "the processing and multi-stage recipes to go into the interface")
                 .thenScreenshot(2, "10-crafting-manager-loaded")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
@@ -744,6 +740,24 @@ public final class FullJourneyClientTests {
 
     private static <T> T app(final ClientTestContext ctx, final String label, final Class<T> type) {
         return DesktopSteps.app(ctx, label, type);
+    }
+
+    private static CraftingManagerApp manager(final ClientTestContext ctx) {
+        return app(ctx, "Crafting Manager", CraftingManagerApp.class);
+    }
+
+    /* Clicks the {@code n}-th file on the disc the Manager loads, the plain bench file left out. */
+    private static void clickLoadableFile(final ClientTestContext ctx, final int n) {
+        final CraftingManagerApp app = manager(ctx);
+        final List<String> files = app.mediaFiles();
+        int seen = 0;
+        for (int i = 0; i < files.size(); i++) {
+            if (!files.get(i).equals("iron_nugget.craft") && seen++ == n) {
+                ctx.clickDesktop(app.mediaRowCenter(i));
+                return;
+            }
+        }
+        throw new ClientTestFailure("no loadable file " + n + " among " + files);
     }
 
     /** Converts an app content-local point into desktop coordinates. */

@@ -35,7 +35,6 @@ final class CraftTexts {
     static final TextKey LOADED_MANY = TextKey.of("jsc.craft_manager.loaded_many", "Loaded %s crafts");
     static final TextKey ALREADY_LOADED = TextKey.of("jsc.craft_manager.already_loaded", "Already loaded");
     static final TextKey NOTHING_TO_LOAD = TextKey.of("jsc.craft_manager.nothing_to_load", "Nothing to load");
-    static final TextKey REMOVABLE_DRIVE = TextKey.of("jsc.craft_manager.removable_drive", "Removable Drive");
     /* A card's place: its name and the slot it is in. */
     static final TextKey CARD_PLACE = TextKey.of("jsc.craft_manager.card_place", "%s (slot %s)");
     /* An interface nobody named, by its kind and where it is. */

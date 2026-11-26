@@ -131,7 +131,9 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         if (showing == null) {
             return false;
         }
-        showing.manager = payload;
+        // The answer to an action lists no folder: the medium shown stays until it is asked for again.
+        showing.manager = payload.listed() || showing.manager == null ? payload
+                : payload.withListingOf(showing.manager);
         return true;
     }
 
@@ -281,7 +283,7 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
      */
     private void ask() {
         PacketDistributor.sendToServer(new RequestPatternStudioPayload(menu.hostPos(), menu.monitorPos()));
-        PacketDistributor.sendToServer(new RequestCraftManagerPayload(menu.hostPos()));
+        PacketDistributor.sendToServer(RequestCraftManagerPayload.first(menu.hostPos()));
     }
 
     private void edit(final int action, final int index) {
@@ -298,14 +300,16 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
 
     private boolean clickedActions(final double mouseX, final double mouseY, final int x, final int y) {
         final String volume = manager == null ? "" : manager.mediaVolumeKey();
+        final String folder = manager == null ? "" : manager.folder();
         if (inRect(mouseX, mouseY, x + GRID_X, y + ACTION_Y, ACTION_W, ACTION_H) && !volume.isEmpty()) {
-            PacketDistributor.sendToServer(new LoadFromMediaPayload(menu.hostPos(), volume, List.of(), true, -1));
+            PacketDistributor.sendToServer(new LoadFromMediaPayload(menu.hostPos(), volume, folder, List.of(), true,
+                    -1));
             refreshIn = 1;
             return true;
         }
         if (inRect(mouseX, mouseY, x + GRID_X + ACTION_W + 6, y + ACTION_Y, ACTION_W, ACTION_H)
                 && pickedFile >= 0 && pickedFile < mediaFiles().size() && !volume.isEmpty()) {
-            PacketDistributor.sendToServer(new LoadFromMediaPayload(menu.hostPos(), volume,
+            PacketDistributor.sendToServer(new LoadFromMediaPayload(menu.hostPos(), volume, folder,
                     List.of(mediaFiles().get(pickedFile)), false, -1));
             refreshIn = 1;
             return true;
@@ -319,7 +323,7 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         }
         if (inRect(mouseX, mouseY, x + PANE_X + ACTION_W + 2, y + ACTION_Y, ACTION_W - 8, ACTION_H)
                 && pickedRomEntry() != null && !volume.isEmpty()) {
-            PacketDistributor.sendToServer(new DownloadToMediaPayload(menu.hostPos(), volume,
+            PacketDistributor.sendToServer(new DownloadToMediaPayload(menu.hostPos(), volume, folder,
                     List.of(pickedRomEntry().ref())));
             refreshIn = 1;
             return true;

@@ -305,12 +305,11 @@ public final class EraFabricationClientTests {
                 .thenWaitUntil(() -> app(ctx, MANAGER, CraftingManagerApp.class) != null
                                 && app(ctx, MANAGER, CraftingManagerApp.class).mediaFiles().size() == 3, WAIT,
                         "the Crafting Manager to list the three patterns on the disc")
-                .then(SETTLE, () -> {
-                    final CraftingManagerApp app = app(ctx, MANAGER, CraftingManagerApp.class);
-                    for (int i = 0; i < 3; i++) {
-                        ctx.clickDesktop(app.mediaRowCenter(i));
-                    }
-                })
+                // A click takes one file; Ctrl+A then takes the three, as the file explorer does.
+                .then(SETTLE, () -> ctx.clickDesktop(app(ctx, MANAGER, CraftingManagerApp.class).mediaRowCenter(0)))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_A, GLFW.GLFW_MOD_CONTROL))
+                .thenWaitUntil(() -> app(ctx, MANAGER, CraftingManagerApp.class).pickedFiles().size() == 3, WAIT,
+                        "Ctrl+A to take the three patterns")
                 .then(2, () -> ctx.clickDesktop(app(ctx, MANAGER, CraftingManagerApp.class).actionButtonCenter(0)))
                 .thenWaitUntil(() -> app(ctx, MANAGER, CraftingManagerApp.class).romNames().size() == 3, WAIT,
                         "Load to put the three patterns where the network crafts from")

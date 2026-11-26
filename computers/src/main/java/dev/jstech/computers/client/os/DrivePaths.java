@@ -9,11 +9,12 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.core.text.GameText;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The drive-letter and parent-folder rules the file explorer and the file dialog share, so a fix to one
- * reaches the other.
+ * The drive-letter and parent-folder rules the file explorer, the file dialog and the Crafting Manager share, so a
+ * fix to one reaches the others.
  */
 final class DrivePaths {
 
@@ -37,21 +38,27 @@ final class DrivePaths {
      */
     static String letterOf(final boolean posix, final List<DiskFilesPayload.WireVolume> volumes,
                            final String key) {
+        final List<String> removable = new ArrayList<>();
+        for (final DiskFilesPayload.WireVolume volume : volumes) {
+            if (volume.removable()) {
+                removable.add(volume.key());
+            }
+        }
+        return letterAmong(posix, removable, key);
+    }
+
+    /**
+     * The same rule from the keys of the removable media alone, in the order the tree lists them: the system disk,
+     * keyed {@code ""}, is C:, and the first medium D:.
+     */
+    static String letterAmong(final boolean posix, final List<String> removableKeys, final String key) {
         if (posix) {
             return "";
         }
         if (key.isEmpty()) {
             return "C:";
         }
-        int n = 0;
-        for (final DiskFilesPayload.WireVolume volume : volumes) {
-            if (volume.removable()) {
-                n++;
-                if (volume.key().equals(key)) {
-                    return (char) ('C' + n) + ":";
-                }
-            }
-        }
-        return "";
+        final int n = removableKeys.indexOf(key);
+        return n < 0 ? "" : (char) ('D' + n) + ":";
     }
 }

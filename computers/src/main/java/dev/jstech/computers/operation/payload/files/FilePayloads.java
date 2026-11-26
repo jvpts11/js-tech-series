@@ -114,31 +114,7 @@ public final class FilePayloads {
                 diskMb = system.capacityMb();
                 freeMb = computer.systemDiskFreeMb();
             }
-            // The mountable volumes (drive tree): the system disk, then each linked drive with a medium.
-            if (!computer.systemDisk().isEmpty()
-                    && filesystemKindOf(computer)
-                            != FilesystemKind.NONE) {
-                // Quince's systems call the disk they start from Quince HD until the player names it.
-                final OsDef os = computer.installedOs();
-                final TextKey unnamed = os != null && os.platform() == Platform.QUINCE ? DiskFilesPayload.QUINCE_DISK
-                        : DiskFilesPayload.LOCAL_DISK;
-                volumes.add(new DiskFilesPayload.WireVolume("", VolumeLabel.of(computer.systemDisk(), unnamed.text())));
-            }
-            for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
-                final ItemStack medium = drive.medium();
-                if (medium.isEmpty()) {
-                    continue;
-                }
-                /*
-                 * An installer's drive is named for what it installs ("Frames 11 Setup"), so the tree says what is
-                 * in the drive before it is opened. A docked disk is named as the disk is.
-                 */
-                final Text fallback = drive.volume().docked() ? GameText.of(medium.getHoverName())
-                        : InstallerProjection.facts(medium)
-                                .map(f -> DiskFilesPayload.SETUP.with(f.name()))
-                                .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text());
-                volumes.add(new DiskFilesPayload.WireVolume(drive.volume().key(), VolumeLabel.of(medium, fallback)));
-            }
+            volumes.addAll(driveVolumes(computer, level));
             // The other machines' shared folders, reached through this machine's own shell.
             if (netShell(level, computer) != null) {
                 volumes.add(new DiskFilesPayload.WireVolume(NET_ROOT, DiskFilesPayload.NETWORK.text()));
@@ -190,6 +166,38 @@ public final class FilePayloads {
         final List<DiskFilesPayload.WireFile> sent = wire.size() > DiskFilesPayload.MAX_FILES
                 ? wire.subList(0, DiskFilesPayload.MAX_FILES) : wire;
         PacketDistributor.sendToPlayer(player, new DiskFilesPayload(payload.dir(), sent, volumes, diskMb, freeMb));
+    }
+
+    /**
+     * The volumes a computer mounts, as its drive tree lists them: the system disk, when it has a filesystem, then
+     * each linked drive with a medium in it, keyed {@code ""} and {@code media:<readerPos>}. The order gives the drive
+     * letters, so every window that names a drive counts them from this list.
+     */
+    public static List<DiskFilesPayload.WireVolume> driveVolumes(final IOsHost computer, final ServerLevel level) {
+        final List<DiskFilesPayload.WireVolume> volumes = new ArrayList<>();
+        if (!computer.systemDisk().isEmpty() && filesystemKindOf(computer) != FilesystemKind.NONE) {
+            // Quince's systems call the disk they start from Quince HD until the player names it.
+            final OsDef os = computer.installedOs();
+            final TextKey unnamed = os != null && os.platform() == Platform.QUINCE ? DiskFilesPayload.QUINCE_DISK
+                    : DiskFilesPayload.LOCAL_DISK;
+            volumes.add(new DiskFilesPayload.WireVolume("", VolumeLabel.of(computer.systemDisk(), unnamed.text())));
+        }
+        for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
+            final ItemStack medium = drive.medium();
+            if (medium.isEmpty()) {
+                continue;
+            }
+            /*
+             * An installer's drive is named for what it installs ("Frames 11 Setup"), so the tree says what is in the
+             * drive before it is opened. A docked disk is named as the disk is.
+             */
+            final Text fallback = drive.volume().docked() ? GameText.of(medium.getHoverName())
+                    : InstallerProjection.facts(medium)
+                            .map(f -> DiskFilesPayload.SETUP.with(f.name()))
+                            .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text());
+            volumes.add(new DiskFilesPayload.WireVolume(drive.volume().key(), VolumeLabel.of(medium, fallback)));
+        }
+        return volumes;
     }
 
     /** Lists what a network path holds into {@code wire}: hosts, a host's shares, or a shared folder. */
