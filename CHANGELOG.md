@@ -4561,6 +4561,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core, Computers) JEI and EMI list the Core's gases, each drawn as the cylinder painted for it, and find the recipes
   that take or make one; a gas dragged from JEI onto a Pattern Studio cell sets that cell to the gas, and a page sent
   to the Studio brings its gases with it.
+- (Computers) The Network Interactor's Operations tab lists one line an order: a craft's machine steps are in its
+  detail alone, where each stood in the list as a CRAFT of its own. A live order's detail has Pause and Cancel side by
+  side: paused, nothing new starts, what the machines already hold is finished and counted, what it reserved stays
+  reserved and it never times out, its row says "hold" and Pause becomes Resume; cancelled, what it held goes back to
+  the network and it is logged as dropped.
+- (Computers) A CRAFT has a colour of its own, purple, and a RUN teal, in every view of the Operations; as writes
+  they were amber, and a RUN blue. The palette `jsc:operation/types` gains `craft` and `run`.
 - (Computers) The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
@@ -4992,6 +4999,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) A craft restored after a restart while its machine steps ran stands in the Operations list waiting to
+  resume, its steps in its detail, and can be paused or cancelled; it vanished from the list until it planned again,
+  and a second save before then lost it.
+- (Computers) The Network Interactor's search starts empty on another tab picked: what was typed on one tab narrowed
+  the next tab's list.
+- (Computers) A desktop's icons no longer light under the pointer through a window standing over them.
 - (Core) A stack of upgrades dropped on a machine's bay goes in only as far as its kind's limit: sixteen motors went
   in where four count, of every kind of motor together.
 - (Core) Emptying a machine by hand leaves its upgrades in their bays: a double click gathering alike items, or shift

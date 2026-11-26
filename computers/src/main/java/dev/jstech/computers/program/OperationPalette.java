@@ -15,7 +15,8 @@ import dev.jstech.core.palette.Palettes;
 
 /**
  * The single per-type colour every Operations view uses, so an Operation reads the same across the desktop
- * apps: writes ({@code INSERT}/{@code CRAFT}) are amber, destructive ops ({@code DELETE}/{@code DROP}) are
+ * apps: writes ({@code INSERT}/{@code UPDATE}) are amber, a {@code CRAFT} purple and a {@code RUN} teal,
+ * destructive ops ({@code DELETE}/{@code DROP}) are
  * red, {@code MOVE} is green, the maintenance ops ({@code ANALYZE}/{@code REINDEX}/{@code VACUUM}) are grey,
  * and reads ({@code SELECT}) plus anything else take the blue accent. The colours mirror the network
  * terminal's own type palette so the whole mod agrees. Pure ARGB, no Minecraft type. The colours are the palette
@@ -25,7 +26,7 @@ import dev.jstech.core.palette.Palettes;
 public final class OperationPalette {
 
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "operation/types",
-            new Colours(0xFFE0A020, 0xFFD1495B, 0xFF2EA043, 0xFF9098A8, 0xFF3A6AE0));
+            new Colours(0xFFE0A020, 0xFFD1495B, 0xFF2EA043, 0xFF9098A8, 0xFF3A6AE0, 0xFF9A5CD0, 0xFF1F9E9E));
 
     private OperationPalette() {
     }
@@ -33,8 +34,11 @@ public final class OperationPalette {
     /** The ARGB colour associated with an Operation of the given {@link OperationRecord} type. */
     public static int colorFor(final byte type) {
         final Colours c = PALETTE.get();
+        // A craft and a machine's own kind of work each have a colour of their own: as writes they read as inserts.
         return switch (type) {
-            case OperationRecord.TYPE_INSERT, OperationRecord.TYPE_CRAFT, OperationRecord.TYPE_UPDATE -> c.write();
+            case OperationRecord.TYPE_INSERT, OperationRecord.TYPE_UPDATE -> c.write();
+            case OperationRecord.TYPE_CRAFT -> c.craft();
+            case OperationRecord.TYPE_RUN -> c.run();
             case OperationRecord.TYPE_DELETE, OperationRecord.TYPE_DROP -> c.destroy();
             case OperationRecord.TYPE_MOVE -> c.move();
             case OperationRecord.TYPE_ANALYZE, OperationRecord.TYPE_REINDEX, OperationRecord.TYPE_VACUUM -> c.upkeep();
@@ -60,7 +64,10 @@ public final class OperationPalette {
         };
     }
 
-    /** The colour of a write, of what destroys, of a move, of upkeep, and of a read or anything else. */
-    private record Colours(int write, int destroy, int move, int upkeep, int read) {
+    /**
+     * The colour of a write, of what destroys, of a move, of upkeep, of a read or anything else, of a craft, and of
+     * a machine's own kind of work.
+     */
+    private record Colours(int write, int destroy, int move, int upkeep, int read, int craft, int run) {
     }
 }

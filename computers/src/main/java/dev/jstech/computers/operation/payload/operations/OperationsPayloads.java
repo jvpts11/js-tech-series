@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.payload.CancelOperationPayload;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.OperationsLogPayload;
+import dev.jstech.computers.operation.payload.PauseOperationPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.SetOperationPriorityPayload;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -52,6 +53,21 @@ public final class OperationsPayloads {
                 ComputerAccess.machine(SetOperationPriorityPayload::host), OperationsPayloads::handleSetOperationPriority);
         ComputerAccess.accept(registrar, CancelOperationPayload.TYPE, CancelOperationPayload.STREAM_CODEC,
                 ComputerAccess.machine(CancelOperationPayload::host), OperationsPayloads::handleCancelOperation);
+        ComputerAccess.accept(registrar, PauseOperationPayload.TYPE, PauseOperationPayload.STREAM_CODEC,
+                ComputerAccess.machine(PauseOperationPayload::host), OperationsPayloads::handlePauseOperation);
+    }
+
+    /* Pauses an Operation in flight, or lets it go on, from the Network Interactor; both views follow at once. */
+    private static void handlePauseOperation(final PauseOperationPayload payload, final ServerPlayer player,
+                                             final ServerLevel level) {
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe != null && mainframe.pauseOperation(payload.operationId(), payload.pause())) {
+            dispatchActiveOperations(player, host.networkUuid(), level);
+        }
     }
 
     private static void handleSetOperationPriority(final SetOperationPriorityPayload payload,

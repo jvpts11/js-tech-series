@@ -130,7 +130,7 @@ public final class MekanismHardwareMatrixGameTests {
                 .thenExecuteAfter(60, () -> {
                     MekanismRig.power(helper);
                     MekanismRig.power(helper.getLevel(), helper.absolutePos(MekanismRig.MACHINE_B));
-                    final List<OperationRecord> records = rig.net().mainframe().activeOperationRecords();
+                    final List<OperationRecord> records = rig.net().mainframe().inFlightRecords();
                     helper.assertTrue(count(records, frame, OperationRecord.STATUS_PROCESSING) == 2,
                             "both crafts run on one queue: crafting is a subnet, not gated by the Mainframe queue; active=" + records);
                     helper.assertTrue(count(records, infused, OperationRecord.STATUS_PROCESSING) == 4,
@@ -171,7 +171,7 @@ public final class MekanismHardwareMatrixGameTests {
                 .thenExecuteAfter(60, () -> {
                     MekanismRig.power(helper);
                     MekanismRig.power(helper.getLevel(), helper.absolutePos(MekanismRig.MACHINE_B));
-                    final List<OperationRecord> records = rig.net().mainframe().activeOperationRecords();
+                    final List<OperationRecord> records = rig.net().mainframe().inFlightRecords();
                     helper.assertTrue(count(records, infused, OperationRecord.STATUS_PROCESSING) == 4,
                             "both machine steps must run, a share of each on each infuser; active=" + records);
                     helper.assertTrue(count(records, frame, OperationRecord.STATUS_PENDING) == 0,

@@ -100,6 +100,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     private int idleTicks;
     private int settleTicks;
     private int feedCooldown;
+    /* Paused with the order it is a step of: it feeds its machine nothing new, and never times out. */
+    private boolean paused;
     private byte status = OperationRecord.STATUS_FAILED;
     private OperationFailure cause = OperationFailure.NONE;
     private OperationPriority priority = OperationPriority.DEFAULT;
@@ -167,6 +169,11 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
             }
             status = OperationRecord.STATUS_COMPLETED;
             finish();
+            return;
+        }
+        if (paused) {
+            // What its machine already holds is still made and credited; nothing new goes in, and nothing times out.
+            idleTicks = 0;
             return;
         }
         final CraftingInterfacePart part = site == null ? null : site.part(level, CraftingInterfacePart.class);
@@ -394,6 +401,20 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     }
 
     @Override
+    public boolean pause(final boolean pause) {
+        if (done) {
+            return false;
+        }
+        this.paused = pause;
+        return true;
+    }
+
+    @Override
+    public boolean paused() {
+        return paused && !done;
+    }
+
+    @Override
     public UUID operationId() {
         return operationId;
     }
@@ -420,6 +441,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.id());
         tag.putLong("Seq", seq);
         tag.putBoolean("Nested", nested);
+        tag.putBoolean("Paused", paused);
         if (interfaceId != null) {
             tag.putUUID("Interface", interfaceId);
         }
@@ -461,6 +483,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         op.idleTicks = tag.getInt("IdleTicks");
         op.priority = NetworkCraftOperation.savedPriority(tag);
         op.seq = tag.getLong("Seq");
+        op.paused = tag.getBoolean("Paused");
         op.interfaceId = tag.hasUUID("Interface") ? tag.getUUID("Interface") : null;
         return op;
     }
@@ -530,7 +553,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     public OperationRecord liveRecord() {
         final byte live = done ? status
                 : waiting ? OperationRecord.STATUS_WAITING : OperationRecord.STATUS_PROCESSING;
-        return buildRecord(live);
+        return buildRecord(live).withHold(paused() ? OperationRecord.HOLD_PAUSED : OperationRecord.HOLD_NONE);
     }
 
     /*

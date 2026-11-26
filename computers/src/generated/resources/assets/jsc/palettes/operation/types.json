@@ -1,7 +1,9 @@
 {
+  "craft": "#FF9A5CD0",
   "destroy": "#FFD1495B",
   "move": "#FF2EA043",
   "read": "#FF3A6AE0",
+  "run": "#FF1F9E9E",
   "upkeep": "#FF9098A8",
   "write": "#FFE0A020"
 }

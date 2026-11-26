@@ -73,6 +73,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         tag.putLong("Requested", requested);
         tag.putString("Label", requesterLabel);
         tag.putByte(PRIORITY_KEY, (byte) priority.id());
+        tag.putBoolean(PAUSED_KEY, paused);
         if (embeddedPattern != null) {
             CraftingPattern.CODEC.encodeStart(ops, embeddedPattern).result().ifPresent(t -> tag.put("Embedded", t));
         }
@@ -107,6 +108,40 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             }
         }
         tag.put("Pool", pool);
+        return tag;
+    }
+
+    /**
+     * The state of a craft waiting to resume after a restart ({@link ResumingCraft}), as {@link #restore} reads a
+     * craft's: what is left of the order to plan again, with nothing gathered (it went back to storage as it was
+     * restored), and the machine steps it still waits for.
+     */
+    static CompoundTag savedWaiting(final UUID id, final StorageKey result, final long remaining, final String label,
+                                    @Nullable final CraftingPattern embedded, final OperationPriority priority,
+                                    final boolean paused, final List<UUID> steps,
+                                    final HolderLookup.Provider registries) {
+        final CompoundTag tag = new CompoundTag();
+        tag.putString(KIND_KEY, KIND);
+        tag.putUUID(ID_KEY, id);
+        final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
+        StorageKey.CODEC.encodeStart(ops, result).result().ifPresent(t -> tag.put("Result", t));
+        tag.putLong("Requested", remaining);
+        tag.putString("Label", label);
+        tag.putByte(PRIORITY_KEY, (byte) priority.id());
+        tag.putBoolean(PAUSED_KEY, paused);
+        if (embedded != null) {
+            CraftingPattern.CODEC.encodeStart(ops, embedded).result().ifPresent(t -> tag.put("Embedded", t));
+        }
+        final ListTag machineSteps = new ListTag();
+        for (final UUID step : steps) {
+            final CompoundTag row = new CompoundTag();
+            row.putUUID("Id", step);
+            machineSteps.add(row);
+        }
+        if (!machineSteps.isEmpty()) {
+            tag.put(MACHINE_STEPS_KEY, machineSteps);
+        }
+        tag.put("Pool", new ListTag());
         return tag;
     }
 
@@ -193,21 +228,35 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 running.add(step);
             }
         }
+        final boolean paused = tag.getBoolean(PAUSED_KEY);
         if (running.isEmpty()) {
-            return new Restored(withPriority(
-                    mainframe.submitNetworkCraft(result, remaining, true, label, embedded), priority), false);
+            final NetworkCraftOperation craft = withPriority(
+                    mainframe.submitNetworkCraft(result, remaining, true, label, embedded), priority);
+            if (craft != null && paused) {
+                craft.pause(true);
+            }
+            return new Restored(craft, false);
         }
-        // Re-plan a tick after the last in-flight step settles, once the storage index has seen what they made.
-        final int[] pending = {running.size()};
-        for (final NetworkProcessingOperation step : running) {
-            step.onSettle(() -> {
-                if (--pending[0] == 0) {
-                    mainframe.runNextTick(() -> withPriority(
-                            mainframe.submitNetworkCraft(result, remaining, true, label, embedded), priority));
-                }
-            });
+        /*
+         * It plans again once the last step it had running settles, from what the network then holds; meanwhile it
+         * stands in the list as an order waiting to resume, which can be paused or cancelled, and is saved again.
+         */
+        final ResumingCraft resuming = new ResumingCraft(tag.hasUUID(ID_KEY) ? tag.getUUID(ID_KEY) : UUID.randomUUID(),
+                mainframe, result, tag.getLong("Requested"), delivered, label, embedded, priority, running);
+        if (paused) {
+            resuming.pause(true);
         }
+        mainframe.trackResuming(resuming);
         return new Restored(null, false);
+    }
+
+    /** Plans {@code remaining} of {@code result} again as a fresh craft, at {@code priority}; null if it cannot be. */
+    @Nullable
+    static NetworkCraftOperation replan(final MainframeBlockEntity mainframe, final StorageKey result,
+                                        final long remaining, final String label,
+                                        @Nullable final CraftingPattern embedded,
+                                        final OperationPriority priority) {
+        return withPriority(mainframe.submitNetworkCraft(result, remaining, true, label, embedded), priority);
     }
 
     /** The scheduling level a saved operation ran at; the default for saves that predate priorities. */
@@ -227,6 +276,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     }
 
     static final String PRIORITY_KEY = "Priority";
+    /* Whether a saved craft was paused, which it is again once restored. */
+    static final String PAUSED_KEY = "Paused";
 
     private static final String MACHINE_STEPS_KEY = "MachineSteps";
 
@@ -291,6 +342,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     private long deliveredResult;
     private boolean done;
     private boolean cancelled;
+    /* Paused by a player: nothing new starts and nothing times out, what it reserved stays reserved. */
+    private boolean paused;
     private byte status = OperationRecord.STATUS_FAILED;
     private OperationFailure cause = OperationFailure.NONE;
     /*
@@ -428,6 +481,20 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             }
             return true;
         });
+
+        if (paused) {
+            /*
+             * Paused: no step begins and no bench work is done, and nothing times out; what the machines already held
+             * was finished and counted above. The computer is let go of while it waits, and claimed again on resume.
+             */
+            if (!waiting) {
+                parkExecutors();
+            }
+            if (allRunsDone() && machineRuns.isEmpty()) {
+                finish();
+            }
+            return;
+        }
 
         if (waiting) {
             /*
@@ -1069,6 +1136,24 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     }
 
     @Override
+    public boolean pause(final boolean pause) {
+        if (done) {
+            return false;
+        }
+        this.paused = pause;
+        // Its machine steps are its own stages: they stop being fed with it, and go on with it.
+        for (final MachineRun run : machineRuns) {
+            run.op.pause(pause);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean paused() {
+        return paused && !done;
+    }
+
+    @Override
     public void cancel() {
         if (done) {
             return;
@@ -1280,7 +1365,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     public OperationRecord liveRecord() {
         final byte liveStatus = done ? status
                 : waiting ? OperationRecord.STATUS_WAITING : OperationRecord.STATUS_PROCESSING;
-        return buildRecord(liveStatus, true);
+        return buildRecord(liveStatus, true).withHold(paused() ? OperationRecord.HOLD_PAUSED
+                : OperationRecord.HOLD_NONE);
     }
 
     private OperationRecord buildRecord(final byte recordStatus, final boolean includeSubs) {
@@ -1336,10 +1422,11 @@ public final class NetworkCraftOperation implements IPersistentOperation {
              * or a bench step that has started and is not currently yielding to the machine steps.
              */
             // A step that settled short failed; one not reached yet waits its turn.
+            // A step running when its order was paused is paused with it.
             final byte state = runsDone[i] >= step.runs() ? OperationRecord.SubRow.SUB_COMPLETED
                     : i == shortStep ? OperationRecord.SubRow.SUB_FAILED
                     : isRunningStep(i) || (!step.isMachine() && !waiting && machineRuns.isEmpty() && runsDone[i] > 0)
-                        ? OperationRecord.SubRow.SUB_STREAMING
+                        ? paused() ? OperationRecord.SubRow.SUB_PAUSED : OperationRecord.SubRow.SUB_STREAMING
                     : OperationRecord.SubRow.SUB_PENDING;
             // Each step by its recipe's name: the layers of a chip's route make the same wafers over again.
             subs.add(new OperationRecord.SubRow(step.name(), step.runs(), runsDone[i], state));

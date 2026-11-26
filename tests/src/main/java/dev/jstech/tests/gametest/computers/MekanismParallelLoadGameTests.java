@@ -256,7 +256,7 @@ public final class MekanismParallelLoadGameTests {
                 .thenExecuteAfter(60, () -> {
                     MekanismRig.power(helper);
                     MekanismRig.power(helper.getLevel(), helper.absolutePos(MekanismRig.MACHINE_B));
-                    final List<OperationRecord> records = rig.net().mainframe().activeOperationRecords();
+                    final List<OperationRecord> records = rig.net().mainframe().inFlightRecords();
                     // Machine steps are the records without sub-rows (the crafts that own them carry the rows).
                     final long running = records.stream()
                             .filter(r -> r.subs().isEmpty() && (infused.equals(r.key()) || dust.equals(r.key()))

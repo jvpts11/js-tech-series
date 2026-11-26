@@ -19,8 +19,10 @@ import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.TestMachines;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -42,6 +44,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Client tests for the Network Interactor's improvements as the player meets them: the mod and category
@@ -72,6 +75,10 @@ public final class NetworkInteractorClientTests {
     private static final int CELL_HALF = 9;
     /** The Favourites tab, last of the seven: Status, Local, Network, Federated, Crafting, Operations, Favourites. */
     private static final int FAVOURITES_TAB = 6;
+    /* An order big enough to be still running while the test clicks its detail. */
+    private static final int BIG_ORDER = 64;
+    /* A point inside a maximized window's left edge, where the desktop's first column of icons stands under it. */
+    private static final int ICON_CORNER = 20;
 
     /*
      * The horizontal grip, the window's corner out, the vertical grip, the corner back in over the widened grid and,
@@ -285,6 +292,10 @@ public final class NetworkInteractorClientTests {
                         "the search, the grips and the tab must come back; search=" + interactor(ctx).searchText()
                                 + " rows=" + interactor(ctx).inventoryRowsShown() + " cols=" + interactor(ctx).gridColumns()
                                 + " tab=" + interactor(ctx).activeTab()))
+                // Another tab picked starts with an empty search: the words typed on this one are not for it.
+                .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).craftingTabCenter())))
+                .then(2, () -> ctx.assertTrue(interactor(ctx).searchText().isEmpty(),
+                        "the Crafting tab starts with an empty search; got " + interactor(ctx).searchText()))
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 // Escape drops a selection first, so a second one may be needed to leave the screen.
                 .then(2, () -> {
@@ -615,6 +626,89 @@ public final class NetworkInteractorClientTests {
                     }
                 })
                 .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    /**
+     * A live order's detail on the Operations tab has Pause and Cancel side by side: paused, its row says it is held
+     * and Pause becomes Resume; cancelled, it is dropped. The list shows the order alone, its kiln step in its detail.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void operations_pauseAndCancelAnOrderFromItsDetail(final ClientTestContext ctx) {
+        final UUID[] order = new UUID[1];
+        ctx.thenBuild(0, world -> {
+                    final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+                    TestWorldBuilder.installDesktop(net.cc(), FRAMES_XP, Programs.CRAFTING_MANAGER);
+                    net.cc().togglePower();
+                    net.cc().togglePower();
+                    world.placeMonitor(MONITOR, Direction.EAST);
+                    CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+                    net.seed(Items.COBBLESTONE, BIG_ORDER);
+                })
+                .thenServer(SETTLE + 2, level -> ctx.assertTrue(TestWorldBuilder.at(level, ctx.origin())
+                        .blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class).loadMachineRecipe(
+                                NetworkRecipe.ofProcessing(CraftingRig.pattern(Items.COBBLESTONE, Items.STONE, 200)))
+                        != null, "the kiln's recipe goes into its interface"))
+                .thenWaitUntilServer(level -> !mainframeAt(ctx, level).recipesFor(StorageKey.of(Items.STONE)).isEmpty(),
+                        BOOT_WAIT, "the Mainframe to know the kiln's recipe", level -> "none yet")
+                .thenServer(SETTLE, level -> {
+                    final var craft = mainframeAt(ctx, level).submitNetworkCraft(StorageKey.of(Items.STONE),
+                            BIG_ORDER, false, "test");
+                    ctx.assertTrue(craft != null, "the order is planned");
+                    order[0] = craft.operationId();
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .then(2, () -> launch(ctx))
+                .thenWaitUntil(() -> interactor(ctx) != null, SCREEN_WAIT, "the Network Interactor window")
+                .then(1, () -> ctx.screen(DesktopScreen.class).windowFor(NETWORK_LAUNCHER).toggleMaximize())
+                .then(2, () -> {
+                    // The desktop's icons under a window do not light under the pointer: the window stands over them.
+                    final DesktopWindow window = ctx.screen(DesktopScreen.class).windowFor(NETWORK_LAUNCHER);
+                    ctx.assertTrue(ctx.screen(DesktopScreen.class).windowOverDesktopAt(window.x() + ICON_CORNER,
+                            window.y() + window.height() / 2), "the window stands over the desktop's icons");
+                })
+                .then(2, () -> ctx.clickDesktop(point(ctx, interactor(ctx).operationsTabCenter())))
+                .thenWaitUntil(() -> interactor(ctx).operationRowWord(0).equals("run"), SCREEN_WAIT * 4,
+                        "the order to run in the list")
+                .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).operationRowCenter(0))))
+                .thenWaitUntil(() -> interactor(ctx).operationButtonsShown(), SCREEN_WAIT,
+                        "Pause and Cancel in the order's detail")
+                // The advancements the build earned would stand over the detail in the pictures.
+                .then(1, () -> ctx.mc().getToasts().clear())
+                .thenScreenshot(4, "ops-order-detail")
+                .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).operationPauseCenter())))
+                .thenWaitUntil(() -> interactor(ctx).operationRowWord(0).equals("hold")
+                                && interactor(ctx).operationPauseLabel().equals("Resume"), SCREEN_WAIT * 4,
+                        "the order to read as held, Pause as Resume")
+                .thenWaitUntilServer(level -> findLive(ctx, level, order[0]).hold() == OperationRecord.HOLD_PAUSED,
+                        SCREEN_WAIT, "the order paused on the Mainframe", level -> "not paused")
+                .thenScreenshot(4, "ops-order-paused")
+                .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).operationCancelCenter())))
+                .thenWaitUntilServer(level -> mainframeAt(ctx, level).recentOperations().stream().anyMatch(
+                                record -> record.id().equals(order[0])
+                                        && record.status() == OperationRecord.STATUS_DISCARDED), SCREEN_WAIT * 4,
+                        "the cancelled order logged as dropped", level -> "recent="
+                                + mainframeAt(ctx, level).recentOperations())
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .then(2, () -> {
+                    if (ctx.mc().screen != null) {
+                        ctx.key(GLFW.GLFW_KEY_ESCAPE);
+                    }
+                })
+                .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    /* The Mainframe of the test's network. */
+    private static MainframeBlockEntity mainframeAt(final ClientTestContext ctx, final ServerLevel level) {
+        return TestWorldBuilder.at(level, ctx.origin()).blockEntity(MAINFRAME, MainframeBlockEntity.class);
+    }
+
+    /* The live record of the Operation {@code id}, or one held for nothing while it is not live. */
+    private static OperationRecord findLive(final ClientTestContext ctx, final ServerLevel level, final UUID id) {
+        return mainframeAt(ctx, level).activeOperationRecords().stream().filter(record -> record.id().equals(id))
+                .findFirst().orElse(new OperationRecord(id, OperationRecord.TYPE_CRAFT, StorageKey.of(Items.STONE),
+                        0, 0, OperationRecord.STATUS_PENDING, OperationPriority.DEFAULT, List.of(), List.of()));
     }
 
     /**

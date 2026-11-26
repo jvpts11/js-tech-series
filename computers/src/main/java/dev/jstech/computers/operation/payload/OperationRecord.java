@@ -58,12 +58,16 @@ import java.util.UUID;
  * <p>{@code settledAt} is the world's tick it was written down on and {@code settledDayTime} the time of day then, for
  * the log's period filter and its clock; both are 0 for a record written before the log kept them. {@code by} is who
  * asked for it, the name the asker gave (a terminal's machine, a job), empty where none did.
+ *
+ * <p>{@code hold} is why a live Operation is held, beside its status: paused by a player ({@link #HOLD_PAUSED}), or a
+ * craft restored after a restart waiting for its machine steps before it plans again ({@link #HOLD_RESUMING}); none
+ * ({@link #HOLD_NONE}) for every other, and for every settled one.
  */
 @TextHolder
 public record OperationRecord(UUID id, byte type, StorageKey key, long requested, long moved, byte status,
                               OperationPriority priority, List<MoveRow> moves, List<SubRow> subs,
                               long waitedTicks, long ranTicks, OperationFailure cause, String kind, String machine,
-                              String asked, long settledAt, long settledDayTime, String by) {
+                              String asked, long settledAt, long settledDayTime, String by, byte hold) {
 
     /*
      * The lists and the reason are copied on the way in, because a record that hands out the very list it was
@@ -80,6 +84,16 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         machine = Utf8Text.clamp(machine == null ? "" : machine, MAX_MACHINE_BYTES);
         asked = Utf8Text.clamp(asked == null ? "" : asked, MAX_ASKED_BYTES);
         by = Utf8Text.clamp(by == null ? "" : by, MAX_MACHINE_BYTES);
+    }
+
+    /** A record that is held for nothing, as every settled one is. */
+    public OperationRecord(final UUID id, final byte type, final StorageKey key, final long requested,
+                           final long moved, final byte status, final OperationPriority priority,
+                           final List<MoveRow> moves, final List<SubRow> subs, final long waitedTicks,
+                           final long ranTicks, final OperationFailure cause, final String kind, final String machine,
+                           final String asked, final long settledAt, final long settledDayTime, final String by) {
+        this(id, type, key, requested, moved, status, priority, moves, subs, waitedTicks, ranTicks, cause, kind,
+                machine, asked, settledAt, settledDayTime, by, HOLD_NONE);
     }
 
     /** A record not yet written down in the log: no time, and nobody named as asking. */
@@ -103,6 +117,11 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
 
     /** The id of a record that never had a live Operation behind it (an instant maintenance record). */
     public static final UUID NO_ID = new UUID(0L, 0L);
+
+    /** Why a live Operation is held: for nothing, paused by a player, or restored and waiting to plan again. */
+    public static final byte HOLD_NONE = 0;
+    public static final byte HOLD_PAUSED = 1;
+    public static final byte HOLD_RESUMING = 2;
 
     /*
      * The numbers the kinds themselves carry, written out here because a switch needs a label the compiler
@@ -210,35 +229,41 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
 
     public OperationRecord withStatus(final byte newStatus) {
         return new OperationRecord(id, type, key, requested, moved, newStatus, priority, moves, subs,
-                waitedTicks, ranTicks, cause, kind, machine, asked, settledAt, settledDayTime, by);
+                waitedTicks, ranTicks, cause, kind, machine, asked, settledAt, settledDayTime, by, hold);
     }
 
     public OperationRecord withPriority(final OperationPriority newPriority) {
         return new OperationRecord(id, type, key, requested, moved, status, newPriority, moves, subs,
-                waitedTicks, ranTicks, cause, kind, machine, asked, settledAt, settledDayTime, by);
+                waitedTicks, ranTicks, cause, kind, machine, asked, settledAt, settledDayTime, by, hold);
     }
 
     public OperationRecord withTiming(final long waited, final long ran) {
         return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs, waited, ran,
-                cause, kind, machine, asked, settledAt, settledDayTime, by);
+                cause, kind, machine, asked, settledAt, settledDayTime, by, hold);
     }
 
     /** The same record with the reason it failed, which only a failed one has any use for. */
     public OperationRecord withCause(final OperationFailure newCause) {
         return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs,
-                waitedTicks, ranTicks, newCause, kind, machine, asked, settledAt, settledDayTime, by);
+                waitedTicks, ranTicks, newCause, kind, machine, asked, settledAt, settledDayTime, by, hold);
     }
 
     /** The same record naming who asked for it. */
     public OperationRecord withBy(final String asker) {
         return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs,
-                waitedTicks, ranTicks, cause, kind, machine, asked, settledAt, settledDayTime, asker);
+                waitedTicks, ranTicks, cause, kind, machine, asked, settledAt, settledDayTime, asker, hold);
     }
 
-    /** The same record stamped with the tick it was written down on and the time of day then. */
+    /** The same record stamped with the tick it was written down on and the time of day then, held for nothing. */
     public OperationRecord withSettled(final long tick, final long dayTime) {
         return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs,
-                waitedTicks, ranTicks, cause, kind, machine, asked, tick, dayTime, by);
+                waitedTicks, ranTicks, cause, kind, machine, asked, tick, dayTime, by, HOLD_NONE);
+    }
+
+    /** The same record held as {@code why}: {@link #HOLD_PAUSED}, {@link #HOLD_RESUMING} or {@link #HOLD_NONE}. */
+    public OperationRecord withHold(final byte why) {
+        return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs,
+                waitedTicks, ranTicks, cause, kind, machine, asked, settledAt, settledDayTime, by, why);
     }
 
     /** Whether it is of another mod's kind, given to a machine of the network, rather than the network's own. */
@@ -323,6 +348,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         public static final byte SUB_COMPLETED = 3;
         /* A craft's step that settled short: its machine stopped taking, or no interface held it. */
         public static final byte SUB_FAILED = 4;
+        /* A craft's step that was running when its order was paused: its machine is fed nothing new. */
+        public static final byte SUB_PAUSED = 5;
 
         public static final StreamCodec<RegistryFriendlyByteBuf, SubRow> STREAM_CODEC =
                 StreamCodec.composite(
@@ -388,6 +415,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                         buf.writeVarLong(rec.settledAt());
                         buf.writeVarLong(rec.settledDayTime());
                         buf.writeUtf(rec.by(), MAX_MACHINE_BYTES);
+                        buf.writeByte(rec.hold());
                     },
                     buf -> new OperationRecord(
                             UUIDUtil.STREAM_CODEC.decode(buf),
@@ -407,7 +435,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                             buf.readUtf(MAX_ASKED_BYTES),
                             buf.readVarLong(),
                             buf.readVarLong(),
-                            buf.readUtf(MAX_MACHINE_BYTES)));
+                            buf.readUtf(MAX_MACHINE_BYTES),
+                            buf.readByte()));
 
     public CompoundTag toNbt(final HolderLookup.Provider registries) {
         final CompoundTag tag = new CompoundTag();

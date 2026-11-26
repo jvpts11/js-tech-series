@@ -131,7 +131,7 @@ public final class PipeliningGameTests {
     private static long infuserStepsRunning(final MainframeBlockEntity mainframe) {
         final StorageKey infused = MekanismRig.itemKey(ALLOY_INFUSED);
         final StorageKey reinforced = MekanismRig.itemKey(ALLOY_REINFORCED);
-        return mainframe.activeOperationRecords().stream()
+        return mainframe.inFlightRecords().stream()
                 .filter(r -> r.subs().isEmpty() && (infused.equals(r.key()) || reinforced.equals(r.key()))
                         && r.status() == OperationRecord.STATUS_PROCESSING)
                 .count();

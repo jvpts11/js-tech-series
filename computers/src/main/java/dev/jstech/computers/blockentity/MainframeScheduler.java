@@ -270,10 +270,28 @@ final class MainframeScheduler {
         return true;
     }
 
-    /** What every in-flight Operation looks like right now, as the views read it. */
+    /**
+     * What every in-flight Operation looks like right now, as the views read it: one row an order. A craft's machine
+     * steps are its own stages, shown in its detail, and stood in the list each as a CRAFT of its own.
+     */
     List<OperationRecord> liveRecords() {
+        return liveRecords(false);
+    }
+
+    /**
+     * What every in-flight Operation looks like right now, a craft's machine steps among them: the engine as whoever
+     * inspects it sees it, each share of a step on its own machine.
+     */
+    List<OperationRecord> inFlightRecords() {
+        return liveRecords(true);
+    }
+
+    private List<OperationRecord> liveRecords(final boolean withSteps) {
         final List<OperationRecord> out = new ArrayList<>(inFlight.size());
         for (final INetworkOperation operation : inFlight) {
+            if (!withSteps && operation instanceof NetworkProcessingOperation step && step.isNested()) {
+                continue;
+            }
             final int[] counted = timingOf(operation);
             OperationRecord record = operation.liveRecord().withTiming(counted[WAITED], counted[RAN]);
             /*

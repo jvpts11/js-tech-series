@@ -87,11 +87,15 @@ final class DesktopPainter {
         final int perCol = grid.perColumn();
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.ICONS);
+        // The pointer over a window is not over the desktop behind it: no icon there lights under it.
+        final boolean behindAWindow = windowOver(desktop.wm(), lmx, lmy);
+        final int iconsX = behindAWindow ? FAR : lmx;
+        final int iconsY = behindAWindow ? FAR : lmy;
         // KDE 4 stands its icons in a Folder View, with the cashew in the corner of its desktop.
         if (desktop.kde4()) {
-            desktop.transitionPanels().renderKde4Desktop(g, sw, lmx, lmy);
+            desktop.transitionPanels().renderKde4Desktop(g, sw, iconsX, iconsY);
         }
-        grid.render(g, lmx, lmy);
+        grid.render(g, iconsX, iconsY);
         // CDE stands a window that was put away on its workspace as an icon, having no panel to list it on.
         if (cde) {
             desktop.cdeWindowIcons().render(g, desktop.wm().putAwayHere(), sw, view.workAreaTop(),
@@ -261,6 +265,11 @@ final class DesktopPainter {
     }
 
     /* Whether a window on show in front of the one at {@code index} stands over the point ({@code x}, {@code y}). */
+    /** Whether a window shown stands over the desktop's point ({@code x}, {@code y}), hiding the icons there. */
+    static boolean windowOver(final DesktopWindows wm, final int x, final int y) {
+        return coveredAt(wm, -1, x, y);
+    }
+
     private static boolean coveredAt(final DesktopWindows wm, final int index, final int x, final int y) {
         for (int j = index + 1; j < wm.all().size(); j++) {
             final DesktopWindow above = wm.all().get(j);

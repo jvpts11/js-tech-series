@@ -185,6 +185,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return state.windowFor(label);
     }
 
+    /** Whether a window shown stands over the desktop's point ({@code x}, {@code y}): no icon there lights under it. */
+    public boolean windowOverDesktopAt(final int x, final int y) {
+        return DesktopPainter.windowOver(state.wm(), x, y);
+    }
+
     /** Outer bounds of the framed monitor window (the bezel plus its chin), for a side panel placed beside it. */
     public MonitorFrameStyle.Geometry frameBounds() {
         return state.frameBounds();

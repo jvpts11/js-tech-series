@@ -194,6 +194,21 @@ final class NetworkInteractorTexts {
     static final TextKey STEP_FAILED = TextKey.of("jsc.interactor.ops.step_failed", "failed");
     static final TextKey STEP_RUNNING = TextKey.of("jsc.interactor.ops.step_running", "running");
     static final TextKey STEP_WAITING = TextKey.of("jsc.interactor.ops.step_waiting", "waiting");
+    static final TextKey STEP_PAUSED = TextKey.of("jsc.interactor.ops.step_paused", "paused");
+    /* A live order paused by a player, or restored after a restart and waiting to plan again. */
+    static final TextKey SHORT_HELD = TextKey.of("jsc.interactor.ops.short_held", "hold");
+    static final TextKey PAUSED = TextKey.of("jsc.interactor.ops.paused", "Paused");
+    static final TextKey PAUSED_NOTE = TextKey.of("jsc.interactor.ops.paused_note", "Nothing new starts: no step"
+            + " begins and no machine is fed. What the machines already hold is finished and counted, and what the"
+            + " order reserved stays reserved.");
+    static final TextKey RESUMING = TextKey.of("jsc.interactor.ops.resuming", "Waiting to resume");
+    /* How many of its machine steps were running when the game was restarted. */
+    static final TextKey RESUMING_NOTE = TextKey.of("jsc.interactor.ops.resuming_note", "The game was restarted"
+            + " while %s of its machine steps were running. They go on; when they finish, the craft plans the rest"
+            + " of the order from what the network then holds.");
+    static final TextKey PAUSE = TextKey.of("jsc.interactor.ops.pause", "Pause");
+    static final TextKey RESUME = TextKey.of("jsc.interactor.ops.resume", "Resume");
+    static final TextKey CANCEL_OPERATION = TextKey.of("jsc.interactor.ops.cancel", "Cancel");
     static final TextKey OPS_CAPTION = TextKey.of("jsc.interactor.ops.caption", "%s live · %s recent");
     static final TextKey SUPERCOMPUTER_SLOTS =
             TextKey.of("jsc.interactor.ops.supercomputer_slots", "Supercomputer: %s / %s parallel crafts");

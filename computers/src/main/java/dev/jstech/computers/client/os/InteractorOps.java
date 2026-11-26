@@ -72,6 +72,15 @@ final class InteractorOps {
         });
     }
 
+    /**
+     * The word a row of the list ends with: where it has got to, or for a live order paused, that it is held. One
+     * waiting to resume reads as waiting.
+     */
+    static String rowWord(final OperationRecord op, final boolean live) {
+        return live && op.hold() == OperationRecord.HOLD_PAUSED
+                ? GameText.resolve(NetworkInteractorTexts.SHORT_HELD) : statusShort(op.status());
+    }
+
     /** The same thing written out, for the detail panel where there is room for it. */
     static String statusLong(final byte status) {
         return GameText.resolve(switch (status) {
@@ -197,7 +206,7 @@ final class InteractorOps {
         final String type = OperationPalette.labelFor(op.type());
         Draw.text(g, font, type, x + 7, y + 2, OperationPalette.colorFor(op.type()));
         final int nameX = x + 8 + font.width(type) + 3;
-        final String st = statusShort(op.status());
+        final String st = rowWord(op, live);
         final int stW = font.width(st);
         // One that crosses to a federated network says where, beside its status.
         final String where = FederatedOperation.KIND.equals(op.kind()) ? op.machine() : "";
@@ -234,8 +243,29 @@ final class InteractorOps {
                 NetworkInteractorApp.formatCount(op.moved()), NetworkInteractorApp.formatCount(op.requested()))),
                 px, py, app.panelSkin().text());
         py += 10;
-        Texts.small(g, font, statusLong(op.status()), px, py, statusColor(op.status()));
+        final boolean live = selected < active.size();
+        final TextKey held = !live ? null : op.hold() == OperationRecord.HOLD_PAUSED ? NetworkInteractorTexts.PAUSED
+                : op.hold() == OperationRecord.HOLD_RESUMING ? NetworkInteractorTexts.RESUMING : null;
+        Texts.small(g, font, held == null ? statusLong(op.status()) : GameText.resolve(held), px, py,
+                statusColor(op.status()));
         py += 12;
+        if (held != null) {
+            // What being held means for it: what goes on and what does not, and what it does next.
+            final String note = GameText.resolve(held == NetworkInteractorTexts.PAUSED
+                    ? NetworkInteractorTexts.PAUSED_NOTE.text()
+                    : NetworkInteractorTexts.RESUMING_NOTE.with(op.subs().size()));
+            py -= 2;
+            for (final FormattedText line : font.getSplitter().splitLines(note, Texts.smallFits(dw - 10),
+                    Style.EMPTY)) {
+                Texts.small(g, font, line.getString(), px, py, app.panelSkin().dim());
+                py += 9;
+            }
+            py += 3;
+        }
+        if (live) {
+            // Pause (or Resume) and Cancel, between where it has got to and its steps.
+            py += app.placeOpButtons(px, py, dw, op);
+        }
         if (!FederatedOperation.KIND.equals(op.kind()) && op.failureText().isPresent()) {
             // Why it ended as it did, in the status's colour, under it: a craft names its step and its machine.
             for (final FormattedText line : font.getSplitter().splitLines(op.failureText().get().getString(),
@@ -303,6 +333,7 @@ final class InteractorOps {
             final String state = GameText.resolve(NetworkInteractorTexts.STEP_STATE.with(step.moved(),
                     step.planned(), GameText.resolve(stepWord(step.state()))));
             final int stateW = Texts.smallWidth(font, state);
+            // A paused step is dim, as one that waits its turn.
             final int colour = switch (step.state()) {
                 case OperationRecord.SubRow.SUB_COMPLETED -> c.online();
                 case OperationRecord.SubRow.SUB_FAILED -> c.opFailed();
@@ -327,6 +358,7 @@ final class InteractorOps {
             case OperationRecord.SubRow.SUB_COMPLETED -> NetworkInteractorTexts.SUB_DONE;
             case OperationRecord.SubRow.SUB_FAILED -> NetworkInteractorTexts.STEP_FAILED;
             case OperationRecord.SubRow.SUB_STREAMING -> NetworkInteractorTexts.STEP_RUNNING;
+            case OperationRecord.SubRow.SUB_PAUSED -> NetworkInteractorTexts.STEP_PAUSED;
             default -> NetworkInteractorTexts.STEP_WAITING;
         };
     }

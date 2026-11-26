@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.program.OperationPalette;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import java.util.List;
@@ -142,19 +143,9 @@ abstract class AbstractTerminalTab implements ITerminalTab {
         };
     }
 
+    /* The network's own colour of each kind of Operation, as every other view of them draws it. */
     protected int opTypeColor(final byte type) {
-        return switch (type) {
-            case OperationRecord.TYPE_INSERT,
-                    OperationRecord.TYPE_CRAFT,
-                    OperationRecord.TYPE_UPDATE -> AMBER();
-            case OperationRecord.TYPE_DELETE,
-                    OperationRecord.TYPE_DROP -> RED();
-            case OperationRecord.TYPE_MOVE -> GREEN();
-            case OperationRecord.TYPE_ANALYZE,
-                    OperationRecord.TYPE_REINDEX,
-                    OperationRecord.TYPE_VACUUM -> DIM();
-            default -> ACCENT2();
-        };
+        return OperationPalette.colorFor(type);
     }
 
     protected int clampOpScroll(final int size) {

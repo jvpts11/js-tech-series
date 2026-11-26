@@ -55,6 +55,20 @@ public interface INetworkOperation {
     void cancel();
 
     /**
+     * Pauses the Operation, or lets it go on from where it stopped: paused, nothing new starts (no step begins and
+     * no machine is fed), what its machines already hold is finished and counted, what it reserved stays reserved,
+     * and it never times out. Returns whether it can be paused; most Operations, which settle in a moment, cannot.
+     */
+    default boolean pause(final boolean paused) {
+        return false;
+    }
+
+    /** Whether it is paused ({@link #pause}). */
+    default boolean paused() {
+        return false;
+    }
+
+    /**
      * Settles the Operation early because the machine running it went dark suddenly: what it was carrying (in the
      * memory buffer, on its way to a disk or to an inventory) is lost rather than handed back, and the rest is let go
      * of as {@link #abandon()} lets it go. What stays where it was, in storage or in a machine in the world, stays.

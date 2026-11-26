@@ -25,6 +25,7 @@ import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ResumingCraft;
 import dev.jstech.computers.crafting.PendingCraftOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.engine.EngineRole;
@@ -1108,6 +1109,19 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
         return true;
     }
 
+    /**
+     * Pauses an in-flight Operation, or lets it go on, on request ({@link INetworkOperation#pause}). Returns false when
+     * no Operation with that id is in flight any more, or it is one that cannot be paused.
+     */
+    public boolean pauseOperation(final UUID id, final boolean pause) {
+        final var operation = findOperation(id);
+        if (operation == null || operation.isDone() || !operation.pause(pause)) {
+            return false;
+        }
+        setChanged();
+        return true;
+    }
+
     /** The rolling statistics of this Mainframe's Operations, over the last game hour, day and 7 days. */
     public NetworkStatistics statistics() {
         return scheduler.statistics();
@@ -1116,6 +1130,11 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
     /** Runs {@code work} on the next operations tick, after the storage index has caught up with this one. */
     public void runNextTick(final Runnable work) {
         scheduler.runNextTick(work);
+    }
+
+    /** Takes on a craft restored while its machine steps ran, which stands in the list until it plans again. */
+    public void trackResuming(final ResumingCraft craft) {
+        track(craft);
     }
 
     /** Takes an Operation on: the scheduler holds it, ticks it and writes it down when it settles. */
@@ -1172,8 +1191,14 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
         return List.copyOf(operationLog);
     }
 
+    /** Every Operation in flight, one an order: a craft's machine steps are in its record, not beside it. */
     public List<OperationRecord> activeOperationRecords() {
         return scheduler.liveRecords();
+    }
+
+    /** Every Operation in flight, a craft's machine steps among them, each share of one on its own machine. */
+    public List<OperationRecord> inFlightRecords() {
+        return scheduler.inFlightRecords();
     }
 
     /** The in-flight Operation with this id, or null when it has settled or never existed. */
@@ -1580,8 +1605,9 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
             if (operation instanceof IPersistentOperation persistent
                     && !operation.isDone() && !persistent.isEphemeral()) {
                 /*
-                 * A craft's machine steps read and write its in-memory pool, which does not survive a reload, so
-                 * they are not persisted; the parent craft re-plans and re-creates them from the handed-back pool.
+                 * A craft's machine steps are saved with what they hold apart, and go on after a reload; the craft
+                 * is saved with their ids and plans the rest once they settle (a restored one waiting for them is
+                 * saved as that craft again).
                  */
                 final CompoundTag state = persistent.saveState(registries);
                 scheduler.stampAsker(operation, state);

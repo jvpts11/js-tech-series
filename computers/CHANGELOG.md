@@ -1066,6 +1066,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - JEI and EMI list the Core's gases, each drawn as the cylinder painted for it, and find the recipes
   that take or make one; a gas dragged from JEI onto a Pattern Studio cell sets that cell to the gas, and a page sent
   to the Studio brings its gases with it.
+- The Network Interactor's Operations tab lists one line an order: a craft's machine steps are in its
+  detail alone, where each stood in the list as a CRAFT of its own. A live order's detail has Pause and Cancel side by
+  side: paused, nothing new starts, what the machines already hold is finished and counted, what it reserved stays
+  reserved and it never times out, its row says "hold" and Pause becomes Resume; cancelled, what it held goes back to
+  the network and it is logged as dropped.
+- A CRAFT has a colour of its own, purple, and a RUN teal, in every view of the Operations; as writes
+  they were amber, and a RUN blue. The palette `jsc:operation/types` gains `craft` and `run`.
 - The Injection Moulder shows what it moulds: the part it ejects, drops and carries out on its belt is the
   recipe's own body, and both halves of its mould show that body's mould, or the mould it cuts; the pellets in its
   hopper are the colour of the recipe's plastic. Its screen's face shows the same body leaving the mould, and so does
@@ -1271,6 +1278,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- A craft restored after a restart while its machine steps ran stands in the Operations list waiting to
+  resume, its steps in its detail, and can be paused or cancelled; it vanished from the list until it planned again,
+  and a second save before then lost it.
+- The Network Interactor's search starts empty on another tab picked: what was typed on one tab narrowed
+  the next tab's list.
+- A desktop's icons no longer light under the pointer through a window standing over them.
 - The Injection Moulder shows a fan frame or a bezel it moulds, and that part's mould on its mould halves,
   as it shows a component's body: it showed neither, its belt and mould empty while it worked.
 - Autocrafting: a machine job that gives up or is cancelled takes back to the network what it fed the

@@ -11,6 +11,7 @@ import dev.jstech.computers.crafting.RecipeChoice;
 import dev.jstech.computers.crafting.RecipeDifferences;
 import dev.jstech.computers.gui.layout.NetworkInteractorLayout;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.operation.payload.CancelOperationPayload;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
@@ -24,6 +25,7 @@ import dev.jstech.computers.operation.payload.NiGridClickPayload;
 import dev.jstech.computers.operation.payload.NiSelectPayload;
 import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.PauseOperationPayload;
 import dev.jstech.computers.operation.payload.RequestItemRecipesPayload;
 import dev.jstech.computers.operation.payload.RequestNetworkInteractorPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
@@ -80,6 +82,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import static dev.jstech.computers.client.os.NetworkInteractorTexts.ADVANCED;
 import static dev.jstech.computers.client.os.NetworkInteractorTexts.ALL_SOURCES;
@@ -255,6 +258,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private static final int SORT_MODES = 3;
     private static final TextKey[] SORT_LABELS = {SORT_A_Z, SORT_MOST, SORT_LEAST};
     private static final int OP_ROW_H = 12;
+    /* The height of Pause and Cancel in a live Operation's detail, as the Network tab's Request and Craft. */
+    private static final int OP_BUTTON_H = 12;
     private static final int SCROLLBAR_W = 3;
     /* How strong the rules inside a panel are, and a count's backing, as alphas over the skin's own colour. */
     private static final int HALF_EDGE_ALPHA = 0x60;
@@ -434,6 +439,12 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private final Button detailCraft;
     private final Button detailStar;
     private final Button detailUpdate;
+    /* Pause (or Resume) and Cancel, in a live Operation's detail; for the one they were last placed for. */
+    private final Button opPause;
+    private final Button opCancel;
+    @Nullable
+    private UUID opButtonsFor;
+    private boolean opButtonsPaused;
     private final Button federationNext;
     private final Button printButton;
     private final PrintDialog printDialog;
@@ -446,7 +457,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         this.host = host;
         this.monitorPos = monitorPos;
 
-        tabs = root.add(new TabStrip(this::tabLabels).fitToLabels(12).setTrailing(TAB_FAV).setOnSelect(this::selectTab));
+        tabs = root.add(new TabStrip(this::tabLabels).fitToLabels(12).setTrailing(TAB_FAV)
+                .setOnSelect(this::tabChosen));
         tabs.setSelected(tab);
         search = root.add(new SearchField(48));
         search.set(lastSearch);
@@ -478,6 +490,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         detailStar = root.add(new Button(STAR, this::detailStarPressed).setLabelScale(Texts.SMALL));
         detailUpdate = root.add(new Button(GameText.resolve(UpdatePopupTexts.OPEN), this::detailUpdatePressed)
                 .setLabelScale(Texts.SMALL));
+        opPause = root.add(new Button(() -> GameText.resolve(opButtonsPaused ? NetworkInteractorTexts.RESUME
+                : NetworkInteractorTexts.PAUSE), this::opPausePressed).setLabelScale(Texts.SMALL));
+        opCancel = root.add(new Button(GameText.resolve(NetworkInteractorTexts.CANCEL_OPERATION),
+                this::opCancelPressed).setLabelScale(Texts.SMALL));
         federation = new InteractorFederation(host, monitorPos);
         federationNext = root.add(new Button(GameText.resolve(InteractorFederation.NEXT), federation::next)
                 .setLabelScale(Texts.SMALL));
@@ -522,6 +538,38 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** Asks the server for the network's recent + active Operations (for the Operations tab). */
     private void requestOps() {
         PacketDistributor.sendToServer(new RequestNiOperationsPayload(host, monitorPos));
+    }
+
+    /**
+     * Shows Pause (Resume for a paused one) and Cancel side by side from ({@code px}, {@code py}) in the detail of
+     * the live Operation {@code op}, as wide as the panel lets them; how far down they reach. Only an order the
+     * network makes can be paused: the others settle in a moment.
+     */
+    int placeOpButtons(final int px, final int py, final int dw, final OperationRecord op) {
+        final int bw = Math.max(30, (dw - 10 - 2) / 2);
+        opButtonsFor = op.id();
+        opButtonsPaused = op.hold() == OperationRecord.HOLD_PAUSED;
+        opPause.setBounds(px, py, bw, OP_BUTTON_H);
+        opPause.setVisible(true);
+        opPause.setEnabled(op.type() == OperationRecord.TYPE_CRAFT);
+        opCancel.setBounds(px + bw + 2, py, bw, OP_BUTTON_H);
+        opCancel.setVisible(true);
+        return OP_BUTTON_H + 4;
+    }
+
+    /* Pauses the Operation whose detail shows, or lets it go on. */
+    private void opPausePressed() {
+        if (opButtonsFor != null) {
+            PacketDistributor.sendToServer(new PauseOperationPayload(host, monitorPos, opButtonsFor,
+                    !opButtonsPaused));
+        }
+    }
+
+    /* Stops the Operation whose detail shows: what it held goes back to the network, and it is logged as dropped. */
+    private void opCancelPressed() {
+        if (opButtonsFor != null) {
+            PacketDistributor.sendToServer(new CancelOperationPayload(host, monitorPos, opButtonsFor));
+        }
     }
 
     // what the machine keeps with the window
@@ -857,6 +905,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         detailCraft.setVisible(false);
         detailStar.setVisible(false);
         detailUpdate.setVisible(false);
+        opPause.setVisible(false);
+        opCancel.setVisible(false);
         federationNext.setVisible(false);
         cardShown = false;
         if (tab == TAB_OPS) {
@@ -1073,6 +1123,18 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         if (index == TAB_FEDERATED) {
             federation.ask(true);
         }
+    }
+
+    /*
+     * A tab the player picks starts with an empty search: what was typed on another tab narrowed this one's list
+     * with words that were not for it. A window reopened on its tab keeps the search it was left with.
+     */
+    private void tabChosen(final int index) {
+        if (index != tab) {
+            search.set("");
+            lastSearch = "";
+        }
+        selectTab(index);
     }
 
     private void searchEdited() {
@@ -3598,6 +3660,36 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     public int[] operationsTabCenter() {
         return local(tabs.tabCenter(TAB_OPS));
+    }
+
+    /** Content-local centre of the Operations list's row {@code index}, as it is scrolled now. */
+    public int[] operationRowCenter(final int index) {
+        return local(opList.rowCenter(index));
+    }
+
+    /** Content-local centre of Pause (or Resume) in the detail of a live Operation. */
+    public int[] operationPauseCenter() {
+        return local(new int[] {opPause.x() + opPause.width() / 2, opPause.y() + opPause.height() / 2});
+    }
+
+    /** Content-local centre of Cancel in the detail of a live Operation. */
+    public int[] operationCancelCenter() {
+        return local(new int[] {opCancel.x() + opCancel.width() / 2, opCancel.y() + opCancel.height() / 2});
+    }
+
+    /** Whether Pause and Cancel show in the detail, and Pause's word now. */
+    public boolean operationButtonsShown() {
+        return opPause.visible() && opCancel.visible();
+    }
+
+    public String operationPauseLabel() {
+        return opPause.label();
+    }
+
+    /** The word the Operations list ends row {@code index} with, where it has got to. */
+    public String operationRowWord(final int index) {
+        final List<OperationRecord> all = ops.all();
+        return index < 0 || index >= all.size() ? "" : InteractorOps.rowWord(all.get(index), index < ops.liveCount());
     }
 
     public long craftQuantity() {
