@@ -106,6 +106,7 @@ import dev.jstech.tests.clienttest.computers.NetworkEventLogClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkInteractorClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkLinksClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkManagerClientTests;
+import dev.jstech.tests.clienttest.computers.PackagingLineClientTests;
 import dev.jstech.tests.clienttest.computers.PortableAppsClientTests;
 import dev.jstech.tests.clienttest.computers.PortableClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkServicesClientTests;
@@ -465,6 +466,7 @@ public final class ClientTestSuite {
             ChainFaceClientTests.class,
             ChainUpgradesClientTests.class,
             InjectionMoulderClientTests.class,
+            PackagingLineClientTests.class,
             RecipeFacesClientTests.class,
             MultipartModelClientTests.class,
             CableBlockClientTests.class,

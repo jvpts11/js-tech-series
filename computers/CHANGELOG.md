@@ -941,6 +941,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   A pattern file written before keeps every input lasting one run.
 
 ### Changed
+- The Packaging Line's belt moves: cleats across it and down its front edge ride with the strips, where
+  ribs painted on the belt stood still under them.
 - An old device works on a newer computer, as a real one does: every device's port takes the peripheral
   cable of every era, so a Floppy Drive joined to a Standard Mainframe with the Mainframe's own cable reads the
   floppies of the Vintage, and a Standard computer reaches a Vintage monitor, speaker or printer the same way. A
@@ -1288,6 +1290,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- The chain machines' working loops no longer run backwards: at the end of its loop the Packaging Line's
+  strips slid back where they started, and the assembly lines' boards and parts did, and in the middle of it a strip,
+  a board or a part took the place of the one beside it and slid back to it. Each now moves on in its place, and the
+  next one stands where it got to as the loop starts again. The Ceramic Kiln, the Injection Moulder and the Large
+  Scale Printer had pieces that jumped back the same way, and no longer do.
 - A craft restored after a restart while its machine steps ran stands in the Operations list waiting to
   resume, its steps in its detail, and can be paused or cancelled; it vanished from the list until it planned again,
   and a second save before then lost it.
