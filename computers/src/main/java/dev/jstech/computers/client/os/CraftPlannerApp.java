@@ -302,7 +302,7 @@ public final class CraftPlannerApp implements IDesktopApp {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         frame++;
-        if (frame % REFRESH_FRAMES == 0) {
+        if (frame % REFRESH_FRAMES == 0 && !OffscreenDesktop.drawingFace()) {
             requestPlan();
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);

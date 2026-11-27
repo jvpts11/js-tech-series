@@ -51,7 +51,7 @@ public final class MachineReadingsView {
 
     /** Asks again now and then while the window is drawn. */
     void tick() {
-        if (frame++ % REFRESH_FRAMES == 0) {
+        if (frame++ % REFRESH_FRAMES == 0 && !OffscreenDesktop.drawingFace()) {
             request();
         }
     }

@@ -251,7 +251,7 @@ public final class SystemMonitorApp implements IDesktopApp {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         frame++;
-        if (frame % REFRESH_FRAMES == 0) {
+        if (frame % REFRESH_FRAMES == 0 && !OffscreenDesktop.drawingFace()) {
             PacketDistributor.sendToServer(new RequestSettingsPayload(host));
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);

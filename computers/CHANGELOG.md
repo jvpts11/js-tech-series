@@ -1290,6 +1290,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- A monitor showing a desktop in the world no longer asks its machine for anything: a Pattern Studio, a
+  Crafting Manager or a Network Interactor open on a monitor in sight asked the server for fresh state a few times a
+  second, as if a player were at the screen, and the server refused every one of them and wrote so to its log.
 - A craft makes its bench steps while its machines work: a lithography station's tin nuggets for its
   next layers, made from tin ingots at the bench, waited for every machine of the craft to stop, which in a chain of
   steps never came, so the station stood still once the nuggets in stock were used up and the craft ended short. The

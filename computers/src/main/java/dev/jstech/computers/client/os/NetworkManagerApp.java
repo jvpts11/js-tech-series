@@ -937,10 +937,11 @@ public final class NetworkManagerApp implements IDesktopApp {
         lastMouseY = mouseY;
         lastFont = font;
         frame++;
-        if ((tab == TAB_PROCESSES || tab == TAB_LOG) && frame % OPS_REFRESH_FRAMES == 0) {
+        final boolean asks = !OffscreenDesktop.drawingFace();
+        if (asks && (tab == TAB_PROCESSES || tab == TAB_LOG) && frame % OPS_REFRESH_FRAMES == 0) {
             requestOps();
         }
-        if (tab == TAB_STATS && frame % STATS_REFRESH_FRAMES == 0) {
+        if (asks && tab == TAB_STATS && frame % STATS_REFRESH_FRAMES == 0) {
             PacketDistributor.sendToServer(new RequestNetworkManagerPayload(host));
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);

@@ -290,7 +290,7 @@ public final class StorageInsightsApp implements IDesktopApp {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         frame++;
-        if (!detailMode && frame % REFRESH_FRAMES == 0) {
+        if (!detailMode && frame % REFRESH_FRAMES == 0 && !OffscreenDesktop.drawingFace()) {
             request();
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);

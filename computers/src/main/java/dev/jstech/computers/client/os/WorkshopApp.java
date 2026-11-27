@@ -346,7 +346,7 @@ public final class WorkshopApp implements IInventoryBandApp {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         drawnCells.clear();
-        if (++refreshFrames >= REFRESH_EVERY_FRAMES) {
+        if (++refreshFrames >= REFRESH_EVERY_FRAMES && !OffscreenDesktop.drawingFace()) {
             refreshFrames = 0;
             send(WorkshopActionPayload.REFRESH, 0);
         }

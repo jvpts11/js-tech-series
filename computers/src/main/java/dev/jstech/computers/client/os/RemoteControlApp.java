@@ -127,7 +127,7 @@ public final class RemoteControlApp implements IDesktopApp {
     public void renderContent(final GuiGraphics g, final Font font, final int x, final int y,
                               final int width, final int height, final int mouseX, final int mouseY,
                               final float partialTick) {
-        if (++frame % REFRESH_FRAMES == 0) {
+        if (++frame % REFRESH_FRAMES == 0 && !OffscreenDesktop.drawingFace()) {
             request();
         }
         lastMouseX = mouseX;

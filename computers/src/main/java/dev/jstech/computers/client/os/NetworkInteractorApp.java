@@ -828,7 +828,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
          * Keep the view live: a few times a second, re-ask for the storage grid (and the live operations on the
          * Operations tab) so stock counts and craft progress update on their own, without a manual refresh.
          */
-        if (++refreshFrames >= 20) {
+        if (++refreshFrames >= 20 && !OffscreenDesktop.drawingFace()) {
             refreshFrames = 0;
             request();
         }

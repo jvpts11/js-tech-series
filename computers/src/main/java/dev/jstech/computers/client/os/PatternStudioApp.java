@@ -563,7 +563,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         lastMouseY = mouseY;
         lastFont = font;
         ghostCells.clear();
-        if (++refreshFrames >= REFRESH_EVERY_FRAMES) {
+        if (++refreshFrames >= REFRESH_EVERY_FRAMES && !OffscreenDesktop.drawingFace()) {
             refreshFrames = 0;
             request();
         }

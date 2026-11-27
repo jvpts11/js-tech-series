@@ -309,7 +309,7 @@ final class NetworkServicesView {
             chooser.renderIn(g, ctx, x, y, width, height);
         } else if (progress.isOpen()) {
             if (replacementUnderWay() && elapsed() >= data.replacement().ticks()
-                    && frame % REPLACING_REFRESH_FRAMES == 0) {
+                    && frame % REPLACING_REFRESH_FRAMES == 0 && !OffscreenDesktop.drawingFace()) {
                 request();
             }
             progress.renderIn(g, ctx, x, y, width, height);

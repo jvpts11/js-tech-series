@@ -162,7 +162,7 @@ public final class ProphetConsoleApp implements IDesktopApp {
             askedOnce = true;
             refresh();
         }
-        if (++frame % REFRESH_FRAMES == 0) {
+        if (++frame % REFRESH_FRAMES == 0 && !OffscreenDesktop.drawingFace()) {
             refresh();
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);

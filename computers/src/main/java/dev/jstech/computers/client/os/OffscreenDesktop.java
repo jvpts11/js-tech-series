@@ -74,7 +74,10 @@ public final class OffscreenDesktop implements DesktopSurface {
 
     /**
      * Whether a desktop is being drawn on a monitor's face in the world right now, which a window showing what only its
-     * opener may see asks so it shows its placeholder there.
+     * opener may see asks so it shows its placeholder there. A window that asks its machine for fresh state as it is
+     * drawn asks it too and asks nothing then: the face asks the machine nothing, and the server refuses a machine's
+     * questions from anybody but the player at its screen, so a Pattern Studio on a monitor in sight sent one a second
+     * for nothing.
      */
     public static boolean drawingFace() {
         return drawingFace;

@@ -217,7 +217,7 @@ final class NetworkEventLogView {
         if (!shown) {
             return;
         }
-        if (frame++ % REFRESH_FRAMES == 0) {
+        if (frame++ % REFRESH_FRAMES == 0 && !OffscreenDesktop.drawingFace()) {
             request();
         }
         // The panel passes a click on only to what lies inside its own bounds.
