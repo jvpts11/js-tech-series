@@ -545,10 +545,17 @@ public final class NetworkCraftOperation implements IPersistentOperation {
 
         if (!machineRuns.isEmpty()) {
             /*
-             * The machines are doing the work: let go of the computer and the cluster slots so other crafts can
-             * use them while this craft waits (it keeps a reference to the computer for the liveness check above),
-             * and claim again once every step clears and bench work remains.
+             * The machines are doing the work. Bench work left is done beside them, the computer claimed again for it:
+             * a machine step can wait on a bench step, as a lithography station on the tin nuggets of its next layers,
+             * and with machines always at work that bench step was never done. Between bench runs the computer and the
+             * cluster slots are let go of, so other crafts can use them while this craft waits (it keeps a reference
+             * to the computer for the liveness check above). Waiting on its machines, the craft holds no Mainframe
+             * queue and is granted nothing, so this bench work goes at the computers' own rate, as the machine stages
+             * get their feed outside the queues.
              */
+            if (dearestBenchRun() > 0 && (!executorsParked || reclaimExecutors())) {
+                benchWork(aliveRate());
+            }
             parkExecutors();
             progressed = true;
         } else {
@@ -558,52 +565,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 waitTicks = 0;
                 return; // re-claim a computer before the bench work resumes
             }
-            /*
-             * Bench work at the summed rate of the live computers (never above the Mainframe's grant). Denser
-             * recipes take longer; faster computers contribute proportionally more of each tick's work. What is
-             * left over is kept, up to the dearest run's cost, and saving up towards a run is progress.
-             */
-            final double rate = Math.min(throughputBudget, aliveRate());
-            final long dearest = dearestBenchRun();
-            this.benchCredit = Math.min(this.benchCredit + rate, Math.max(rate, dearest));
-            final long granted = (long) this.benchCredit;
-            if (rate > 0.0 && granted < dearest) {
-                progressed = true;
-            }
-            long budget = granted;
-            final NetworkStorage storage = NetworkStorage.of(level, network);
-            for (int i = 0; i < plan.steps().size() && budget > 0; i++) {
-                final CraftPlanner.Step step = plan.steps().get(i);
-                if (step.isMachine() || runsDone[i] >= step.runs()) {
-                    continue;
-                }
-                final long unitsPerRun = step.unitsPerRun();
-                final long runsAffordable = Math.max(budget >= unitsPerRun ? budget / unitsPerRun : 0, 0);
-                if (runsAffordable <= 0) {
-                    continue;
-                }
-                final long runsNow = Math.min(step.runs() - runsDone[i], runsAffordable);
-                /*
-                 * A bench step consumes its machine-made intermediates straight from the pool (a machine step
-                 * delivered them there) plus its locked raw stock; its result goes back into the pool.
-                 */
-                final long executable = consumeIngredients(storage, step.pattern(), runsNow);
-                if (executable <= 0) {
-                    continue; // ingredients not deliverable yet (an upstream step must fill the pool first)
-                }
-                pool.merge(StorageKey.of(step.pattern().result()),
-                        executable * step.pattern().result().getCount(), Long::sum);
-                if (stepStarted[i] < 0) {
-                    stepStarted[i] = level.getGameTime();
-                }
-                runsDone[i] += executable;
-                if (runsDone[i] >= step.runs()) {
-                    stepFinished[i] = level.getGameTime();
-                }
-                budget -= executable * unitsPerRun;
-                progressed = true;
-            }
-            this.benchCredit -= granted - budget;
+            progressed |= benchWork(throughputBudget);
         }
 
         if (allRunsDone()) {
@@ -764,6 +726,66 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             }
         }
         return false;
+    }
+
+    /**
+     * One tick of bench work at the summed rate of the live computers (never above the Mainframe's grant), and whether
+     * it went forward. Denser recipes take longer; faster computers contribute proportionally more of each tick's
+     * work. What is left over is kept, up to the dearest run's cost, and saving up towards a run is progress.
+     */
+    private boolean benchWork(final double throughputBudget) {
+        boolean progressed = false;
+        final double rate = Math.min(throughputBudget, aliveRate());
+        final long dearest = dearestBenchRun();
+        this.benchCredit = Math.min(this.benchCredit + rate, Math.max(rate, dearest));
+        final long granted = (long) this.benchCredit;
+        if (rate > 0.0 && granted < dearest) {
+            progressed = true;
+        }
+        long budget = granted;
+        final NetworkStorage storage = NetworkStorage.of(level, network);
+        for (int i = 0; i < plan.steps().size() && budget > 0; i++) {
+            final CraftPlanner.Step step = plan.steps().get(i);
+            if (step.isMachine() || runsDone[i] >= step.runs()) {
+                continue;
+            }
+            final long unitsPerRun = step.unitsPerRun();
+            final long runsAffordable = Math.max(budget >= unitsPerRun ? budget / unitsPerRun : 0, 0);
+            if (runsAffordable <= 0) {
+                continue;
+            }
+            final long runsNow = Math.min(step.runs() - runsDone[i], runsAffordable);
+            /*
+             * A bench step consumes its machine-made intermediates straight from the pool (a machine step
+             * delivered them there) plus its locked raw stock; its result goes back into the pool.
+             */
+            final long executable = consumeIngredients(storage, step.pattern(), runsNow);
+            if (executable <= 0) {
+                continue; // ingredients not deliverable yet (an upstream step must fill the pool first)
+            }
+            pool.merge(StorageKey.of(step.pattern().result()),
+                    executable * step.pattern().result().getCount(), Long::sum);
+            if (stepStarted[i] < 0) {
+                stepStarted[i] = level.getGameTime();
+            }
+            runsDone[i] += executable;
+            if (runsDone[i] >= step.runs()) {
+                stepFinished[i] = level.getGameTime();
+            }
+            budget -= executable * unitsPerRun;
+            progressed = true;
+        }
+        this.benchCredit -= granted - budget;
+        return progressed;
+    }
+
+    /* Claims the computer again, let go of while the machine steps work, for bench work beside them; whether it did. */
+    private boolean reclaimExecutors() {
+        if (!tryClaimExecutors()) {
+            return false;
+        }
+        executorsParked = false;
+        return true;
     }
 
     /** Lets go of the exclusively claimed computer, or the cluster's craft slot, while the machine steps work. */

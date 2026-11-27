@@ -5028,6 +5028,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) A craft makes its bench steps while its machines work: a lithography station's tin nuggets for its
+  next layers, made from tin ingots at the bench, waited for every machine of the craft to stop, which in a chain of
+  steps never came, so the station stood still once the nuggets in stock were used up and the craft ended short. The
+  Crafting Computer is claimed for each bench run beside the machines and let go of again.
 - (Computers) The chain machines' working loops no longer run backwards: at the end of its loop the Packaging Line's
   strips slid back where they started, and the assembly lines' boards and parts did, and in the middle of it a strip,
   a board or a part took the place of the one beside it and slid back to it. Each now moves on in its place, and the

@@ -10,9 +10,11 @@ package dev.jstech.tests.gametest.computers;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.chain.ChainParts;
+import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.WaferWork;
 import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftingFloor;
+import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.PatternWorkbench;
@@ -22,6 +24,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.upgrade.SharedUpgrades;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.tests.JsTests;
@@ -34,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -61,6 +65,8 @@ public final class KeptInputGameTests {
     /* The implanter stands clear of the standard crafting network, its front west corner here, its front north. */
     private static final BlockPos IMPLANTER_CORNER = new BlockPos(2, 1, 5);
     private static final int LASTS = 8;
+    /* One more wafer than a dust dopes, so a second dust is needed. */
+    private static final int WAFERS = LASTS + 1;
 
     private KeptInputGameTests() {
     }
@@ -155,6 +161,56 @@ public final class KeptInputGameTests {
                     }
                     helper.assertTrue(held == 1, "the implanter keeps that one; it holds " + held);
                 })
+                .thenSucceed();
+    }
+
+    /**
+     * A craft makes at the bench what a machine step keeps beside it while the machine works: the network holds one
+     * dust, the bench makes the second from bone meal, and the implanter dopes all nine wafers, a dust for every eight.
+     * The step started on the dust in stock and the bench waited for every machine to stop, so the second dust was
+     * never made, the implanter stood still after eight layers, and the craft ended short.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 3000)
+    public static void craft_makesAKeptInputAtTheBenchWhileItsMachineWorks(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final BlockPos terminal = ChainMachineSite.formed(helper, ChainMachineSite.machine("ion_implanter"),
+                IMPLANTER_CORNER);
+        final CraftingFloor.Site feeding = new CraftingFloor.Site(IMPLANTER_CORNER.north(), Direction.SOUTH);
+        final CraftingFloor.Site receiving = new CraftingFloor.Site(IMPLANTER_CORNER.south().west(), Direction.EAST);
+        CraftingRig.lay(world, new BlockPos(5, 2, 3), new BlockPos(5, 2, 4), new BlockPos(4, 2, 4),
+                new BlockPos(3, 2, 4), new BlockPos(2, 2, 4), feeding.cable(), feeding.cable().west(),
+                receiving.cable().north(), receiving.cable());
+        final CraftingInterfacePart part = CraftingRig.addPart(world, feeding,
+                new CraftingInterfacePart(HardwareEra.STANDARD));
+        CraftingRig.addPart(world, receiving, new ReceivingBusPart());
+        final Item dust = MaterialUses.item(Elements.of(Element.PHOSPHORUS), Forms.DUST).get();
+        final StorageKey doped = StorageKey.of(wafer(WaferWork.Step.DEPOSITION));
+        final ProcessingPattern implant = new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(wafer(WaferWork.Step.IMPLANT)), 1),
+                        new ProcessingPattern.ProcessingInput(key(dust), 1, false, LASTS)),
+                List.of(new ProcessingPattern.ProcessingOutput(doped, 1, ProcessingPattern.FULL_CHANCE)), 400);
+        final NonNullList<ItemStack> grid = NonNullList.withSize(9, ItemStack.EMPTY);
+        grid.set(0, new ItemStack(Items.BONE_MEAL));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.rack().getServerStorage(0).insert(StorageKey.of(wafer(WaferWork.Step.IMPLANT)), WAFERS);
+                    net.rack().getServerStorage(0).insert(key(dust), 1);
+                    net.rack().getServerStorage(0).insert(key(Items.BONE_MEAL), 4);
+                    net.cc().loadPattern(new CraftingPattern(grid, new ItemStack(dust)));
+                    // Four motors, so nine layers take a minute rather than three.
+                    final ChainMachineBlockEntity implanter = ChainMachineSite.machineAt(helper, terminal);
+                    implanter.getInventory().insertItem(implanter.layout().firstUpgrade(),
+                            new ItemStack(SharedUpgrades.BRUSHED_MOTOR.get(), 4), false);
+                    helper.assertTrue(part.place(NetworkRecipe.ofProcessing(implant)), "the interface takes it");
+                    net.cc().forgetFloor();
+                })
+                .thenExecuteAfter(SETTLE, () -> helper.assertTrue(
+                        net.mainframe().submitNetworkCraft(doped, WAFERS, false, "kept") != null, "the craft starts"))
+                .thenWaitUntil(() -> helper.assertTrue(net.storage(helper.getLevel()).count(doped) == WAFERS,
+                        "all nine wafers doped; " + net.storage(helper.getLevel()).count(doped) + " so far"))
+                .thenExecute(() -> helper.assertTrue(net.storage(helper.getLevel()).count(key(Items.BONE_MEAL)) == 3,
+                        "the bench made the second dust of one bone meal"))
                 .thenSucceed();
     }
 
