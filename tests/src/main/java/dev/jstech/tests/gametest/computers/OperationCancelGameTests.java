@@ -196,8 +196,8 @@ public final class OperationCancelGameTests {
                     helper.assertTrue(live.get(0).status() != OperationRecord.STATUS_FAILED,
                             "the pull is live, not failed; got " + live.get(0).status());
                     shortId[0] = ShortId.of(live.get(0).id().toString());
-                    helper.assertTrue(TestCli.contains(shell.run("interac ops", cli), shortId[0]),
-                            "ops lists the operation by its short id " + shortId[0]);
+                    helper.assertTrue(TestCli.contains(shell.run("interac ops", cli), shortId[0] + " select"),
+                            "ops lists the operation by its short id " + shortId[0] + ", a space before its verb");
                     helper.assertTrue(TestCli.contains(shell.run("interac cancel nope", cli), "no operation"),
                             "an unknown id is reported");
                     helper.assertTrue(

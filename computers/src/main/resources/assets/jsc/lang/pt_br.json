@@ -2449,7 +2449,7 @@
   "jsc.cli.interac.nothing_matches": "nada corresponde a \"%s\"",
   "jsc.cli.interac.nothing_starred": "nada está marcado com estrela neste computador",
   "jsc.cli.interac.online": "online",
-  "jsc.cli.interac.ops_header": "ID    O QUE     ITEM                      PROGRESSO",
+  "jsc.cli.interac.ops_header": "ID     O QUE     ITEM                      PROGRESSO",
   "jsc.cli.interac.option.sort": "ordenar uma listagem por quanto existe; --sort name por nome",
   "jsc.cli.interac.option.to": "deixar o que for retirado neste computador, não em suas mãos",
   "jsc.cli.interac.peak": "pico de %s em andamento hoje",

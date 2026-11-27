@@ -50,6 +50,10 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
 
     /** How wide the name column of a listing is, leaving room for a count and where it is. */
     private static final int NAME_WIDTH = 26;
+    /** How wide the id column of the operations is: a short id, six characters, and a space before what comes next. */
+    private static final int ID_WIDTH = 7;
+    /** How wide the column of what an operation does is: its longest word, and room after it. */
+    private static final int WHAT_WIDTH = 10;
 
     private static final TextKey SUMMARY = TextKey.of("jsc.cli.interac.summary",
             "work the data network: what it holds, where, and what it is doing");
@@ -111,7 +115,7 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
     private static final TextKey LIST_HEADER =
             TextKey.of("jsc.cli.interac.list_header", "ITEM                          COUNT  WHERE");
     private static final TextKey OPS_HEADER =
-            TextKey.of("jsc.cli.interac.ops_header", "ID    WHAT      ITEM                      PROGRESS");
+            TextKey.of("jsc.cli.interac.ops_header", "ID     WHAT      ITEM                      PROGRESS");
 
     private static final TextKey HOLDS_NOTHING =
             TextKey.of("jsc.cli.interac.holds_nothing", "the network holds nothing");
@@ -413,7 +417,7 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
         }
         ctx.out().header(OPS_HEADER);
         for (final ICliComputer.ActiveOp op : ops) {
-            ctx.out().line(CliText.pad(op.id(), 6) + CliText.pad(op.type().toLowerCase(Locale.ROOT), 10)
+            ctx.out().line(CliText.pad(op.id(), ID_WIDTH) + CliText.pad(op.type().toLowerCase(Locale.ROOT), WHAT_WIDTH)
                     + CliText.pad(op.item(), NAME_WIDTH)
                     + CliText.group(op.progress()) + "/" + CliText.group(op.total())
                     + "  " + op.status().toLowerCase(Locale.ROOT));

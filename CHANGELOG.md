@@ -5028,6 +5028,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) `interac ops` keeps a space between an operation's id and what it does: the six-character id filled
+  its whole column and ran into the word after it.
 - (Core) A machine gathers an input spread over several of its slots into one: fed lot after lot, it took each
   recipe from whichever slot held enough, and the rest could end up shared among slots none of which held a whole
   input, so the machine waited for ever with all it needed inside (an assembly line held a socket's 61 copper foils as

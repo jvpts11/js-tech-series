@@ -1290,6 +1290,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- `interac ops` keeps a space between an operation's id and what it does: the six-character id filled
+  its whole column and ran into the word after it.
 - A monitor showing a desktop in the world no longer asks its machine for anything: a Pattern Studio, a
   Crafting Manager or a Network Interactor open on a monitor in sight asked the server for fresh state a few times a
   second, as if a player were at the screen, and the server refused every one of them and wrote so to its log.

@@ -3201,7 +3201,7 @@
   "jsc.cli.interac.nothing_matches": "nothing matches \"%s\"",
   "jsc.cli.interac.nothing_starred": "nothing is starred on this computer",
   "jsc.cli.interac.online": "online",
-  "jsc.cli.interac.ops_header": "ID    WHAT      ITEM                      PROGRESS",
+  "jsc.cli.interac.ops_header": "ID     WHAT      ITEM                      PROGRESS",
   "jsc.cli.interac.option.sort": "order a listing by how much there is; --sort name by name",
   "jsc.cli.interac.option.to": "leave what is taken in this computer, not your hands",
   "jsc.cli.interac.peak": "peak %s in flight today",
