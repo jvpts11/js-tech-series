@@ -14,7 +14,10 @@ import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.client.chain.ChainMachineRenderer;
 import dev.jstech.core.client.model.kit.KitModels;
+import dev.jstech.core.jstechseries.SeriesCompounds;
 import dev.jstech.core.machine.MachineStatus;
+import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelPose;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -25,74 +28,106 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * What a chain machine's renderer shows of its model: the work going through it only while it works, so an idle
- * Crusher stands empty, with no ore falling into it nor lying on its bars.
+ * What a chain machine's renderer shows of its model: the work going through it and the glow of its work only while
+ * it works, so an idle machine stands empty and cold, drawn by what only an idle machine has (a crucible's cold
+ * floor). An idle Crusher holds no ore, falling or lying on its bars; an idle Induction Furnace no melt, no charge.
  */
 public final class ChainMachineRendererClientTests {
 
     private static final int SETTLE = 4;
     private static final int WAIT = 400;
-    private static final BlockPos CORNER = new BlockPos(2, 2, 4);
+    private static final BlockPos CRUSHER_AT = new BlockPos(2, 2, 4);
+    private static final BlockPos FURNACE_AT = new BlockPos(8, 2, 4);
+    private static final String MODE = "mode_";
     private static final String WORK = "work_";
-    private static final int FERRITES = 8;
+    private static final String IDLE = "idle_";
+    private static final int LOTS = 8;
 
     private ChainMachineRendererClientTests() {
     }
 
     @ClientTest(timeoutTicks = 1200)
     public static void crusher_standsEmptyIdleAndShowsItsOreAtWork(final ClientTestContext ctx) {
-        final ChainMachine machine = ChainMachines.byId("crusher").orElseThrow();
-        final BlockPos terminal = terminalOf(machine);
-        ctx.thenBuild(0, world -> build(world::setBlock, machine))
-                .thenWaitUntilServer(level -> crusher(ctx, level, terminal).formed(), SETTLE * 30,
-                        "the Crusher to form", level -> "it stands unformed")
-                .thenWaitUntil(() -> clientCrusher(ctx, terminal) != null && clientCrusher(ctx, terminal).formed(),
-                        SETTLE * 30, "the Crusher to form on the client")
-                .thenAssert(SETTLE, () -> !workBones(machine).isEmpty(), "the Crusher's model has its ore as work")
-                .thenAssert(0, () -> workShown(ctx, machine, terminal).isEmpty(),
-                        "idle, the Crusher shows no ore falling nor lying on its bars")
-                .thenServer(0, level -> crusher(ctx, level, terminal).getInventory()
-                        .insertItem(0, new ItemStack(ChainParts.FERRITE.get(), FERRITES), false))
-                .thenWaitUntil(() -> clientCrusher(ctx, terminal).status() == MachineStatus.WORKING, WAIT,
-                        "the Crusher to work")
-                .thenAssert(0, () -> workShown(ctx, machine, terminal).size() == workBones(machine).size(),
-                        "at work, the Crusher shows all its ore");
+        idleThenAtWork(ctx, "crusher", CRUSHER_AT, List.of(new ItemStack(ChainParts.FERRITE.get(), LOTS)));
     }
 
-    /* The names of the bones of {@code machine}'s model that are the work going through it. */
-    private static List<String> workBones(final ChainMachine machine) {
+    @ClientTest(timeoutTicks = 1200)
+    public static void inductionFurnace_standsColdIdleAndMeltsAtWork(final ClientTestContext ctx) {
+        idleThenAtWork(ctx, "induction_furnace", FURNACE_AT, List.of(new ItemStack(Items.CALCITE, LOTS),
+                new ItemStack(MaterialUses.item(SeriesCompounds.COKE, Forms.LUMP).get(), LOTS)));
+    }
+
+    /*
+     * Builds machine {@code id} at {@code corner}; idle, its renderer shows none of its work and all that only an
+     * idle one has; fed {@code inputs} and at work, all its work and none of that.
+     */
+    private static void idleThenAtWork(final ClientTestContext ctx, final String id, final BlockPos corner,
+                                       final List<ItemStack> inputs) {
+        final ChainMachine machine = ChainMachines.byId(id).orElseThrow();
+        final BlockPos terminal = terminalOf(machine, corner);
+        ctx.thenBuild(0, world -> build(world::setBlock, machine, corner))
+                .thenWaitUntilServer(level -> serverMachine(ctx, level, terminal).formed(), SETTLE * 30,
+                        "the " + id + " to form", level -> "it stands unformed")
+                .thenWaitUntil(() -> clientMachine(ctx, terminal) != null && clientMachine(ctx, terminal).formed(),
+                        SETTLE * 30, "the " + id + " to form on the client")
+                .thenAssert(SETTLE, () -> !bones(machine, WORK).isEmpty(), "the " + id + "'s model has its work")
+                .thenAssert(0, () -> shown(ctx, machine, terminal, WORK).isEmpty(),
+                        "idle, the " + id + " shows none of its work")
+                .thenAssert(0, () -> shown(ctx, machine, terminal, IDLE).size() == bones(machine, IDLE).size(),
+                        "idle, the " + id + " shows all that only an idle one has")
+                .thenServer(0, level -> {
+                    for (int slot = 0; slot < inputs.size(); slot++) {
+                        serverMachine(ctx, level, terminal).getInventory().insertItem(slot, inputs.get(slot).copy(),
+                                false);
+                    }
+                })
+                .thenWaitUntil(() -> clientMachine(ctx, terminal).status() == MachineStatus.WORKING, WAIT,
+                        "the " + id + " to work")
+                .thenAssert(0, () -> shown(ctx, machine, terminal, WORK).size() == bones(machine, WORK).size(),
+                        "at work, the " + id + " shows all its work")
+                .thenAssert(0, () -> shown(ctx, machine, terminal, IDLE).isEmpty(),
+                        "at work, the " + id + " shows nothing only an idle one has");
+    }
+
+    /* The names of the bones of {@code machine}'s model marked {@code mark}. */
+    private static List<String> bones(final ChainMachine machine, final String mark) {
         final ModelData model = KitModels.get(machine.modelId()).orElseThrow().data();
         final List<String> out = new ArrayList<>();
         model.bones().forEach(bone -> {
-            if (bone.name().startsWith(WORK)) {
+            if (marked(bone.name(), mark)) {
                 out.add(bone.name());
             }
         });
         return out;
     }
 
-    /* The work bones the renderer leaves shown, posing the machine at its terminal as it stands now. */
-    private static List<String> workShown(final ClientTestContext ctx, final ChainMachine machine,
-                                          final BlockPos terminal) {
+    /* The bones marked {@code mark} the renderer leaves shown, posing the machine at its terminal as it stands now. */
+    private static List<String> shown(final ClientTestContext ctx, final ChainMachine machine,
+                                      final BlockPos terminal, final String mark) {
         final ModelPose pose = new ModelPose(KitModels.get(machine.modelId()).orElseThrow().data());
-        ChainMachineRenderer.of(machine).move(clientCrusher(ctx, terminal), pose, 0.0);
+        ChainMachineRenderer.of(machine).move(clientMachine(ctx, terminal), pose, 0.0);
         final List<String> out = new ArrayList<>();
         for (int bone = 0; bone < pose.bones(); bone++) {
             final String name = pose.model().bones().get(bone).name();
-            if (name.startsWith(WORK) && !pose.hides(bone)) {
+            if (marked(name, mark) && !pose.hides(bone)) {
                 out.add(name);
             }
         }
         return out;
     }
 
-    /* Lays {@code machine}'s blocks from {@link #CORNER} facing north, its Machine Terminal at its place. */
-    private static void build(final Placer world, final ChainMachine machine) {
+    private static boolean marked(final String name, final String mark) {
+        return name.startsWith(mark) || name.startsWith(MODE) && name.contains("_" + mark);
+    }
+
+    /* Lays {@code machine}'s blocks from {@code corner} facing north, its Machine Terminal at its place. */
+    private static void build(final Placer world, final ChainMachine machine, final BlockPos corner) {
         final List<List<String>> layers = machine.layers();
         for (int y = 0; y < layers.size(); y++) {
             for (int z = 0; z < layers.get(y).size(); z++) {
@@ -102,33 +137,33 @@ public final class ChainMachineRendererClientTests {
                     final Block block = letter == '#' ? ChainMachines.terminalOf(machine).get()
                             : ChainMachineBlocks.byId(machine.legend().get(letter)).get();
                     final BlockState state = block.defaultBlockState();
-                    world.place(CORNER.offset(x, y, z), state.hasProperty(HorizontalDirectionalBlock.FACING)
+                    world.place(corner.offset(x, y, z), state.hasProperty(HorizontalDirectionalBlock.FACING)
                             ? state.setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH) : state);
                 }
             }
         }
     }
 
-    /* Where {@link #build} lays the Machine Terminal of {@code machine}. */
-    private static BlockPos terminalOf(final ChainMachine machine) {
+    /* Where {@link #build} lays the Machine Terminal of {@code machine} built from {@code corner}. */
+    private static BlockPos terminalOf(final ChainMachine machine, final BlockPos corner) {
         final List<List<String>> layers = machine.layers();
         for (int y = 0; y < layers.size(); y++) {
             for (int z = 0; z < layers.get(y).size(); z++) {
                 final int x = layers.get(y).get(z).indexOf('#');
                 if (x >= 0) {
-                    return CORNER.offset(x, y, z);
+                    return corner.offset(x, y, z);
                 }
             }
         }
         throw new IllegalArgumentException(machine.id() + " has no terminal");
     }
 
-    private static ChainMachineBlockEntity crusher(final ClientTestContext ctx, final ServerLevel level,
-                                                   final BlockPos terminal) {
+    private static ChainMachineBlockEntity serverMachine(final ClientTestContext ctx, final ServerLevel level,
+                                                         final BlockPos terminal) {
         return (ChainMachineBlockEntity) level.getBlockEntity(ctx.abs(terminal));
     }
 
-    private static ChainMachineBlockEntity clientCrusher(final ClientTestContext ctx, final BlockPos terminal) {
+    private static ChainMachineBlockEntity clientMachine(final ClientTestContext ctx, final BlockPos terminal) {
         return ctx.mc().level.getBlockEntity(ctx.abs(terminal)) instanceof ChainMachineBlockEntity found ? found
                 : null;
     }
