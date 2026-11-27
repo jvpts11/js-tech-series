@@ -9,9 +9,16 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.InstallerStacks;
+import dev.jstech.computers.os.media.MachineMedia;
+import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CablePlugs;
@@ -38,10 +45,10 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The peripheral cables: one for each era, in the Core's cable block, each reaching its era's run. A port takes its
- * era's cable and every earlier one, so a newer computer takes an older device's cable and an older device never takes
- * a newer cable, the drives and the encoders alike; cables of two eras never join; and each cable ends in the plug of
- * the port it enters.
+ * The peripheral cables: one for each era, in the Core's cable block, each reaching its era's run. A computer's port
+ * takes its era's cable and every earlier one, never a newer one; a device's port, a drive's or an encoder's, takes
+ * every era's, so a newer computer reaches an older device with its own cable; cables of two eras never join; and each
+ * cable ends in the plug of the port it enters.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -49,6 +56,10 @@ public final class PeripheralCableGameTests {
 
     private static final String ARENA = "empty";
     private static final BlockPos PC = new BlockPos(0, 2, 0);
+    /* A Mainframe's origin, with room east of it for a cable and a drive. */
+    private static final BlockPos MAINFRAME = new BlockPos(1, 2, 2);
+    private static final ResourceLocation INTERACTOR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "interactor");
     /* Long enough for a peripheral's next tick to try its link, and a little more. */
     private static final int LINK_TICKS = 10;
 
@@ -133,42 +144,45 @@ public final class PeripheralCableGameTests {
                 .thenSucceed();
     }
 
-    /** A Vintage drive takes only the Vintage cable on its back. */
+    /**
+     * A Vintage drive takes every era's cable on its back, as an old drive works on a newer computer: the Vintage
+     * cable and the Standard computer's own one both link it. It used to take the Vintage cable only.
+     */
     @GameTest(template = ARENA)
-    public static void vintageDrive_neverTakesANewerCable(final GameTestHelper helper) {
+    public static void vintageDrive_takesEveryErasCable(final GameTestHelper helper) {
         standardPcWithCard(helper);
         final BlockPos olderRun = new BlockPos(1, 2, 0);
         final BlockPos olderDrive = new BlockPos(2, 2, 0);
-        final BlockPos newerRun = new BlockPos(0, 2, 1);
-        final BlockPos newerDrive = new BlockPos(0, 2, 2);
+        final BlockPos ownRun = new BlockPos(0, 2, 1);
+        final BlockPos ownDrive = new BlockPos(0, 2, 2);
         TestCables.lay(helper, olderRun, ComputingModule.VINTAGE_PERIPHERAL_CABLE);
         helper.setBlock(olderDrive, facingBlock(ComputingModule.FLOPPY_DRIVE.get(), Direction.EAST));
-        TestCables.lay(helper, newerRun, ComputingModule.LEGACY_PERIPHERAL_CABLE);
-        helper.setBlock(newerDrive, facingBlock(ComputingModule.FLOPPY_DRIVE.get(), Direction.SOUTH));
+        TestCables.lay(helper, ownRun, ComputingModule.PERIPHERAL_CABLE);
+        helper.setBlock(ownDrive, facingBlock(ComputingModule.FLOPPY_DRIVE.get(), Direction.SOUTH));
         helper.startSequence()
                 .thenExecuteAfter(LINK_TICKS, () -> {
                     helper.assertTrue(driveLinked(helper, olderDrive), "the Vintage cable links the floppy drive");
-                    helper.assertTrue(!driveLinked(helper, newerDrive), "the Legacy cable does not fit it");
+                    helper.assertTrue(driveLinked(helper, ownDrive), "and so does the Standard computer's own cable");
                 })
                 .thenSucceed();
     }
 
     /**
-     * A Pattern Encoder takes the device port of its era on its back: the cable of its era and every earlier one, as
-     * the drives do, and never a newer one.
+     * A Pattern Encoder takes every era's cable on its back, as the drives do: the cable of its era, a newer one and an
+     * older one alike.
      */
     @GameTest(template = ARENA)
-    public static void encoders_takeTheirErasCableAndEveryEarlierOne(final GameTestHelper helper) {
+    public static void encoders_takeEveryErasCable(final GameTestHelper helper) {
         standardPcWithCard(helper);
         // A Legacy cable east to a Legacy encoder, its back to the cable.
         TestCables.lay(helper, new BlockPos(1, 2, 0), ComputingModule.LEGACY_PERIPHERAL_CABLE);
         final BlockPos ownEra = new BlockPos(2, 2, 0);
         helper.setBlock(ownEra, facingBlock(ComputingModule.LEGACY_PATTERN_ENCODER.get(), Direction.EAST));
-        // A Transition cable south to another Legacy encoder: a newer cable than its port takes.
+        // A Transition cable south to another Legacy encoder: a newer cable than the encoder's era.
         TestCables.lay(helper, new BlockPos(0, 2, 1), ComputingModule.TRANSITION_PERIPHERAL_CABLE);
         final BlockPos newer = new BlockPos(0, 2, 2);
         helper.setBlock(newer, facingBlock(ComputingModule.LEGACY_PATTERN_ENCODER.get(), Direction.SOUTH));
-        // A Vintage cable up and over to a Standard encoder: an older cable, which its port takes.
+        // A Vintage cable up and over to a Standard encoder: an older cable than the encoder's era.
         TestCables.lay(helper, new BlockPos(0, 3, 0), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
         TestCables.lay(helper, new BlockPos(0, 3, 1), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
         final BlockPos older = new BlockPos(0, 3, 2);
@@ -176,8 +190,34 @@ public final class PeripheralCableGameTests {
         helper.startSequence()
                 .thenExecuteAfter(LINK_TICKS, () -> {
                     helper.assertTrue(encoderLinked(helper, ownEra), "the Legacy encoder takes the Legacy cable");
-                    helper.assertTrue(!encoderLinked(helper, newer), "and not the Transition one");
+                    helper.assertTrue(encoderLinked(helper, newer), "and the Transition one");
                     helper.assertTrue(encoderLinked(helper, older), "the Standard encoder takes the Vintage cable");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A Standard Mainframe reads the Interactor's install floppy in a Floppy Drive joined with the Mainframe's own
+     * cable. The Interactor comes on a floppy only, and the drive used to refuse every cable newer than the Vintage's.
+     */
+    @GameTest(template = ARENA)
+    public static void standardMainframe_readsTheInteractorFloppyOnItsOwnCable(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(MAINFRAME);
+        TestCables.lay(helper, MAINFRAME.east(), ComputingModule.PERIPHERAL_CABLE);
+        final BlockPos drive = MAINFRAME.east(2);
+        helper.setBlock(drive, facingBlock(ComputingModule.FLOPPY_DRIVE.get(), Direction.EAST));
+        final ItemStack installer = InstallerStacks.forProgram(INTERACTOR);
+        helper.<MediaReaderBlockEntity>getBlockEntity(drive).mediaSlot().setStackInSlot(0, installer);
+        helper.startSequence()
+                .thenExecuteAfter(LINK_TICKS, () -> {
+                    helper.assertTrue(installer.getItem() instanceof FormattedMediaItem medium
+                            && medium.format() == MediaFormat.FLOPPY, "the Interactor comes on a floppy");
+                    helper.assertValueEqual(helper.<MediaReaderBlockEntity>getBlockEntity(drive).ownerPos(),
+                            mainframe.getBlockPos(), "the drive on the Standard cable hangs from the Mainframe");
+                    final IMediaDrive found = MachineMedia.of(mainframe, helper.getLevel())
+                            .installing(MediaKind.PROGRAM_INSTALL);
+                    helper.assertTrue(found != null && INTERACTOR.equals(found.payload()),
+                            "and the Mainframe finds the Interactor's installer in it");
                 })
                 .thenSucceed();
     }

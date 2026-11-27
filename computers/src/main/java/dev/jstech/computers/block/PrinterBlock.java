@@ -46,13 +46,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /**
  * A printer, one for each era, generic: it prints whatever a program of its computer sends it. A click with paper fills
  * its tray; a plain click opens its window, with the tray, the job printing, the queue and the sheets that came out.
- * It links to a computer as a drive does, against it or on a peripheral cable into the port of its era on its back.
+ * It links to a computer as a drive does, against it or on a peripheral cable of any era into the port on its back.
  */
 @TextHolder
 public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
     private final Era era;
-    private final FacePorts ports;
 
     public static final MapCodec<PrinterBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -68,7 +67,6 @@ public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraCha
     public PrinterBlock(final Properties properties, final Era era) {
         super(properties, DEVICE);
         this.era = era;
-        this.ports = PeripheralSockets.back(era);
     }
 
     /** The printer this block is. */
@@ -93,10 +91,10 @@ public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraCha
         lines.add(GameText.component(model().printsIn()).withStyle(ChatFormatting.GRAY));
     }
 
-    /** The device port of its era, in the middle of its back. */
+    /** The device port in the middle of its back, which takes every era's peripheral cable. */
     @Override
     public FacePorts ports() {
-        return ports;
+        return PeripheralSockets.back();
     }
 
     @Override

@@ -18,7 +18,9 @@ There is one cable per era, with the plugs of its era:
 | Standard | braided | HDMI and USB 3 | 16 |
 | Advanced | space grey | DisplayPort and USB-C | 20 |
 
-- A port takes the cable of its era and of every era before it; cables of two eras never join.
+- A computer's port takes the cable of its era and of every era before it; cables of two eras never join. A device's
+  port takes the cable of every era, as a real old drive still works on a newer computer: a newer computer reaches an
+  older device with its own cable, and a Floppy Drive reads its floppies on a Standard Mainframe.
 - A device takes the cable at its back, where its model has the port; a computer, on any face. A device right against
   its computer needs no cable.
 - **Ports by kind**, as on a real computer ([Hardware](hardware.md)): a monitor takes a video output of a graphics card

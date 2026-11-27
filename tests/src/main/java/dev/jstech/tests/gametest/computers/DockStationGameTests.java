@@ -168,9 +168,9 @@ public final class DockStationGameTests {
     }
 
     /**
-     * The Dock serves the disks of every era, so its back takes every era's peripheral cable: an Advanced computer
-     * reaches it with its own cable. It used to take the Standard's and older only, and the install of an Advanced
-     * system from a stick in it failed with nothing said.
+     * The Dock's back takes every era's peripheral cable, as every device's does: an Advanced computer reaches it with
+     * its own cable. It used to take the Standard's and older only, and the install of an Advanced system from a stick
+     * in it failed with nothing said.
      */
     @GameTest(template = ARENA)
     public static void dock_backTakesEveryErasCable(final GameTestHelper helper) {

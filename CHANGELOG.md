@@ -4441,6 +4441,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) An old device works on a newer computer, as a real one does: every device's port takes the peripheral
+  cable of every era, so a Floppy Drive joined to a Standard Mainframe with the Mainframe's own cable reads the
+  floppies of the Vintage, and a Standard computer reaches a Vintage monitor, speaker or printer the same way. A
+  computer still takes no cable newer than its own era's. The drives' line on what cable their port takes is gone.
 - (Core) A row of tabs too wide for its strip, even with its tabs squeezed, scrolls as a Windows XP tab control's
   does: two arrows at the strip's end move it a tab at a time, and a tab chosen is brought into view. The
   Lithography program's seven lists of an Injection Moulder fit this way in Portuguese.

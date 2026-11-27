@@ -35,7 +35,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public class Printer3DBlock extends DeviceBlock implements IEraChassisBlock {
 
     private final Printer3DModel model;
-    private final FacePorts ports;
 
     public static final MapCodec<Printer3DBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -50,7 +49,6 @@ public class Printer3DBlock extends DeviceBlock implements IEraChassisBlock {
     public Printer3DBlock(final Properties properties, final Printer3DModel model) {
         super(properties, DEVICE);
         this.model = model;
-        this.ports = PeripheralSockets.back(model.era());
     }
 
     /** The model this block is. */
@@ -63,10 +61,10 @@ public class Printer3DBlock extends DeviceBlock implements IEraChassisBlock {
         return model.era();
     }
 
-    /** The device port of its era, in the middle of its back. */
+    /** The device port in the middle of its back, which takes every era's peripheral cable. */
     @Override
     public FacePorts ports() {
-        return ports;
+        return PeripheralSockets.back();
     }
 
     @Override

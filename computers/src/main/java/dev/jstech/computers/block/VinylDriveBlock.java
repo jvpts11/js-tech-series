@@ -37,13 +37,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /**
  * A Vinyl RW Drive, one for each era (computers/docs/design/peripherals.md): a click with a music disc or a blank vinyl
  * lays it on the platter, an empty hand takes it off; Soundfoundry, on the computer at the cable's other end, records
- * the disc and cuts onto the blank. It links to a computer as a drive does, against it or on a peripheral cable into the
- * port of its era on its back.
+ * the disc and cuts onto the blank. It links to a computer as a drive does, against it or on a peripheral cable of any
+ * era into the port on its back.
  */
 public class VinylDriveBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
     private final Era era;
-    private final FacePorts ports;
 
     public static final MapCodec<VinylDriveBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -57,7 +56,6 @@ public class VinylDriveBlock extends DeviceBlock implements IFaceConnector, IEra
     public VinylDriveBlock(final Properties properties, final Era era) {
         super(properties, DEVICE);
         this.era = era;
-        this.ports = PeripheralSockets.back(era);
     }
 
     public Era era() {
@@ -69,10 +67,10 @@ public class VinylDriveBlock extends DeviceBlock implements IFaceConnector, IEra
         return era;
     }
 
-    /** The device port of its era, in the middle of its back. */
+    /** The device port in the middle of its back, which takes every era's peripheral cable. */
     @Override
     public FacePorts ports() {
-        return ports;
+        return PeripheralSockets.back();
     }
 
     @Override

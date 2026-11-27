@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 public class RedstoneInterfaceBlock extends DirectionalBlock implements EntityBlock, IFaceConnector {
 
     private final Era era;
-    private final FacePorts ports;
 
     public static final MapCodec<RedstoneInterfaceBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -61,19 +60,18 @@ public class RedstoneInterfaceBlock extends DirectionalBlock implements EntityBl
     public RedstoneInterfaceBlock(final Properties properties, final Era era) {
         super(properties);
         this.era = era;
-        this.ports = PeripheralSockets.back(era);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
-    /** The era of its housing, which decides the port on its back. */
+    /** The era of its housing. */
     public Era era() {
         return era;
     }
 
-    /** The port of its era in the middle of its back, where its wires go into a gland. */
+    /** The port in the middle of its back, where its wires go into a gland; it takes every era's peripheral cable. */
     @Override
     public FacePorts ports() {
-        return ports;
+        return PeripheralSockets.back();
     }
 
     /* The lens faces the way the player looks, so it meets the block the player placed it against. */

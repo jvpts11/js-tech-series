@@ -122,12 +122,11 @@ public enum MediaDriveType implements IStableName {
     }
 
     /**
-     * The era the drive is of, which decides the port on its back (save the Dock's, see {@link #portEra()}) and so the
-     * peripheral cables it takes: the floppy
-     * drive the Vintage's parallel port, the CD drive the Legacy's USB, the DVD drive the Transition's USB 2, the Dock
-     * the Standard's USB 3, the Blu-ray drive the Advanced's USB-C. The DVD drive is the Transition's, as the real
-     * ones were and as that era's programs need, since they come on DVDs; a Standard computer reaches it with a
-     * Transition cable. A case's front port came with the Transition's case.
+     * The era the drive is of: the floppy drive the Vintage's, the CD drive the Legacy's, the DVD drive the
+     * Transition's, the Dock the Standard's, the Blu-ray drive the Advanced's. The DVD drive is the Transition's, as
+     * the real ones were and as that era's programs need, since they come on DVDs. A case's front port came with the
+     * Transition's case. The era does not hold back the computers a drive serves: its port takes every era's
+     * peripheral cable, so a newer computer reads an old floppy drive with its own cable.
      */
     public Era era() {
         return switch (this) {
@@ -137,15 +136,6 @@ public enum MediaDriveType implements IStableName {
             case DOCK_STATION -> HardwareEra.STANDARD;
             case BLU_RAY_DRIVE -> HardwareEra.ADVANCED;
         };
-    }
-
-    /**
-     * The newest era of peripheral cable the drive's port takes, a port taking its own era's cable and every earlier
-     * one. The Dock serves the disks of every era, so it takes every era's cable: an Advanced computer reaches it with
-     * its own cable, not only with an older one.
-     */
-    public Era portEra() {
-        return this == DOCK_STATION ? HardwareEra.ADVANCED : era();
     }
 
     /** Returns whether this drive can read media of the given format. */

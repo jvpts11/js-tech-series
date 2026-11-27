@@ -15,7 +15,6 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -32,11 +31,8 @@ public class NetworkGatewayBlock extends DeviceBlock implements IFaceConnector {
 
     public static final MapCodec<NetworkGatewayBlock> CODEC = simpleCodec(NetworkGatewayBlock::new);
 
-    /*
-     * Its socket is a serial port, the Vintage cable's: every computer takes that cable, so it serves every era, a
-     * cable of a later era never fitting it.
-     */
-    private static final FacePorts PORTS = PeripheralSockets.back(HardwareEra.VINTAGE);
+    /* Its socket is a serial port, and like every device's it takes every era's peripheral cable. */
+    private static final FacePorts PORTS = PeripheralSockets.back();
 
     /** True while the status lights are on: linked to a host, or blinking for Identify. */
     public static final BooleanProperty LIT = BlockStateProperties.LIT;

@@ -38,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>A peripheral reaches its computer by standing against it, or along the peripheral wires of the Core's cable
  * blocks. A wire leads only where it crosses: to the cables of its own era it joins and to the blocks it plugs into,
- * and it plugs into a peripheral or a computer only where that block's port takes its era's cable, so an older device
- * never hangs from a newer cable. A run reaches as far as its era's cable does.
+ * and it plugs into a peripheral or a computer only where that block's port takes its era's cable: a device's port takes
+ * every era's, a computer's its own era's and the earlier ones, so a newer cable never reaches an older computer. A run
+ * reaches as far as its era's cable does.
  */
 public final class PeripheralLinks {
 

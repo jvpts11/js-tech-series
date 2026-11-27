@@ -86,15 +86,13 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
     private boolean breaking;
 
     /*
-     * What a player looking at the drive reads: the newest peripheral cable its port takes (a floppy drive's
-     * parallel port takes no newer cable than the Vintage one, whatever computer is at the other end), and the
-     * computer it is linked to, or that none reaches it on a cable it takes.
+     * What a player looking at the drive reads: the computer it is linked to, or that none reaches it. Its port takes
+     * every era's peripheral cable, so a drive is unlinked only for want of a computer at the cable's other end that
+     * takes that cable.
      */
-    private static final TextKey TAKES_CABLE = TextKey.of("jsc.media_reader.takes_cable",
-            "Its port takes the %s peripheral cable or an older one");
     private static final TextKey LINKED_TO = TextKey.of("jsc.media_reader.linked_to", "Linked to %s at %s, %s, %s");
     private static final TextKey NOT_LINKED = TextKey.of("jsc.media_reader.not_linked",
-            "Not linked: no computer reaches it on a cable it takes");
+            "Not linked: no computer reaches it on a peripheral cable");
 
     public MediaReaderBlockEntity(final BlockPos pos, final BlockState state) {
         this(ComputingModule.MEDIA_READER_BE.get(), pos, state);
@@ -166,7 +164,6 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
 
     @Override
     public void describe(final List<Text> lines, final boolean details) {
-        lines.add(TAKES_CABLE.with(driveType().portEra().text()));
         final BlockPos owner = ownerPos();
         if (owner == null || level == null) {
             lines.add(NOT_LINKED.text());

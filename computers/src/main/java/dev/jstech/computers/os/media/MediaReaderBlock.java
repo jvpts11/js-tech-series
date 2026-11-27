@@ -53,14 +53,14 @@ import org.jetbrains.annotations.Nullable;
  * <p>The concrete drive (Floppy / CD / DVD / Dock) is decided by the {@link MediaDriveType} passed at registration,
  * which also controls which media formats the slot accepts.
  *
- * <p>A peripheral of its computer: against it, or on a peripheral cable into the port of its era on its back, it links
- * to the computer, which then finds installation media in it without the reader having to stand beside it.
+ * <p>A peripheral of its computer: against it, or on a peripheral cable of any era into the port on its back, it links
+ * to the computer, which then finds installation media in it without the reader having to stand beside it. An old
+ * floppy drive serves a newer computer as a real one does.
  */
 @TextHolder
 public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITrayBlock, IStandingParts {
 
     private final MediaDriveType driveType;
-    private final FacePorts ports;
 
     public static final MapCodec<MediaReaderBlock> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
@@ -92,7 +92,6 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITr
     protected MediaReaderBlock(final MediaDriveType driveType, final Properties properties, final Device<?> device) {
         super(properties, device);
         this.driveType = driveType;
-        this.ports = PeripheralSockets.back(driveType.portEra());
         registerDefaultState(defaultBlockState().setValue(LOADED, false));
     }
 
@@ -101,10 +100,10 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITr
         return driveType;
     }
 
-    /** The device port of the drive's era, in the middle of its back. */
+    /** The device port in the middle of its back, which takes every era's peripheral cable. */
     @Override
     public FacePorts ports() {
-        return ports;
+        return PeripheralSockets.back();
     }
 
     @Override

@@ -55,8 +55,9 @@ starts at an era.
 - An operating system needs hardware of its first era or newer.
 - A rack takes servers of its era or older.
 - A port takes the cable of its era and of every era before it, never of a later one. Two eras of the same cable line
-  that touch do not join: they meet at a router of the newer era. Peripheral cables follow the same rule
-  ([Peripherals](peripherals.md), [The network](network.md)).
+  that touch do not join: they meet at a router of the newer era. Peripheral cables follow the same rule at a
+  computer, but a device takes every era's peripheral cable, so a newer computer uses an older device and reads its
+  media ([Peripherals](peripherals.md), [The network](network.md)).
 - Each removable medium goes in its own kind of drive. A drive also reads older optical discs: a DVD drive reads CDs, a
   Blu-ray drive reads DVDs and CDs.
 - Power supplies of any era go in any computer: a power supply is just power, and a new one runs an old board fine.

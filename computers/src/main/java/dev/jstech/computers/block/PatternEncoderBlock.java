@@ -65,7 +65,6 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
         IStandingParts {
 
     private final Era era;
-    private final FacePorts ports;
 
     public static final MapCodec<PatternEncoderBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -118,7 +117,6 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
     public PatternEncoderBlock(final Properties properties, final Era era) {
         super(properties, DEVICE);
         this.era = era;
-        this.ports = PeripheralSockets.back(era);
     }
 
     /** The era of this encoder, which decides which media it writes. */
@@ -131,10 +129,10 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
         return era;
     }
 
-    /** The device port of its era, in the middle of its back. */
+    /** The device port in the middle of its back, which takes every era's peripheral cable. */
     @Override
     public FacePorts ports() {
-        return ports;
+        return PeripheralSockets.back();
     }
 
     /** The button of its tray; the Vintage encoder writes floppies, which go through a slot, and has none. */

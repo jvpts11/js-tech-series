@@ -44,7 +44,6 @@ import net.minecraft.world.phys.BlockHitResult;
 public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
     private final Era era;
-    private final FacePorts ports;
 
     public static final MapCodec<SpeakerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -66,7 +65,6 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
     public SpeakerBlock(final Properties properties, final Era era) {
         super(properties, DEVICE);
         this.era = era;
-        this.ports = PeripheralSockets.back(era);
         registerDefaultState(defaultBlockState().setValue(LIT, false));
     }
 
@@ -100,10 +98,10 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
         return era;
     }
 
-    /** The audio jack of its era, in the middle of its back. */
+    /** The audio jack in the middle of its back, which takes every era's peripheral cable. */
     @Override
     public FacePorts ports() {
-        return ports;
+        return PeripheralSockets.back();
     }
 
     @Override

@@ -24,6 +24,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -128,29 +129,30 @@ public final class DeviceMapGameTests {
 
     /* A port as a Device Manager lists it: its name, and what is plugged into it. */
     /**
-     * A drive says what cable its port takes and the computer it is linked to: a floppy drive against a Standard
-     * computer links, and one on a Standard peripheral cable, newer than its Vintage port takes, says it is not.
+     * A drive says the computer it is linked to: a floppy drive against a Standard computer links, and one on an
+     * Advanced peripheral cable, newer than the computer takes, says no computer reaches it.
      */
     @GameTest(template = ARENA)
-    public static void drive_saysTheCableItTakesAndWhetherItIsLinked(final GameTestHelper helper) {
+    public static void drive_saysWhetherItIsLinked(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningPersonalComputer(COMPUTER);
         helper.setBlock(COMPUTER.south(), ComputingModule.FLOPPY_DRIVE.get());
-        world.setBlock(COMPUTER.west(), ComputingModule.PERIPHERAL_CABLE);
-        helper.setBlock(COMPUTER.west(2), ComputingModule.FLOPPY_DRIVE.get());
+        world.setBlock(COMPUTER.west(), ComputingModule.ADVANCED_PERIPHERAL_CABLE);
+        // Facing west, the drive's back meets the cable, so only the computer's era keeps it unlinked.
+        helper.setBlock(COMPUTER.west(2), ComputingModule.FLOPPY_DRIVE.get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.WEST));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final BlockPos pc = helper.absolutePos(COMPUTER);
                     final String computer = GameText.of(helper.getBlockState(COMPUTER).getBlock().getName())
                             .english();
                     final List<String> near = described(helper, COMPUTER.south());
-                    helper.assertTrue(near.equals(List.of("Its port takes the Vintage peripheral cable or an older one",
-                                    "Linked to " + computer + " at " + pc.getX() + ", " + pc.getY() + ", "
-                                    + pc.getZ())), "the drive against the computer is linked to it: " + near);
+                    helper.assertTrue(near.equals(List.of("Linked to " + computer + " at " + pc.getX() + ", "
+                                    + pc.getY() + ", " + pc.getZ())),
+                            "the drive against the computer is linked to it: " + near);
                     final List<String> far = described(helper, COMPUTER.west(2));
-                    helper.assertTrue(far.equals(List.of("Its port takes the Vintage peripheral cable or an older one",
-                                    "Not linked: no computer reaches it on a cable it takes")),
-                            "the drive on a newer cable says it is not linked and what it takes: " + far);
+                    helper.assertTrue(far.equals(List.of("Not linked: no computer reaches it on a peripheral cable")),
+                            "the drive on a cable newer than the computer says it is not linked: " + far);
                 })
                 .thenSucceed();
     }

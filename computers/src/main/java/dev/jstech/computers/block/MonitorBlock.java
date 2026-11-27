@@ -100,8 +100,6 @@ import org.jetbrains.annotations.Nullable;
 public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
     private final MonitorKind kind;
-    /* Its port, worked out the first time it is asked: the era a monitor is of is its kind's to say. */
-    private @Nullable FacePorts ports;
 
     public static final MapCodec<MonitorBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             MonitorKind.CODEC.fieldOf("kind").forGetter(MonitorBlock::kind),
@@ -143,13 +141,10 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         return era();
     }
 
-    /** The video port of its era, in the middle of its back. */
+    /** The video port in the middle of its back, which takes every era's peripheral cable. */
     @Override
     public FacePorts ports() {
-        if (this.ports == null) {
-            this.ports = PeripheralSockets.behindScreen(era());
-        }
-        return this.ports;
+        return PeripheralSockets.behindScreen();
     }
 
     /** What its tube shows, whether it joins others into a big screen, that its computer's sound comes out of it. */

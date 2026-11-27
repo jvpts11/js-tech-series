@@ -134,7 +134,9 @@ Interface. It is a different line from the data cables and carries no network.
 | Standard | braided | HDMI and USB 3 | 16 |
 | Advanced | space grey | DisplayPort and USB-C | 20 |
 
-- A port takes its era's cable and every earlier one; cables of two eras never join.
+- A computer's port takes its era's cable and every earlier one; cables of two eras never join. A device's port
+  takes every era's cable, so an old device works on a newer computer joined with that computer's own cable: a
+  Floppy Drive reads its floppies on a Standard Mainframe.
 - A device takes the cable on its back, where its model has the port; a computer on any face. A device placed
   against its computer needs no cable at all.
 - Ports go by kind, as on a real computer: a monitor takes a video output of a graphics card, speakers the audio

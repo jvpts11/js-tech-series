@@ -19,7 +19,8 @@ import net.minecraft.resources.ResourceLocation;
  * The peripheral line: the short cables between a machine and its own screens, speakers and devices, one cable for
  * each era (serial and parallel on the Vintage, then USB with the video cable of its day). Each era's cable is a
  * generation of the line, so a port takes its own era's cable and every earlier one, as a newer machine still takes an
- * older plug; an older device never takes a newer cable.
+ * older plug. A device asks for the newest generation, which takes every era's cable, so an old drive or screen still
+ * works on a newer machine with that machine's own cable.
  *
  * <p>How far a run reaches grows with the era: eight cables on the Vintage, then twelve, fourteen, sixteen and twenty.
  * The numbers are first estimates.

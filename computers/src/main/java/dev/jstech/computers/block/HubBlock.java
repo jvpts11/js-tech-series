@@ -13,9 +13,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.HubBlockEntity;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.FacePorts;
-import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.EraTable;
@@ -38,13 +36,12 @@ import org.jetbrains.annotations.Nullable;
  * the Standard and the Advanced. Screens and speakers do not pass through it, as no hub carries a video or an audio
  * signal.
  *
- * <p>Every face takes the peripheral cable of its era and of every earlier one, the cable up to the computer and the
- * cables down to the devices alike, and the cable after a hub reaches as far again as the cable before it.
+ * <p>Every face takes the peripheral cable of every era, the cable up to the computer and the cables down to the
+ * devices alike, as every device's port does, and the cable after a hub reaches as far again as the cable before it.
  */
 public class HubBlock extends Block implements EntityBlock, IFaceConnector {
 
     private final Era era;
-    private final FacePorts ports;
 
     public static final MapCodec<HubBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -58,7 +55,6 @@ public class HubBlock extends Block implements EntityBlock, IFaceConnector {
     public HubBlock(final Properties properties, final Era era) {
         super(properties);
         this.era = era;
-        this.ports = FacePorts.builder().port(FaceRule.EVERY, PeripheralLine.of(era)).build();
     }
 
     /** How many devices a hub of {@code era} offers ports to. The numbers are first estimates. */
@@ -66,7 +62,7 @@ public class HubBlock extends Block implements EntityBlock, IFaceConnector {
         return PORTS.get(era);
     }
 
-    /** The era the hub belongs to: the newest peripheral cable it takes. */
+    /** The era the hub belongs to, which sets how many devices it offers ports to. */
     public Era era() {
         return era;
     }
@@ -78,7 +74,7 @@ public class HubBlock extends Block implements EntityBlock, IFaceConnector {
 
     @Override
     public FacePorts ports() {
-        return ports;
+        return PeripheralSockets.everyFace();
     }
 
     @Override

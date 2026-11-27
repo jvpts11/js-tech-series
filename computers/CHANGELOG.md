@@ -941,6 +941,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   A pattern file written before keeps every input lasting one run.
 
 ### Changed
+- An old device works on a newer computer, as a real one does: every device's port takes the peripheral
+  cable of every era, so a Floppy Drive joined to a Standard Mainframe with the Mainframe's own cable reads the
+  floppies of the Vintage, and a Standard computer reaches a Vintage monitor, speaker or printer the same way. A
+  computer still takes no cable newer than its own era's. The drives' line on what cable their port takes is gone.
 - Board components: each socket, slot and connector is made of its own plastic body, "Socket Body (LGA
   1700)" or "Body (DDR5 DIMM Slot)", which the Injection Moulder moulds from the plastic the component took before,
   in the body's own mould, lent to the job and never used up; the component takes its body where it took the
