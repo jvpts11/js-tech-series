@@ -2573,6 +2573,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   one.
 
 ### Fixed
+- A machine gathers an input spread over several of its slots into one: fed lot after lot, it took each
+  recipe from whichever slot held enough, and the rest could end up shared among slots none of which held a whole
+  input, so the machine waited for ever with all it needed inside (an assembly line held a socket's 61 copper foils as
+  49 and four times 3).
 - The Multiblock Builder calls a multiblock the same aimed at its terminal as in front of a projector: a dock
   was the "Shipyard Terminal" one way and the "Small Shipyard" the other. Its header gives up the size line before it
   cuts the name.

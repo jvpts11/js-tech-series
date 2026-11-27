@@ -271,6 +271,26 @@ public final class ChainMachineGameTests {
         });
     }
 
+    /*
+     * An input spread over slots none of which holds all of it, as the network's lots leave it once a recipe has
+     * taken from the fullest slot again and again, is gathered into one slot and made: a coil's four wires, three in
+     * one slot and one in another.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 1200)
+    public static void coilWinder_gathersAnInputSpreadOverSlots(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("coil_winder"));
+        final Item wire = MaterialUses.item(Elements.of(Element.COPPER), Forms.WIRE).get();
+        final Item pvc = MaterialUses.item(SeriesCompounds.PVC, Forms.SHEET).get();
+        helper.runAfterDelay(20, () -> {
+            final IItemHandler slots = machineAt(helper, terminal).getInventory();
+            slots.insertItem(0, new ItemStack(wire, 3), false);
+            slots.insertItem(1, new ItemStack(pvc, 1), false);
+            slots.insertItem(2, new ItemStack(wire, 1), false);
+        });
+        helper.succeedWhen(() -> helper.assertTrue(holds(machineAt(helper, terminal), ChainParts.COPPER_COIL.get(),
+                1), "a coil from its wire spread over two slots"));
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void crusher_runsItsLoopOnlyWhileItWorks(final GameTestHelper helper) {
         final BlockPos terminal = formed(helper, machine("crusher"));

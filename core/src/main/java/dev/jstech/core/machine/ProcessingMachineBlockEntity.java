@@ -10,6 +10,7 @@ package dev.jstech.core.machine;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.CombinedTanks;
 import dev.jstech.core.blockentity.FieldFluidTank;
+import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.PartField;
@@ -882,6 +883,32 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
     }
 
     /*
+     * Gathers what lane {@code lane}'s input slots hold of one item into the first of them, as much as it holds. The
+     * network feeds lot after lot and a recipe takes from whichever slot holds enough, so the rest of a lot that
+     * spilled into another slot can end up spread over several, none holding a whole input, and the lane would wait
+     * on it forever.
+     */
+    private void gatherInputs(final int lane) {
+        final FieldItemHandler slots = getInventory();
+        for (int index = 0; index < layout.inputs(); index++) {
+            final int into = layout.laneInput(lane, index);
+            for (int other = index + 1; other < layout.inputs(); other++) {
+                final ItemStack kept = slots.getStackInSlot(into);
+                final int from = layout.laneInput(lane, other);
+                final ItemStack spilled = slots.getStackInSlot(from);
+                final int room = kept.isEmpty() ? 0 : slots.stackLimitOf(into, kept) - kept.getCount();
+                if (room <= 0 || !ItemStack.isSameItemSameComponents(kept, spilled)) {
+                    continue;
+                }
+                final int moved = Math.min(room, spilled.getCount());
+                slots.setStackInSlot(into, kept.copyWithCount(kept.getCount() + moved));
+                slots.setStackInSlot(from, moved == spilled.getCount() ? ItemStack.EMPTY
+                        : spilled.copyWithCount(spilled.getCount() - moved));
+            }
+        }
+    }
+
+    /*
      * Sorts what its lanes hold of each input among them, as even as it goes, the first lanes taking what is left over:
      * only when every lane that holds anything there holds the same item, and only into lanes not locked to another.
      */
@@ -991,6 +1018,10 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             final int held = found.map(each -> setsHeld(each, effect)).orElse(0);
             if (held <= 0) {
                 reset();
+                // A waiting machine sleeps until something changes, so this runs once a wake, not every tick.
+                if (!input.isEmpty()) {
+                    gatherInputs(this.index);
+                }
                 return locked ? MachineStatus.LOCKED : MachineStatus.WAITING;
             }
             final Processing work = found.get();
