@@ -5028,6 +5028,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) The ore falling through a Crusher and the water raining in a Cooling Tower fall on and are gone at the
+  bottom, as their approved models draw them: each lump and each drop slid back up to the top over one frame.
+- (Computers) A Crusher standing idle holds no ore: the lumps falling into it and those lying on its bars show only
+  while it works. A Cooling Tower rains only while it works.
 - (Computers) `interac ops` keeps a space between an operation's id and what it does: the six-character id filled
   its whole column and ran into the word after it.
 - (Core) A machine gathers an input spread over several of its slots into one: fed lot after lot, it took each

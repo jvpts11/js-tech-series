@@ -1290,6 +1290,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- The ore falling through a Crusher and the water raining in a Cooling Tower fall on and are gone at the
+  bottom, as their approved models draw them: each lump and each drop slid back up to the top over one frame.
+- A Crusher standing idle holds no ore: the lumps falling into it and those lying on its bars show only
+  while it works. A Cooling Tower rains only while it works.
 - `interac ops` keeps a space between an operation's id and what it does: the six-character id filled
   its whole column and ran into the word after it.
 - A monitor showing a desktop in the world no longer asks its machine for anything: a Pattern Studio, a

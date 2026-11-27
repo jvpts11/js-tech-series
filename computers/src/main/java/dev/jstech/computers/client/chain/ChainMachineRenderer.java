@@ -29,7 +29,8 @@ import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Draws a formed chain machine from its terminal, as its approved mock draws it (computers/docs/design/survival.md):
- * its model over the whole machine, playing its working loop while it works and at rest otherwise; only the bones of
+ * its model over the whole machine, playing its working loop while it works and at rest otherwise; what goes through
+ * it (the ore falling into a crusher) only while it works, so an idle one stands empty; only the bones of
  * the mode it works in (a tube or a flat screen); the bones of each channel painted in the colour of the material at
  * work; the things of the recipe at its locators (the moulder's body and its mould); and, while it works, what it
  * gives off, each emitter an effect held in the world where the machine stands,
@@ -44,6 +45,8 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
      * of the removed ones. */
     private static final Map<ChainMachineBlockEntity, Held> HELD = new HashMap<>();
     private static final String MODE = "mode_";
+    /* The model's bones of what goes through the machine, a mode's own after the mode's name. */
+    private static final String WORK = "work_";
     private static final String TINT = "_tint_";
     private static final String GLOW = "_glow";
     private static final String WORKING = "working";
@@ -78,7 +81,7 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
 
     @Override
     public void drive(final ChainMachineBlockEntity terminal, final ModelAnimator animator, final double seconds) {
-        final boolean working = terminal.formed() && terminal.status() == MachineStatus.WORKING;
+        final boolean working = working(terminal);
         if (working) {
             animator.play("main", WORKING, seconds);
         } else {
@@ -90,9 +93,11 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
     @Override
     public void move(final ChainMachineBlockEntity terminal, final ModelPose pose, final double seconds) {
         final String mode = MODE + ChainReflect.mode(terminal) + "_";
+        final boolean working = working(terminal);
         for (int bone = 0; bone < pose.bones(); bone++) {
             final String name = pose.model().bones().get(bone).name();
-            if (name.startsWith(MODE) && !name.startsWith(mode)) {
+            final boolean work = name.startsWith(WORK) || name.startsWith(MODE) && name.contains("_" + WORK);
+            if (name.startsWith(MODE) && !name.startsWith(mode) || work && !working) {
                 pose.setHidden(bone, true);
             }
             final int at = name.indexOf(TINT);
@@ -147,6 +152,11 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
             holders.add(holder);
         }
         HELD.put(terminal, new Held(work, holders));
+    }
+
+    /* Whether the machine stands formed and at work. */
+    private static boolean working(final ChainMachineBlockEntity terminal) {
+        return terminal.formed() && terminal.status() == MachineStatus.WORKING;
     }
 
     /* A place on the machine as it stands facing north, turned as it was built. */
