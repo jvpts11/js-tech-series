@@ -1172,10 +1172,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private void layoutBar(final int x, final int barY, final int width, final boolean loaded) {
         final boolean complete = draftComplete();
-        final boolean inRom = draftInRom();
         burn.setEnabled(loaded && complete && state.encoder().linked());
         saveDisk.setEnabled(loaded && complete);
-        loadRom.setEnabled(loaded && complete && state.craftingComputer() && state.hasCard() && !inRom);
+        loadRom.setEnabled(loaded && complete && state.craftingComputer() && state.hasCard() && !loadedWhereChosen());
         final FlowLayout row = FlowLayout.row(x + PAD, barY + (BAR_H - BTN_H) / 2 + 1, PAD);
         row.place(burn, BAR_BTN_W, BTN_H);
         row.place(saveDisk, BAR_BTN_W, BTN_H);
@@ -1220,7 +1219,16 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private String loadRomLabel() {
-        return GameText.resolve(draftInRom() ? IN_ROM : LOAD_ROM);
+        return GameText.resolve(loadedWhereChosen() ? IN_ROM : LOAD_ROM);
+    }
+
+    /*
+     * Whether the draft is loaded where Load would put it: in the card's ROM, for a bench recipe; for a machine's or a
+     * pipeline's, anywhere, while the first interface with room is chosen. An interface chosen by name takes another
+     * copy of a recipe another one holds, so two machines share its step; one that holds it already refuses it.
+     */
+    private boolean loadedWhereChosen() {
+        return draftInRom() && (tab == TAB_BENCH || into.isEmpty());
     }
 
     private String statusText() {

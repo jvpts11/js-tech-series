@@ -5034,6 +5034,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) The Pattern Studio loads a machine's or a pipeline's recipe into the Crafting Interface chosen under
+  Into when another interface holds it already, so a second machine can share the step: the button stood greyed out
+  as "Loaded" while any interface held the recipe. With the first interface with room chosen, a recipe held anywhere
+  still shows as loaded.
 - (Computers) A machine's console keeps what was said at it when its terminal is closed and opened again: the
   commands typed and the machine's answers are still there, as a desktop's programs are, where it came back a fresh
   console. What the machine says while nobody looks is there too.
