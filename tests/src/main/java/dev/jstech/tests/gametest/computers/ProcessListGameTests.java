@@ -47,6 +47,18 @@ public final class ProcessListGameTests {
                 public void OnDestroy() { }
             }
             """;
+    /** A program that only listens: its turns do nothing, and it stays up for what it hears. */
+    private static final String LISTENER = """
+            using System.*;
+            using System.Operations.*;
+            namespace Programs;
+            class Listener : IScript {
+                public void OnInit() { Operations.OnSettled(Heard); }
+                public void OnTick() { }
+                public void OnDestroy() { }
+                void Heard(OperationInfo operation) { }
+            }
+            """;
 
     private ProcessListGameTests() {
     }
@@ -168,6 +180,29 @@ public final class ProcessListGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(up(mainframe), "the Mainframe comes back"))
                 .thenExecute(() -> helper.assertTrue(mainframe.runningEngine() != null,
                         "and its engine with it"))
+                .thenSucceed();
+    }
+
+    /**
+     * A script between its turns is waiting for the next one, not over: it reads as parked, and only one that called
+     * Program.Exit reads as finished.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 1200)
+    public static void state_readsAScriptBetweenItsTurnsAsParked(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = upWith(helper, "debian");
+        final int[] id = new int[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
+                .thenExecute(() -> {
+                    final MachinePrograms.Started started = pc.programs().start("listener.sgs", LISTENER, 1, pc);
+                    helper.assertTrue(started.ok(), "the listener starts");
+                    id[0] = started.id();
+                })
+                .thenExecuteAfter(10, () -> {
+                    final String state = pc.programs().view().stream().filter(one -> one.id() == id[0])
+                            .map(one -> one.state()).findFirst().orElse("gone");
+                    helper.assertTrue(state.equals("parked"), "a listening script reads as parked; got " + state);
+                })
                 .thenSucceed();
     }
 

@@ -236,10 +236,16 @@ public final class MachinePrograms {
                 || (state == ILanguageProcess.State.FINISHED && process.isService());
     }
 
-    /** How a program's state reads to a person: a program stopped on a read is waiting for input. */
+    /**
+     * How a program's state reads to a person: a program stopped on a read is waiting for input, and a script between
+     * its turns is parked, since it is asked again next tick and is not over.
+     */
     public static String stateOf(final ILanguageProcess process) {
-        return process.waitingForInput() ? "input"
-                : process.state().name().toLowerCase(Locale.ROOT);
+        if (process.waitingForInput()) {
+            return "input";
+        }
+        final boolean betweenTurns = process.state() == ILanguageProcess.State.FINISHED && process.isService();
+        return (betweenTurns ? ILanguageProcess.State.PARKED : process.state()).name().toLowerCase(Locale.ROOT);
     }
 
     /**

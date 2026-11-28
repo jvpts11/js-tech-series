@@ -1318,6 +1318,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- Programs: a Σ# script that is waiting for its next turn, or for what it listens to, reads as parked in
+  the list of running programs. It read as finished while it was still up and still heard every Operation.
 - Autocrafting: a pattern holding a thing the game no longer has, an item a later version took away, is
   left out whole when it is read, with a line in the log saying why. It was read back without that thing, as a
   recipe that made its result out of less, and the planner took it as the cheaper way: the job then fed a machine
