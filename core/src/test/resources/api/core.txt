@@ -8343,6 +8343,7 @@ stable 4
 10 dev.jstech.core.machine.MachineStructure  List<PortAt> ports()
 10 dev.jstech.core.machine.MachineStructure  MachineStructure formingAnimation(String)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure formingSound(SoundKey)
+107 dev.jstech.core.machine.MachineStructure  MachineStructure formsOnlyWhen(BiFunction<ServerLevel, ShapeMatch.Formed, Optional<ShapeMatch.Failure>>)
 12 dev.jstech.core.machine.MachineStructure  MachineStructure handsOn(InteractiveModel)
 64 dev.jstech.core.machine.MachineStructure  MachineStructure holdWhile(BooleanSupplier)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure merges()

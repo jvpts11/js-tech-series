@@ -137,10 +137,12 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     public ShipyardTerminalBlockEntity(final BlockPos pos, final BlockState state) {
         super(ShipyardBlocks.TERMINAL_ENTITY.get(), pos, state, 0, MachineEnergy.fe(0, 0, 0));
         // Closed, as it builds and changes ships, or open, as it lets one go or waits for one; held as it stood while
-        // its crane and its floor move.
+        // its crane and its floor move. It forms only with its bay clear up to the crane, but for the ship planned in
+        // it: a dock taken apart round a ship half built forms again.
         this.doors = new ShipyardDoors(this, this::doorsChanged);
         this.structure = MachineStructure.of(ShipyardStructure.PATTERN).or(ShipyardStructure.OPEN_PATTERN).merges()
-                .holdWhile(this.doors::moving);
+                .holdWhile(this.doors::moving).formsOnlyWhen((level, found) -> ShipyardStructure.bayInTheWay(
+                        level, getBlockPos(), found.orientation(), this::planned));
         formsWith(this.structure);
         this.design = fields().value("Design", ShipDesign.CODEC, EMPTY).save().toClient();
         this.plans = fields().value("Plans", ShipDesign.CODEC.listOf(0, MOST_PLANS), List.<ShipDesign>of()).save()
@@ -722,6 +724,12 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
      * The plan built before comes apart, its formed parts' blocks given back, unless it is the same plan, which goes
      * on.
      */
+    /* Whether {@code pos} is a place of the ship planned in its dock, which may stand in its bay as it forms. */
+    private boolean planned(final BlockPos pos) {
+        final PlannedBuild built = this.build;
+        return built != null && built.spotAt(pos).isPresent();
+    }
+
     private boolean send(final ShipDesign sent) {
         final Optional<Orientation> dock = this.structure.orientation();
         if (this.level == null || !formed() || dock.isEmpty() || !ready(this.level, sent)) {

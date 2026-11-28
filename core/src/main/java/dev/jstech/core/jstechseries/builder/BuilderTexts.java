@@ -70,6 +70,8 @@ public final class BuilderTexts {
     public static final TextKey TOO_FAR = TextKey.of("jscore.builder.too_far", "You walked too far away");
     public static final TextKey RAN_OUT = TextKey.of("jscore.builder.ran_out", "You ran out of %s");
     public static final TextKey BLOCKED = TextKey.of("jscore.builder.blocked", "%s in the way at %s");
+    public static final TextKey BURIED = TextKey.of("jscore.builder.buried",
+            "It would stand sunk into the ground here: its terminal goes at %2$s");
     public static final TextKey SOMETHING = TextKey.of("jscore.builder.something", "Something");
     public static final TextKey NOT_ALLOWED = TextKey.of("jscore.builder.not_allowed",
             "You may not build multiblocks here");

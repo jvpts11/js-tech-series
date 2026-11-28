@@ -27,12 +27,15 @@ import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -127,11 +130,55 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
         return out;
     }
 
+    /**
+     * How many blocks under the ground the layer of it that stands on the ground would lie, built round its terminal
+     * at {@code terminal}, as a terminal set on the ground where it stands higher in its shape would bury it: the
+     * ground's top within its height in each column of its footprint, what of it stands built, plants, liquids and air
+     * no ground, by the middle of its columns. 0 where it stands on the ground or over it, and for a shape
+     * lying down, which meets the ground by no layer of its own.
+     */
+    public int buried(final Level level, final BlockPos terminal) {
+        if (this.formed || this.preview.ground() == Integer.MIN_VALUE) {
+            return 0;
+        }
+        final int layer = terminal.getY() + this.preview.ground();
+        // What of it already stands built is no ground; the ground standing in a place of it is.
+        final Set<Long> own = new HashSet<>();
+        for (final ProjectorView.Place place : this.view.places()) {
+            if (place.state() == ProjectorView.State.PLACED) {
+                own.add(place.pos().asLong());
+            }
+        }
+        // In each column, the ground's top within its height, from that layer up: a roof or a ceiling over it is no
+        // ground it stands in.
+        final int[] depths = new int[this.preview.sizeX() * this.preview.sizeZ()];
+        int column = 0;
+        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int x = 0; x < this.preview.sizeX(); x++) {
+            for (int z = 0; z < this.preview.sizeZ(); z++) {
+                at.set(terminal.getX() + this.preview.minX() + x, layer, terminal.getZ() + this.preview.minZ() + z);
+                int y = layer + this.preview.sizeY() - 1;
+                while (y >= layer && passedOver(level, at.setY(y), own)) {
+                    y--;
+                }
+                depths[column++] = y + 1 - layer;
+            }
+        }
+        Arrays.sort(depths);
+        return depths[depths.length / 2];
+    }
+
     /** How many blocks the source holds of {@code block}, by id, for {@code player}. */
     public static int has(final Player player, final BuilderState state, final String block) {
         final Block known = MultiblockBlocks.blockOf(block);
         return known == null ? 0
                 : (int) Math.min(Integer.MAX_VALUE, SourceCounts.count(player, state.source(), known.asItem()));
+    }
+
+    /* Whether what stands at {@code at} is no ground: air, a plant or a liquid, or a block of the shape built. */
+    private static boolean passedOver(final Level level, final BlockPos at, final Set<Long> own) {
+        final BlockState state = level.getBlockState(at);
+        return state.isAir() || state.canBeReplaced() || own.contains(at.asLong());
     }
 
     /* How many of each count of {@code quotas} already stand in their places, a merged block as the block it was. */

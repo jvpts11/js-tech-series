@@ -109,7 +109,13 @@ outside the series builds its multiblocks as it likes; the kit takes any block.
   player chooses and shows its counts, twice a second while it is read.
   Before it places anything it takes out, from the top down as a player would break them, the blocks standing where
   the multiblock must be left empty or in its places, giving them back to where it takes its blocks from (in creative
-  it only clears); its terminal goes in last, turned as the multiblock stands.
+  it only clears); its terminal goes in last, turned as the multiblock stands. Aimed at a terminal, whose multiblock
+  is laid round where the terminal stands, it refuses to build one whose layer that stands on the ground would lie
+  under it, as a terminal set on the ground where it stands higher in its shape would sink the whole, and says where
+  the terminal goes; a projector shows where its multiblock goes, the ground's layer level with it.
+- **What it asks only as it forms**: a multiblock may ask, as it forms and never again once formed, for what its
+  shape cannot say: a room that must be clear as it forms and may fill once it has, as a dry dock's bay. What fails
+  is shown as its shape's own failures are.
 
 ### For modpacks
 

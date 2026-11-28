@@ -1067,6 +1067,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   back, so a ship released from the screen was taken in again by the first use of its console.
 
 ### Fixed
+- The Small Shipyard forms only with its bay clear over the pit up to the crane, the ship planned in it apart:
+  a dock built too low, the ground standing in its bay, formed all the same and could build no ship.
 - The Cab cockpit is walked into: its flight deck stands lower, its pilot's seat on a plinth as high as before,
   so a player stands beside the seat under the cabin's roof, and the slab hidden where the cabin sits on the chin, which
   a player struck their head on 0.75 over the deck, is gone. The pipes overhead start behind the deck; the copper one

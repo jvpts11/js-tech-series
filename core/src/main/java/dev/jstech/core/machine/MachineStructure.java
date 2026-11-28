@@ -45,6 +45,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.ToIntFunction;
 import net.minecraft.core.BlockPos;
@@ -109,6 +110,9 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     private long recheckAt;
     /* Whether it is held as it stands now: not checked, its blocks carried off keeping themselves. */
     private BooleanSupplier holding = () -> false;
+    /* What keeps it from forming that its shape cannot say, asked only as it forms: nothing unless it says. */
+    private BiFunction<ServerLevel, ShapeMatch.Formed, Optional<ShapeMatch.Failure>> formsOnly =
+            (level, found) -> Optional.empty();
 
     public static final TextKey FORMED = TextKey.of("jscore.multiblock.formed", "Formed");
     public static final TextKey FORMED_SIZE = TextKey.of("jscore.multiblock.formed_size", "Formed: %s by %s by %s");
@@ -225,6 +229,17 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
      */
     public MachineStructure holdWhile(final BooleanSupplier holding) {
         this.holding = Objects.requireNonNull(holding, "holding");
+        return this;
+    }
+
+    /**
+     * Found whole while it is not formed, it forms only if {@code check} finds nothing wrong: a room that must be clear
+     * as it forms and may fill once it has, as a dry dock's bay, where its ship is then built. What {@code check}
+     * returns is shown as its shape's own failures are. Formed, it is not asked again.
+     */
+    public MachineStructure formsOnlyWhen(
+            final BiFunction<ServerLevel, ShapeMatch.Formed, Optional<ShapeMatch.Failure>> check) {
+        this.formsOnly = Objects.requireNonNull(check, "check");
         return this;
     }
 
@@ -445,7 +460,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         this.dirty = false;
         this.notBefore = now + SETTLE;
         this.recheckAt = now + RECHECK_EVERY;
-        apply(level, pos, check(level, pos));
+        apply(level, pos, forming(level, check(level, pos)));
     }
 
     /*
@@ -541,6 +556,15 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         }
         this.build = 0;
         return first;
+    }
+
+    /* {@code result}, unless it is a shape found whole that is not formed yet and what it asks to form fails. */
+    private ShapeMatch forming(final ServerLevel level, final ShapeMatch result) {
+        if (this.formed || !(result instanceof ShapeMatch.Formed found)) {
+            return result;
+        }
+        final Optional<ShapeMatch.Failure> wrong = this.formsOnly.apply(level, found);
+        return wrong.isPresent() ? wrong.get() : result;
     }
 
     /* The farthest from its terminal any of its builds reads the world, along any axis. */

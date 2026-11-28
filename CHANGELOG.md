@@ -713,6 +713,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an empty item inlet. `PortBuckets.use` moves a liquid container's liquid through a machine's port, a full one into an
   inlet and an empty one from an outlet, and takes the click so the container is never used on the world beside the
   port; `MultiblockPortBlock` uses it. Experimental.
+- (Core) What a multiblock asks as it forms: J's Core's API is at version 107. `MachineStructure.formsOnlyWhen` gives
+  a multiblock a check its shape cannot make, asked as it forms and never again once formed, as a room that must be
+  clear then and may fill afterwards; what it finds wrong shows as the shape's own failures do. Experimental.
 - (Core) What the components drew: J's Core's API is at version 106. While `DrawnComponents.keep` is on, each frame
   keeps every component a panel drew and the box it covers on the screen, the moves and the scale of what drew it
   counted in, and `lastFrame` gives the last whole frame's. Experimental.
@@ -5041,6 +5044,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Core) The Multiblock Builder aimed at a terminal refuses to build a multiblock that would stand sunk into the
+  ground, as one does round a terminal set on the ground where it stands higher in its shape, and says where its
+  terminal goes: it built the whole a few blocks down, buried. A projector's multiblock is still built where it shows.
+- (Space) The Small Shipyard forms only with its bay clear over the pit up to the crane, the ship planned in it apart:
+  a dock built too low, the ground standing in its bay, formed all the same and could build no ship.
 - (Computers) A Standard or Advanced access point that cannot go where it is placed says why over the hotbar: it goes
   under a ceiling or on a wall, never on a floor, where the Legacy's and the Transition's stand on a desk; and it needs a
   solid face, which a cable in the wall is once a facade closes its face. It was not placed, without a word. The manual

@@ -96,7 +96,9 @@ The **Small Shipyard** is a dry dock: a pit sixteen blocks wide and twenty-four 
 of Ship Pad Plates on four lift rams, with a rim of hazard concrete and a cradle of clamps rising from the deck; four
 lattice towers down each side, eleven blocks to the
 rails of a gantry crane, with walkways at two heights and a stair; floodlights at the corners; at the back a control
-booth, and at its foot an **Item Port**. The pit must be clear. The booth is entered by its door: the **Shipyard
+booth, and at its foot an **Item Port**. The pit must be clear, and so must the bay over it up to the crane when the
+dock forms, but for the ship planned in it: one dug too low has the ground standing in its bay and does not form. The
+booth is entered by its door: the **Shipyard
 Terminal** is the first half of its console under the windows on the bay, the parts list on the other half, and behind
 them stand a bench a computer can stand on and a socket in the wall beside it, for the day the yard is worked from a
 computer (below).

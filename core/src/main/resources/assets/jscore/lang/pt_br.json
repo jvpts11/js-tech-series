@@ -686,6 +686,7 @@
   "jscore.builder.aimed": "MIRADO",
   "jscore.builder.blocked": "%s no caminho em %s",
   "jscore.builder.building": "CONSTRUINDO",
+  "jscore.builder.buried": "Aqui ficaria enterrado no chão: o terminal vai em %2$s",
   "jscore.builder.building_line": "%s de %s colocados",
   "jscore.builder.built": "PRONTO",
   "jscore.builder.built_line": "Não falta nada",

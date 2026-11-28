@@ -122,6 +122,31 @@ public final class MultiblockBuilderGameTests {
         });
     }
 
+    /**
+     * A terminal set where its multiblock would stand sunk into the ground, as the baker's set on the arena's floor,
+     * where it stands amid a face a block over its bottom: the builder finds it one block down, refuses, and places
+     * nothing.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void build_refusesToSinkAMultiblockIntoTheGround(final GameTestHelper helper) {
+        final BlockPos low = TERMINAL.below();
+        helper.setBlock(low, TestStructures.BAKER.get());
+        final FakePlayer player = player(helper, "sunk", low.north(2));
+        player.getInventory().add(new ItemStack(Items.IRON_BLOCK, 64));
+        final BlockPos terminal = helper.absolutePos(low);
+        final BuilderPlan plan = BuilderPlan.of(helper.getLevel(), terminal, player, BuilderState.DEFAULT)
+                .orElseThrow();
+        final int buried = plan.buried(helper.getLevel(), terminal);
+        helper.assertTrue(buried == 1, "its bottom layer would be the floor's own: one block down; got " + buried);
+        BuildJobs.start(player, terminal, BuilderState.DEFAULT);
+        helper.startSequence()
+                .thenExecuteAfter(20, () -> {
+                    helper.assertTrue(BuildJobs.building(player).isEmpty(), "it refuses to build it");
+                    helper.assertTrue(player.getInventory().countItem(Items.IRON_BLOCK) == 64, "and places nothing");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = TIME)
     public static void build_takesOutABlockStandingInAPlaceAndGivesItBack(final GameTestHelper helper) {
         final FakePlayer player = builder(helper, "take-out");

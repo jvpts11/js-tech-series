@@ -15,6 +15,7 @@ import dev.jstech.core.moving.StructureYard;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.ShapeMatch;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.protection.PlayerLimits;
@@ -286,6 +287,31 @@ public final class ShipyardDoorsGameTests {
                             + "bay, it says so");
                     GameTestPlayers.leave(pilot);
                 })
+                .thenSucceed();
+    }
+
+    /*
+     * A dock forms only with its bay clear over the pit up to the crane, as one dug too low has the ground standing in
+     * it: with a block of dirt there it does not form, and says where; the dirt taken away, it forms.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void form_aDockFormsOnlyWithItsBayClear(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final AABB bay = ShipyardStructure.bay(terminal, Orientation.NORTH);
+        // Over the pit's front west corner, clear of the cradle, two blocks over the ground.
+        final BlockPos dirt = BlockPos.containing(bay.minX + 1, bay.minY + 5, bay.minZ + 1);
+        level.setBlockAndUpdate(dirt, Blocks.DIRT.defaultBlockState());
+        helper.startSequence()
+                .thenIdle(40)
+                .thenExecute(() -> {
+                    helper.assertFalse(dock(level, terminal).formed(), "dirt in its bay, it does not form");
+                    final ShapeMatch.Failure wrong = dock(level, terminal).structure().failure().orElseThrow();
+                    helper.assertTrue(wrong.found().equals("minecraft:dirt") && terminal.offset(wrong.relX(),
+                            wrong.relY(), wrong.relZ()).equals(dirt), "and names the dirt and where: " + wrong);
+                    level.setBlockAndUpdate(dirt, Blocks.AIR.defaultBlockState());
+                })
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).formed(), "cleared, it forms"))
                 .thenSucceed();
     }
 

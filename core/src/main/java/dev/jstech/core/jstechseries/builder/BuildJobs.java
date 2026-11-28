@@ -8,6 +8,7 @@
 package dev.jstech.core.jstechseries.builder;
 
 import dev.jstech.core.jstechseries.projector.ProjectorView;
+import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.multiblock.BuildBalance;
 import dev.jstech.core.multiblock.BuildOrder;
 import dev.jstech.core.multiblock.FormedPartBlock;
@@ -86,9 +87,20 @@ public final class BuildJobs {
                     terminal));
             return;
         }
-        if (BuilderPlan.of(player.level(), terminal, player, state).isEmpty()) {
+        final Optional<BuilderPlan> plan = BuilderPlan.of(player.level(), terminal, player, state);
+        if (plan.isEmpty()) {
             tell(player, new BuildStatus(terminal, BuildStatus.Phase.STOPPED, BuildStatus.Reason.UNKNOWN, "",
                     terminal));
+            return;
+        }
+        // A terminal's own shape is laid round where the terminal stands, and one set on the ground where it stands
+        // higher in its shape would sink the whole into the ground: it is refused, the terminal's place named. A
+        // projector shows where its multiblock goes, the ground's layer level with it, and is built as it shows.
+        final int buried = player.level().getBlockEntity(terminal) instanceof MachineBlockEntity
+                ? plan.get().buried(player.level(), terminal) : 0;
+        if (buried > 0) {
+            tell(player, new BuildStatus(terminal, BuildStatus.Phase.STOPPED, BuildStatus.Reason.BURIED, "",
+                    terminal.above(buried)));
             return;
         }
         final Job job = new Job(player, player.level().dimension(), terminal.immutable(), state);

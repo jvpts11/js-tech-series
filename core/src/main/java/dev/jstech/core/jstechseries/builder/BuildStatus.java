@@ -88,7 +88,12 @@ public record BuildStatus(BlockPos terminal, Phase phase, Reason reason, String 
         /** Something it cannot move stands where a block goes, or where it must be left empty: what, and where. */
         BLOCKED("blocked", BuilderTexts.BLOCKED),
         /** The source has none of a block left. */
-        RAN_OUT("ran_out", BuilderTexts.RAN_OUT);
+        RAN_OUT("ran_out", BuilderTexts.RAN_OUT),
+        /**
+         * Built round its terminal where it stands, the layer that stands on the ground would lie under it: the place
+         * its terminal goes to stand it on the ground.
+         */
+        BURIED("buried", BuilderTexts.BURIED);
 
         private final String serializedName;
         private final TextKey says;

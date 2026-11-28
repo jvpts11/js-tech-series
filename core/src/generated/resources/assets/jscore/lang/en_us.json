@@ -871,6 +871,7 @@
   "jscore.builder.building_line": "%s of %s placed",
   "jscore.builder.built": "BUILT",
   "jscore.builder.built_line": "Nothing is missing",
+  "jscore.builder.buried": "It would stand sunk into the ground here: its terminal goes at %2$s",
   "jscore.builder.choice_more": "+%s more",
   "jscore.builder.choice_one_place": "1 place:",
   "jscore.builder.choice_places": "%s places:",

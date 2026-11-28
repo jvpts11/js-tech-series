@@ -12,15 +12,22 @@ import dev.jstech.core.multiblock.InsideRule;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.PatternMatcher;
 import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.multiblock.ShapeMatch;
 import dev.jstech.core.multiblock.plan.PlanArms;
 import dev.jstech.space.JsSpace;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -159,6 +166,8 @@ public final class ShipyardStructure {
     private static final List<int[]> DECK_CLOSED = offsets(false, FLOOR);
     private static final List<int[]> DECK_OPEN = offsets(true, FLOOR);
     private static final List<int[]> CRADLE_CLOSED = offsets(false, 'C');
+    /* The bay over the pit, from the ground up to the crane's bridge, where nothing of the dock closed stands. */
+    private static final List<int[]> BAY = bayOffsets();
 
     private ShipyardStructure() {
     }
@@ -192,6 +201,25 @@ public final class ShipyardStructure {
      */
     public static List<BlockPos> cranePlaces(final BlockPos terminal, final Orientation dock, final boolean open) {
         return places(terminal, dock, open ? CRANE_OPEN : CRANE_CLOSED);
+    }
+
+    /**
+     * The first place of the bay of a dock whose terminal is at {@code terminal}, standing as {@code dock} says, that
+     * holds anything but air or a block of the ship planned in it ({@code planned}), as a failure to form: the bay over
+     * the pit must be clear, up to the crane, when the dock forms, as one dug too low has the ground standing in it.
+     */
+    public static Optional<ShapeMatch.Failure> bayInTheWay(final Level level, final BlockPos terminal,
+                                                           final Orientation dock, final Predicate<BlockPos> planned) {
+        for (final BlockPos place : places(terminal, dock, BAY)) {
+            final BlockState state = level.getBlockState(place);
+            if (!state.isAir() && !planned.test(place)) {
+                return Optional.of(new ShapeMatch.Failure(ShapeMatch.Wrong.BLOCK, PatternMatcher.encodePosition(
+                        place.getX(), place.getY(), place.getZ()), place.getX() - terminal.getX(),
+                        place.getY() - terminal.getY(), place.getZ() - terminal.getZ(), String.valueOf(PIT),
+                        BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString()));
+            }
+        }
+        return Optional.empty();
     }
 
     /** The places in the world of the floor's deck, closed under the pit's floor, {@code open} at the ground's top. */
@@ -427,6 +455,21 @@ public final class ShipyardStructure {
             for (int z = FRONT; z <= BACK; z++) {
                 for (int x = WEST; x <= EAST; x++) {
                     if (letter(x, y, z, open) == letter) {
+                        out.add(new int[] {x - TERMINAL_X, y - BOOTH_FLOOR, z - TERMINAL_Z});
+                    }
+                }
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    /* Where the bay over the pit stands from its terminal, up to the crane's bridge, but the cradle closed in it. */
+    private static List<int[]> bayOffsets() {
+        final List<int[]> out = new ArrayList<>();
+        for (int y = GROUND + 1; y < CRANE; y++) {
+            for (int z = FRONT; z <= BACK; z++) {
+                for (int x = WEST; x <= EAST; x++) {
+                    if (pit(x, z) && letter(x, y, z, false) == NONE) {
                         out.add(new int[] {x - TERMINAL_X, y - BOOTH_FLOOR, z - TERMINAL_Z});
                     }
                 }
