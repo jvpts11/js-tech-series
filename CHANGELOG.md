@@ -5050,6 +5050,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) Autocrafting: a pattern holding a thing the game no longer has, an item a later version took away, is
+  left out whole when it is read, with a line in the log saying why. It was read back without that thing, as a
+  recipe that made its result out of less, and the planner took it as the cheaper way: the job then fed a machine
+  that had no recipe for what it got, and the order failed.
 - (Core) The Multiblock Builder aimed at a terminal refuses to build a multiblock that would stand sunk into the
   ground, as one does round a terminal set on the ground where it stands higher in its shape, and says where its
   terminal goes: it built the whole a few blocks down, buried. A projector's multiblock is still built where it shows.

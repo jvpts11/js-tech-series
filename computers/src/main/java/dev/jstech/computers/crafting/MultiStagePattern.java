@@ -73,7 +73,7 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
     }
 
     public static final Codec<MultiStagePattern> CODEC = RecordCodecBuilder.create(i -> i.group(
-            Stage.CODEC.listOf().fieldOf("stages").forGetter(MultiStagePattern::stages),
+            WholeReads.listOf(Stage.CODEC).fieldOf("stages").forGetter(MultiStagePattern::stages),
             Codec.STRING.optionalFieldOf("name", "").forGetter(MultiStagePattern::name),
             Codec.STRING.optionalFieldOf("note", "").forGetter(MultiStagePattern::note)
     ).apply(i, MultiStagePattern::new));

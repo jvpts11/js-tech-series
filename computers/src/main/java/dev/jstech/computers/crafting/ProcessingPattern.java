@@ -151,8 +151,8 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
     }
 
     public static final Codec<ProcessingPattern> CODEC = RecordCodecBuilder.create(i -> i.group(
-            ProcessingInput.CODEC.listOf().fieldOf("inputs").forGetter(ProcessingPattern::inputs),
-            ProcessingOutput.CODEC.listOf().fieldOf("outputs").forGetter(ProcessingPattern::outputs),
+            WholeReads.listOf(ProcessingInput.CODEC).fieldOf("inputs").forGetter(ProcessingPattern::inputs),
+            WholeReads.listOf(ProcessingOutput.CODEC).fieldOf("outputs").forGetter(ProcessingPattern::outputs),
             Codec.INT.fieldOf("timeout").forGetter(ProcessingPattern::timeoutTicks),
             Codec.STRING.optionalFieldOf("name", "").forGetter(ProcessingPattern::name),
             Codec.STRING.optionalFieldOf("note", "").forGetter(ProcessingPattern::note)

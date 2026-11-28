@@ -44,11 +44,12 @@ public record NetworkRecipe(Optional<CraftingPattern> bench, Optional<Processing
         return proc.isPresent() || multi.isPresent();
     }
 
-    public static final Codec<NetworkRecipe> CODEC = RecordCodecBuilder.create(i -> i.group(
+    /* Read whole: a pattern that cannot be read is no recipe at all, never one with nothing in it. */
+    public static final Codec<NetworkRecipe> CODEC = WholeReads.of(RecordCodecBuilder.create(i -> i.group(
             CraftingPattern.CODEC.optionalFieldOf("bench").forGetter(NetworkRecipe::bench),
             ProcessingPattern.CODEC.optionalFieldOf("proc").forGetter(NetworkRecipe::proc),
             MultiStagePattern.CODEC.optionalFieldOf("multi").forGetter(NetworkRecipe::multi)
-    ).apply(i, NetworkRecipe::new));
+    ).apply(i, NetworkRecipe::new)));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, NetworkRecipe> STREAM_CODEC =
             StreamCodec.composite(

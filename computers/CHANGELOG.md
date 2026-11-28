@@ -1309,6 +1309,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- Autocrafting: a pattern holding a thing the game no longer has, an item a later version took away, is
+  left out whole when it is read, with a line in the log saying why. It was read back without that thing, as a
+  recipe that made its result out of less, and the planner took it as the cheaper way: the job then fed a machine
+  that had no recipe for what it got, and the order failed.
 - A Standard or Advanced access point that cannot go where it is placed says why over the hotbar: it goes
   under a ceiling or on a wall, never on a floor, where the Legacy's and the Transition's stand on a desk; and it needs a
   solid face, which a cable in the wall is once a facade closes its face. It was not placed, without a word. The manual

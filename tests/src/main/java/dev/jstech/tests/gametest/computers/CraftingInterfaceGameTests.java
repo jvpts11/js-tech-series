@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
@@ -18,6 +19,7 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingLog;
+import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ICraftIo;
 import dev.jstech.computers.crafting.InterfaceRoutes;
 import dev.jstech.computers.crafting.NetworkCraftOperation;
@@ -45,6 +47,8 @@ import dev.jstech.tests.TestMachines;
 import dev.jstech.tests.testkit.computers.ChainMachineSite;
 import dev.jstech.tests.testkit.computers.CraftingRig;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -55,6 +59,10 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -421,6 +429,42 @@ public final class CraftingInterfaceGameTests {
         helper.assertTrue(loaded.setBy(CraftingInterfacePart.ROUTES).equals("Router script"),
                 "the program mark is kept");
         helper.assertTrue(loaded.log().entries().size() == 1, "the log is kept");
+        helper.succeed();
+    }
+
+    /**
+     * A pattern one of whose things the game no longer has, an item a later version took away, is left out whole when
+     * the interface is read: never read back without that thing, as a recipe that makes the same out of less.
+     */
+    @GameTest(template = ARENA)
+    public static void interface_leavesOutWholeAPatternWhoseThingIsGone(final GameTestHelper helper) {
+        final CraftingInterfacePart part = new CraftingInterfacePart(HardwareEra.TRANSITION);
+        part.place(proc(Items.COBBLESTONE, Items.STONE));
+        part.place(NetworkRecipe.ofProcessing(CraftingRig.mix(Items.SAND, Items.GOLD_NUGGET, Items.GLASS, 1L)));
+        final CompoundTag saved = new CompoundTag();
+        part.save(saved, helper.getLevel().registryAccess());
+        final CraftingInterfacePart loaded = new CraftingInterfacePart(HardwareEra.TRANSITION);
+        loaded.load(withoutSand(saved), helper.getLevel().registryAccess());
+        helper.assertValueEqual(loaded.patterns().size(), 1, "the patterns read back");
+        helper.assertTrue(loaded.patterns().getFirst().recipe().proc()
+                        .map(pattern -> pattern.primaryOutput().key().equals(StorageKey.of(Items.STONE))).orElse(false),
+                "the one left is the stone's, not the glass's without its sand");
+        helper.succeed();
+    }
+
+    /** A bench pattern with a cell the game no longer has is not read at all, rather than read with that cell empty. */
+    @GameTest(template = ARENA)
+    public static void benchPattern_withACellGoneIsNotReadAtAll(final GameTestHelper helper) {
+        final List<ItemStack> grid = new ArrayList<>(Collections.nCopies(9, ItemStack.EMPTY));
+        grid.set(0, new ItemStack(Items.SAND));
+        grid.set(1, new ItemStack(Items.GOLD_NUGGET));
+        final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, helper.getLevel().registryAccess());
+        final CompoundTag saved = new CompoundTag();
+        saved.put("pattern", CraftingPattern.CODEC.encodeStart(ops, new CraftingPattern(grid,
+                new ItemStack(Items.GLASS))).getOrThrow());
+        final Tag gone = withoutSand(saved).get("pattern");
+        helper.assertTrue(CraftingPattern.CODEC.parse(ops, gone).resultOrPartial(error -> { }).isEmpty(),
+                "nothing is read back, not even a glass made of the gold nugget alone");
         helper.succeed();
     }
 
@@ -1323,6 +1367,15 @@ public final class CraftingInterfaceGameTests {
 
     private static NetworkRecipe proc(final Item input, final Item output) {
         return NetworkRecipe.ofProcessing(CraftingRig.pattern(input, output, 200));
+    }
+
+    /* {@code saved} as a later version of the game would read it, one with no sand: the sand named by an id gone. */
+    private static CompoundTag withoutSand(final CompoundTag saved) {
+        try {
+            return TagParser.parseTag(saved.toString().replace("minecraft:sand", "jstests:gone_from_the_game"));
+        } catch (final CommandSyntaxException e) {
+            throw new IllegalStateException("the save written a moment ago does not parse", e);
+        }
     }
 
     private static TestMachineBlockEntity kiln(final CraftingRig rig) {
