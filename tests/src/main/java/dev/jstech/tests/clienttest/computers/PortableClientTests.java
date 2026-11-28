@@ -24,6 +24,7 @@ import dev.jstech.computers.portable.PortableDevices;
 import dev.jstech.computers.portable.PortableItem;
 import dev.jstech.computers.portable.PortableModel;
 import dev.jstech.computers.portable.Portables;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.teracoin.FoundBlock;
 import dev.jstech.computers.teracoin.TeracoinChain;
 import dev.jstech.computers.teracoin.TeracoinState;
@@ -77,8 +78,32 @@ public final class PortableClientTests {
     /* Blockwright's gold, which the unit is written in, and how near a pixel must come to it to be it. */
     private static final int GOLD = 0xF0B23A;
     private static final int NEAR = 24;
+    /* The red sliver of an empty battery, and how long past the three seconds it shows to look again. */
+    private static final int RED = 0xFF3B30;
+    private static final int GONE_DARK = 70;
 
     private PortableClientTests() {
+    }
+
+    /**
+     * A flat qPhone held up shows its empty battery, a red sliver and a plug, as a phone with nothing left does when
+     * one tries to switch it on; three seconds on, its screen goes dark again.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void flatPhone_heldUpShowsItsEmptyBatteryAndGoesDark(final ClientTestContext ctx) {
+        ctx.thenBuild(0, PortableClientTests::build)
+                .thenTeleport(SETTLE, PLAYER, Direction.NORTH)
+                .then(0, () -> {
+                    final ItemStack flat = new ItemStack(PortableItems.QPHONE.get());
+                    flat.set(ComputingComponents.PORTABLE_BATTERY.get(), 0);
+                    ctx.give(0, flat);
+                    ctx.selectHotbar(0);
+                })
+                .then(SETTLE, () -> use(ctx))
+                .thenAwaitScreen(PortableScreen.class, WAIT)
+                .thenScreenshot(SETTLE, "flat_qphone")
+                .thenAssert(0, () -> red(ctx) > 0, "held up flat, it shows the red sliver of its empty battery")
+                .thenAssert(GONE_DARK, () -> red(ctx) == 0, "three seconds on, its screen is dark again");
     }
 
     /**
@@ -258,6 +283,22 @@ public final class PortableClientTests {
             }
         }
         return reach;
+    }
+
+    /* How many GUI pixels of the qPhone's glass, held up, are the red of an empty battery. */
+    private static int red(final ClientTestContext ctx) {
+        final PortableScreen screen = ctx.screen(PortableScreen.class);
+        int found = 0;
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = (int) screen.guiY(0); y < (int) screen.guiY(PortableModel.QPHONE.screenHeight()); y++) {
+                for (int x = (int) screen.guiX(0); x < (int) screen.guiX(PortableModel.QPHONE.screenWidth()); x++) {
+                    if (near(frame.pixel(x, y), RED)) {
+                        found++;
+                    }
+                }
+            }
+        }
+        return found;
     }
 
     /* What the lower part of the device's glass, where the history's rows are, looks like, as one number. */

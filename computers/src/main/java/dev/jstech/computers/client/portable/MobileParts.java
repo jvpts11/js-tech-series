@@ -33,7 +33,7 @@ final class MobileParts {
      * charger, its outline and its green.
      */
     private static final Palette<Colours> COLOURS = Palettes.declare(JsComputers.MODID, "mobile/shared",
-            new Colours(0xFFFFFFFF, 0xFF000000, 0xFFFF3B30, 0xFFEBEBEB, 0xFF4CD964));
+            new Colours(0xFFFFFFFF, 0xFF000000, 0xFFFF3B30, 0xFFEBEBEB, 0xFF4CD964, 0xFFFF3B30));
     /* How dim a glyph without a link is: its colour at this alpha. */
     private static final int DIM_ALPHA = 0x66;
     /* A game hour, in the ticks a battery's time left is counted in, and the hours of a day. */
@@ -160,6 +160,6 @@ final class MobileParts {
     }
 
     /** The shared colours, as the palette above names them. */
-    record Colours(int white, int black, int badge, int batteryLine, int batteryGreen) {
+    record Colours(int white, int black, int badge, int batteryLine, int batteryGreen, int batteryRed) {
     }
 }

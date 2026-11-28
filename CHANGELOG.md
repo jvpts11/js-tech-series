@@ -5038,6 +5038,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) A phone or tablet held up with its battery flat shows its empty battery for three seconds, a red sliver in
+  it and a plug under it, before its screen goes dark: its screen stayed black, as one broken would.
 - (Computers) A Crafting Interface that feeds its machine through routers with empty filters sends each input through
   one against a face of the machine that takes it: a liquid went to the first router on the cable, even the one on
   the item inlet, and the job waited there for good with nothing said.

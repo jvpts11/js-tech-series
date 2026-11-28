@@ -30,8 +30,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class MobileDisplay {
 
-    /* The bolt drawn over a battery while it charges, mark by mark. */
+    /* The bolt drawn over a battery while it charges, and the plug under a flat one, mark by mark. */
     private static final String[] BOLT = {"...XX", "..XX.", ".XXXX", "..XX.", ".XX..", "XX..."};
+    private static final String[] PLUG = {"..X.X..", "..X.X..", "XXXXXXX", "XXXXXXX", ".XXXXX.", "..XXX..", "...X...",
+        "...X...", "...X..."};
+    /* How much of a flat battery shows red: a sliver, as a phone's own shows. */
+    private static final float SLIVER = 0.07F;
 
     private MobileDisplay() {
     }
@@ -71,6 +75,31 @@ public final class MobileDisplay {
         final MobileCanvas c = new MobileCanvas(graphics, Minecraft.getInstance().font, model.screenWidth(),
                 model.screenHeight());
         final MobileParts.Colours k = MobileParts.colours();
+        final Battery b = battery(c, k, percent / 100.0F, k.batteryGreen());
+        if (filling) {
+            final float mark = Math.max(1.0F, b.h() / 10);
+            c.glyph(BOLT, b.x() + b.w() / 2 - 2.5F * mark, b.y() + b.h() / 2 - 3 * mark, k.white(), mark);
+        }
+        c.text(MobileParts.say(MobileTexts.PERCENT.with(percent)), c.width() / 2, b.y() + b.h() + 2 * b.t() + 4,
+                k.batteryLine(), MobileCanvas.BIG, Align.CENTRE, false);
+    }
+
+    /**
+     * Paints a flat device held up to be switched on: the battery its dock shows, a red sliver in it and a plug under
+     * it, as a phone with nothing left shows for a moment before its screen goes dark again.
+     */
+    public static void flat(final GuiGraphics graphics, final PortableModel model) {
+        final MobileCanvas c = new MobileCanvas(graphics, Minecraft.getInstance().font, model.screenWidth(),
+                model.screenHeight());
+        final MobileParts.Colours k = MobileParts.colours();
+        final Battery b = battery(c, k, SLIVER, k.batteryRed());
+        final float mark = Math.max(1.0F, b.h() / 10);
+        c.glyph(PLUG, c.width() / 2 - 3.5F * mark, b.y() + b.h() + 3 * b.t() + 2, k.batteryLine(), mark);
+    }
+
+    /* Darkens the screen and paints a battery in the middle of it, {@code share} of it filled with {@code fill}. */
+    private static Battery battery(final MobileCanvas c, final MobileParts.Colours k, final float share,
+                                   final int fill) {
         final float w = c.width();
         final float h = c.height();
         c.rect(0, 0, w, h, k.black());
@@ -84,13 +113,8 @@ public final class MobileDisplay {
         c.rect(x0, y0, t, bh, k.batteryLine());
         c.rect(x0 + bw - t, y0, t, bh, k.batteryLine());
         c.rect(x0 + bw, y0 + bh / 3, t * 2, bh / 3, k.batteryLine());
-        c.rect(x0 + 2 * t, y0 + 2 * t, (bw - 4 * t) * percent / 100.0F, bh - 4 * t, k.batteryGreen());
-        if (filling) {
-            final float mark = Math.max(1.0F, bh / 10);
-            c.glyph(BOLT, x0 + bw / 2 - 2.5F * mark, y0 + bh / 2 - 3 * mark, k.white(), mark);
-        }
-        c.text(MobileParts.say(MobileTexts.PERCENT.with(percent)), w / 2, y0 + bh + 2 * t + 4, k.batteryLine(),
-                MobileCanvas.BIG, Align.CENTRE, false);
+        c.rect(x0 + 2 * t, y0 + 2 * t, (bw - 4 * t) * share, bh - 4 * t, fill);
+        return new Battery(x0, y0, bw, bh, t);
     }
 
     /* Everything the screen of the device in {@code stack} shows this frame. */
@@ -111,5 +135,9 @@ public final class MobileDisplay {
                 PortableClock.day(dayTime), owner, mouseX, mouseY, session == null ? null : session.balloon(),
                 session == null ? 0.0F : session.slide(), session == null ? MobileSession.ALL_TAB : session.tab(),
                 session == null ? 0 : session.scroll(), now, session);
+    }
+
+    /* Where a battery was painted, in the screen's pixels: its corner, its size and its outline's thickness. */
+    private record Battery(float x, float y, float w, float h, float t) {
     }
 }

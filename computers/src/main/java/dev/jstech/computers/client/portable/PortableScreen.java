@@ -41,6 +41,8 @@ public final class PortableScreen extends Screen {
     /* The device the screen was opened with, or null for one that had no id yet. */
     @Nullable
     private final UUID device;
+    /* The game time it was held up at: a flat device answers that with its empty battery for a few seconds. */
+    private final long heldUpAt;
     private int left;
     private int top;
     private float scale = 1.0F;
@@ -59,6 +61,8 @@ public final class PortableScreen extends Screen {
     private static final float SWIPE_SPAN = 0.35F;
     private static final float PULL = 0.2F;
     private static final int EDGE = 16;
+    /* How long a flat device held up shows its empty battery before its screen goes dark: three seconds. */
+    private static final long FLAT_SHOWN = 60L;
 
     public PortableScreen(final InteractionHand hand, final PortableModel model) {
         super(Component.empty());
@@ -68,6 +72,8 @@ public final class PortableScreen extends Screen {
         this.look = IMobileLook.of(model.system());
         final UUID id = Portables.id(held());
         this.device = id;
+        final Minecraft game = Minecraft.getInstance();
+        this.heldUpAt = game.level == null ? 0L : game.level.getGameTime();
         if (id != null) {
             final PortableViewPayload view = PortableViews.of(id);
             PortableViews.session(id).raised(view == null ? List.of() : view.alerts());
@@ -107,7 +113,12 @@ public final class PortableScreen extends Screen {
         g.pose().scale(scale, scale, 1.0F);
         g.pose().pushPose();
         g.pose().translate(face.screenX(), face.screenY(), 0.0F);
-        presses = MobileDisplay.paint(g, stack, model, session, screenX(mouseX), screenY(mouseY));
+        if (showsFlat(stack)) {
+            MobileDisplay.flat(g, model);
+            presses = List.of();
+        } else {
+            presses = MobileDisplay.paint(g, stack, model, session, screenX(mouseX), screenY(mouseY));
+        }
         g.pose().popPose();
         g.blit(MobileArt.face(model), 0, 0, face.width(), face.height(), 0.0F, 0.0F, face.width() * 2,
                 face.height() * 2, face.width() * 2, face.height() * 2);
@@ -268,6 +279,13 @@ public final class PortableScreen extends Screen {
             // A swipe up from the foot is the way home of a device with no home button, as the qPhone X's.
             session.tap(MobileTap.HOME, PacketDistributor::sendToServer);
         }
+    }
+
+    /* Whether the device, held up with nothing in its battery, still answers that with its empty battery. */
+    private boolean showsFlat(final ItemStack stack) {
+        final Minecraft game = Minecraft.getInstance();
+        return !Portables.isOn(stack) && Portables.battery(stack, model) <= 0 && game.level != null
+                && game.level.getGameTime() - heldUpAt < FLAT_SHOWN;
     }
 
     /* The device's system, when it has an id and is in the hand. */
