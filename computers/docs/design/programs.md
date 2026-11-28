@@ -162,10 +162,15 @@ the Storage Insights in [Interface](interface.md); Soundfoundry in [Sound](sound
 - **Midsoft Messenger** and **Messenger Service:** conversations between whoever is on the network. The service lives on
   a server; it grows on disk with the conversations it keeps and in memory with whoever has the messenger open.
 - **Knot** and **KnotHub** (Daylight Foundation): the network's code repository, revision by revision, on a server; Knot
-  sends files and shows who changed what.
+  sends files and shows who changed what. At the prompt, as git's command line: `knot push <file> -m <message>`,
+  `knot pull <file> [revision]`, `knot log [file]` and `knot status`; a file is kept by its name. A KnotHub on a
+  network federated with this one is reached as its items are: reading it (status, log, pull) needs its port to grant
+  seeing, and pushing to it, sending.
 - **Exceed** (Midsoft): a spreadsheet whose cells ask the network what it stores.
 - **Paint** (Bellwether Labs): an image in an indexed palette, which can also become the desktop's wallpaper.
-- **67ark** (Vaultis): packs files into one that weighs less, to stretch a small disk.
+- **67ark** (Vaultis): packs files into one that weighs less, to stretch a small disk. At the prompt, as 7-Zip's
+  command line: `67ark a <archive.ark> <files>` packs, adding to an archive that is there, `67ark x <archive.ark>
+  [folder]` takes the files out (one already there is left as it is), and `67ark l <archive.ark>` lists them.
 - **screenfetch:** the system's identity with the distribution's logo; until it is installed, the prompt answers
   "command not found", and that is how the package manager is learnt.
 - Games: Minesweeper, Solitaire and Snake.

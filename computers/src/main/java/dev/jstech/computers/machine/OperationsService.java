@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -545,7 +546,9 @@ public final class OperationsService {
         for (final OperationRecord record : mainframe.activeOperationRecords()) {
             rows.add(new ICliComputer.ActiveOp(ShortId.of(record.id().toString()),
                     OperationRecord.typeName(record.type()), record.name().getString(), record.moved(),
-                    record.requested(), OperationRecord.statusName(record.status()), record.priority().label()));
+                    record.requested(), OperationRecord.statusName(record.status()), record.priority().label(),
+                    record.failureText().map(Component::getString).orElse(""), record.waitedTicks(),
+                    record.ranTicks(), -1L, record.by()));
         }
         return rows;
     }

@@ -45,6 +45,21 @@ L1: ldnull
     ldfld   OperationInfo.Moved
     call    string.Concat(string, long) -> string
     call    Console.PrintLine(string) -> void
+    ldloc   0
+    ldfld   OperationInfo.By
+    ldloc   0
+    ldfld   OperationInfo.Cause
+    call    string.Concat(string, string) -> string
+    ldloc   0
+    ldfld   OperationInfo.Waited
+    call    string.Concat(string, long) -> string
+    ldloc   0
+    ldfld   OperationInfo.Ran
+    call    string.Concat(string, long) -> string
+    ldloc   0
+    ldfld   OperationInfo.Settled
+    call    string.Concat(string, long) -> string
+    call    Console.PrintLine(string) -> void
     ret
 
 .method static void Logged(NetworkEvent) slots 1

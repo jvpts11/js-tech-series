@@ -33,6 +33,20 @@ Table: Columns of the archive list
 
 After packing, the window asks whether to delete the original files or keep them.
 
+## At the prompt
+
+67ark also works at the command prompt, with the letters of 7-Zip. A program can pack its own files this way.
+
+Table: 67ark at the prompt
+
+| Command | What it does |
+| --- | --- |
+| 67ark a logs.ark ops.txt | Packs ops.txt into logs.ark. If logs.ark is already there, the file is added to it. |
+| 67ark x logs.ark | Takes every file out where the prompt stands. Give a folder after it to take them out there. A file that is already there is left as it is. |
+| 67ark l logs.ark | Lists the files in the archive with their sizes. |
+
+The archive packs its files together, so only the whole archive has a packed size. The list shows it beside the file when the archive holds one file, and on the total line otherwise.
+
 ## If something goes wrong
 
 > [!PROBLEM] 67ark says that file is not an archive.

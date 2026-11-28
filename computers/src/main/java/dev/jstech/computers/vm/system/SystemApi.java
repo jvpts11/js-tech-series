@@ -1001,6 +1001,15 @@ public final class SystemApi {
         operation.recordValue(LONG, "Requested");
         operation.recordValue(STRING, "Status");
         operation.recordValue(STRING, "Priority");
+        /*
+         * What the operations log keeps of one beside, for a program that keeps a log of its own: why it fell short,
+         * the ticks it waited and ran, the tick it settled at (-1 while it runs) and who asked for it.
+         */
+        operation.recordValue(STRING, "Cause");
+        operation.recordValue(LONG, "Waited");
+        operation.recordValue(LONG, "Ran");
+        operation.recordValue(LONG, "Settled");
+        operation.recordValue(STRING, "By");
         return new TypeSpec(OPERATIONS, "OperationInfo", operation.members);
     }
 

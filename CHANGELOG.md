@@ -827,6 +827,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Experimental.
 
 ### Added
+- (Computers) 67ark at the command prompt, with 7-Zip's letters: `67ark a` packs files into an archive, adding to one
+  that is there, `67ark x` takes them out where the prompt stands or into a folder, leaving a file already there as it
+  is, and `67ark l` lists what an archive holds.
+- (Computers) Knot at the command prompt, as git's: `knot push <file> -m <message>`, `knot pull <file> [revision]`,
+  `knot log [file]` and `knot status`. A network with no KnotHub of its own uses one on a network it is federated
+  with, in the window too: reading it needs that network's port to grant seeing, and pushing to it, sending.
+- (Computers) Sigma#: `OperationInfo` tells why an Operation fell short (`Cause`), the ticks it waited and ran, the
+  tick it settled at and who asked for it (`By`), for a program that keeps a log of its own.
+- (Computers) A Mainframe keeps the last 256 settled Operations in its log, where it kept 32.
 - (Computers) Quince's Crafting Computers: one in the case of the Russet Pro (Transition), the Russet Pro (Standard)
   and the Russet Studio, made at the era's Electronics bench of the empty machine and its era's Crafting Card. Each
   takes only its own Quince Logic Board, the machine's board with four slots for the Crafting Cards, made of that board

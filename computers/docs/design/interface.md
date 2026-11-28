@@ -119,7 +119,7 @@ makes it, which buses filter it).
   on the others, where KDE's and GNOME's task managers have no Power page. A graphics card's temperature is not shown.
   On Frames XP and 7 a click on the status bar changes the period, and every window counts in the game's time.
 - **The shopping list:** the Craft Planner's Print prints the plan, with what is missing highlighted. The **history** of
-  crafts is the Operations log, filtered by CRAFT in the Network Manager; the log still keeps 32 entries.
+  crafts is the Operations log, filtered by CRAFT in the Network Manager; the log keeps 256 entries.
 - **The network's event log** in the Log tab, with levels INFO, WARN and ERROR per machine, filters by level, machine
   and period, Print, and export to a file on a disk ([Operations](operations.md)). It opens on the last day.
 - **Longer statistics:**

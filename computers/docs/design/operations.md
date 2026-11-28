@@ -225,7 +225,7 @@ What the Mainframe's log shows for the SELECT above:
 
 ## The log and the statistics
 
-- The Mainframe saves the **log** of the last 32 Operations and the persistent Operations. When it starts, it rebuilds
+- The Mainframe saves the **log** of the last 256 Operations and the persistent Operations. When it starts, it rebuilds
   them once booting has settled (the index analysed, the Crafting Computers recognised), with the time an orphaned
   Operation is kept (24 hours by default). A multi-stage finds its stages by id; the machine stages inside a recursive
   craft are not saved. The log prints on the printer ([Peripherals](peripherals.md)).

@@ -25,6 +25,7 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.program.KnotHubs;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.Programs;
@@ -255,8 +256,13 @@ public final class SocialPayloads {
 
     private static void handleKnot(final KnotActionPayload payload, final ServerPlayer player,
                                    final ServerLevel level) {
-        final ServerServices.Host host = serviceFor(player, level,
-                payload.hostPos(), payload.monitorPos(), Programs.KNOT_HUB);
+        /*
+         * The network's own KnotHub, or one across a federation: a hub whose network does not let this one see it is
+         * none to this window, and one that does not let it send takes no push.
+         */
+        final IComputerTerminalHost terminal = niHost(player, level, payload.hostPos(), payload.monitorPos());
+        final KnotHubs.Reach reach = terminal == null ? null : KnotHubs.of(level, terminal.networkUuid());
+        final ServerServices.Host host = reach == null || !reach.see() ? null : reach.host();
         final KnotRepository repository = host == null ? null : host.rack().knotAt(host.slot());
         if (repository == null) {
             PacketDistributor.sendToPlayer(player, new KnotStatePayload(
@@ -264,7 +270,8 @@ public final class SocialPayloads {
             return;
         }
         final Text note = switch (payload.action()) {
-            case KnotActionPayload.PUSH -> push(payload, player, level, host, repository);
+            case KnotActionPayload.PUSH -> reach.send() ? push(payload, player, level, host, repository)
+                    : KnotStatePayload.MAY_NOT_SEND.text();
             case KnotActionPayload.PULL -> pull(payload, level, repository);
             default -> Text.EMPTY;
         };

@@ -131,7 +131,8 @@ class ProgramEventsTest {
                         + "        Network.OnEvent(e => Console.PrintLine(e.Level + \" \" + e.Machine + \" \""
                         + " + e.Text + \" \" + e.Tick));\n"
                         + "        Operations.OnSettled(o => Console.PrintLine(o.Id + \" \" + o.Status + \" \""
-                        + " + o.Moved));\n"
+                        + " + o.Moved + \" \" + o.By + \" \" + o.Waited + \" \" + o.Ran + \" \" + o.Settled"
+                        + " + \" [\" + o.Cause + \"]\"));\n"
                         + "    }\n"
                         + "    public void OnTick() { }\n"
                         + "    public void OnDestroy() { }\n"
@@ -168,11 +169,13 @@ class ProgramEventsTest {
         process.deliverNetworkEvent("warn", "UPS-1", "on battery", 40L);
         process.deliverSettled(settled("a1b2"));
         process.step(100_000);
-        assertEquals(List.of("warn UPS-1 on battery 40", "a1b2 done 64"), process.console());
+        assertEquals(List.of("warn UPS-1 on battery 40", "a1b2 done 64 Bench (IQL) 2 40 900 []"),
+                process.console());
     }
 
     private static SettledOperation settled(final String id) {
-        return new SettledOperation(id, "craft", "minecraft:oak_planks", 64, 64, "done", "medium");
+        return new SettledOperation(id, "craft", "minecraft:oak_planks", 64, 64, "done", "medium", "", 2L, 40L, 900L,
+                "Bench (IQL)");
     }
 
     @Test

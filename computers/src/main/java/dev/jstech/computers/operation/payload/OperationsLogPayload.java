@@ -20,7 +20,8 @@ import java.util.List;
  */
 public record OperationsLogPayload(List<OperationRecord> operations) implements CustomPacketPayload {
 
-    public static final int MAX = 32;
+    /* As many as a Mainframe keeps; a log this long is split on the wire, as any large payload is. */
+    public static final int MAX = 256;
 
     public static final CustomPacketPayload.Type<OperationsLogPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "operations_log"));

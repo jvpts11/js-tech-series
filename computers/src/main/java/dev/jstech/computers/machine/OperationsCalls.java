@@ -128,6 +128,11 @@ final class OperationsCalls {
         made.set("Requested", op.total());
         made.set("Status", op.status().toLowerCase(Locale.ROOT));
         made.set("Priority", op.priority().toLowerCase(Locale.ROOT));
+        made.set("Cause", op.cause());
+        made.set("Waited", op.waited());
+        made.set("Ran", op.ran());
+        made.set("Settled", op.settled());
+        made.set("By", op.by());
         return made;
     }
 

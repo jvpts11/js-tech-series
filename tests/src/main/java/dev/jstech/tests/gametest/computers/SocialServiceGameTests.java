@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.os.HostScope;
@@ -20,6 +21,12 @@ import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.wan.FederationEdge;
+import dev.jstech.computers.wan.PortSettings;
+import dev.jstech.computers.wan.WanFederation;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -61,6 +68,26 @@ public final class SocialServiceGameTests {
         private ServerServices.Host serving(final GameTestHelper helper, final ResourceLocation program) {
             return ServerServices.find(helper.getLevel(), mainframe.networkUuid(), program);
         }
+    }
+
+    /* What the prompt of {@code cli} printed for {@code line}. */
+    private static String said(final ServerCliComputer cli, final String line) {
+        return text(CliCommands.shellFor(cli, 80).run(line, cli));
+    }
+
+    /*
+     * Federates the hub's network with {@code far} this tick, as their WAN gateways would say it: {@code hub}'s port
+     * lets {@code far} do what {@code grant} says, and {@code far}'s lets the hub's network see it.
+     */
+    private static void federate(final GameTestHelper helper, final MainframeBlockEntity hub,
+                                 final MainframeBlockEntity far, final PortSettings grant) {
+        final long now = helper.getLevel().getGameTime();
+        final DataLink line = new DataLink(DataLine.ACCESS, HardwareEra.STANDARD);
+        final WanFederation federation = WanFederation.of(helper.getLevel());
+        federation.publish(new FederationEdge(hub.networkUuid(), far.networkUuid(), 1L, 1, 2L, 1, line, 64L, grant),
+                now);
+        federation.publish(new FederationEdge(far.networkUuid(), hub.networkUuid(), 2L, 1, 1L, 1, line, 64L,
+                PortSettings.NEW), now);
     }
 
     private static Base base(final GameTestHelper helper) {
@@ -298,6 +325,75 @@ public final class SocialServiceGameTests {
                     final String said = text(CliCommands.shellFor(cli, 80).run("msgsvc list", cli));
                     helper.assertTrue(said.contains("not found"),
                             "a server with no Messenger Service has no msgsvc; got " + said);
+                })
+                .thenSucceed();
+    }
+
+    /** Knot at the prompt: a file pushed twice, its log newest first, an older revision pulled back, the status. */
+    @GameTest(template = ARENA)
+    public static void knot_atThePromptPushesPullsAndReadsTheLog(final GameTestHelper helper) {
+        final Base base = base(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerRackBlockEntity rack = base.rack();
+                    rack.consoleOf(0).install(KNOTHUB.toString());
+                    rack.consoleOf(0).install(Programs.KNOT.toString());
+                    final ServerCliComputer cli = new ServerCliComputer(rack, helper.getLevel());
+                    cli.writeFile("oplog.sgs", "int kept = 1;");
+                    final String first = said(cli, "knot push oplog.sgs -m first");
+                    helper.assertTrue(first.startsWith("revision ") && first.contains(" of oplog.sgs, by "),
+                            "a push says the revision it made and who signed it; got " + first);
+                    cli.writeFile("oplog.sgs", "int kept = 2;");
+                    said(cli, "knot push oplog.sgs -m \"second pass\"");
+                    final String log = said(cli, "knot log oplog.sgs");
+                    helper.assertTrue(log.contains("second pass") && log.indexOf("second pass") < log.indexOf("first"),
+                            "the log lists the newest first; got " + log);
+                    final int older = rack.knotAt(0).revisionsOf("oplog.sgs").getFirst().number();
+                    cli.deleteFile("oplog.sgs");
+                    final String pulled = said(cli, "knot pull oplog.sgs " + older);
+                    helper.assertTrue(pulled.contains("oplog.sgs at revision " + older + " written to oplog.sgs"),
+                            "a pull says what it wrote where; got " + pulled);
+                    helper.assertValueEqual(cli.readFile("oplog.sgs").message().english(), "int kept = 1;",
+                            "the revision asked for is on the disk again");
+                    final String status = said(cli, "knot status");
+                    helper.assertTrue(status.contains("(this network)") && status.contains("oplog.sgs   2 revisions"),
+                            "the status names the hub and what it keeps; got " + status);
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A KnotHub across a federation: a machine of the other network reads it where the hub's network lets it see, and
+     * pushes to it only where it lets it send.
+     */
+    @GameTest(template = ARENA)
+    public static void knot_acrossAFederationReadsWhereSeenAndPushesWhereSent(final GameTestHelper helper) {
+        final Base base = base(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final MainframeBlockEntity far = world.placeRunningMainframe(new BlockPos(1, 2, 6));
+        world.setBlock(new BlockPos(2, 2, 6), ComputingModule.HBW_CABLE);
+        world.setBlock(new BlockPos(3, 2, 6), ComputingModule.PERSONAL_ROUTER.get());
+        world.setBlock(new BlockPos(4, 2, 6), ComputingModule.ETHERNET_CABLE);
+        final PersonalComputerBlockEntity computer = world.placeRunningPersonalComputer(new BlockPos(5, 2, 6));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    base.rack().consoleOf(0).install(KNOTHUB.toString());
+                    base.rack().knotAt(0).commit("oplog.sgs", "ada", "first", "int kept = 1;",
+                            helper.getLevel().getGameTime());
+                    computer.console().install(Programs.KNOT.toString());
+                    final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
+                    federate(helper, base.mainframe(), far, new PortSettings(true, false, false, false, false, true));
+                    final String status = said(cli, "knot status");
+                    helper.assertTrue(status.contains("oplog.sgs   1 revision"),
+                            "the other network sees what the hub keeps; got " + status);
+                    cli.writeFile("oplog.sgs", "int kept = 2;");
+                    final String refused = said(cli, "knot push oplog.sgs -m mine");
+                    helper.assertTrue(refused.contains("does not let this one send to it"),
+                            "and may not push without the right to send; got " + refused);
+                    federate(helper, base.mainframe(), far, new PortSettings(true, false, true, false, false, true));
+                    final String pushed = said(cli, "knot push oplog.sgs -m mine");
+                    helper.assertTrue(pushed.contains(" of oplog.sgs, by "),
+                            "with it, the push is made; got " + pushed);
                 })
                 .thenSucceed();
     }

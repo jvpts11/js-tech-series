@@ -37,6 +37,7 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.CommandScope;
+import dev.jstech.computers.program.cli.ICliKnot;
 import dev.jstech.computers.program.cli.Signals;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -124,6 +125,22 @@ public final class ServerCliComputer extends ServerCliNetwork {
     public MinerConsole miner() {
         return host instanceof IOsHost machine && machine.console() != null
                 ? new MinerConsole(machine, level, hostBlock.getBlockPos()) : null;
+    }
+
+    @Override
+    @Nullable
+    public ICliKnot knot() {
+        final KnotHubs.Reach reach = KnotHubs.of(level, host.networkUuid());
+        if (reach == null) {
+            return null;
+        }
+        final KnotRepository repository = reach.host().rack().knotAt(reach.host().slot());
+        if (repository == null) {
+            return null;
+        }
+        // A player at the machine signs what they push; a program the machine runs signs with the machine's name.
+        return new KnotAtPrompt(reach, repository, typist != null ? typist.getGameProfile().getName() : hostname(),
+                level);
     }
 
     @Override

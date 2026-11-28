@@ -123,6 +123,12 @@ public final class Programs {
     public static final ResourceLocation MESSENGER_SERVICE =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "messenger_service");
 
+    /** 67ark: Vaultis's archiver, which packs files into one that weighs less, in a window or at the prompt. */
+    public static final ResourceLocation ARK = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ark");
+
+    /** Knot: what pushes a file to the network's KnotHub and brings a revision back, in a window or at the prompt. */
+    public static final ResourceLocation KNOT = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "knot");
+
     /** KnotHub: keeps the source a network is working on, revision by revision, on a server in a rack. */
     public static final ResourceLocation KNOT_HUB =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "knothub");

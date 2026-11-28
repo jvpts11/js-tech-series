@@ -16,7 +16,9 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.SigmaCommands;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.vm.program.ProgramEntry;
+import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -46,7 +48,8 @@ public final class NetworkListeningGameTests {
             "class Watcher : IScript {",
             "    public void OnInit() {",
             "        Network.OnEvent(e => Console.PrintLine(\"event \" + e.Level + \" \" + e.Text));",
-            "        Operations.OnSettled(o => Console.PrintLine(\"settled \" + o.Status + \" \" + o.Moved));",
+            "        Operations.OnSettled(o => Console.PrintLine(\"settled \" + o.Status + \" \" + o.Moved + \" by \""
+                    + " + o.By + \" [\" + o.Cause + \"] \" + (o.Settled > 0 ? \"timed\" : \"untimed\")));",
             "    }",
             "    public void OnTick() { }",
             "    public void OnDestroy() { }",
@@ -83,13 +86,21 @@ public final class NetworkListeningGameTests {
                             computer.nodeUuid(), "UPS-1", Text.literal("on battery"));
                     mainframe.recordOperation(OperationRecord.TYPE_CRAFT, new ItemStack(Items.OAK_PLANKS), 64, 64,
                             OperationRecord.STATUS_COMPLETED, List.of());
+                    // One that fell short, as a program keeping a log of its own needs to hear it: why, and who asked.
+                    mainframe.recordOperation(new OperationRecord(OperationRecord.TYPE_SELECT,
+                            StorageKey.of(Items.OAK_LOG), 16, 4, OperationRecord.STATUS_PARTIAL, List.of())
+                            .withBy("Bench (IQL)").withCause(OperationFailure.of(
+                                    "jsc.operation.failure.not_enough_stored", "Oak Log")));
                 })
                 .thenExecuteAfter(SETTLE, () -> {
                     final ProgramEntry<?> watcher = computer.programs().byId(started.getFirst());
                     helper.assertTrue(watcher != null, "the watcher still runs");
                     final List<String> said = computer.programs().byId(started.getFirst()).process().console();
                     helper.assertTrue(said.contains("event warn on battery"), "it heard the log; got " + said);
-                    helper.assertTrue(said.contains("settled done 64"), "and the Operation settle; got " + said);
+                    helper.assertTrue(said.contains("settled done 64 by  [] timed"),
+                            "and the Operation settle, at the tick it did; got " + said);
+                    helper.assertTrue(said.contains("settled partial 4 by Bench (IQL) [the network was not holding"
+                            + " enough Oak Log] timed"), "with why it fell short and who asked; got " + said);
                 })
                 .thenSucceed();
     }

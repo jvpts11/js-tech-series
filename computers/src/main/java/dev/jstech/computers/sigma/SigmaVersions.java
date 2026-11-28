@@ -90,6 +90,10 @@ public final class SigmaVersions {
             // The two more sources of events.
             Map.entry("Operations.OnSettled(Action<OperationInfo>)", 3),
             Map.entry("Operations.OnSettled(string, Action<OperationInfo>)", 3),
+            // What the operations log keeps of an Operation beside, for a program that keeps a log of its own.
+            Map.entry("OperationInfo.Cause()", 3), Map.entry("OperationInfo.Waited()", 3),
+            Map.entry("OperationInfo.Ran()", 3), Map.entry("OperationInfo.Settled()", 3),
+            Map.entry("OperationInfo.By()", 3),
             Map.entry("Network.OnEvent(Action<NetworkEvent>)", 3),
             // A file's size and the tick it last changed, and being told when it changes.
             Map.entry("File.Size(string)", 3), Map.entry("File.Changed(string)", 3),

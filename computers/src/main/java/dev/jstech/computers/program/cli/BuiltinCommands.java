@@ -115,6 +115,9 @@ public final class BuiltinCommands {
                 // Blockwright's Teracoin miner, once its package is installed.
                 new MinerCommand(),
                 new LithoCommand(),
+                // Vaultis's archiver and Knot, once each is installed: what a program keeping a log packs and shares.
+                new ArkCommand(),
+                new KnotCommand(),
                 new ShellCommands.Exit(),
                 new SoftwareCommands.Pckmgr("pckmgr", Set.of(Platform.FRAMES)),
                 new SoftwareCommands.ProgramsList(),

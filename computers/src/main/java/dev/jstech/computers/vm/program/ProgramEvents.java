@@ -37,8 +37,8 @@ final class ProgramEvents {
     static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
     /** What an input event handed to a system holds before its text: a header and its six fields. */
     static final long INPUT_BYTES = Heap.HEADER + 6L * Heap.REFERENCE;
-    /** What an Operation that settled holds before its text: a header and its seven fields. */
-    static final long OPERATION_BYTES = Heap.HEADER + 7L * Heap.REFERENCE;
+    /** What an Operation that settled holds before its text: a header and its twelve fields. */
+    static final long OPERATION_BYTES = Heap.HEADER + 12L * Heap.REFERENCE;
     /** What an entry of the network's event log holds before its text: a header and its four fields. */
     static final long NETWORK_EVENT_BYTES = Heap.HEADER + 4L * Heap.REFERENCE;
     /** What a message on a channel weighs, what it holds aside: the header and its four values. */
@@ -137,7 +137,8 @@ final class ProgramEvents {
         }
         final long bytes = OPERATION_BYTES + Heap.sizeOfText(operation.id()) + Heap.sizeOfText(operation.type())
                 + Heap.sizeOfText(operation.item()) + Heap.sizeOfText(operation.status())
-                + Heap.sizeOfText(operation.priority());
+                + Heap.sizeOfText(operation.priority()) + Heap.sizeOfText(operation.cause())
+                + Heap.sizeOfText(operation.by());
         final Values.DelegateValue one = this.listeners.takeSettled(operation.id());
         final boolean toOne = this.offer(one, bytes, () -> List.of(this.operationOf(operation)));
         return this.offer(this.listeners.onSettled(), bytes, () -> List.of(this.operationOf(operation))) && toOne;
@@ -346,6 +347,11 @@ final class ProgramEvents {
         made.set("Requested", operation.requested());
         made.set("Status", this.heap.text(operation.status(), 0));
         made.set("Priority", this.heap.text(operation.priority(), 0));
+        made.set("Cause", this.heap.text(operation.cause(), 0));
+        made.set("Waited", operation.waited());
+        made.set("Ran", operation.ran());
+        made.set("Settled", operation.settled());
+        made.set("By", this.heap.text(operation.by(), 0));
         this.heap.allocate(made, OPERATION_BYTES, 0);
         return made;
     }

@@ -15,6 +15,7 @@ class ListenersCorpus {
 
     static void Settled(OperationInfo operation) {
         Console.PrintLine(operation.Id + operation.Status + operation.Moved);
+        Console.PrintLine(operation.By + operation.Cause + operation.Waited + operation.Ran + operation.Settled);
     }
 
     static void Logged(NetworkEvent entry) {

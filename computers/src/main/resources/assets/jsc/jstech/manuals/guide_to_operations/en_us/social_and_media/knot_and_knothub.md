@@ -22,6 +22,21 @@ A file keeps at most 64 revisions, and the oldest go first. A repository keeps a
 
 KnotHub keeps the repository for the network, and it runs on a server in a rack of the network ([](jsc:server_racks)). The [Book of Sigma](jsc:knot) explains Knot for programs.
 
+A network that has no KnotHub of its own uses one on a network it is federated with. The port of the KnotHub's network decides, as it does for items: to read the repository, the port must let your network see; to push to it, the port must let your network send.
+
+## At the prompt
+
+Knot also works at the command prompt, as git does. A file is kept by its name, without its folders, so another machine pulls it by the same name.
+
+Table: Knot at the prompt
+
+| Command | What it does |
+| --- | --- |
+| knot push oplog.sgs -m "first version" | Sends the file as a new revision, with a message. |
+| knot pull oplog.sgs | Writes the newest revision of the file onto this computer. Give a revision number after it to get an older one. |
+| knot log oplog.sgs | Lists the file's revisions, newest first. Without a file, it lists the newest of all. |
+| knot status | Names the KnotHub you reached and lists each file with its count of revisions. |
+
 ## If something goes wrong
 
 > [!PROBLEM] The window says No KnotHub on this network.

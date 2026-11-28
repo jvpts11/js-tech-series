@@ -209,6 +209,11 @@ abstract class ServerCliFiles extends ServerCliShell {
     }
 
     @Override
+    public FsResult writeMade(final String path, final String content) {
+        return files().installFile(path, content);
+    }
+
+    @Override
     public FsResult appendFile(final String path, final String content) {
         return files().appendFile(path, content);
     }

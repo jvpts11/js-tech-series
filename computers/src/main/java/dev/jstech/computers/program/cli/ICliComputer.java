@@ -348,9 +348,19 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
         }
     }
 
-    /** A snapshot of one in-flight operation; {@code id} is the short id {@code cancel} takes. */
+    /**
+     * A snapshot of one in-flight operation; {@code id} is the short id {@code cancel} takes. {@code cause} is why it
+     * is held up, empty where nothing says; {@code waited} and {@code ran} its ticks so far; {@code settled} the tick
+     * it settled at, -1 while it runs; {@code by} who asked for it.
+     */
     record ActiveOp(String id, String type, String item, long progress, long total, String status,
-                    String priority) {
+                    String priority, String cause, long waited, long ran, long settled, String by) {
+
+        /** A snapshot that says only what the list of operations shows: no cause, no times and no asker. */
+        public ActiveOp(final String id, final String type, final String item, final long progress, final long total,
+                        final String status, final String priority) {
+            this(id, type, item, progress, total, status, priority, "", 0L, 0L, -1L, "");
+        }
     }
 
     /**

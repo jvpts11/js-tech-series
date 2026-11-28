@@ -176,7 +176,8 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
     /** The door the network's work comes in by, handing it to the engine running here. */
     private final NetworkOperationsService networkOperations = new NetworkOperationsService(this);
 
-    private static final int OPERATION_LOG_MAX = 32;
+    /* The settled Operations it keeps, newest first, for the windows and the network's tables after a restart. */
+    private static final int OPERATION_LOG_MAX = 256;
     private static final int FAILOVER_PROMOTE_DELAY = 60;
     private final Deque<OperationRecord>
             operationLog = new ArrayDeque<>();

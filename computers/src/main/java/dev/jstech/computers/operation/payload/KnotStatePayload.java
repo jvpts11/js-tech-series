@@ -68,6 +68,9 @@ public record KnotStatePayload(Service service, List<String> files, List<Revisio
     public static final TextKey NOTHING_CHANGED =
             TextKey.of("jsc.knot.note.nothing_changed", "Nothing changed since the last revision");
     public static final TextKey PUSHED = TextKey.of("jsc.knot.note.pushed", "Pushed %s");
+    /** The KnotHub is on a network this one is federated with, whose port lets this one read it and not push to it. */
+    public static final TextKey MAY_NOT_SEND =
+            TextKey.of("jsc.knot.note.may_not_send", "That KnotHub's network does not let this one send to it");
     public static final TextKey NO_SUCH_REVISION = TextKey.of("jsc.knot.note.no_such_revision", "No such revision");
     public static final TextKey NO_ROOM = TextKey.of("jsc.knot.note.no_room", "Not enough free space");
     public static final TextKey COULD_NOT_WRITE = TextKey.of("jsc.knot.note.could_not_write", "Could not write %s");

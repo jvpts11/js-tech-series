@@ -384,7 +384,10 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
     when this craft is done");
   - `Network.OnEvent(handler)`: the network's event log ([Operations](operations.md)), with the level (info, warn or
     error) and the machine, so a program can react to a UPS on battery, a degraded power supply or a conflict.
-    `OnSettled` hears only the Operations the network's log records, neither nested nor silent ones.
+    `OnSettled` hears only the Operations the network's log records, neither nested nor silent ones. An
+    `OperationInfo` carries what the log keeps of one, for a program that keeps a log of its own: its id, type, item,
+    what it moved of what was requested, its status and priority, and, from Σ# 3, why it fell short (`Cause`), the
+    ticks it waited and ran, the tick it settled at (-1 while it runs) and who asked for it (`By`).
 - **The language reference in the game:** a section of the Guide to Operations ([Manuals](manuals.md)) with the files
   and forms of a program, the library by namespace, every API object with its price in credits, the errors and the
   versions. It is read in the book and on every system through its help (`man sigma`, `info sigma`, Help Topics, Get

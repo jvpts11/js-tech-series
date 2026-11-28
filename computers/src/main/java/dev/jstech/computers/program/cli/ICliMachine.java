@@ -61,6 +61,12 @@ public interface ICliMachine {
         return null;
     }
 
+    /** The KnotHub the machine reaches, on its network or across a federation, or null where it reaches none. */
+    @Nullable
+    default ICliKnot knot() {
+        return null;
+    }
+
     /** A human label for the computer kind, e.g. {@code "Personal Computer"} or {@code "Mainframe"}. */
     default String type() {
         return "";

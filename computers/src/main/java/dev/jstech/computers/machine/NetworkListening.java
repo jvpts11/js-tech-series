@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -82,7 +83,9 @@ public final class NetworkListening {
         final SettledOperation settled = new SettledOperation(record.hasId() ? ShortId.of(record.id().toString()) : "",
                 OperationRecord.typeName(record.type()).toLowerCase(Locale.ROOT), record.name().getString(),
                 record.moved(), record.requested(), OperationRecord.statusName(record.status()),
-                record.priority().label().toLowerCase(Locale.ROOT));
+                record.priority().label().toLowerCase(Locale.ROOT),
+                record.failureText().map(Component::getString).orElse(""), record.waitedTicks(), record.ranTicks(),
+                record.settledAt(), record.by());
         each(level.getServer(), network, programs -> programs.deliverSettled(settled));
     }
 

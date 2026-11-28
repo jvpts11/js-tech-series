@@ -110,6 +110,14 @@ public interface ICliFiles {
     }
 
     /**
+     * Writes a file a program made, in the kind its extension says, even one a player does not write by hand: the
+     * archive 67ark packs. Fails as {@link #writeFile} does.
+     */
+    default ICliComputer.FsResult writeMade(final String path, final String content) {
+        return ICliComputer.FsResult.noOs();
+    }
+
+    /**
      * Adds text at the end of a user file on the host computer's system disk, making the file when there is none,
      * without reading what it already holds.
      *
