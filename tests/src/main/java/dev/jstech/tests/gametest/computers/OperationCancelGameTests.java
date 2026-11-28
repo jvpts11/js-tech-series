@@ -261,7 +261,12 @@ public final class OperationCancelGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, timeoutTicks = 400)
+    /**
+     * A saved Operation past the expiry is discarded on reload, not resumed. It shortens the expiry every Mainframe
+     * reads for eighty ticks, so it runs in a batch of its own: a test beside it that reloads a Mainframe in that time
+     * would see its own Operation discarded.
+     */
+    @GameTest(template = ARENA, batch = "jsc_orphan_expiry", timeoutTicks = 400)
     public static void orphanExpiry_savedOperationsPastTheTtlAreDiscardedOnReload(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final TestWorldBuilder.CraftingNetwork net = kilnRig(world);
