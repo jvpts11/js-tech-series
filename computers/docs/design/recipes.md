@@ -82,7 +82,7 @@ shows its own sculpted model in its own colour.
 | --- | --- | --- | --- |
 | Machine Casing | `Zn Fe Zn / Fe . Fe / Zn Fe Zn` | galvanised steel: mechanical work | Crusher, Grinder, Rolling Mill, Wire Drawer, Coil Winder, Wafer Saw, Laminator, Optical Polisher, Packaging Line, Electronics Assembly Line, Prebuilder, Preinstaller |
 | Refractory Casing | `B Fe B / Fe B Fe / B Fe B` | refractory brick: heat | Coke Oven, Induction Furnace, Ceramic Kiln, Crystal Puller, Siemens Reactor |
-| Lined Casing | `Fe G Fe / G . G / Fe G Fe` | glass-lined steel: corrosion | Chemical Reactor, Electrolytic Cell, Board Etcher |
+| Lined Casing | `Fe G Fe / G . G / Fe G Fe` | glass-lined steel: corrosion | Chemical Reactor, Board Etcher; the Electrolytic Cell's Cell Stacks |
 | Vacuum Casing | `Cu SS Cu / SS . SS / Cu SS Cu` | stainless steel with sealed flanges: vacuum and gases | Plasma Etcher, Ion Implanter, Deposition Chamber, Display Line, Air Separation Unit |
 | Clean Room Casing | `AP GF AP / GF . GF / AP GF AP` | a clean room panel with its filter: lithography | Lithography Station, every era |
 
@@ -154,7 +154,7 @@ Line.
 | Induction Coil | Crafting Table | `Cu Cu Cu / Cu RC Cu / Cu Cu Cu` | the casing ringed with copper |
 | Capacitor Bank | Vintage bench | 1 Machine Casing, 4 copper ingots and 4 tin ingots | copper plates and tin foil, the first capacitors |
 
-**Electrolytic Cell** (step 1, Lined Casing):
+**Electrolytic Cell** (step 1, no casing of its own: its Cell Stacks are of Lined Casing):
 
 | Block | Where | Recipe | What it is |
 | --- | --- | --- | --- |

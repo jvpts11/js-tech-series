@@ -10,11 +10,6 @@
         "jsc:electrolytic_cell_cell_stack"
       ]
     },
-    "c": {
-      "blocks": [
-        "jsc:lined_casing"
-      ]
-    },
     "d": {
       "blocks": [
         "jsc:power_entry"
@@ -38,12 +33,12 @@
   },
   "layers": [
     [
-      "abc",
-      "dbe"
+      "abd",
+      "fbe"
     ],
     [
       "fb#",
-      "ffg"
+      "fbg"
     ]
   ],
   "name": "electrolytic_cell",
