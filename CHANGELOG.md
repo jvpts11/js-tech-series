@@ -5034,6 +5034,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   for stays in it however busy the buses are.
 
 ### Fixed
+- (Computers) A machine's console keeps what was said at it when its terminal is closed and opened again: the
+  commands typed and the machine's answers are still there, as a desktop's programs are, where it came back a fresh
+  console. What the machine says while nobody looks is there too.
 - (Computers) A piece that leaves a machine's loop before its end (a strip off the Packaging Line's belt, a board
   into a machine's mouth, a part set down on a board) no longer slides back, over its last moment in sight, toward
   where it shows again: it goes on at the pace it kept, or stays where it was set. Seen on the assembly lines, the

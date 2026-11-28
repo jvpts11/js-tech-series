@@ -205,6 +205,35 @@ public final class McNetSpaceClientTests {
     }
 
     /**
+     * The console keeps what was said at it when the terminal is closed and opened again: the command typed and the
+     * machine's answer are still on the glass, as a real terminal's scrollback is. It came back a fresh console.
+     */
+    @ClientTest(timeoutTicks = 1800)
+    public static void theConsole_keepsWhatWasSaidWhenTheTerminalOpensAgain(final ClientTestContext ctx) {
+        atTheMachine(ctx)
+                .thenAwaitScreen(ComputerTerminalScreen.class, BOOT_WAIT)
+                .then(2, () -> ctx.clickGui(space(ctx).headingPoint("Console")[0],
+                        space(ctx).headingPoint("Console")[1]))
+                .thenWaitUntil(() -> space(ctx).consoleText().contains("MC-NET"), SCREEN_WAIT,
+                        "the prompt to greet in the system's own name")
+                .then(1, () -> ctx.type("listfiles"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> space(ctx).consoleText().contains("netstart.sys"), SCREEN_WAIT,
+                        "the machine to answer what is on its disk")
+                .then(SETTLE, () -> ctx.mc().player.closeContainer())
+                .thenAwaitNoScreen(SCREEN_WAIT)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(ComputerTerminalScreen.class, SCREEN_WAIT)
+                .then(2, () -> ctx.clickGui(space(ctx).headingPoint("Console")[0],
+                        space(ctx).headingPoint("Console")[1]))
+                .thenWaitUntil(() -> space(ctx).activeHeading() == ComputerTerminalMenu.TAB_CONSOLE,
+                        SCREEN_WAIT, "the Console heading to be the one showing again")
+                .thenAssert(2, () -> space(ctx).consoleText().contains("listfiles")
+                                && space(ctx).consoleText().contains("netstart.sys"),
+                        "opened again, the console still shows the command typed and its answer");
+    }
+
+    /**
      * Asking the network for a thing opens the question, and the question draws.
      *
      * <p>It threw the moment it was opened: the field a quantity is typed into was built with the screen's

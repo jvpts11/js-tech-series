@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.client.os.KeptConsoles;
 import dev.jstech.computers.client.os.OsSkin;
 import dev.jstech.computers.client.os.ShellView;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
@@ -125,25 +126,23 @@ final class ConsoleTerminalTab extends AbstractTerminalTab {
         return this.view == null ? null : this.view.editorScreen();
     }
 
+    /* The terminal closed: its console stays kept for the machine, still listening, for the next time it opens. */
     @Override
     public void onRemoved() {
-        if (this.view != null) {
-            this.view.release();
-            this.view = null;
-        }
+        this.view = null;
     }
 
     /**
      * The view of this machine's console, made the first time the heading is looked at.
      *
      * <p>Made late so a machine nobody opens the prompt on never talks to its console at all, and kept
-     * afterwards so walking away from the heading and coming back finds what was said there.
+     * afterwards, past the terminal closing, so coming back finds what was said there.
      */
     private ShellView shell() {
         if (this.view == null) {
             // The line this system uses to say where to start, which is its own word and not the DOS family's.
-            this.view = new ShellView(menu.hostPos(), false, screen.systemName(),
-                    GameText.resolve(TerminalUpkeepTexts.START_HINT.with("showcommands")));
+            this.view = KeptConsoles.of(menu.hostPos(), () -> new ShellView(menu.hostPos(), false,
+                    screen.systemName(), GameText.resolve(TerminalUpkeepTexts.START_HINT.with("showcommands"))));
         }
         return this.view;
     }

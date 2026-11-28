@@ -197,6 +197,7 @@ public final class ActiveDesktop {
      */
     public static void forgetClientState() {
         WindowLayouts.forgetAll();
+        KeptConsoles.forgetAll();
         DesktopRequests.forgetAll();
         ClientDeviceMaps.forgetAll();
     }
