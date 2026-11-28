@@ -36,7 +36,7 @@ The setting that turns the computers' draw off turns the machines' off too.
 
 | Source | What it gives |
 | --- | --- |
-| J's Core's generic ore of the element | tin, lead, zinc, nickel, aluminium, tantalum, chromium, cobalt, silver, lithium, manganese, mercury, zirconium, tungsten, molybdenum; and vanilla's iron, copper and gold |
+| J's Core's generic ore of the element | tin, lead, zinc, nickel, aluminium, tantalum, chromium, cobalt, silver, lithium, manganese, mercury, zirconium, tungsten, molybdenum, ruthenium; and vanilla's iron, copper and gold |
 | A J's Core mineral | fluorine, from fluorspar (its element has no generic ore: its ores are salts) |
 | A byproduct, in the Crusher | gallium (from aluminium ore), indium and germanium (from zinc ore), hafnium (from zirconium ore), arsenic (from copper and gold ore), ruthenium (from nickel ore), sulfur (from zinc and lead ore) |
 | The Air Separation Unit | nitrogen, oxygen, argon, krypton |
@@ -56,7 +56,7 @@ player further across the world and further down. Every vein is in the Overworld
 | Legacy | deep in the Overworld: cobalt, silver, lithium (spodumene) | 16 chunks | y −16 to 40 |
 | Transition | deep in the Overworld (indium, from the zinc already mined) | | |
 | Standard | the deepslate: zirconium (and its hafnium), tungsten | 24 chunks | y −64 to 0 |
-| Advanced | the deepslate: molybdenum (ruthenium comes from the nickel already mined) | 24 chunks | y −64 to 0 |
+| Advanced | the deepslate: molybdenum, ruthenium (which the nickel already mined also gives a little of) | 24 chunks | y −64 to 0 |
 | Exa | set when the era is designed | | |
 
 The spacing is the average distance between two veins of the same kind; a vein has the size of J's Core's kit
@@ -86,7 +86,8 @@ unless another mod asks for it. Where each metal becomes an ingot is in *The cha
 | Zirconium | ore, raw, crushed ore (only for its hafnium) |
 | Molybdenum | ore, raw, crushed ore, ingot, plate |
 | Gallium, indium | dust, ingot |
-| Hafnium, ruthenium | dust, ingot, nugget |
+| Hafnium | dust, ingot, nugget |
+| Ruthenium | ore, raw, crushed ore, dust, ingot, nugget |
 | Germanium | dust (a crystal in J's Core, with no ingot) |
 | Arsenic, sulfur, boron, phosphorus | dust |
 | Silicon | lump (metallurgical silicon), rod (polysilicon), boule, wafer |

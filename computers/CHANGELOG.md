@@ -116,6 +116,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- Ruthenium ore, in veins of its own in the deepslate, as the Advanced's other metals lie: crushed in the
+  Crusher and melted in the Induction Furnace, it gives the ruthenium every Advanced wafer's wiring takes, which the
+  nickel ore's little by-product could not keep up with.
 - The Injection Moulder: a chain machine of every era, three blocks wide, two high and two deep, that
   will mould the plastic bodies of sockets, slots and connectors, fan frames, bezels and cable jackets, each in the
   mould its job lends it. Formed, it shows its clamp closing on the mould, the screw driving the shot through the

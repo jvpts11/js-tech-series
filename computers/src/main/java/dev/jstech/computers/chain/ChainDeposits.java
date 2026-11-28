@@ -45,7 +45,7 @@ public final class ChainDeposits {
             deep(Element.LITHIUM));
     /** The Standard's and the Advanced's veins, only in the deepslate. */
     public static final List<ResourceLocation> IN_THE_DEEPSLATE = List.of(deepslate(Element.ZIRCONIUM),
-            deepslate(Element.TUNGSTEN), deepslate(Element.MOLYBDENUM));
+            deepslate(Element.TUNGSTEN), deepslate(Element.MOLYBDENUM), deepslate(Element.RUTHENIUM));
 
     private ChainDeposits() {
     }

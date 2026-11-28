@@ -1,0 +1,22 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "jscore:setting",
+      "file": "jscomputers-server",
+      "setting": "survival.own_chain"
+    }
+  ],
+  "type": "jsc:induction_furnace",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:ruthenium_crushed"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:ruthenium_ingot"
+    }
+  ]
+}

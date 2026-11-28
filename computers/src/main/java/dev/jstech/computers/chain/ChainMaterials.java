@@ -40,7 +40,8 @@ public final class ChainMaterials {
     /** The elements the chain mines as their own ore; iron, copper and gold keep the game's. */
     public static final List<Element> MINED = List.of(Element.TIN, Element.LEAD, Element.ZINC, Element.NICKEL,
             Element.ALUMINIUM, Element.TANTALUM, Element.CHROMIUM, Element.MANGANESE, Element.MERCURY, Element.COBALT,
-            Element.SILVER, Element.LITHIUM, Element.ZIRCONIUM, Element.TUNGSTEN, Element.MOLYBDENUM);
+            Element.SILVER, Element.LITHIUM, Element.ZIRCONIUM, Element.TUNGSTEN, Element.MOLYBDENUM,
+            Element.RUTHENIUM);
     /** The chain's liquids, at room temperature: its acids, solvents and mixtures, and mercury. */
     public static final List<Material> LIQUIDS = List.of(SeriesChemicals.COAL_TAR, SeriesChemicals.PHENOL,
             SeriesChemicals.METHANOL, SeriesChemicals.HYDROFLUORIC_ACID, SeriesChemicals.SULFURIC_ACID,
@@ -56,7 +57,7 @@ public final class ChainMaterials {
     static {
         for (final Element element : MINED) {
             final boolean deep = element == Element.ZIRCONIUM || element == Element.TUNGSTEN
-                    || element == Element.MOLYBDENUM;
+                    || element == Element.MOLYBDENUM || element == Element.RUTHENIUM;
             MaterialUses.ore(JsComputers.MODID, Elements.of(element), deep ? DEEP : SHALLOW);
         }
         MaterialUses.ore(JsComputers.MODID, SeriesMinerals.FLUORSPAR, FLUORSPAR_ROCKS.toArray(HostRock[]::new));
@@ -83,7 +84,7 @@ public final class ChainMaterials {
         uses(Element.GALLIUM, Forms.DUST, Forms.INGOT);
         uses(Element.INDIUM, Forms.DUST, Forms.INGOT);
         uses(Element.HAFNIUM, Forms.DUST, Forms.INGOT, Forms.NUGGET);
-        uses(Element.RUTHENIUM, Forms.DUST, Forms.INGOT, Forms.NUGGET);
+        uses(Element.RUTHENIUM, Forms.CRUSHED, Forms.DUST, Forms.INGOT, Forms.NUGGET);
         uses(Element.GERMANIUM, Forms.DUST);
         uses(Element.ARSENIC, Forms.DUST);
         uses(Element.SULFUR, Forms.DUST);

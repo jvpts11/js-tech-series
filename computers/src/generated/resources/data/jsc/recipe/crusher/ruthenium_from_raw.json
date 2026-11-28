@@ -1,0 +1,22 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "jscore:setting",
+      "file": "jscomputers-server",
+      "setting": "survival.own_chain"
+    }
+  ],
+  "type": "jsc:crusher",
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/ruthenium"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:ruthenium_crushed"
+    }
+  ]
+}

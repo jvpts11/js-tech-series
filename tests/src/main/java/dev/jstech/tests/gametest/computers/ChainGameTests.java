@@ -126,6 +126,31 @@ public final class ChainGameTests {
         helper.succeed();
     }
 
+    /*
+     * Ruthenium, which every Advanced wafer's wiring takes, has a vein of its own in the deepslate, as the Advanced's
+     * other metals do, besides the little the nickel gives: its ore crushes in two, and its crushed ore melts into an
+     * ingot in the Induction Furnace.
+     */
+    @GameTest(template = ARENA)
+    public static void ruthenium_hasAVeinOfItsOwnAndMeltsInTheInductionFurnace(final GameTestHelper helper) {
+        final DepositType ruthenium = deposit("ruthenium");
+        helper.assertTrue(ruthenium.maxY() == 0 && ruthenium.rocks().equals(List.of(HostRocks.DEEPSLATE.id())),
+                "its vein lies in the deepslate alone");
+        helper.assertTrue(ores(Elements.of(Element.RUTHENIUM)).equals(List.of(HostRocks.DEEPSLATE)),
+                "its ore in the deepslate");
+        for (final String[] recipe : List.of(new String[] {"crusher/ruthenium_from_ore", "jscore:ruthenium_crushed"},
+                new String[] {"induction_furnace/ruthenium_from_crushed", "jscore:ruthenium_ingot"})) {
+            final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, recipe[0]);
+            helper.assertTrue(helper.getLevel().getRecipeManager().byKey(id).isPresent(), id + " is loaded");
+            final JsonObject saved = helper.getLevel().getServer().getResourceManager().getResource(
+                    ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "recipe/" + recipe[0] + ".json"))
+                    .map(ChainGameTests::json).orElseThrow();
+            helper.assertTrue(saved.getAsJsonArray("outputs").toString().contains(recipe[1]),
+                    id + " gives " + recipe[1] + ": " + saved.getAsJsonArray("outputs"));
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void ownChain_offLaysNoneOfTheChainsVeinsAndLoadsNoneOfItsRecipes(final GameTestHelper helper) {
         final ResourceLocation lead = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "lead");
