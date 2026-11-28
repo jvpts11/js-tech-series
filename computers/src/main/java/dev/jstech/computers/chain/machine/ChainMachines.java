@@ -109,10 +109,11 @@ public final class ChainMachines {
                         + "f=induction_furnace_capacitor_bank,g=item_inlet")
                 .declareRecipes();
         machine("electrolytic_cell").named("Electrolytic Cell").step(10, 3_000).slots(4, 2, 1, 0, 0, 2)
-                .shape("abc,dbe", "fb#,fbg")
+                .shape("abc,dbe", "fb#,ffg")
                 .legend("a=item_outlet,b=electrolytic_cell_cell_stack,c=lined_casing,d=power_entry,e=liquid_inlet,"
                         + "f=gas_outlet,g=item_inlet")
-                .products('f', "jscore:hydrogen", "jscore:chlorine|jscore:oxygen")
+                // The anode's gas leaves by the outlet of its kind: chlorine from brine, oxygen from water.
+                .products('f', "jscore:hydrogen", "jscore:chlorine", "jscore:oxygen")
                 .declareRecipes();
         machine("rolling_mill").named("Rolling Mill").step(4, 1_500).slots(1, 1, 0, 0, 0, 0)
                 .shape("aba,cde", "#fg,aea")

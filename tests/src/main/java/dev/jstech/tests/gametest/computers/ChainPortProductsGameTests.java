@@ -169,6 +169,36 @@ public final class ChainPortProductsGameTests {
     }
 
     /*
+     * The Electrolytic Cell's anode gas leaves by the outlet of its kind: three gas outlets, one each for the hydrogen,
+     * the chlorine and the oxygen, so the oxygen of a cell given water and no salt never shows at the chlorine's.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void electrolyticCell_chlorineAndOxygenLeaveByOutletsOfTheirOwn(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("electrolytic_cell"));
+        final ResourceLocation oxygen = Elements.of(Element.OXYGEN).id();
+        helper.startSequence()
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    final ChainMachineBlockEntity cell = machineAt(helper, terminal);
+                    final List<BlockPos> outlets = ports(cell, PortKind.GAS_OUTPUT);
+                    final Set<Set<ResourceLocation>> bound = new HashSet<>();
+                    outlets.forEach(outlet -> bound.add(cell.portProducts(outlet)));
+                    helper.assertTrue(outlets.size() == 3 && bound.equals(Set.of(
+                                    Set.of(Elements.of(Element.HYDROGEN).id()),
+                                    Set.of(Elements.of(Element.CHLORINE).id()), Set.of(oxygen))),
+                            "three gas outlets, one gas each: " + bound);
+                    cell.matter().outputs(MatterState.GAS).getFirst()
+                            .set(new MatterStack(Elements.of(Element.OXYGEN), POUR));
+                    for (final BlockPos outlet : outlets) {
+                        final boolean its = cell.portProducts(outlet).contains(oxygen);
+                        helper.assertTrue(shown(helper, List.of(outlet)).contains(oxygen) == its,
+                                "the oxygen shows at its own outlet alone; at " + cell.portProducts(outlet));
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /*
      * A port bound to no product shows the tanks it can move alone: the Chemical Reactor's gas outlet shows what its
      * output holds and not the gas waiting in its input, which it cannot give, and its gas inlet the other way round.
      */

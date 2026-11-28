@@ -225,8 +225,9 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
   every face. The Coke Oven needs no energy.
 - **One port per product:** where a machine has several ports of one kind, each is bound to its own product and tagged
   with it, so the pipe on it carries that alone. The Air Separation Unit's four gas outlets give krypton (KR), argon
-  (AR), nitrogen (N2) and oxygen (O2); the Electrolytic Cell's two give hydrogen (H2) and the anode's gas (OX: the
-  chlorine or the oxygen of whichever it splits); the Siemens Reactor's two gas inlets take hydrogen chloride (HCL) and
+  (AR), nitrogen (N2) and oxygen (O2); the Electrolytic Cell's three give hydrogen (H2), chlorine (CL2) and oxygen
+  (O2), the anode's gas sent to its own by a diverter on the header, chlorine from brine, oxygen from water; the
+  Siemens Reactor's two gas inlets take hydrogen chloride (HCL) and
   hydrogen (H2); the Plasma Etcher's chlorine (CL2) and argon (AR); the Display Line's two liquid inlets liquid
   crystal (LC) and mercury (HG); the ArF Lithography Station's ultrapure water (H2O) and photoresist (RES). The
   Chemical Reactor's two liquid and two gas inlets are bound by role, A and B: while it works a recipe, A takes the

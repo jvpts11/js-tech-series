@@ -4441,6 +4441,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a place is picked there.
 
 ### Changed
+- (Computers) The Electrolytic Cell gives chlorine and oxygen by outlets of their own: a diverter on the anode's
+  header sends the chlorine of brine on to the service end, as before, and the oxygen of water up a riser to a third
+  gas outlet on top of the stack, so a cell given no salt no longer fills the chlorine's pipe with oxygen. The stack's
+  back middle block on top is now a Gas Outlet: a cell built before forms again once one stands there.
 - (Computers) An idle chain machine stands empty and cold: what goes through it shows only while it works (the ore,
   the melt, the wafers, the boards, the strips, the glass, the wire on its spools, the parts on an assembly line's
   reels, the brine in a cell's sight tube, the etchant in an etcher's sump), and so does the glow of its work (a

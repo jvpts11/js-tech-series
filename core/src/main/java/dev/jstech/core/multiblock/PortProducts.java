@@ -19,8 +19,8 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * The products a multiblock's repeated ports are bound to: a bound port takes in, or gives out, its own products
  * alone, so the pipe on it carries one thing (an air separation unit's four gas outlets, its nitrogen, its oxygen, its
- * argon and its krypton); a port may be bound to a few, as an electrolytic cell's anode outlet gives the chlorine or
- * the oxygen of whichever it splits. The ports of a letter of the pattern are bound in the order the pattern is read:
+ * argon and its krypton); a port may be bound to a few, as a chiller's second inlet takes the cold water or the plain
+ * water it is given. The ports of a letter of the pattern are bound in the order the pattern is read:
  * its layers from the bottom, each layer's rows from the first, each row from its first character; a port past the
  * last binding is bound to none.
  *
