@@ -32,7 +32,7 @@ Table: Registros de Operações
 | Registro | Campos | O que cada campo guarda |
 | --- | --- | --- |
 | `AskResult` | `AskResult.Ok, AskResult.Message` | Ok: sim quando a rede aceitou o pedido. Message: a resposta da rede, em inglês. |
-| `OperationInfo` | `OperationInfo.Id, OperationInfo.Type, OperationInfo.Item, OperationInfo.Moved, OperationInfo.Requested, OperationInfo.Status, OperationInfo.Priority` | Id: o id a usar. Type e Status: texto em letras minúsculas. Item: o item. Moved e Requested: quanto foi movido e quanto foi pedido. |
+| `OperationInfo` | `OperationInfo.Id, OperationInfo.Type, OperationInfo.Item, OperationInfo.Moved, OperationInfo.Requested, OperationInfo.Status, OperationInfo.Priority, OperationInfo.Cause, OperationInfo.Waited, OperationInfo.Ran, OperationInfo.Settled, OperationInfo.By` | Id: o id a usar. Type e Status: texto em letras minúsculas. Item: o item. Moved e Requested: quanto foi movido e quanto foi pedido. Cause: por que ficou aquém ou está parada, vazio quando nada diz. Waited e Ran: os ticks que passou esperando e rodando. Settled: o tick do jogo em que terminou, -1 enquanto roda. By: quem a pediu. Os cinco últimos chegaram na versão 3. |
 | `AskResult` | `AskResult.Id` | O id curto da Operação que o pedido pôs em andamento, que Operations.OnSettled pode esperar; vazio quando ele não pôs nenhuma em andamento. Adicionado na versão 3. |
 
 Table: Prioridades de uma Operação

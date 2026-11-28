@@ -47,6 +47,10 @@ Table: 67ark at the prompt
 
 The archive packs its files together, so only the whole archive has a packed size. The list shows it beside the file when the archive holds one file, and on the total line otherwise.
 
+```command
+id: jsc:command/mc_net/67ark
+```
+
 ## If something goes wrong
 
 > [!PROBLEM] 67ark says that file is not an archive.

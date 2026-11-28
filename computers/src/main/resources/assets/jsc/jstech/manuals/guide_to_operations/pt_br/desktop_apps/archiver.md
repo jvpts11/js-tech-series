@@ -47,6 +47,10 @@ Table: O 67ark no prompt
 
 O pacote comprime os arquivos juntos, então só o pacote inteiro tem um tamanho comprimido. A lista o mostra ao lado do arquivo quando o pacote tem um só, e na linha do total nos outros casos.
 
+```command
+id: jsc:command/mc_net/67ark
+```
+
 ## Se algo der errado
 
 > [!PROBLEM] 67ark diz que esse arquivo não é um Arquivo.

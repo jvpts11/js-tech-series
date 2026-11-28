@@ -37,6 +37,10 @@ Table: O Knot no prompt
 | knot log oplog.sgs | Lista as revisões do arquivo, a mais nova primeiro. Sem arquivo, lista as mais novas de todos. |
 | knot status | Diz qual KnotHub você alcançou e lista cada arquivo com a contagem de revisões. |
 
+```command
+id: jsc:command/mc_net/knot
+```
+
 ## Se algo der errado
 
 > [!PROBLEM] A janela diz "Nenhum KnotHub nesta rede".

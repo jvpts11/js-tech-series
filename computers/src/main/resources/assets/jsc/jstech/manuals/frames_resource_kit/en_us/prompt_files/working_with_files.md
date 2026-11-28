@@ -103,6 +103,18 @@ run runs an .iql file, as if you had typed its statements with iql ([](jsc:netwo
 id: jsc:command/mc_dos/run
 ```
 
+## Archives and revisions
+
+67ark packs files into one archive and takes them out again, with the letters of 7-Zip: 67ark a packs, 67ark x takes out and 67ark l lists ([](jsc:archiver)). Knot keeps the revisions of a file on a KnotHub: knot push sends a file with a message, knot pull writes it back and knot log lists its revisions ([](jsc:knot_and_knothub)). Each is a program you install first.
+
+```command
+id: jsc:command/mc_dos/67ark
+```
+
+```command
+id: jsc:command/mc_dos/knot
+```
+
 ## If something goes wrong
 
 > [!PROBLEM] NAME: .dat files are read-only (use the Network Interactor to access items)

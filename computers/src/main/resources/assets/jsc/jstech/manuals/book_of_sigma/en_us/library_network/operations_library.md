@@ -32,7 +32,7 @@ Table: Records of Operations
 | Record | Fields | What each field holds |
 | --- | --- | --- |
 | `AskResult` | `AskResult.Ok, AskResult.Message` | Ok: yes when the network took the request. Message: the network's answer, in English. |
-| `OperationInfo` | `OperationInfo.Id, OperationInfo.Type, OperationInfo.Item, OperationInfo.Moved, OperationInfo.Requested, OperationInfo.Status, OperationInfo.Priority` | Id: the id to use. Type and Status: lower-case text. Item: the item. Moved and Requested: how much has moved, and how much was asked for. |
+| `OperationInfo` | `OperationInfo.Id, OperationInfo.Type, OperationInfo.Item, OperationInfo.Moved, OperationInfo.Requested, OperationInfo.Status, OperationInfo.Priority, OperationInfo.Cause, OperationInfo.Waited, OperationInfo.Ran, OperationInfo.Settled, OperationInfo.By` | Id: the id to use. Type and Status: lower-case text. Item: the item. Moved and Requested: how much has moved, and how much was asked for. Cause: why it fell short or is held up, empty when nothing says. Waited and Ran: the ticks it spent waiting and running. Settled: the game tick it settled at, -1 while it runs. By: who asked for it. The last five were added in version 3. |
 | `AskResult` | `AskResult.Id` | The short id of the Operation the request set going, which Operations.OnSettled can wait on; empty when it set none going. Added in version 3. |
 
 Table: Priorities of an Operation

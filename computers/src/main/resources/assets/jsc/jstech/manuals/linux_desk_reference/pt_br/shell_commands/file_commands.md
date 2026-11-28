@@ -82,6 +82,18 @@ id: jsc:command/linux/mkfs.ext4
 
 > [!WARNING] O mkfs.ext4 apaga o dispositivo inteiro. Tudo nele se perde, e o apagamento não pode ser desfeito.
 
+## Pacotes e revisões
+
+O 67ark empacota arquivos num pacote só e os tira de novo, com as letras do 7-Zip: 67ark a empacota, 67ark x tira e 67ark l lista ([](jsc:archiver)). O Knot guarda as revisões de um arquivo num KnotHub, como o git: knot push envia um arquivo com uma mensagem, knot pull o grava de volta e knot log lista as revisões dele ([](jsc:knot_and_knothub)). Cada um é um programa que você instala primeiro.
+
+```command
+id: jsc:command/linux/67ark
+```
+
+```command
+id: jsc:command/linux/knot
+```
+
 ## Se algo der errado
 
 > [!PROBLEM] O shell diz usage: cat <file>, porque você não informou nenhum nome de arquivo.

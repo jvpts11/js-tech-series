@@ -37,6 +37,10 @@ Table: Knot at the prompt
 | knot log oplog.sgs | Lists the file's revisions, newest first. Without a file, it lists the newest of all. |
 | knot status | Names the KnotHub you reached and lists each file with its count of revisions. |
 
+```command
+id: jsc:command/mc_net/knot
+```
+
 ## If something goes wrong
 
 > [!PROBLEM] The window says No KnotHub on this network.

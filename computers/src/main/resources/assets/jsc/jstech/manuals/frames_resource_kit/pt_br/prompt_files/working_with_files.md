@@ -103,6 +103,18 @@ run executa um arquivo .iql, como se você tivesse digitado as suas instruções
 id: jsc:command/mc_dos/run
 ```
 
+## Pacotes e revisões
+
+O 67ark empacota arquivos num pacote só e os tira de novo, com as letras do 7-Zip: 67ark a empacota, 67ark x tira e 67ark l lista ([](jsc:archiver)). O Knot guarda as revisões de um arquivo num KnotHub: knot push envia um arquivo com uma mensagem, knot pull o grava de volta e knot log lista as revisões dele ([](jsc:knot_and_knothub)). Cada um é um programa que você instala primeiro.
+
+```command
+id: jsc:command/mc_dos/67ark
+```
+
+```command
+id: jsc:command/mc_dos/knot
+```
+
 ## Se algo der errado
 
 > [!PROBLEM] NAME: arquivos .dat são somente leitura (use o Interator de Rede para acessar itens)

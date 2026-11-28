@@ -82,6 +82,18 @@ id: jsc:command/linux/mkfs.ext4
 
 > [!WARNING] mkfs.ext4 erases the whole device. Everything on it is lost, and the erase cannot be undone.
 
+## Archives and revisions
+
+67ark packs files into one archive and takes them out again, with the letters of 7-Zip: 67ark a packs, 67ark x takes out and 67ark l lists ([](jsc:archiver)). Knot keeps the revisions of a file on a KnotHub, as git does: knot push sends a file with a message, knot pull writes it back and knot log lists its revisions ([](jsc:knot_and_knothub)). Each is a program you install first.
+
+```command
+id: jsc:command/linux/67ark
+```
+
+```command
+id: jsc:command/linux/knot
+```
+
 ## If something goes wrong
 
 > [!PROBLEM] The shell says usage: cat <file>, because you gave no file name.
