@@ -18,7 +18,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * The processing machines the autocraft tests feed: a kiln with one input that takes it through any face, and a mixer
- * with two inputs that each go in through a face of their own. Both work in a few ticks without power.
+ * with two inputs that each go in through a face of their own. Both work in a few ticks without power, and a test may
+ * give either a tank behind one face.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class TestMachines {
@@ -45,5 +46,7 @@ public final class TestMachines {
     public static void onRegisterCapabilities(final RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, MACHINE.get(),
                 (machine, side) -> machine.handler(side));
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, MACHINE.get(),
+                (machine, side) -> machine.tank(side));
     }
 }

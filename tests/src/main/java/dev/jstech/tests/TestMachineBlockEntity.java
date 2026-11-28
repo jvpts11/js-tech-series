@@ -18,6 +18,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -44,10 +46,15 @@ public final class TestMachineBlockEntity extends BlockEntity {
     /* Where it pushes what it makes, as a machine that ejects into a chest beside it does; null keeps it. */
     @Nullable
     private Direction ejectTo;
+    /* A tank behind one face only, as a machine with a liquid inlet has; it shows through no face until given one. */
+    private final FluidTank tank = new FluidTank(TANK_MB);
+    @Nullable
+    private Direction tankSide;
 
     /** How many ticks one recipe takes unless a test sets another pace. */
     public static final int DEFAULT_TICKS = 4;
     private static final int MOST_SLOTS = 4;
+    private static final int TANK_MB = 4000;
 
     public TestMachineBlockEntity(final BlockPos pos, final BlockState state) {
         super(TestMachines.MACHINE.get(), pos, state);
@@ -177,6 +184,21 @@ public final class TestMachineBlockEntity extends BlockEntity {
         setChanged();
     }
 
+    /** Its tank as seen through {@code side}: there only through the face it was given, else none. */
+    @Nullable
+    public IFluidHandler tank(@Nullable final Direction side) {
+        return side != null && side == tankSide ? tank : null;
+    }
+
+    /** Gives it a tank behind {@code side} alone, or behind no face with null. */
+    public void setTankSide(@Nullable final Direction side) {
+        this.tankSide = side;
+        setChanged();
+        if (level != null) {
+            level.invalidateCapabilities(worldPosition);
+        }
+    }
+
     /** One server tick: what it made goes out where it ejects, and a recipe's worth of progress is made. */
     public void serverTick() {
         ejectAll();
@@ -215,6 +237,10 @@ public final class TestMachineBlockEntity extends BlockEntity {
         if (ejectTo != null) {
             tag.putByte("EjectTo", (byte) ejectTo.get3DDataValue());
         }
+        tag.put("Tank", tank.writeToNBT(registries, new CompoundTag()));
+        if (tankSide != null) {
+            tag.putByte("TankSide", (byte) tankSide.get3DDataValue());
+        }
     }
 
     @Override
@@ -226,6 +252,8 @@ public final class TestMachineBlockEntity extends BlockEntity {
         progress = tag.getInt("Progress");
         made = tag.getLong("Made");
         ejectTo = tag.contains("EjectTo") ? Direction.from3DDataValue(tag.getByte("EjectTo")) : null;
+        tank.readFromNBT(registries, tag.getCompound("Tank"));
+        tankSide = tag.contains("TankSide") ? Direction.from3DDataValue(tag.getByte("TankSide")) : null;
     }
 
     private int outputSlot() {

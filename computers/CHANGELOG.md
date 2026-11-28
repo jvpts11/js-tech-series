@@ -1296,6 +1296,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- A Crafting Interface that feeds its machine through routers with empty filters sends each input through
+  one against a face of the machine that takes it: a liquid went to the first router on the cable, even the one on
+  the item inlet, and the job waited there for good with nothing said.
 - The Pattern Studio loads a machine's or a pipeline's recipe into the Crafting Interface chosen under
   Into when another interface holds it already, so a second machine can share the step: the button stood greyed out
   as "Loaded" while any interface held the recipe. With the first interface with room chosen, a recipe held anywhere

@@ -9,6 +9,7 @@ package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.CraftingRouterPart;
+import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Which router of an interface's own cable carries each input of a pattern: the one chosen for it by hand, while it is
  * still on the cable; else a router whose filter lists the input; else a router with nothing in its filter, which
- * takes anything. An input none of these carries has no way into the machine, and the pattern cannot run there.
+ * takes anything, and of those one against a face of the machine that takes that kind of input, as a liquid cannot go
+ * in through an item inlet. An input none of these carries has no way into the machine, and the pattern cannot run
+ * there.
  */
 public final class InterfaceRoutes {
 
@@ -56,6 +59,7 @@ public final class InterfaceRoutes {
             }
         }
         CraftingFloor.Site wildcard = null;
+        boolean wildcardFits = false;
         for (final CraftingFloor.Site site : reach.routers()) {
             final CraftingRouterPart router = site.part(level, CraftingRouterPart.class);
             if (router == null) {
@@ -65,8 +69,13 @@ public final class InterfaceRoutes {
             if (listed.contains(input)) {
                 return new Route(site, Why.FILTER);
             }
-            if (listed.isEmpty() && wildcard == null) {
-                wildcard = site;
+            // The first that takes anything, unless a later one stands against a face that takes this kind of input.
+            if (listed.isEmpty() && !wildcardFits) {
+                final boolean fits = facesTake(level, site, input);
+                if (wildcard == null || fits) {
+                    wildcard = site;
+                    wildcardFits = fits;
+                }
             }
         }
         return wildcard == null ? Route.NONE : new Route(wildcard, Why.ANY);
@@ -90,5 +99,10 @@ public final class InterfaceRoutes {
             }
         }
         return true;
+    }
+
+    /* Whether the machine's face the router sits against takes {@code input}'s kind: items, a liquid or a gas. */
+    private static boolean facesTake(final ServerLevel level, final CraftingFloor.Site router, final StorageKey input) {
+        return ExternalDataPort.at(level, router.faced(), router.face().getOpposite()).kinds().contains(input.kind());
     }
 }

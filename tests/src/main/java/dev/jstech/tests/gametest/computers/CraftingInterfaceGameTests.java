@@ -61,6 +61,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomModelData;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.material.Fluids;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -467,6 +469,40 @@ public final class CraftingInterfaceGameTests {
                     rig.part().route(0, dirt, null, "");
                     helper.assertTrue(route(world, rig, mix, dirt).why() == InterfaceRoutes.Why.ANY,
                             "routed back, the dirt follows the filters again");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Of the routers that take anything, an input goes through one against a face of the machine that takes its kind:
+     * a liquid never goes to the router on an item inlet, where it would wait for good.
+     */
+    @GameTest(template = ARENA)
+    public static void routes_anyRouterIsOneWhoseFaceTakesTheInput(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingRig rig = CraftingRig.routed(world, net.cc(), TestMachines.MIXER.get(), true);
+        final StorageKey dirt = StorageKey.of(Items.DIRT);
+        final StorageKey water = StorageKey.of(new FluidStack(Fluids.WATER, 1));
+        final ProcessingPattern soak = new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(dirt, 1L),
+                        new ProcessingPattern.ProcessingInput(water, 100L)),
+                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.MUD), 1L,
+                        ProcessingPattern.FULL_CHANCE)),
+                ProcessingPattern.DEFAULT_TIMEOUT_TICKS);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final CraftingFloor.Site west = abs(world, rig.routerSites().get(0));
+                    final CraftingFloor.Site north = abs(world, rig.routerSites().get(1));
+                    // The tank is behind the west face alone, where the second router on the cable sits.
+                    rig.machine().setTankSide(Direction.WEST);
+                    rig.hold(soak);
+                    InterfaceRoutes.Route route = route(world, rig, soak, water);
+                    helper.assertTrue(route.why() == InterfaceRoutes.Why.ANY && west.equals(route.router()),
+                            "the water goes to the router on the face with the tank; got " + route);
+                    route = route(world, rig, soak, dirt);
+                    helper.assertTrue(route.why() == InterfaceRoutes.Why.ANY && north.equals(route.router()),
+                            "the dirt, which both faces take, still goes to the first; got " + route);
                 })
                 .thenSucceed();
     }
