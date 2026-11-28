@@ -70,6 +70,8 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     private final ValueField<List<ResourceLocation>> takes;
     private final ValueField<List<ResourceLocation>> makes;
     private final ValueField<List<ResourceLocation>> flows;
+    /* The tools its input slots hold, by id, worked or not: a mask left in a station's slot shows on its model. */
+    private final ValueField<List<ResourceLocation>> tools;
     /* The entries it told to draw nothing while its shape stands, by position; kept with it, so a shape that came
      * apart while it was away still lets them draw again. */
     private final ValueField<List<Long>> flagged;
@@ -101,6 +103,12 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
         this.takes = fields().value("Takes", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
         this.makes = fields().value("Makes", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
         this.flows = fields().value("Flows", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
+        this.tools = fields().value("Tools", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
+        getInventory().onChange(slot -> {
+            if (machine.layout().isInput(slot)) {
+                readTools();
+            }
+        });
         this.flagged = fields().value("Flagged", Codec.LONG.listOf(), List.<Long>of()).save();
         this.marks = fields().value("Marks", PortMark.CODEC.listOf(), List.<PortMark>of()).toClient();
         this.link = new LithoLink(machine);
@@ -139,6 +147,18 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     /** The liquids and gases what it works on now takes, by the liquid's or the material's id. */
     public List<ResourceLocation> flows() {
         return flows.get();
+    }
+
+    /** The tools its input slots hold now, by item id, whether it works or not: a mask, a mould. */
+    public List<ResourceLocation> tools() {
+        return tools.get();
+    }
+
+    /* Its tools read again once it stands in a level, for one loaded from before they were kept. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        readTools();
     }
 
     /**
@@ -382,6 +402,23 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
             }
         }
         roles = Map.copyOf(byRole);
+    }
+
+    /* Reads which tools its input slots hold, on the server, for its model to show them; its slots change rarely. */
+    private void readTools() {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        final List<ResourceLocation> held = new ArrayList<>();
+        for (int slot = 0; slot < getInventory().getSlots(); slot++) {
+            final ItemStack stack = getInventory().getStackInSlot(slot);
+            if (machine.layout().isInput(slot) && !stack.isEmpty() && usesAsTool(stack)) {
+                held.add(BuiltInRegistries.ITEM.getKey(stack.getItem()));
+            }
+        }
+        if (!held.equals(tools.get())) {
+            tools.set(held);
+        }
     }
 
     /* Keeps the liquids and the gases {@code work} takes, in its recipe's order, for its ports bound by role. */

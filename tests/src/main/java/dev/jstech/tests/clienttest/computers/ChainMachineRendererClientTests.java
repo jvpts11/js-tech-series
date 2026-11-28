@@ -44,12 +44,36 @@ public final class ChainMachineRendererClientTests {
     private static final int WAIT = 400;
     private static final BlockPos CRUSHER_AT = new BlockPos(2, 2, 4);
     private static final BlockPos FURNACE_AT = new BlockPos(8, 2, 4);
+    private static final BlockPos STATION_AT = new BlockPos(14, 2, 4);
     private static final String MODE = "mode_";
     private static final String WORK = "work_";
     private static final String IDLE = "idle_";
+    private static final String TOOL = "tool_";
     private static final int LOTS = 8;
 
     private ChainMachineRendererClientTests() {
+    }
+
+    /* An idle Lithography Station shows the mask a player left in its slot, the memory chip's, and none with none. */
+    @ClientTest(timeoutTicks = 1200)
+    public static void lithography_showsTheMaskLeftInItsSlotIdle(final ClientTestContext ctx) {
+        final ChainMachine machine = ChainMachines.byId("lithography_vintage").orElseThrow();
+        final BlockPos terminal = terminalOf(machine, STATION_AT);
+        ctx.thenBuild(0, world -> build(world::setBlock, machine, STATION_AT))
+                .thenWaitUntilServer(level -> serverMachine(ctx, level, terminal).formed(), SETTLE * 30,
+                        "the station to form", level -> "it stands unformed")
+                .thenWaitUntil(() -> clientMachine(ctx, terminal) != null && clientMachine(ctx, terminal).formed(),
+                        SETTLE * 30, "the station to form on the client")
+                .thenAssert(SETTLE, () -> !bones(machine, TOOL).isEmpty(), "the station's model has its mask")
+                .thenAssert(0, () -> shown(ctx, machine, terminal, TOOL).isEmpty(),
+                        "with no mask in its slot, the station shows none")
+                .thenServer(0, level -> serverMachine(ctx, level, terminal).getInventory().insertItem(0,
+                        new ItemStack(ChainParts.MEMORY_MASKS.getFirst().get()), false))
+                .thenWaitUntil(() -> !clientMachine(ctx, terminal).tools().isEmpty(), SETTLE * 30,
+                        "the client to learn of the mask")
+                .thenAssert(0, () -> !shown(ctx, machine, terminal, TOOL).isEmpty() && shown(ctx, machine, terminal,
+                                TOOL).stream().allMatch(name -> name.startsWith(MODE + "memory_")),
+                        "idle, the station shows the memory mask left in its slot");
     }
 
     @ClientTest(timeoutTicks = 1200)

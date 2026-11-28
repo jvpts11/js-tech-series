@@ -31,7 +31,8 @@ import net.neoforged.neoforge.common.NeoForge;
  * Draws a formed chain machine from its terminal, as its approved mock draws it (computers/docs/design/survival.md):
  * its model over the whole machine, playing its working loop while it works and at rest otherwise; what goes through
  * it (the ore falling into a crusher) and the glow of its work only while it works, so an idle one stands empty and
- * cold, drawn by the bones only an idle machine has (a heater not glowing); only the bones of
+ * cold, drawn by the bones only an idle machine has (a heater not glowing); a tool (a station's mask) while one is
+ * in its slot, worked or not; only the bones of
  * the mode it works in (a tube or a flat screen); the bones of each channel painted in the colour of the material at
  * work; the things of the recipe at its locators (the moulder's body and its mould); and, while it works, what it
  * gives off, each emitter an effect held in the world where the machine stands,
@@ -50,6 +51,8 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
     private static final String WORK = "work_";
     /* The model's bones only an idle machine has, in their place while it works: a heater cold. */
     private static final String IDLE = "idle_";
+    /* The model's bones of a tool in its slot (a station's mask), shown while one is there, worked or not. */
+    private static final String TOOL = "tool_";
     private static final String TINT = "_tint_";
     private static final String GLOW = "_glow";
     private static final String WORKING = "working";
@@ -100,7 +103,7 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
         for (int bone = 0; bone < pose.bones(); bone++) {
             final String name = pose.model().bones().get(bone).name();
             if (name.startsWith(MODE) && !name.startsWith(mode) || marked(name, WORK) && !working
-                    || marked(name, IDLE) && working) {
+                    || marked(name, IDLE) && working || marked(name, TOOL) && terminal.tools().isEmpty()) {
                 pose.setHidden(bone, true);
             }
             final int at = name.indexOf(TINT);

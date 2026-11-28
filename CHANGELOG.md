@@ -4444,8 +4444,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) An idle chain machine stands empty and cold: what goes through it shows only while it works (the ore,
   the melt, the wafers, the boards, the strips, the glass, the wire on its spools, the parts on an assembly line's
   reels, the brine in a cell's sight tube, the etchant in an etcher's sump), and so does the glow of its work (a
-  furnace's heater and melt, a kiln's lining, a plasma, an implanter's beam, a lithography station's flash). The
-  mask of a lithography station shows only while a job has lent it one. Status lamps stay lit.
+  furnace's heater and melt, a kiln's lining, a plasma, an implanter's beam, a lithography station's flash). A tool
+  shows while one is in its slot, working or not: a lithography station's mask (the memory chip's or the
+  processor's, as the mask is), an Injection Moulder's mould left between its halves. Status lamps stay lit.
 - (Computers) The Packaging Line's belt moves: cleats across it and down its front edge ride with the strips, where
   ribs painted on the belt stood still under them.
 - (Computers) An old device works on a newer computer, as a real one does: every device's port takes the peripheral

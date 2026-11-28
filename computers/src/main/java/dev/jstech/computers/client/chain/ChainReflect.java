@@ -41,7 +41,8 @@ public final class ChainReflect {
         final List<ResourceLocation> in = machine.takes();
         final List<ResourceLocation> out = machine.makes();
         if (id.startsWith("lithography_")) {
-            return any(in, "memory") || any(out, "memory") ? "memory" : "processor";
+            // At rest, the mask in its slot says which chip it is set up for.
+            return any(in, "memory") || any(out, "memory") || any(machine.tools(), "memory") ? "memory" : "processor";
         }
         if (id.startsWith("assembly_")) {
             return any(out, "ram") || any(out, "memory") ? "memory" : "card";
@@ -78,12 +79,16 @@ public final class ChainReflect {
     /**
      * What the machine's model holds at its locator {@code locator}, from what it makes: at the Injection Moulder the
      * part it moulds, a body, a fan frame or a bezel, at "body", and that part's mould on the mould's faces, at
-     * "mould", or the mould it cuts; nothing at rest, or for a locator of no such thing.
+     * "mould", or the mould it cuts; at rest only a mould left in its slot, at "mould"; nothing for a locator of no
+     * such thing.
      */
     public static ItemStack held(final ChainMachineBlockEntity machine, final String locator) {
         final List<ResourceLocation> out = machine.makes();
         if (out.isEmpty()) {
-            return ItemStack.EMPTY;
+            // At rest it holds no part, but a mould left in its slot stays between its halves.
+            return MOULD.equals(locator) ? machine.tools().stream().map(BuiltInRegistries.ITEM::get)
+                    .filter(MouldCutting::isTool).findFirst().map(ItemStack::new).orElse(ItemStack.EMPTY)
+                    : ItemStack.EMPTY;
         }
         final Item made = BuiltInRegistries.ITEM.get(out.getFirst());
         final Optional<Item> tool = MouldCutting.toolOf(made);
