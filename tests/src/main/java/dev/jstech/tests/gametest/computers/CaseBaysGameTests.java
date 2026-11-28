@@ -12,6 +12,7 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.QuinceComputerBlock;
+import dev.jstech.computers.block.QuinceCraftingComputerBlock;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.BayDriveSpec;
@@ -54,9 +55,10 @@ public final class CaseBaysGameTests {
     /**
      * The cases there are: nine for each of the Personal, Crafting and Cluster Management Computers and for J's
      * Industrial's Industrial Controller Computer, the test mod's Quantum computer, whose era has the Advanced's case,
-     * and Quince's twenty computers, whose closed cases have no bay (computers/docs/design/quince.md).
+     * and Quince's twenty computers and three Crafting Computers, whose closed cases have no bay
+     * (computers/docs/design/quince.md).
      */
-    private static final int CASES = 57;
+    private static final int CASES = 60;
     /** How many parts a small computer held before its case had bays. */
     private static final int SLOTS_BEFORE_BAYS = 13;
 
@@ -72,7 +74,7 @@ public final class CaseBaysGameTests {
             }
             helper.setBlock(WHERE, block);
             final AbstractComputerBlockEntity machine = helper.getBlockEntity(WHERE);
-            final int bays = block instanceof QuinceComputerBlock ? 0
+            final int bays = block instanceof QuinceComputerBlock || block instanceof QuinceCraftingComputerBlock ? 0
                     : BAYS.get(HardwareEra.withParts(computerCase.chassisEra()));
             helper.assertValueEqual(machine.caseBays(), bays,
                     "the 5.25-inch bays of " + BuiltInRegistries.BLOCK.getKey(block));

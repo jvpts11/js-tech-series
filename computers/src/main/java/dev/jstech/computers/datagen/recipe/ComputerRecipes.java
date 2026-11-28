@@ -201,6 +201,24 @@ final class ComputerRecipes {
             dyed(output, item("qrusset_colour_blue"), colourDyes.get(i - 1),
                     item("qrusset_colour_" + QuinceMachines.COLOURS.get(i)));
         }
+        // Its Crafting Computers: the Russet Pros' boards seat three cards and the Studio's none, a Crafting
+        // Computer's four.
+        quinceCraftingComputer(output, HardwareEra.TRANSITION, "russet_pro_t", "pro_2006", 1);
+        quinceCraftingComputer(output, HardwareEra.STANDARD, "russet_pro_s", "pro_2019", 1);
+        quinceCraftingComputer(output, HardwareEra.ADVANCED, "russet_studio", "russet_studio", 4);
+    }
+
+    /*
+     * One of Quince's Crafting Computers as the others are made, the empty desk {@code machine} whose case it wears
+     * with its era's Crafting Card in it for good; and its own board, that machine's {@code board} with the
+     * {@code slots} PCIe slots it lacks, on that board's jig as every board is.
+     */
+    private static void quinceCraftingComputer(final RecipeOutput output, final Era era, final String machine,
+                                               final String board, final int slots) {
+        made(output, era, item(machine + "_crafting_computer"), empty(item(machine)), 1,
+                item(CRAFTING_CARDS.get(index(era))), 1);
+        madeOn(output, era, item("quince_board_crafting_" + board), BoardJigs.ofQuince(board).item().get(),
+                item("quince_board_" + board), 1, part("expansion_slot_pcie"), slots);
     }
 
     /* Quince's logic board {@code board}, "russet_128k", of {@code ingredients}, assembled on its own jig. */

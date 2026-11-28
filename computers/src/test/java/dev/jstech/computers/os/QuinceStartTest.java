@@ -52,9 +52,10 @@ class QuinceStartTest {
     }
 
     @Test
-    void isQuince_holdsTheSixteenBoardsOnly() {
-        assertEquals(16, QuinceBoards.ALL.size());
+    void isQuince_holdsTheNineteenBoardsOnly() {
+        assertEquals(19, QuinceBoards.ALL.size());
         assertTrue(QuinceBoards.isQuince(QuinceBoards.QSERVE_LEGACY));
+        assertTrue(QuinceBoards.isQuince(QuinceBoards.CRAFTING_STUDIO));
         assertFalse(QuinceBoards.isQuince(FormFactor.MTX));
     }
 }

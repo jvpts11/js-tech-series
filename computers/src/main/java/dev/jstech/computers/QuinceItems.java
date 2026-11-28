@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers;
 
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -110,6 +111,25 @@ public final class QuinceItems {
             spec(QuinceBoards.MAINFRAME_ADVANCED, HardwareEra.ADVANCED, CpuSocketId.QUINCE_Q, 4,
                     RamGeneration.DDR5, 64, PcieGeneration.PCIE_5_0, 8, 6))
             .named("Quince Logic Board (Quince Mainframe, Advanced)").register();
+    /*
+     * The boards of Quince's Crafting Computers: each the board of the desk machine whose case its computer wears,
+     * looking just as it does, with as many slots for the Crafting Cards as any Crafting Computer has.
+     */
+    public static final ItemEntry<Item> BOARD_CRAFTING_PRO_2006 = PartItems.board("quince_board_crafting_pro_2006",
+            spec(QuinceBoards.CRAFTING_PRO_TRANSITION, HardwareEra.TRANSITION, CpuSocketId.LGA_771, 1,
+                    RamGeneration.DDR2, 4, PcieGeneration.PCIE_1_0, CraftingComputerBlockEntity.PCIE_SLOTS, 2),
+            "quince_board_pro_2006")
+            .named("Quince Logic Board (Crafting, Russet Pro, Transition)").register();
+    public static final ItemEntry<Item> BOARD_CRAFTING_PRO_2019 = PartItems.board("quince_board_crafting_pro_2019",
+            spec(QuinceBoards.CRAFTING_PRO_STANDARD, HardwareEra.STANDARD, CpuSocketId.LGA_2011, 1,
+                    RamGeneration.DDR3, 4, PcieGeneration.PCIE_3_0, CraftingComputerBlockEntity.PCIE_SLOTS, 2),
+            "quince_board_pro_2019")
+            .named("Quince Logic Board (Crafting, Russet Pro, Standard)").register();
+    public static final ItemEntry<Item> BOARD_CRAFTING_STUDIO = PartItems.board("quince_board_crafting_russet_studio",
+            spec(QuinceBoards.CRAFTING_STUDIO, HardwareEra.ADVANCED, CpuSocketId.QUINCE_Q, 1, RamGeneration.DDR5, 2,
+                    PcieGeneration.PCIE_4_0, CraftingComputerBlockEntity.PCIE_SLOTS, 2),
+            "quince_board_russet_studio")
+            .named("Quince Logic Board (Crafting, Russet Studio)").register();
 
     /*
      * The processors of Quince's own boards, each only in its own socket: the Motoroller 68000's long package, the

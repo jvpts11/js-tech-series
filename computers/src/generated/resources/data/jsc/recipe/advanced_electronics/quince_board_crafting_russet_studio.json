@@ -1,0 +1,25 @@
+{
+  "type": "jsc:advanced_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_quince_russet_studio"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:quince_board_russet_studio"
+    },
+    {
+      "count": 4,
+      "item": "jsc:expansion_slot_pcie"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:quince_board_crafting_russet_studio"
+    }
+  ]
+}

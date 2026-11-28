@@ -19,6 +19,7 @@ import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.computers.registry.OwnHardware;
+import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.jstechseries.tier.Era;
 import java.util.function.Function;
@@ -70,6 +71,12 @@ final class PartItems {
     static ItemBuilder<Item> board(final String id, final MotherboardSpec spec) {
         OwnHardware.add(id, (event, item) -> event.motherboard(item, spec));
         return onShelf(id, spec.era(), Item::new);
+    }
+
+    /* A board that looks just as the board {@code like} does, in the hand and in the case, drawn by its models. */
+    static ItemBuilder<Item> board(final String id, final MotherboardSpec spec, final String like) {
+        OwnHardware.drawnAs(id, like);
+        return board(id, spec).look(IItemLook.parent("item/" + like));
     }
 
     static ItemBuilder<Item> disk(final String id, final DiskSpec spec) {

@@ -20,6 +20,8 @@ Table: Os computadores da Quince por era
 
 O hardware da Quince é fechado. Cada máquina aceita só a sua própria Placa Lógica Quince, e essa placa não entra em nenhum outro gabinete. A memória, os discos e as placas de expansão são os comuns. Os Russet Pro levam o Dissipador Quince da sua era sobre o processador.
 
+A Quince também faz três Computadores de Fabricação, nos gabinetes do Russet Pro (Transition), do Russet Pro (Standard) e do Russet Studio ([](jsc:crafting_computers)). Faça um com a máquina, vazia, e a Placa de Fabricação da sua era. Cada um aceita a sua própria Placa Lógica Quince, a placa da máquina com quatro slots para as Placas de Fabricação: faça-a com a placa da máquina e os Slots PCIe x16 que faltam nela, no gabarito dessa placa.
+
 Um all-in-one traz a sua tela no próprio bloco. O vidro mostra o que a máquina mostra, como um monitor: use o vidro para se sentar diante dela, e use o gabinete em qualquer outro ponto para abrir as suas peças. O som sai do próprio gabinete.
 
 Os all-in-ones e o Studio recebem cabos só por trás, e o botão de ligar também fica atrás. Uma torre recebe cabos como um Computador Pessoal, o botão de ligar fica na frente, e usá-la agachado tira a sua lateral esquerda.

@@ -48,11 +48,18 @@ public final class QuinceBoards {
             "Quince Mainframe (Standard)", false);
     public static final FormFactor MAINFRAME_ADVANCED = FormFactor.own("quince_mainframe_advanced",
             "Quince Mainframe (Advanced)", false);
+    /* Quince's Crafting Computers', each in the case of the desk machine of its era it is named after. */
+    public static final FormFactor CRAFTING_PRO_TRANSITION = FormFactor.own("quince_crafting_pro_transition",
+            "Russet Pro Crafting Computer (Transition)", false);
+    public static final FormFactor CRAFTING_PRO_STANDARD = FormFactor.own("quince_crafting_pro_standard",
+            "Russet Pro Crafting Computer (Standard)", false);
+    public static final FormFactor CRAFTING_STUDIO = FormFactor.own("quince_crafting_studio",
+            "Russet Studio Crafting Computer", false);
     /** Every one of them: what makes a machine one of Quince's, its firmware on its board with them. */
     public static final Set<FormFactor> ALL = Set.of(RUSSET_128K, QRUSSET_G3, RUSSET_POWER_G4, QRUSSET_TRANSITION,
             RUSSET_PRO_TRANSITION, QRUSSET_STANDARD, RUSSET_PRO_STANDARD, QRUSSET_ADVANCED, RUSSET_STUDIO,
             QSERVE_LEGACY, QSERVE_TRANSITION, QSERVE_STANDARD, QSERVE_ADVANCED, MAINFRAME_TRANSITION,
-            MAINFRAME_STANDARD, MAINFRAME_ADVANCED);
+            MAINFRAME_STANDARD, MAINFRAME_ADVANCED, CRAFTING_PRO_TRANSITION, CRAFTING_PRO_STANDARD, CRAFTING_STUDIO);
 
     private QuinceBoards() {
     }

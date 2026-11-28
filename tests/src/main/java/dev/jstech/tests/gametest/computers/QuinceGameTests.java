@@ -14,15 +14,19 @@ import dev.jstech.computers.QuinceItems;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.QuinceComputerBlock;
+import dev.jstech.computers.block.QuinceCraftingComputerBlock;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.QuinceMachines;
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.monitor.MonitorPictures;
 import dev.jstech.computers.monitor.SessionOpenings;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.os.QuinceStart;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.core.connect.Connection;
@@ -64,6 +68,8 @@ public final class QuinceGameTests {
     private static final int PAST_ITS_END = 40;
     private static final BlockPos AT = new BlockPos(2, 2, 2);
     private static final BlockPos BESIDE = new BlockPos(5, 2, 2);
+    /* The Crafting Cards a Crafting Computer seats, a Quince one as any other. */
+    private static final int CRAFTING_CARDS = 4;
 
     private QuinceGameTests() {
     }
@@ -208,6 +214,73 @@ public final class QuinceGameTests {
                 "and not the Mainframe's MTX board");
         helper.assertValueEqual(((MainframeBlock) ComputingModule.QUINCE_MAINFRAME_STANDARD.get()).cabinetModel(),
                 "quince_mainframe_standard", "drawn in Quince's cabinet");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void quinceCraftingComputer_takesItsOwnBoardAndCraftsWithFourCards(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        world.setBlock(AT, ComputingModule.TRANSITION_RUSSET_PRO_CRAFTING_COMPUTER.get());
+        world.setBlock(BESIDE, ComputingModule.TRANSITION_CRAFTING_COMPUTER.get());
+        final CraftingComputerBlockEntity pro = world.blockEntity(AT, CraftingComputerBlockEntity.class);
+        final CraftingComputerBlockEntity common = world.blockEntity(BESIDE, CraftingComputerBlockEntity.class);
+        final ComputerHardwareLayout map = pro.hardwareLayout();
+        final Item board = QuinceItems.BOARD_CRAFTING_PRO_2006.get();
+        helper.assertTrue(pro.isValidForSlot(map.motherboardSlot(), new ItemStack(board)),
+                "the Russet Pro Crafting Computer takes its own logic board");
+        helper.assertFalse(pro.isValidForSlot(map.motherboardSlot(), new ItemStack(QuinceItems.BOARD_PRO_2006.get())),
+                "and not the Russet Pro's");
+        helper.assertFalse(common.isValidForSlot(common.hardwareLayout().motherboardSlot(), new ItemStack(board)),
+                "and its board goes in no other Crafting Computer");
+        helper.assertValueEqual(map.bayCount(), 0, "its closed case has no bay");
+        final ItemStackHandler hardware = pro.getHardware();
+        hardware.setStackInSlot(map.motherboardSlot(), new ItemStack(board));
+        hardware.setStackInSlot(map.psuSlot(), new ItemStack(EraParts.psuFor(HardwareEra.TRANSITION)));
+        hardware.setStackInSlot(map.cpuSlot(0), new ItemStack(EraParts.cpuFor(board)));
+        hardware.setStackInSlot(map.ramSlot(0), new ItemStack(EraParts.ramFor(board)));
+        hardware.setStackInSlot(map.coolerStart(), new ItemStack(QuinceItems.HEAT_SINK_PRO_2006.get()));
+        hardware.setStackInSlot(map.diskStart(), new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+        for (int k = 0; k < map.pcieCount(); k++) {
+            hardware.setStackInSlot(map.pcieStart() + k, new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        }
+        pro.installOs(TestWorldBuilder.LEGACY_DESKTOP_OS);
+        pro.togglePower();
+        final CraftingCardSpec card = (CraftingCardSpec) HardwareRegistry.card(
+                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(pro.canCraft(), "built whole, it crafts");
+                    helper.assertValueEqual(pro.craftingThreads(), CRAFTING_CARDS * card.threads(),
+                            "with all four of its Crafting Cards");
+                    helper.assertValueEqual(pro.interfaceBudget(), CRAFTING_CARDS * card.interfaces(),
+                            "each driving its Crafting Interfaces");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void quinceCraftingComputers_wearTheirMachinesCases(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        world.setBlock(AT, ComputingModule.RUSSET_STUDIO_CRAFTING_COMPUTER.get());
+        final CraftingComputerBlockEntity studio = world.blockEntity(AT, CraftingComputerBlockEntity.class);
+        final ComputerHardwareLayout map = studio.hardwareLayout();
+        helper.assertTrue(studio.isValidForSlot(map.motherboardSlot(),
+                new ItemStack(QuinceItems.BOARD_CRAFTING_STUDIO.get())), "the Studio's takes its own board");
+        helper.assertFalse(studio.isValidForSlot(map.motherboardSlot(),
+                new ItemStack(QuinceItems.BOARD_RUSSET_STUDIO.get())), "and not the Russet Studio's");
+        helper.assertValueEqual(map.pcieCount(), CRAFTING_CARDS, "with room for four Crafting Cards");
+        final QuinceCraftingComputerBlock block = ComputingModule.RUSSET_STUDIO_CRAFTING_COMPUTER.get();
+        final QuinceCraftingComputerBlock tower = ComputingModule.RUSSET_PRO_CRAFTING_COMPUTER.get();
+        helper.assertValueEqual(block.caseModel(), QuinceMachines.RUSSET_STUDIO.model(), "in the Studio's case");
+        helper.assertValueEqual(tower.caseModel(), QuinceMachines.RUSSET_PRO_STANDARD.model(),
+                "and the Russet Pro's in the Russet Pro's");
+        final BlockState north = block.defaultBlockState();
+        final Connection peripheral = PeripheralLine.of(HardwareEra.ADVANCED);
+        final Connection crafting = DataLines.of(new DataLink(DataLine.CRAFTING, HardwareEra.ADVANCED));
+        helper.assertTrue(block.ports().accepts(north, Direction.SOUTH, peripheral), "the Studio's peripherals behind");
+        helper.assertFalse(block.ports().accepts(north, Direction.EAST, peripheral), "never on its side");
+        helper.assertTrue(block.ports().accepts(north, Direction.EAST, crafting),
+                "but the crafting cable on any face, as on every Crafting Computer");
         helper.succeed();
     }
 

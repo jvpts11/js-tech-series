@@ -34,6 +34,7 @@ import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.block.QuinceComputerBlock;
+import dev.jstech.computers.block.QuinceCraftingComputerBlock;
 import dev.jstech.computers.block.QuinceMainframeBlock;
 import dev.jstech.computers.block.Printer3DBlock;
 import dev.jstech.computers.block.PrinterBlock;
@@ -610,12 +611,26 @@ public final class ComputingModule {
     public static final BlockEntry<CraftingComputerBlock> ADVANCED_AESTHETIC_CRAFTING_COMPUTER =
             craftingComputer("advanced_aesthetic_crafting_computer", HardwareEra.ADVANCED, CaseStyle.AESTHETIC)
                     .named("Advanced Aesthetic Crafting Computer").register();
+    /*
+     * Quince's Crafting Computers (computers/docs/design/quince.md): the Russet Pros' and the Studio's cases, each on a
+     * board of its own with four slots for the Crafting Cards.
+     */
+    public static final BlockEntry<QuinceCraftingComputerBlock> TRANSITION_RUSSET_PRO_CRAFTING_COMPUTER =
+            quinceCraftingComputer(QuinceMachines.RUSSET_PRO_TRANSITION, QuinceBoards.CRAFTING_PRO_TRANSITION)
+                    .named("Russet Pro Crafting Computer (Transition)").register();
+    public static final BlockEntry<QuinceCraftingComputerBlock> RUSSET_PRO_CRAFTING_COMPUTER =
+            quinceCraftingComputer(QuinceMachines.RUSSET_PRO_STANDARD, QuinceBoards.CRAFTING_PRO_STANDARD)
+                    .named("Russet Pro Crafting Computer (Standard)").register();
+    public static final BlockEntry<QuinceCraftingComputerBlock> RUSSET_STUDIO_CRAFTING_COMPUTER =
+            quinceCraftingComputer(QuinceMachines.RUSSET_STUDIO, QuinceBoards.CRAFTING_STUDIO)
+                    .named("Russet Studio Crafting Computer").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CraftingComputerBlockEntity>>
             CRAFTING_COMPUTER_BE = CONTENT.blockEntity("crafting_computer", CraftingComputerBlockEntity::new,
                     CRAFTING_COMPUTER, HIGH_PERFORMANCE_CRAFTING_COMPUTER, AESTHETIC_CRAFTING_COMPUTER,
                     VINTAGE_CRAFTING_COMPUTER, LEGACY_CRAFTING_COMPUTER, TRANSITION_CRAFTING_COMPUTER,
                     ADVANCED_CRAFTING_COMPUTER, ADVANCED_HIGH_PERFORMANCE_CRAFTING_COMPUTER,
-                    ADVANCED_AESTHETIC_CRAFTING_COMPUTER);
+                    ADVANCED_AESTHETIC_CRAFTING_COMPUTER, TRANSITION_RUSSET_PRO_CRAFTING_COMPUTER,
+                    RUSSET_PRO_CRAFTING_COMPUTER, RUSSET_STUDIO_CRAFTING_COMPUTER);
 
     /*
      * Cluster Management Computer: a full computer that, with a Cluster Interface Card, drives every
@@ -1648,7 +1663,30 @@ public final class ComputingModule {
     private static BlockBuilder<QuinceComputerBlock> quinceComputer(final QuinceCase machine) {
         final String id = machine.model().substring("quince_".length());
         OwnComputers.computer(id, PersonalComputerBlockEntity.quince(machine));
-        return CONTENT.block(id, properties -> new QuinceComputerBlock(properties, machine))
+        return quinceCase(id, machine, Shelf.PERSONAL_COMPUTERS,
+                properties -> new QuinceComputerBlock(properties, machine));
+    }
+
+    /*
+     * One of Quince's Crafting Computers, in {@code machine}'s case on its own {@code board}, named by the machine:
+     * russet_pro_t_crafting_computer.
+     */
+    private static BlockBuilder<QuinceCraftingComputerBlock> quinceCraftingComputer(final QuinceCase machine,
+                                                                                    final FormFactor board) {
+        final String id = machine.model().substring("quince_".length()) + "_crafting_computer";
+        OwnComputers.computer(id, CraftingComputerBlockEntity.quince(machine, board));
+        return quinceCase(id, machine, Shelf.CRAFTING_COMPUTERS,
+                properties -> new QuinceCraftingComputerBlock(properties, machine));
+    }
+
+    /*
+     * A computer in the case of Quince's {@code machine}, which its block entity draws, as a small computer's
+     * (computer(...)): the block shows only the case's particles, and its item the case, switched off.
+     */
+    private static <B extends Block & IComputerCase> BlockBuilder<B> quinceCase(
+            final String id, final QuinceCase machine, final Shelf shelf,
+            final Function<BlockBehaviour.Properties, B> factory) {
+        return CONTENT.block(id, factory)
                 .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(2.0F).noOcclusion())
                 .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body",
                         "block/computer/" + machine.model() + "_particle")))
@@ -1656,7 +1694,7 @@ public final class ComputingModule {
                 .drops(Drops.NONE)
                 .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.COMPUTER,
                         block.caseModel(), DEVICE_FIT, COMPUTER_LAMPS))
-                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERSONAL_COMPUTERS, machine.era()));
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(shelf, machine.era()));
     }
 
     /* Every block the Personal Computer's entity serves: the PCs of every era and Quince's computers. */

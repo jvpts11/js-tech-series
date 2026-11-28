@@ -22,14 +22,19 @@ and its own systems, desktop and mobile. It follows the real history of its mode
   real one was a 19" unit ([Servers and racks](servers-and-racks.md)).
 - **The Quince Mainframe**, from the Transition on, a Mainframe of its own running Quince OS X Server
   ([Computers](computers.md)). Quince had no large machines before.
+- **The Crafting Computers:** one in the case of the Russet Pro (Transition), the Russet Pro (Standard) and the Russet
+  Studio, each a Crafting Computer in every way but its case ([Autocrafting](autocrafting.md)), drawn as the machine
+  it is made of. The Studio's takes its peripherals and its access line only from behind, as the Studio does; the
+  crafting cable goes on any face of each, as on every Crafting Computer.
 - **The phones and tablets:** the qPhone and the qPad, with qOS ([Wireless](wireless.md)).
 
 ## Closed hardware
 
 A Quince machine takes a Quince logic board, and a Quince logic board takes only the processors its era gives it
 (Motoroller, PowerQ, the Integra ones of the Transition and the Standard, and Quince's own); it never goes into another
-maker's case, and no other board goes into a Quince case. There are sixteen logic boards: one for each machine, one
-for the qServe of each era and one for the Quince Mainframe of each era. Memory modules, disks and graphics cards are
+maker's case, and no other board goes into a Quince case. There are nineteen logic boards: one for each machine, one
+for the qServe of each era, one for the Quince Mainframe of each era and one for each Crafting Computer, which is the
+board of the machine whose case it wears, drawn as it is, with four slots for the Crafting Cards. Memory modules, disks and graphics cards are
 the common ones; the all-in-ones draw with the graphics on their board, and their screen takes no video memory. Quince's
 own chips carry memory in their package, unified with the graphics, and the Advanced logic boards keep the common memory
 slots besides. Quince's machines have no drive bays. Their chips' figures (clock, power, cores, memory, graphics and

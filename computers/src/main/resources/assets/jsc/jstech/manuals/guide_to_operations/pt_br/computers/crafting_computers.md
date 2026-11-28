@@ -28,6 +28,8 @@ Table: Placas de Fabricação por era
 | Standard | 6 | 6 |
 | Advanced | 8 | 8 |
 
+A Quince faz os seus próprios, nos gabinetes dos Russet Pro e do Russet Studio. Cada um aceita só a sua própria Placa Lógica Quince, e não tem baias de unidades ([](jsc:quince_computers)).
+
 Abra o Gerenciador de Fabricação nele para carregar os padrões e acompanhar as tarefas ([](jsc:crafting_manager)).
 
 ## Se algo der errado

@@ -116,6 +116,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- Quince's Crafting Computers: one in the case of the Russet Pro (Transition), the Russet Pro (Standard)
+  and the Russet Studio, made at the era's Electronics bench of the empty machine and its era's Crafting Card. Each
+  takes only its own Quince Logic Board, the machine's board with four slots for the Crafting Cards, made of that board
+  and the PCIe x16 Slots it lacks on that board's jig; like every Quince machine it has no drive bays. The Studio's takes its peripherals
+  and its access line from behind, and the crafting cable on any face.
 - Ruthenium ore, in veins of its own in the deepslate, as the Advanced's other metals lie: crushed in the
   Crusher and melted in the Induction Furnace, it gives the ruthenium every Advanced wafer's wiring takes, which the
   nickel ore's little by-product could not keep up with.

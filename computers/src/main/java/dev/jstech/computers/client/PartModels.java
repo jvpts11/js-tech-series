@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.jstech.computers.registry.OwnHardware;
 import dev.jstech.core.client.model.kit.IKitDriver;
 import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitClock;
@@ -184,7 +185,7 @@ final class PartModels {
             return part(item);
         }
         final Part own = part(LIT_PARTS.computeIfAbsent(light, named -> new HashMap<>())
-                .computeIfAbsent(item, id -> id.withSuffix("_" + light)));
+                .computeIfAbsent(item, id -> OwnHardware.modelOf(id).withSuffix("_" + light)));
         return own != null ? own : part(item);
     }
 
@@ -289,14 +290,16 @@ final class PartModels {
     private record PartFiles(ResourceLocation geo, ResourceLocation texture, ResourceLocation animation,
                              boolean there) {
 
+        /* The files of {@code item}'s models, or of the part's it looks just as. */
         static PartFiles of(final ResourceLocation item) {
-            final String namespace = item.getNamespace();
+            final ResourceLocation drawn = OwnHardware.modelOf(item);
+            final String namespace = drawn.getNamespace();
             final ResourceLocation geo = ResourceLocation.fromNamespaceAndPath(namespace,
-                    "geo/part/" + item.getPath() + ".geo.json");
+                    "geo/part/" + drawn.getPath() + ".geo.json");
             return new PartFiles(geo,
-                    ResourceLocation.fromNamespaceAndPath(namespace, "textures/block/part/" + item.getPath() + ".png"),
+                    ResourceLocation.fromNamespaceAndPath(namespace, "textures/block/part/" + drawn.getPath() + ".png"),
                     ResourceLocation.fromNamespaceAndPath(namespace,
-                            "animations/part/" + item.getPath() + ".animation.json"),
+                            "animations/part/" + drawn.getPath() + ".animation.json"),
                     Minecraft.getInstance().getResourceManager().getResource(geo).isPresent());
         }
     }

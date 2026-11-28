@@ -28,6 +28,8 @@ Table: Crafting Cards by era
 | Standard | 6 | 6 |
 | Advanced | 8 | 8 |
 
+Quince makes its own, in the cases of the Russet Pros and the Russet Studio. Each takes only its own Quince Logic Board, and has no drive bays ([](jsc:quince_computers)).
+
 Open the Crafting Manager on it to load its patterns and watch the jobs ([](jsc:crafting_manager)).
 
 ## If something goes wrong

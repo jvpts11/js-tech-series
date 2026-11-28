@@ -56,7 +56,8 @@ lights and a service panel that comes off. It has no operator panel: it is read 
 
 It drives the network's crafts with its Crafting Cards: bench recipes live in the cards' memory, machine recipes in the
 Crafting Interfaces ([Autocrafting](autocrafting.md)). Without a supercomputer, it runs one whole craft at a time, with
-its steps in parallel up to the cards' threads. Its cases are the Personal Computer's.
+its steps in parallel up to the cards' threads. Its cases are the Personal Computer's, and Quince makes three of its
+own, in the cases of the Russet Pros and the Russet Studio, each on its own logic board ([Quince](quince.md)).
 
 ### Server
 

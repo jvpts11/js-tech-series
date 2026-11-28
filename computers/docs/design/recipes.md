@@ -617,6 +617,16 @@ table, empty, so no dye eats a computer's parts: the qRusset G3's Bondi Blue wit
 red the Strawberry, lime the Lime, purple the Grape and orange the Tangerine; the coloured qRusset's blue with a
 green, pink, light grey, yellow, orange or purple dye makes its green, pink, silver, yellow, orange or purple.
 
+Quince's Crafting Computers are made as the others are: the empty Russet Pro (Transition), Russet Pro (Standard) or
+Russet Studio with its era's Crafting Card in it for good, at the era's bench. Each takes a board of its own, the
+machine's board with the PCIe x16 Slots it lacks to seat four cards, assembled on the machine's board's jig:
+
+| Logic board of | Bench | Recipe |
+| --- | --- | --- |
+| Russet Pro Crafting Computer (Transition) | Transition | 1 Quince Logic Board (Russet Pro, Transition) and 1 PCIe x16 Slot |
+| Russet Pro Crafting Computer (Standard) | Standard | 1 Quince Logic Board (Russet Pro, Standard) and 1 PCIe x16 Slot |
+| Russet Studio Crafting Computer | Advanced | 1 Quince Logic Board (Russet Studio) and 4 PCIe x16 Slots |
+
 #### The server room
 
 A **server chassis** is 2 steel plates for every U, an aluminium front, the desk cases' front, and the

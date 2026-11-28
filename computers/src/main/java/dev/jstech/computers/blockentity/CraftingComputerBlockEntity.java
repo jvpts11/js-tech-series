@@ -19,7 +19,9 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.ExpansionCardKind;
+import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.QuinceCase;
 import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.storage.IDataSink;
@@ -32,6 +34,7 @@ import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -115,6 +118,16 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     public static ComputerDef computer(final Era era, final CaseStyle style) {
         return new ComputerDef(era, TowerBoards.craftingComputer(era), HostScope.CRAFTING_COMPUTER, PARTS,
                 style.cooling(era));
+    }
+
+    /**
+     * What one of Quince's Crafting Computers is: a Crafting Computer in {@code machine}'s case that takes only
+     * {@code board}, its own, with no bay for a drive, cooled by the case alone (computers/docs/design/quince.md).
+     */
+    public static ComputerDef quince(final QuinceCase machine, final FormFactor board) {
+        return new ComputerDef(machine.era(), Set.of(board), HostScope.CRAFTING_COMPUTER,
+                new CaseParts(PARTS.processors(), PARTS.memory(), PARTS.cards(), PARTS.disks(), 0, PARTS.storage()),
+                machine.cooling());
     }
 
     public static void serverTick(final Level level, final BlockPos pos,

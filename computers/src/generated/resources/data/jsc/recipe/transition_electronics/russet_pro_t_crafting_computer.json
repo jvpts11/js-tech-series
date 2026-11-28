@@ -1,0 +1,20 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "type": "jsc:empty_computer",
+      "count": 1,
+      "item": "jsc:russet_pro_t"
+    },
+    {
+      "count": 1,
+      "item": "jsc:crafting_card_t2"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:russet_pro_t_crafting_computer"
+    }
+  ]
+}

@@ -11,6 +11,8 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -24,8 +26,21 @@ import net.minecraft.world.item.Items;
 public final class OwnHardware {
 
     private static final List<Entry> ENTRIES = new ArrayList<>();
+    /* The parts that look just as another does, by item: a board that differs from another only in what it seats. */
+    private static final Map<ResourceLocation, ResourceLocation> DRAWN_AS = new ConcurrentHashMap<>();
 
     private OwnHardware() {
+    }
+
+    /** Keeps that the part {@code id} looks just as the part {@code like} does, drawn by its models. */
+    public static void drawnAs(final String id, final String like) {
+        DRAWN_AS.put(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, id),
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, like));
+    }
+
+    /** The part whose models draw {@code item}: the item itself, unless it looks just as another does. */
+    public static ResourceLocation modelOf(final ResourceLocation item) {
+        return DRAWN_AS.getOrDefault(item, item);
     }
 
     /**

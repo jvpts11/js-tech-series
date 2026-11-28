@@ -1,0 +1,25 @@
+{
+  "type": "jsc:standard_electronics",
+  "catalysts": [
+    {
+      "count": 1,
+      "item": "jsc:board_jig_quince_pro_2019"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:quince_board_pro_2019"
+    },
+    {
+      "count": 1,
+      "item": "jsc:expansion_slot_pcie"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:quince_board_crafting_pro_2019"
+    }
+  ]
+}

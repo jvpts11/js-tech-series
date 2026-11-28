@@ -20,6 +20,8 @@ Table: Quince's computers by era
 
 Quince's hardware is closed. Each machine takes only its own Quince Logic Board, and that board goes in no other case. The memory, the disks and the cards are the common ones. The Russet Pros take the Quince Heat Sink of their era over the processor.
 
+Quince also makes three Crafting Computers, in the cases of the Russet Pro (Transition), the Russet Pro (Standard) and the Russet Studio ([](jsc:crafting_computers)). Make one of the machine, empty, and its era's Crafting Card. Each takes its own Quince Logic Board, the machine's board with four slots for the Crafting Cards: make it of the machine's board and the PCIe x16 Slots it lacks, on that board's jig.
+
 An all-in-one carries its screen in its own block. Its glass shows what the machine shows, as a monitor does: use the glass to sit down at it, and use the case anywhere else to open its parts. Its sound comes from its own case.
 
 The all-in-ones and the Studio take their cables only from behind, and their power button is behind them too. A tower takes cables as a Personal Computer does, its power button is on its front, and sneaking as you use it takes its left side off.

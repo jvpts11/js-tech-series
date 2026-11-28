@@ -47,7 +47,8 @@ public class QuinceComputerBlock extends AbstractSmallComputerBlock<PersonalComp
 
     private final QuinceCase machine;
 
-    private static final Codec<QuinceCase> MACHINE = Codec.STRING.comapFlatMap(model -> {
+    /** A Quince machine by the model it is drawn with, as its blocks keep it. */
+    static final Codec<QuinceCase> MACHINE = Codec.STRING.comapFlatMap(model -> {
         final QuinceCase found = QuinceMachines.byModel(model);
         return found == null ? DataResult.error(() -> "no Quince computer is drawn as " + model)
                 : DataResult.success(found);

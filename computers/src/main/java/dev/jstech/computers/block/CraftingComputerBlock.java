@@ -11,6 +11,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
@@ -39,15 +40,22 @@ public class CraftingComputerBlock extends AbstractSmallComputerBlock<CraftingCo
             StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(CraftingComputerBlock::caseStyle)
     ).apply(i, CraftingComputerBlock::new));
 
+    public CraftingComputerBlock(final Properties properties, final Era era, final CaseStyle caseStyle) {
+        this(properties, era, caseStyle, CaseFrontLayout.of(era, caseStyle), FaceRule.EVERY);
+    }
+
     /*
-     * Data over its era's access line on the back (through a router to the backbone), and the crafting cable to its
+     * A Crafting Computer in a case of its own, its front {@code front} and its peripherals on {@code peripherals}:
+     * data over its era's access line on the back (through a router to the backbone), and the crafting cable to its
      * Crafting Interfaces on any face, since the search for the crafting network walks out of all six.
      */
-    public CraftingComputerBlock(final Properties properties, final Era era, final CaseStyle caseStyle) {
-        super(properties, era, caseStyle,
+    protected CraftingComputerBlock(final Properties properties, final Era era, final CaseStyle caseStyle,
+                                    final CaseFrontLayout front, final FaceRule peripherals) {
+        super(properties, era, caseStyle, front,
                 FacePorts.builder()
                         .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS))
-                        .port(FaceRule.EVERY, DataLines.upTo(era, DataLine.CRAFTING), PeripheralLine.of(era))
+                        .port(FaceRule.EVERY, DataLines.upTo(era, DataLine.CRAFTING))
+                        .port(peripherals, PeripheralLine.of(era))
                         .build(),
                 CraftingComputerBlockEntity.class, ComputingModule.CRAFTING_COMPUTER_BE::get,
                 CraftingComputerBlockEntity::serverTick);
