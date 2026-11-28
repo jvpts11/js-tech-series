@@ -21,8 +21,14 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.wireless.AccessPointMount;
 import dev.jstech.computers.wireless.WirelessLink;
 import dev.jstech.computers.wireless.WirelessStandard;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CableType;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.multipart.MicroShape;
+import dev.jstech.core.multipart.Microblock;
+import dev.jstech.core.multipart.SpaceSlots;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestComputerEnergy;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
@@ -218,6 +224,36 @@ public final class WirelessGameTests {
                                     .anyMatch(item -> item.getItem().is(ComputingModule.STANDARD_ACCESS_POINT.get()
                                             .asItem())),
                             "it drops as itself");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * One fixed to a ceiling takes its cables through it, so they run inside the ceiling: a cable block there holds it
+     * once a facade closes the cable's face under it, and the facade, hiding the wire, leaves it linked to the access
+     * point. A bare cable is no face to fix it to.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void fixedAccessPoint_hangsFromACableInTheCeilingBehindAFacade(final GameTestHelper helper) {
+        final BlockPos ceiling = new BlockPos(3, 4, 3);
+        final BlockPos hanging = ceiling.below();
+        final CableType copper = SharedEnergy.INSULATED_COPPER_CABLE.get();
+        final CableBlockEntity cable = TestCables.lay(helper, ceiling, SharedEnergy.INSULATED_COPPER_CABLE);
+        final BlockState state = ComputingModule.STANDARD_ACCESS_POINT.get().defaultBlockState()
+                .setValue(AccessPointBlock.MOUNT, AccessPointMount.CEILING);
+        helper.assertFalse(state.canSurvive(helper.getLevel(), helper.absolutePos(hanging)),
+                "a bare cable holds no access point");
+        helper.assertTrue(cable.parts().add(new Microblock(new Microblock.MicroblockPiece(MicroShape.FACADE,
+                MicroShape.COVER, Blocks.STONE), SpaceSlots.face(Direction.DOWN.get3DDataValue()), SpaceSlots.Y)),
+                "a facade closes the cable's face under it");
+        helper.assertTrue(state.canSurvive(helper.getLevel(), helper.absolutePos(hanging)),
+                "behind the facade, the cable holds it");
+        helper.setBlock(hanging, state);
+        helper.startSequence()
+                .thenExecuteAfter(2, () -> {
+                    helper.assertBlockPresent(ComputingModule.STANDARD_ACCESS_POINT.get(), hanging);
+                    helper.assertTrue(cable.crosses(copper, Direction.DOWN),
+                            "the facade hides the wire and leaves it linked to the access point");
                 })
                 .thenSucceed();
     }

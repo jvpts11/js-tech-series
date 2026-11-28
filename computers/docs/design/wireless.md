@@ -27,6 +27,11 @@ wall on their mounting plate, never on a floor, and take their cables through th
 over Ethernet. The Network Manager shows each as an ACCESS POINT node, and its tooltip gives its reach, its speed and
 its draw.
 
+A fixed one's cables run inside the ceiling or the wall: a cable block there, its face under the access point closed by
+a facade of the wall's block, holds it as a solid face does and leaves the lines linked through the facade; a bare
+cable holds none. Placed on a floor, or where nothing holds it, it says why over the hotbar and names the desk ones
+for a desk. The manual explains it ([Guide to Operations](manuals.md)).
+
 ## Wi-Fi cards
 
 An expansion card per era (PCI in the Legacy, PCI Express x1 later) that joins a computer to the network through an

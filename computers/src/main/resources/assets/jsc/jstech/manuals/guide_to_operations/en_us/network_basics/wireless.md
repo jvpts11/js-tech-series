@@ -27,6 +27,8 @@ Table: The access points
 
 An access point takes two lines: the access cable of its era or an older one, and the energy cable. Both come in through one face. The Legacy's and the Transition's stand on a desk, facing you, and take their cables from behind. The Standard's and the Advanced's are fixed to a ceiling or a wall on their mounting plate, and take their cables through the face they are fixed to; take that block away and the access point comes off with it.
 
+So a fixed access point's cables run inside the ceiling or the wall it is fixed to. Lay them in a cable block there, and close the cable's face where the access point goes with a facade of the wall's own block: the facade looks like the wall around it, holds the access point as a solid face does, and leaves the cables linked through it. A bare cable, with nothing closing its face, holds no access point.
+
 Its lamps tell how it stands: the power lamp while it has its energy, and the two traffic lamps blinking while it is on a network. Several access points in one place do not conflict: each computer joins the nearest one that reaches it, and an access point takes any number of computers.
 
 ## The cards
@@ -41,6 +43,6 @@ A link goes at the speed of the older of its two ends, as real Wi-Fi does: a Sta
 > Move it within the access point's reach, or check that the access point has its energy and its cable: its power lamp is lit and its traffic lamps blink.
 
 > [!PROBLEM] A fixed access point will not go where you click.
-> It goes under a ceiling or on a wall, never on a floor, and the face it is fixed to must be solid.
+> It says why over your hotbar. It goes under a ceiling or on a wall, never on a floor: for a desk, take the Legacy's or the Transition's. The face it is fixed to must be solid: a cable in the wall is, once a facade closes its face.
 
 > [!SEE] jsc:routers, jsc:data_cables, jsc:network_manager

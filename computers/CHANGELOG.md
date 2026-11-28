@@ -1303,6 +1303,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for stays in it however busy the buses are.
 
 ### Fixed
+- A Standard or Advanced access point that cannot go where it is placed says why over the hotbar: it goes
+  under a ceiling or on a wall, never on a floor, where the Legacy's and the Transition's stand on a desk; and it needs a
+  solid face, which a cable in the wall is once a facade closes its face. It was not placed, without a word. The manual
+  explains how its cables run inside the ceiling or the wall, through a facaded cable block.
 - A phone or tablet held up with its battery flat shows its empty battery for three seconds, a red sliver in
   it and a plug under it, before its screen goes dark: its screen stayed black, as one broken would.
 - A Crafting Interface that feeds its machine through routers with empty filters sends each input through

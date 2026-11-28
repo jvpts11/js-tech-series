@@ -27,6 +27,8 @@ Table: Os access points
 
 Um access point recebe duas linhas: o cabo de acesso da sua era ou de uma mais antiga, e o cabo de energia. As duas chegam pela mesma face. O do Legacy e o do Transition ficam sobre uma mesa, virados para você, e recebem os cabos por trás. O do Standard e o do Advanced são presos no teto ou numa parede pela placa de montagem, e recebem os cabos pela face onde estão presos; tire esse bloco e o access point cai junto.
 
+Por isso os cabos de um access point de fixar passam por dentro do teto ou da parede onde ele está preso. Passe-os num bloco de cabo ali e feche a face do cabo onde o access point vai com uma facade do próprio bloco da parede: a facade parece a parede em volta, segura o access point como uma face sólida e deixa os cabos ligados através dela. Um cabo nu, sem nada fechando a sua face, não segura access point nenhum.
+
 As luzes dizem como ele está: a de energia enquanto tem energia, e as duas de tráfego piscando enquanto está numa rede. Vários access points no mesmo lugar não brigam: cada computador entra pelo mais próximo que o alcança, e um access point aceita qualquer número de computadores.
 
 ## As placas
@@ -41,6 +43,6 @@ Uma ligação anda na velocidade do mais velho dos dois lados, como no Wi-Fi de 
 > Ponha-o ao alcance do access point, ou confira se o access point tem energia e cabo: a luz de energia acesa e as de tráfego piscando.
 
 > [!PROBLEM] Um access point de fixar não vai para onde você clica.
-> Ele vai no teto ou numa parede, nunca no chão, e a face onde ele se prende tem de ser sólida.
+> Ele diz o porquê acima da sua barra de itens. Ele vai no teto ou numa parede, nunca no chão: para uma mesa, use o do Legacy ou o do Transition. A face onde ele se prende tem de ser sólida: um cabo na parede é, depois que uma facade fecha a sua face.
 
 > [!SEE] jsc:routers, jsc:data_cables, jsc:network_manager

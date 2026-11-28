@@ -78,6 +78,10 @@ public final class AccessPointBlock extends DeviceBlock {
             "On a desk; its cables come in from behind");
     private static final TextKey FIXED = TextKey.of("block.jsc.access_point.fixed",
             "On a ceiling or a wall; its cables come in where it is fixed");
+    private static final TextKey NOT_ON_A_FLOOR = TextKey.of("block.jsc.access_point.not_on_a_floor",
+            "It hangs from a ceiling or sits on a wall; the Legacy and Transition access points stand on a desk");
+    private static final TextKey NOTHING_TO_HOLD_IT = TextKey.of("block.jsc.access_point.nothing_to_hold_it",
+            "Nothing there holds it: fix it to a solid face, or to a cable behind a facade");
     /* What it is drawn in, in pixels: a desk box with its antennas left out, the plate and its body when fixed. */
     private static final VoxelShape DESK = Block.box(2.5, 0, 3.0, 13.5, 4.0, 13.0);
     private static final VoxelShape CEILING = Block.box(0.5, 12.5, 0.5, 15.5, 16.0, 15.5);
@@ -124,7 +128,8 @@ public final class AccessPointBlock extends DeviceBlock {
 
     /**
      * One on a desk faces whoever places it. One that is fixed hangs under the block above it, or sits on the side of the
-     * block it is placed against, facing away from it; it is not set on a floor.
+     * block it is placed against, facing away from it; it is not set on a floor, and says so, as it says what it
+     * needs where nothing would hold it, rather than not being placed without a word.
      */
     @Override
     @Nullable
@@ -141,9 +146,14 @@ public final class AccessPointBlock extends DeviceBlock {
         } else if (clicked.getAxis().isHorizontal()) {
             state = defaultBlockState().setValue(FACING, clicked).setValue(MOUNT, AccessPointMount.WALL);
         } else {
+            tell(context, NOT_ON_A_FLOOR);
             return null;
         }
-        return canSurvive(state, context.getLevel(), context.getClickedPos()) ? state : null;
+        if (!canSurvive(state, context.getLevel(), context.getClickedPos())) {
+            tell(context, NOTHING_TO_HOLD_IT);
+            return null;
+        }
+        return state;
     }
 
     /** One that is fixed needs the face it is fixed to; one on a desk stands anywhere. */
@@ -212,6 +222,13 @@ public final class AccessPointBlock extends DeviceBlock {
                 .ticks(AccessPointBlockEntity::serverTick)
                 .ports(FacePorts.builder().port(FaceRule.EVERY, DataLines.upTo(era, DataLine.ACCESS),
                         SharedEnergy.LOW_VOLTAGE_LINE).build());
+    }
+
+    /* Tells whoever is placing it why it was not placed, over their hotbar, once: the server's answer alone. */
+    private static void tell(final BlockPlaceContext context, final TextKey why) {
+        if (context.getPlayer() != null && !context.getLevel().isClientSide()) {
+            context.getPlayer().displayClientMessage(GameText.component(why), true);
+        }
     }
 
     /* The plate and its body against the wall behind a block facing {@code facing}. */

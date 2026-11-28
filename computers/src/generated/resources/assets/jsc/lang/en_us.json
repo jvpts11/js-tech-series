@@ -239,6 +239,8 @@
   "advancements.jsc.teracoin.you_wouldnt_download_a_car.title": "You Wouldn't Download a Car",
   "block.jsc.access_point.draws": "Draws %s W",
   "block.jsc.access_point.fixed": "On a ceiling or a wall; its cables come in where it is fixed",
+  "block.jsc.access_point.not_on_a_floor": "It hangs from a ceiling or sits on a wall; the Legacy and Transition access points stand on a desk",
+  "block.jsc.access_point.nothing_to_hold_it": "Nothing there holds it: fix it to a solid face, or to a cable behind a facade",
   "block.jsc.access_point.on_a_desk": "On a desk; its cables come in from behind",
   "block.jsc.access_point.reach_and_speed": "Reach %s blocks · %s items per tick",
   "block.jsc.advanced_access_point": "Advanced Wireless Access Point",
